@@ -1,4 +1,10 @@
-\usepackage{hyperref}
+\RequirePackage{hyperref}
+\RequirePackage{xcolor}
+
+\providecolor{OliveGreen}{HTML}{3C8031}
+\providecolor{Plum}{HTML}{92268F}
 
 % see https://en.wikibooks.org/wiki/LaTeX/Colors
-\hypersetup{breaklinks=true,colorlinks=true,citecolor=OliveGreen,urlcolor=Plum}
+\AtBeginDocument
+  {\hypersetup
+     {breaklinks=true,colorlinks=true,citecolor=OliveGreen,urlcolor=Plum}}

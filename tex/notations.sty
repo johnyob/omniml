@@ -44,6 +44,7 @@
 \newcommand{\clet}[4]{\cletin {#1}{\cabs{#2}{#3}}{#4}}
 \newcommand{\Clet}[4]{\Let #1\; #2 = #3 \In #4}
 \newcommand{\cletr}[5]{\Clet{#1}{#2\;\where{#3}}{#4}{#5}}
+\newcommand{\cdefault}[1]{\mathinfix{default} #1}
 
 \newcommand{\Csuspend}[4]{\cmatch {#1}{#3}{\clam {#2}{#4}}}
 \newcommand{\csuspend}[4]{#1?#2 [#3]\to}
@@ -62,7 +63,7 @@
 \newcommand{\cpatrcd}[1]{\Tapp[#1]\wild}
 \defmetavar{\cscm}{s}
 \defmetavar{\ct}{t}
-\defmetavar[s]{\cbr}{\chi}
+\defmetavar[s,as,bs]{\cbr}{\chi}
 \newcommand{\cbranch}[2]{#1 \to #2}
 
 % Partial applications
@@ -177,8 +178,7 @@
 \newcommand \sbot {\bot}
 \newcommand{\Sh}{\zeta}
 \newcommand{\Shp}{\Sh'}
-\newcommand{\sh}{\varsigma}
-\newcommand{\shp}{\sh'}
+\defmetavar{\sh}{\varsigma}
 \newcommand{\shapp}[1][\sh]{#1\,}
 \newcommand{\pshapp}{\shapp}
 \newcommand{\deshaped}[3]{(\any{#1}{#2}, #3)}
@@ -288,7 +288,8 @@
 \newcommand {\iton}[1][n]{_{i=1}^{#1}}
 \renewcommand{\@}{\;}
 
-% Braces
+% Braces and parens
+
 \newcommand {\parens}[1]{(#1)}
 \newcommand {\iparens}[2][\iton]{\parens{#2}#1}
 \newcommand {\seq}[2][\iton]{\parens{#2}#1}
@@ -312,9 +313,19 @@
 \newcommand {\Where}[1]{\Brackets {#1}}
 \newcommand {\is}{:=}
 
+%% wedges
+
+\newcommand {\Lbrace}[2][L]
+   {\left\{\begin{tabular}{#1}#2\end{tabular}\right.}
+\newcommand {\Wedges}[2][L.R] {\bigwedge \Lbrace[#1]{#2}}
+\newcommand {\wedges}[2][]    {{\def \\{\wide\wedge} #2}}
+
+%% Domains
 \newcommand{\disjoint}{\mathop{\#}}
 \newcommand{\dom}{\mathprefix{dom}}
 \newcommand{\rng}{\mathprefix{rng}}
+
+%% Binders
 
 \newcommand{\all}[2]{\forall #1.\,#2}
 \newcommand{\exi}[2]{\exists #1.\,#2}
@@ -349,3 +360,20 @@
 \newcommand{\cnmatches}[1]{\#\Match #1}
 \newcommand{\csize}[1]{|#1|}
 \newcommand{\cmeasure}[1]{{\| #1 \|}}
+
+\let \latexS \S \let \S \relax
+% strategy
+\newcommand{\S}{{\mathcal S}}
+\newcommand{\Sempty}{\S_{\mathbb{0}}}
+\newcommand{\Sfull}{\S_{\mathbb{1}}}
+\newcommand{\Sopt}{\S_{\textsf{opt}}}
+
+\newcommand{\Sfire}[2]{#1(#2)}
+\newcommand{\Ssol}[2][\c]{\Sols [#1]_{#2}}
+\newcommand{\Sols}[1][\c]{\bbrackets {#1}}
+
+%% Free type variables
+\newcommand{\ftv}{\mathprefix{ftv}}
+
+%% Depenency
+\newcommand{\cprec}[1][]{\prec_{#1}}

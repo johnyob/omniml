@@ -31,7 +31,7 @@ clean:
 	rm -rf _build
 
 cleaner vacuum: clean
-	rm -f suspended.pdf
+	rm -f suspended.*.pdf
 
 clean-alistair: vacuum
 	rm -rf *.toc *.aux $(addsuffix .bbl,${PRJ}) *.blg *.log *~* *.bak *.out cut.sh .latexrun.db* *.fls *.rel _region_.* *.synctex.gz *.fdb_latexmk *.ist *.glo

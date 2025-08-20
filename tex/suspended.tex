@@ -3,9 +3,10 @@
 %% Leave the above line for didier
 %% No macros before \documentclass
 
-\documentclass[acmsmall,screen,nonacm,review]{acmart}
 
+\documentclass[acmsmall,screen,nonacm,review]{acmart}
 \input{suspended.cfg}
+
 \newcommand{\acmart}{\True}
 \usepackage{suspended}
 
@@ -983,8 +984,9 @@ nominal records or variants that share field or constructor names, particularly
 when some field projections or constructors need non-uniform typing rules,
 such polymorphic fields or GADT constructors.
 
-
-\begin{mathparfig}[htpb!]%
+%% BEWARE: Can only be located as the top of a page---otherwise  it would be
+%% misplaced
+\begin{mathparfig}[t]%
   {fig:constraint-semantics}%
   {Semantics of constraints (without suspended constraints).}
   \begin{bnfgrammar}
@@ -1236,9 +1238,12 @@ be represented as the shape application $\shapp (\tint \tlist)$.
 
 \subsection{Suspended constraints}
 
-We have left the syntax of shape patterns deliberately abstract. We also
-assume a matching relation:
-% mathpar instead of mathline since spacing was odd. If spacing is fixed, use mathline
+We have left the syntax of shape patterns deliberately abstract.
+\XDR{Shape patterns are never defined! in the body of the paper.
+What aren't shape patterns just a subset of principal shapes}
+We also assume a matching relation:
+% mathpar instead of mathline since spacing was odd. If spacing is fixed,
+% use mathline
 \begin{mathpar}
   \cmatches \cpat \sh \tvcs \theta
 \end{mathpar}
@@ -1257,8 +1262,9 @@ any shape and binds nothing:
 \begin{definition}[Discharged match constraint]
   Given a suspended constraint $(\cmatch \t \cbrs)$ and a canonical shape
   $\sh$, we introduce the syntactic sugar $(\cmatched \t \sh \cbrs)$ for the
-  \emph{discharged match constraint} that selects the branch in $\cbrs$ that matches
-  $\sh$:
+  \emph{discharged match constraint} that selects the branch in $\cbrs$ that
+  matches $\sh$:\XDR{$\cmatches \cpati \sh \tvs \theta$ is never defined in
+  the body of teh paper}
 \begin{mathpar}
   \cmatched \t \sh {\cbranch \cpats \cs} \uad\eqdef\uad
   \begin{cases}
@@ -1405,7 +1411,8 @@ constraints that have already been discharged in $\C$; it excludes suspended
 match constraints, which may be discharged in the future. Implicitly, this
 induces a linear partial order between the suspended match constraints within a
 constraint, reflecting a \emph{temporal} dependency: a match constraint may only
-be discharged once all of its dependencies have been discharged.
+be discharged once all of its dependencies have been discharged.\XDR{Is this
+really true? What is the \emph{formal} definition of this temporal order?}
 
 The erasure $\cerase{\C\where{\cunif \t \gt}}$ is simple, so the use of
 $\thsimple$ avoids well-foundedness issues that would arise from
@@ -1692,7 +1699,8 @@ infinitely many typings for $\e$, provided the tuple is of sufficient length.
 %\end{wraphbox}
 This is the exact same issue we had with the na\"ive semantics of suspended
 constraints, and in fact we solve it in the same way, with a unicity
-condition and a contextual rule (\Rule{Proj-I}) that transforms the fragile, implicit
+condition and a contextual rule (\Rule{Proj-I}) that transforms the fragile,
+implicit
 construct into the robust, explicit counterpart:
 \begin{mathpar}
   \infer[Proj-I]
@@ -2480,11 +2488,25 @@ variables from outside the region.
 To decide when $\cdetermines {\cexists \tvs \c} \tvbs$ holds for $\tvbs
 \disjoint \tvs$, we search for a multi-equation $\ueq$ in $\c$ of the form:
 \begin{enumerate*}
-  \item $\cunif \tvc \ueq'$ where $\tvc \disjoint \tvs, \tvbs$ and
+  \item
+    $\cunif \tvc \ueq'$ where $\tvc \disjoint \tvs, \tvbs$ and
     $\tvbs \subseteq \fvs {\ueq'}$, or
-  \item $\cunif \tvbs {\cunif \t \ueq'}$ where $\fvs \t \disjoint
-    \tvs, \tvbs$.
+  \item
+    $\cunif \tvbs {\cunif \t \ueq'}$ where
+    $\fvs \t \disjoint \tvs, \tvbs$.
 \end{enumerate*}
+\XDR{The formulation suggests that this defines an algorithm that computes
+the largest set $\tvbs$ such that $\cdetermines {\cexists \tvs \c} \tvbs$.
+But thus is not the case.
+%
+The algorithm is syntactic. It is sound but incomplete with respect to
+the above definition of determinacy, which is semantic.
+\par
+These are just two sound subcases that can be combined to produce that
+largest subset of $\tvbs$ of $\tvas$ such that $\cdetermines {\cexists \tvs
+\c} \tvbs$ \emph{that are only complete when $\c$ is in solved form! as in
+emlti}.  This should be fixed.}
+
 For instance, $\cexists \tvba \cunif \tv {\tvba \to \tvbb}$ determines
 $\tvbb$, as $\tvbb$ is free.
 
@@ -2857,14 +2879,11 @@ could further empower \MLF.
 
 \paragraph{Default rules}
 
-% Default rules are useful
 Some type systems disambiguate fragile constructs using known type information,
 but fall back on default, non-principal choices when none is available. \OCaml
 selects the most recent matching record type in scope for ambiguous field
 names; \SML assigns default types to overloaded numeric
 literals~\citep*[Section 5.8]{rossberg-hamlet}.
-
-\parcomment {We tried, but failed}
 
 We explored adding such \emph{default rules} to suspended match constraints,
 allowing unresolved constraints to discharge with a default shape rather
@@ -2883,12 +2902,12 @@ defaulting one over the other may force an unsatisfiable branch to be taken.
 %% but only know type variables they may contraint), there is actually an
 %% optimal strategy.
 
-The optimal or principled strategy for applying defaults in such cases
-remains unclear.  Should we fire all default rules of all suspended
+Is there an optimal or principled strategy for applying defaults in such
+cases? Should we fire all default rules of all suspended
 constraints that remain after the solver terminates simultaneously, or in
 batches, \eg. restricted to connected components of mutually dependent suspended
 constraints?  Our prototype opts for the latter, but this warrants further
-study.
+study. More details can be found in Appendix \cref {app/default-rules}.
 
 %%\paragraph{Behavior of default rules} Giving priority to most recent
 %%definitions is a possible default behavior for field and constructor
@@ -4186,7 +4205,6 @@ This is formalized by the relation $\tv \prec_\up \tvb$ indicating that $\tv$
 occurs in a type assigned to $\tvb$ in $\up$. A unification problem is cyclic,
 written $\cyclic \up$, if $\tv \prec_\up^* \tv$ for some $\tv$.
 
-\clearpage
 \section{Full technical reference}
 \label{appendix:figures}
 \label{app:full-reference}
@@ -4340,7 +4358,6 @@ definition in full, or when studying the meta-theory of the system.
 }
 \end{bnfgrammar}
 \end{mathpar}
-\clearpage
 
 
 
@@ -5411,7 +5428,6 @@ A context $\C$ proves a multi-equation $\ueq$, written $\ueq \in \C$,  if there 
 \end{definition}
 
 
-\clearpage
 \section{Properties of the constraint language}
 \label{app:proofs-constraints}
 
@@ -6060,7 +6076,6 @@ composability property.
   \end{proof}
 \end{corollary}
 
-\clearpage
 \section{Properties of the constraint solver}
 \label{app:proofs-solving}
 
@@ -7310,30 +7325,34 @@ rules that are not inherently destructive.
   \end{proof}
 \end{corollary}
 
-\clearpage
 \section{Properties of \OML}
 \label{app/oml/proofs}
 
 % What we do
-This section states and proves the two central metatheoretic properties of \OML. The first
-is the \emph{soundness and completeness} of the constraint generator $\cinfer \e \tv$ with
-respect to the \OML typing rules. The second is the existence of \emph{principal types},
-which follows as a consequence of soundness and completeness: every closed well-typed term $\e$
-admits a most general type.
+
+This section states and proves the two central metatheoretic properties of
+\OML. The first is the \emph{soundness and completeness} of the constraint
+generator $\cinfer \e \tv$ with respect to the \OML typing rules. The second
+is the existence of \emph{principal types}, which follows as a consequence
+of soundness and completeness: every closed well-typed term $\e$ admits a
+most general type.
 
 % Closed terms
-Throughout this section, we restrict our attention to \emph{closed terms}. This is because the
-typing context $\G$ can contain bindings to terms whose type is ``guessed''. When we
-generate constraints for a term $\e$ under a context $\G$, we encode the type schemes in
-$\G$ as part of the constraint itself using $\Let$-constraints. However, these schemes are treated as
-known within the constraint! As a result, we assume terms are closed from the outside to avoid
-$\G$ leaking any guessed type information.
+
+Throughout this section, we restrict our attention to \emph{closed
+terms}. This is because the typing context $\G$ can contain bindings to
+terms whose type is ``guessed''. When we generate constraints for a term
+$\e$ under a context $\G$, we encode the type schemes in $\G$ as part of the
+constraint itself using $\Let$-constraints. However, these schemes are
+treated as known within the constraint! As a result, we assume terms are
+closed from the outside to avoid $\G$ leaking any guessed type information.
 
 \subsection{Simple syntax-directed system}
 
 As a first step towards proving soundness and completeness of constraint
-generation, we first present a variant of the \OML type system for \emph{simple terms}. For this
-system, the syntax tree completely determines the derivation tree.
+generation, we first present a variant of the \OML type system for
+\emph{simple terms}. For this system, the syntax tree completely determines
+the derivation tree.
 
 We use the standard technique of removing the \Rule{Inst} and \Rule{Gen} rules,
 and always apply instantiations in \Rule{Var} (\Rule{Var-SD}) and always
@@ -7657,6 +7676,187 @@ Let $\e$ be an arbitrary closed well-typed term; that is, there exists a type
   required \ref{proof:principal-types:2}.
 \end{proof}
 
+\section {Further study}
+
+\subsection {Default rules}
+
+The use of default rules, which does not fit well with \Geninst-inference
+but are still often used in practice, deserve further investigation.
+
+\paragraph {Default shapes}
+
+
+In this section we study a particular case where, rather than general
+default rules that could fire any constraint, we restrict to default shapes,
+\ie. shapes attached to suspended match constraints that can be fired,
+according to some strategy, when no progress could be made.  We show that
+under some conditions for well-behaved defaulting there is actually an
+optimal strategy.
+
+We thus write $(\cmatch \t \cbrs \cdefault \sh)$ to let $\sh$ be the default
+shape to be used for the given suspended constraint $(\cmatch \t \cbrs)$.
+Restricting to default shapes has several benefits.  First, a strategy $\S$
+can be reduced to the choice for any constrain $\c$ of a subset $\Sfire \S
+\c$ of suspended constraints of $\c$ to default, simultaneously.
+The behavior is then determined by the default already determined by $\c$.
+It then reuses the same logic that runs when the shape is determined by the
+context instead of been force to be the default one.  In particular, this
+ensures that the same behavior could have been obtained by an explicit shape
+constraint in the source.
+
+\paragraph {Strategies}
+
+
+We write $\Sempty$ for the empty strategy that never defaults (and thus fails
+on all constraints with leftover suspensions) and $\Sfull$ the full strategy
+that defaults all suspended constraints simultaneously.
+%% We can formulate some good properties that defaulting strategies should
+%% satisfy.
+A strategy $\S$ is \emph{reasonable} if for all constraints
+$\c$, $\S (\c)$ succeeds more often than the empty strategy on C.
+%
+This criterion rules out weird strategies that would default a suspension
+before solving the other constraints that could discharge this suspension,
+possibly with another shape, hence a different output.
+
+A strategy $\S$ applied to a constraint $\c$, either allows to solve $\c$,
+hence with a principal solution written $\Ssol \S$ or ends in error ($\Ssol
+\S$ is equal to $\bot$).  Let use write $\Sols$ for the union of
+all $\Ssol \S$ for all successful reasonable strategies $\S$.
+%
+We say that $\S$ is non-ambiguous if, for any $\c$, $\Ssol \S$ is $\bot$
+whenever $\Sols$ has more than two elements.  This condition forces a
+non-ambiguous strategy to fail instead of picking an arbitrary solution when
+different defaulting strategies would give incompatible solutions.
+
+We define a \emph{good} strategy as one that is both \emph{reasonable} and
+\emph{non-ambiguous}. A good strategy should not fail more often that
+$\Sempty$ nor succeed when there are more than one possible solution.
+
+We claim that there is an optimal \emph{good} strategy $\Sopt$ that explores all
+possible default subsets, succeeds when there is exactly one principal
+solution, then following a successful strategy, and fails otherwise.
+Unfortunately, $\Sopt$ as described this is inefficient, as it runs in time
+exponential in the number of remaining delayed constraints.
+
+\paragraph {Dependencies}
+\begin{local}
+We may look at the dependency order between suspended constraints.  A
+suspended constraint $(\cmatch \tvaa \cbras \cdefault \sha)$, say $\ca$,
+semantically depends on another suspended constrain $(\cmatch \tvab \cbrbs
+\cdefault \shb)$, say $\cb$ if defaulting the former allows to solve the latter.
+Typically, theses constraints are placed in a two-hole context $\C\where
+{\ca, \cb}$ where $\cerase {\C\where {\ca, \cb}}$ is solved.  However, the
+constraints $\ca$ and $\cb$ are opaque.
+
+Hence, we instead use a syntactic over approximation of dependencies.
+First, $\C$ determines a partial ordering between variables $\cprec[\C]$.
+We then abstract suspended constraints $\cmatch \tvi {\cbrs_i} \cdefault
+\shi$ by $\tvi \cprec[\C] \ftv {\cbr_i}$ where $\ftv \cbr_i$ are the set of
+free variables appearing in $\cbr_i$.  We then say that $\ca \cprec \cb$
+between two suspended constraints if $\tvaa \cprec \tvab$ where $\tvaa$ and
+$\tvab$ are the guards of $\ca$ and $\cb$.
+
+The syntactic dependency ordering is over approximation of the semantic
+dependency ordering. Hence, a constraint that is minimal for the syntactic
+ordering is also minimal for the semantics ordering.
+
+A strategy that default a constraint that is minimal is
+\begin{enumerate*}
+\item reasonable;
+\item non-ambiguous;
+\item \emph{complete}, it preserves the set of solutions $\Sols$.
+\end{enumerate*}
+Indeed, either a strategy does not discharge this minimal constraint, and it
+fails on $\c$, or it discharges this constraint and this must be via
+defaulting given minimality; and for minimal constraints the defaulting
+order does not affect the result.  All constraints that are minimal can also
+be defaulted simultaneously.
+
+If there is a cycle of constraints that are all minimal, then defaulting
+them altogether (we call this the “whole-cycle” strategy) is reasonable and
+non-ambiguous, but not complete.
+For example, consider the constraint:
+\begin{mathpar}
+\Wedges {
+\cmatch \tv {
+    \cbranch \wild {\cunif \tvb \tint}
+    } \cdefault \tint
+\\
+\cmatch \tvb {
+    \cbranch\wild {\cunif \tva \tbool}
+    } \cdefault \tbool
+}
+\end{mathpar}
+that are interdependent.  Defaulting $\set \tva$ succeeds while defaulting
+$\set \tvb$ or $\set {\tva, \tvb}$ fails.  The whole-cycle strategy
+$\set{\tva, \tvb}$ fails here, so it is not complete.
+
+\paragraph {Opaque suspended constraints}
+
+Notice however, that if we treat the suspended parts as opaque, we cannot
+distinguish this example from the following where defaulting only $\set
+\tva$ would incorrectly succeed in an ambiguous situation. Hence, it would
+not be a non-ambiguous strategy:
+\begin{mathpar}
+\Wedges{
+\cmatch \tv {
+    \cbranch \tint  {\cunif \tvb \tint} \mid
+    \cbranch \tbool {\cunif \tvb \tint}
+    } \cdefault \tint
+\\
+\cmatch \tvb {
+    \cbranch \tint  {\cunif \tva \tint} \mid
+    \cbranch \tbool {\cunif \tva \tbool}
+    } \cdefault \tbool
+}
+\end{mathpar}
+Indeed defaulting $\set{\tva}$ gives
+\relax $\wedges {\cunif \tva \tint \\ \cunif \tvb \tint}$,
+whereas defaulting $\set \tvb$ gives
+\relax $\wedges {\cunif \tva \tint \\ \cunif \tvb \tbool}$;
+and defaulting $\set {\tva,\tvb}$ fails. This constraint is ambiguous.
+Hence, the whole-cycle strategy \emph{correctly} fails.
+
+We call a strategy \emph{opaque} when it only depends on the syntactic
+dependency relation and not on the actual branches of the suspended
+constraints.
+%
+For example, the optimal strategy is \emph{not} opaque, as it behaves differently on the
+two examples above whereas they have the same syntactic dependencies.
+
+\begin{property}
+The whole-cycle strategy is optimal among opaque strategies.
+\end{property}
+\begin{proof}[Proof hint]{}
+We may reduce the general case to a specific cycle of size $n$
+(one minimal element of the topological sort of the dependency order).
+On this cycle, all opaque strategies are characterized by which subset of
+the cycle they default.
+
+To show that defaulting all together is optimal:
+\begin{enumerate*}
+
+\item
+  We show that it is not worse than defaulting less.
+\item
+  Conversely, we may build a specific example with an $n$-cycle of
+  suspended constraints where defaulting all at once succeeds, and
+  defaulting strictly less fails.
+
+\end{enumerate*}
+\end{proof}
+
+\begin{version}{\Draft}
+Computing the syntactic dependencies $\cprec$ is in $O(n \log n)$ where $n$
+is the size of the constraint (not just of suspended constraints).  However,
+it is not stable by defaulting. Indeed, this may remove (and add) some
+syntactic dependencies, which requires the re-computation of $\prec$.
+Incremental computation of dependencies with both edge removal and insertion
+may be needed. In any case, experimentation will be needed to
+undrerstand whether this is a criticial issue.
+\end{version}
+\end{local}
 
 
 \clearpage

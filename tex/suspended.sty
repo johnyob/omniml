@@ -21,11 +21,17 @@
 
 
 %% \RequirePackage{mylistings}
-\RequirePackage{myprogram}
 \RequirePackage{mycolors}
+\RequirePackage{myprogram}
 \RequirePackage{mymath}
 \RequirePackage{mybiblio}
 \RequirePackage{myhyperref}
+%% \RequirePackage{hyperref}
+%% % see https://en.wikibooks.org/wiki/LaTeX/Colors
+%% \AtBeginDocument
+%%   {\hypersetup
+%%      {breaklinks=true,colorlinks=true,citecolor=OliveGreen,urlcolor=Plum}}
+
 \RequirePackage{notations}
 \RequirePackage{mycomments}
 \RequirePackage{myabbreviations}
@@ -41,7 +47,7 @@
 
 \RequirePackage [noabbrev,capitalize,nameinlink]{cleveref}
 %% \crefformat{lstnumber}{#2line #1#3}
-\newcommand{\Sect}{}\let \Sect \S
+\newcommand{\Sect}{}\let \Sect \latexS
 
 \crefformat{appendix}{#2\Sect#1#3}
 \Crefformat{appendix}{#2\Sect#1#3}

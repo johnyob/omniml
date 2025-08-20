@@ -10,14 +10,16 @@
 %% Visible command
 
 \newif \ifVersionVisible \VersionVisibletrue
-\newcount \VersionDepth 
+\newcount \VersionDepth
 \newcommand {\theVersionDepth}{\the \Version@Depth}
 
 %% Hidden commands
 
-\let \rev@depth \VersionDepth 
+\@ifundefined{rev@depth}{}{\Error {package already loaded}}
+
+\let \rev@depth \VersionDepth
 \rev@depth 0\relax
-\let \version@level  \rev@depth 
+\let \version@level  \rev@depth
 
 \def \rev@show {\advance \rev@depth by 1\relax\ignorespaces}
 \def \rev@hide {\copytofile{\VersionAuxFile}}
@@ -26,7 +28,7 @@
 
 \providecommand{\VersionAnchor}[1]{\fbox{#1}}
 
-%% Environment \end{version} must be at the beginning of a line. 
+%% Environment \end{version} must be at the beginning of a line.
 \newenvironment{version}[2][]
    {\VersionEval{#2}{\rev@show}
         {\IsEmpty{#1}{}{\VersionAnchor {#1}}\rev@hide}}
@@ -48,7 +50,7 @@
 \endinput
 }{}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Extra for WhizzyTeX 
+%% Extra for WhizzyTeX
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \RequirePackage{color}
@@ -60,10 +62,11 @@
 \def \WhizzyHiddenVersionStyle {\color{red}}
 
 \def \WhizzyVersionActivate
-  {\WhizzyInsideEnvironment {version}[2][]
+  {\@ifundefined{in@version}
+   {\WhizzyInsideEnvironment {version}[2][]
        {\VersionEval{##2}{\WhizzyVisibleVersionStyle}
                         {\WhizzyHiddenVersionStyle}\rev@show}
        {\endout@version}}
+   {\Error{already loaded}}}
 
 \endinput
-
