@@ -2804,16 +2804,16 @@ steps; solving simple constraints first and then solving delayed implications.
 The deferral ensures that inference for GADT match branches occurs when more is
 known about the scrutinee and expected return type from the context.
 %
-To ensure principality, \OutsideIn enforces an algorithmic
-restriction: the variables $\tvs$ must already be instantiated to
-concrete type constructors before they may be unified by the
-implication's conclusion $\cb$. This ensures information only flows
-from the outside into the implication's conclusion. Notably, they do
-give a declarative semantics this restriction, using an elegant but
-mysterious quantification on all possible ways to type the context
-outside the GADT clauses. Using our new perspective on \emph{known}
-type information, we can say that their semantics enforces that only
-\emph{known} information from outside GADT clauses can be used inside.
+To ensure principality, \OutsideIn enforces an algorithmic restriction: the
+variables $\tvs$ must already be instantiated to concrete type constructors
+before they may be unified by the implication's conclusion $\cb$. This ensures
+information only flows from the outside into the implication's
+conclusion. Notably, they do give a declarative specification for this
+restriction, using an elegant but mysterious quantification on all possible
+ways to type the context outside the GADT clauses. Using our new perspective
+on \emph{known} type information, we can say that their semantics enforces
+that only \emph{known} information from outside GADT clauses can be used
+inside.
 
 Later work on \OutsideIn argues
 \citep*{Vytiniotis-Peyton-Jones-Schrijvers-Sulzmann/outsidein@jfp2011}
