@@ -2533,6 +2533,18 @@ $\tvp$. Any other shape would render the instantiation unsatisfiable.
 % Properties
 % May look like space hacks, but restatable introduces its own space
 
+\XDR {Shouldn't we defined a notion of well-scoped constraints and
+show that well-scoping is preserved by rewriting rules?}
+
+\XDR {Then, a stuck constraint would either be $\cfalse$ or contain
+an suspended constraint.}
+
+\XDR {A stuck constraint may also contain well-scoped
+instantiation clauses \emath{\cpapp \x \tv \tvc \inst}
+since Rule \Rule {S-Inst-Poly} may not fire because of
+$\tvp$ occurring in $\C$}
+
+
 \begin{restatable}[Progress]{theorem}{progress}
   \label{thm:progress}
   If constraint $\c$ cannot take a step $\c \csolve \cp$, then either:
@@ -2544,9 +2556,13 @@ $\tvp$. Any other shape would render the instantiation unsatisfiable.
         $\cfalse$;
       \item
         $\hat\C\where{\capp \x \t}$ where $\x \disjoint \hat\C$;
+        \XDR{This case should not occur in well-scoped constraints}
       \item
         $\hat\C\where{\cpapp \x \tv \tvc \inst}$ where
         $\x \disjoint \hat\C$ and $\inst.\tv \disjoint \insts {\hat\C}$;
+        \XDR{Idem.}
+        \XDR{$\insts$ is undefined in the body of the paper---and its
+        appendices.}
       \item
         for every match constraint $\hat\C\where{\cmatch \tv \cbrs}$ in
         $\c$, $\Cshape {\hat\C} \tv \sh$ does not hold for any $\sh$.
@@ -7678,38 +7694,37 @@ Let $\e$ be an arbitrary closed well-typed term; that is, there exists a type
 
 \section {Further study}
 
-\subsection {Default rules}
+\subsection {Defaulting}
 
-The use of default rules, which does not fit well with \Geninst-inference
-but are still often used in practice, deserve further investigation.
+Default rules, which does not fit well with \Geninst-inference are still
+often used in practice, and therefore would deserve further investigation.
 
 \paragraph {Default shapes}
 
+In this section we study a particular form of defaulting where, rather than
+general default rules that could fire any constraint, we restrict to default
+shapes. That is, we may attach a defauly shape $\sh$ to a match constraints
+$\cmatch \t \cbrs$, which is then written $\cmatch \t \cbrs \cdefault
+\sh$. The default shape $\sh$ can then be used to force the shape of
+$\t$ when it could not be dertermined from context.
 
-In this section we study a particular case where, rather than general
-default rules that could fire any constraint, we restrict to default shapes,
-\ie. shapes attached to suspended match constraints that can be fired,
-according to some strategy, when no progress could be made.  We show that
-under some conditions for well-behaved defaulting there is actually an
-optimal strategy.
+%% We show that under some conditions for well-behaved defaulting there is
+%% actually an optimal strategy.
 
-We thus write $(\cmatch \t \cbrs \cdefault \sh)$ to let $\sh$ be the default
-shape to be used for the given suspended constraint $(\cmatch \t \cbrs)$.
 Restricting to default shapes has several benefits.  First, a strategy $\S$
-can be reduced to the choice for any constrain $\c$ of a subset $\Sfire \S
-\c$ of suspended constraints of $\c$ to default, simultaneously.
-The behavior is then determined by the default already determined by $\c$.
-It then reuses the same logic that runs when the shape is determined by the
-context instead of been force to be the default one.  In particular, this
-ensures that the same behavior could have been obtained by an explicit shape
+can be reduced to the choice of a mapping from constrains $\c$ to of a
+subset $\Sfire \S \c$ of suspended constraints of $\suspc$ that should be
+defaulted, simultaneously.  The behavior is then entirely determined,
+reusing the same logic that runs when the shape is determined by the context
+instead of been forced by the default clause.  In particular, this ensures
+that the same behavior could have been obtained by an explicit shape
 constraint in the source.
 
 \paragraph {Strategies}
 
-
 We write $\Sempty$ for the empty strategy that never defaults (and thus fails
 on all constraints with leftover suspensions) and $\Sfull$ the full strategy
-that defaults all suspended constraints simultaneously.
+that defaults all suspended constraints, simultaneously.
 %% We can formulate some good properties that defaulting strategies should
 %% satisfy.
 A strategy $\S$ is \emph{reasonable} if for all constraints
@@ -7729,39 +7744,75 @@ whenever $\Sols$ has more than two elements.  This condition forces a
 non-ambiguous strategy to fail instead of picking an arbitrary solution when
 different defaulting strategies would give incompatible solutions.
 
-We define a \emph{good} strategy as one that is both \emph{reasonable} and
+A \emph{good} strategy as one that is both \emph{reasonable} and
 \emph{non-ambiguous}. A good strategy should not fail more often that
 $\Sempty$ nor succeed when there are more than one possible solution.
-
+%
 We claim that there is an optimal \emph{good} strategy $\Sopt$ that explores all
 possible default subsets, succeeds when there is exactly one principal
 solution, then following a successful strategy, and fails otherwise.
-Unfortunately, $\Sopt$ as described this is inefficient, as it runs in time
-exponential in the number of remaining delayed constraints.
+
+Unfortunately, $\Sopt$ is inefficient: as described , it runs in time
+exponential in the number of remaining suspended constraints.  Therefore, we
+should seek for suboptimal, but more efficient good strategies.
+
+\begin{version}{\Not\Final} %\Draft
 
 \paragraph {Dependencies}
-\begin{local}
-We may look at the dependency order between suspended constraints.  A
-suspended constraint $(\cmatch \tvaa \cbras \cdefault \sha)$, say $\ca$,
-semantically depends on another suspended constrain $(\cmatch \tvab \cbrbs
-\cdefault \shb)$, say $\cb$ if defaulting the former allows to solve the latter.
-Typically, theses constraints are placed in a two-hole context $\C\where
-{\ca, \cb}$ where $\cerase {\C\where {\ca, \cb}}$ is solved.  However, the
-constraints $\ca$ and $\cb$ are opaque.
 
-Hence, we instead use a syntactic over approximation of dependencies.
-First, $\C$ determines a partial ordering between variables $\cprec[\C]$.
-We then abstract suspended constraints $\cmatch \tvi {\cbrs_i} \cdefault
-\shi$ by $\tvi \cprec[\C] \ftv {\cbr_i}$ where $\ftv \cbr_i$ are the set of
-free variables appearing in $\cbr_i$.  We then say that $\ca \cprec \cb$
-between two suspended constraints if $\tvaa \cprec \tvab$ where $\tvaa$ and
-$\tvab$ are the guards of $\ca$ and $\cb$.
+We may look at the dependency order between suspended constraints.
+\begin{version}{}
 
-The syntactic dependency ordering is over approximation of the semantic
-dependency ordering. Hence, a constraint that is minimal for the syntactic
-ordering is also minimal for the semantics ordering.
+Intuitively, a suspended constraint $(\cmatch \tvab \cbrbs \cdefault \shb)$,
+say $\suspcb$ depends on another suspended constraint $(\cmatch \tvaa \cbras
+\cdefault \sha)$, say $\suspca$, and we write $\suspca \cprec \suspcb$, if defaulting
+the $\suspca$ allows to solve $\suspcb$---without further defaulting.
+Unfortunately, this is too strong as a suspended constraint may help resolve
+another one without solving it. For instance, defaulting two suspended
+constraint could be needed to allow solving a third one.
 
-A strategy that default a constraint that is minimal is
+\end{version}
+Given a stuck constraint  $\c$, a suspended subconstraint
+$\suspcb$ depends on another suspended subconstraint~$\suspca$ if there
+exists a strategy $\S$ that can solve $\suspcb$ only after defaulting
+$\suspca$.  That is, if successively defaulting $\suspca, \bar \suspcs$
+solves $\cb$ while $\bar \suspcs$ does not.
+%
+This defines a partial ordering $\cprec$ on suspended constraints of $\c$,
+but it is expensive to compute.
+
+We may define a syntactical over approximation of $\cprec$ that is easier to
+compute. We assume that $\c$ is partially solved. That is, it is stuck, but
+excluding cases (b) and (c) which cannot occur with well-formed constraints.
+The solved part of $\cerase {\c}$ defines a partial (structural domination)
+ordering $\cprec$ on variables. It may also contains partial instantiations
+\emath{\cpapp \x \tv \tvc  \inst}, which could in potentially force
+unifitcaion of $\tv and \tvc$.
+
+We extend the $\cprec$ ordering as follows:
+\begin{itemize}
+
+\item
+  For each partial instantiation \emath{\cpapp \x \tv \tvc  \inst},
+  we add $\tv \cprecsucc \tvc$;
+
+For each suspended constraints $\cmatch \tvi {\cbrs_i} \cdefault
+\shi$ of $\c$, let $\tvbs$ be the set of free variabls of $\cbrs_i$
+and add to $\cprec$
+\begin{enumerate*}
+\item $\tvi \cprec \tvbi$ for $\tvbi$ in $\tvbs$;
+\item $\tvbi \cprec \tvbi$ for $\tvbi, \tvb_j$ in $\tvbs$.
+\end{enumerate*}
+\end{itemize}
+We then say that $\suspca \cprec \suspcb$ if $\tvaa \cprec \tvab$ where
+$\suspci$ is of the form $(\cmatch \tvai {\bar\cbri} \cdefault \shi)$.
+
+The syntactic dependency ordering is an over approximation of the semantic
+dependency ordering.  Hence, a suspended constraint that is minimal for the
+syntactic ordering is also minimal for the semantics ordering---it depends
+on no other suspended constraints.
+
+A strategy that always defaults a minimal constraint is
 \begin{enumerate*}
 \item reasonable;
 \item non-ambiguous;
@@ -7773,10 +7824,14 @@ defaulting given minimality; and for minimal constraints the defaulting
 order does not affect the result.  All constraints that are minimal can also
 be defaulted simultaneously.
 
-If there is a cycle of constraints that are all minimal, then defaulting
-them altogether (we call this the “whole-cycle” strategy) is reasonable and
-non-ambiguous, but not complete.
-For example, consider the constraint:
+However, such a strategy may be stuck if there is no mimimal element, but a
+minimal cycle of constraints. \XDR{Can we still say that the strategy is
+complete? Is then the empty strategy complete? We should distinguish beeing
+stuck from returning a failure.}
+
+If there is a cycle of constraints that are minimal, then defaulting them
+altogether (we call this the “whole-cycle” strategy) is reasonable and
+non-ambiguous, but not complete.  For example, consider the constraint:
 \begin{mathpar}
 \Wedges {
 \cmatch \tv {
@@ -7788,9 +7843,9 @@ For example, consider the constraint:
     } \cdefault \tbool
 }
 \end{mathpar}
-that are interdependent.  Defaulting $\set \tva$ succeeds while defaulting
-$\set \tvb$ or $\set {\tva, \tvb}$ fails.  The whole-cycle strategy
-$\set{\tva, \tvb}$ fails here, so it is not complete.
+that are clearly interdependent.  Defaulting $\set \tva$ succeeds while
+defaulting $\set \tvb$ or $\set {\tva, \tvb}$ fails.  The whole-cycle
+strategy $\set{\tva, \tvb}$ fails here, so it is not complete.
 
 \paragraph {Opaque suspended constraints}
 
@@ -7818,12 +7873,18 @@ whereas defaulting $\set \tvb$ gives
 and defaulting $\set {\tva,\tvb}$ fails. This constraint is ambiguous.
 Hence, the whole-cycle strategy \emph{correctly} fails.
 
+Intuitively, treating suspended constraints as opaque is a way to compensate
+for the over-approximation of syntactic dependences by allowing allow to
+choose for opaque constraints ones some that create dependencies that
+actually match the over approximation.
+
 We call a strategy \emph{opaque} when it only depends on the syntactic
 dependency relation and not on the actual branches of the suspended
 constraints.
 %
-For example, the optimal strategy is \emph{not} opaque, as it behaves differently on the
-two examples above whereas they have the same syntactic dependencies.
+For example, the optimal strategy is \emph{not} opaque, as it behaves
+differently on the two examples above whereas they have the same syntactic
+dependencies.
 
 \begin{property}
 The whole-cycle strategy is optimal among opaque strategies.
@@ -7856,7 +7917,7 @@ Incremental computation of dependencies with both edge removal and insertion
 may be needed. In any case, experimentation will be needed to
 undrerstand whether this is a criticial issue.
 \end{version}
-\end{local}
+\end{version}
 
 
 \clearpage

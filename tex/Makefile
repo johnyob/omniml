@@ -1,10 +1,12 @@
-PRJ = suspended suspended.final
+PRJ = suspended suspended.final suspended.draft
 
 LATEXMK = latexmk -bibtex -pdf -outdir=_build -auxdir=_build
 
 SOURCES=$(shell find . -name '*.tex' -or -name '*.bib' -or -name '*.sty')
 
-draft: suspended.pdf
+default: suspended.pdf
+
+draft: suspended.draft.pdf
 
 final: suspended.final.pdf
 

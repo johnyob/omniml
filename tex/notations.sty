@@ -362,7 +362,9 @@
 \newcommand{\cmeasure}[1]{{\| #1 \|}}
 
 \let \latexS \S \let \S \relax
-% strategy
+
+% Strategy
+\defmetavar[s]{\suspc}{c}
 \newcommand{\S}{{\mathcal S}}
 \newcommand{\Sempty}{\S_{\mathbb{0}}}
 \newcommand{\Sfull}{\S_{\mathbb{1}}}
@@ -377,3 +379,4 @@
 
 %% Depenency
 \newcommand{\cprec}[1][]{\prec_{#1}}
+\newcommand{\cprecsucc}[1][]{\prec\joinrel\succ_{#1}}
