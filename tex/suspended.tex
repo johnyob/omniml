@@ -2808,15 +2808,20 @@ To ensure principality, \OutsideIn enforces an algorithmic
 restriction: the variables $\tvs$ must already be instantiated to
 concrete type constructors before they may be unified by the
 implication's conclusion $\cb$. This ensures information only flows
-from the outside into the implication's conclusion. They do not give
-a declarative semantics for delayed implication that their solver
-preserves. Moreover, later work on \OutsideIn argues
+from the outside into the implication's conclusion. Notably, they do
+give a declarative semantics this restriction, using an elegant but
+mysterious quantification on all possible ways to type the context
+outside the GADT clauses. Using our new perspective on \emph{known}
+type information, we can say that their semantics enforces that only
+\emph{known} information from outside GADT clauses can be used inside.
+
+Later work on \OutsideIn argues
 \citep*{Vytiniotis-Peyton-Jones-Schrijvers-Sulzmann/outsidein@jfp2011}
 that delayed implication constraints make local let-generalization all
-but unmanageable, both in theory and implementation. Their proposed fix
-is to abandon local let-generalization altogether. We believe that we
-have solved the troubling interactions between let-generalization and
-suspended constraints in this work, and would be interested in
+but unmanageable, both in theory and implementation. Their proposed
+fix is to abandon local let-generalization altogether. We believe that
+we have solved the troubling interactions between let-generalization
+and suspended constraints in this work, and would be interested in
 studying applications to GADT typing\XDR[, which was also one of our
 original motivations]{Does not bring much to the reader}.
 
