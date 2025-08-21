@@ -1264,7 +1264,7 @@ any shape and binds nothing:
   $\sh$, we introduce the syntactic sugar $(\cmatched \t \sh \cbrs)$ for the
   \emph{discharged match constraint} that selects the branch in $\cbrs$ that
   matches $\sh$:\XDR{$\cmatches \cpati \sh \tvs \theta$ is never defined in
-  the body of teh paper}
+  the body of the paper}
 \begin{mathpar}
   \cmatched \t \sh {\cbranch \cpats \cs} \uad\eqdef\uad
   \begin{cases}
@@ -2759,7 +2759,7 @@ have not considered scaling our approach to those systems yet.
 Contextual typing \cite {Xue-Oliveira/contextual-typing@icfp2024} is a
 recent improvement of bidirectional typing that captures more complex flows
 of \emph{known} type information, but still suffers from directionality. It
-has not been combinded with ML-style type inference yet, but this would be
+has not been combined with ML-style type inference yet, but this would be
 interesting to explore.
 
 
@@ -7703,10 +7703,10 @@ often used in practice, and therefore would deserve further investigation.
 
 In this section we study a particular form of defaulting where, rather than
 general default rules that could fire any constraint, we restrict to default
-shapes. That is, we may attach a defauly shape $\sh$ to a match constraints
+shapes. That is, we may attach a default shape $\sh$ to a match constraints
 $\cmatch \t \cbrs$, which is then written $\cmatch \t \cbrs \cdefault
 \sh$. The default shape $\sh$ can then be used to force the shape of
-$\t$ when it could not be dertermined from context.
+$\t$ when it could not be determined from context.
 
 %% We show that under some conditions for well-behaved defaulting there is
 %% actually an optimal strategy.
@@ -7754,7 +7754,7 @@ solution, then following a successful strategy, and fails otherwise.
 
 Unfortunately, $\Sopt$ is inefficient: as described , it runs in time
 exponential in the number of remaining suspended constraints.  Therefore, we
-should seek for suboptimal, but more efficient good strategies.
+should seek for sub-optimal, but more efficient good strategies.
 
 \begin{version}{\Not\Final} %\Draft
 
@@ -7772,8 +7772,8 @@ another one without solving it. For instance, defaulting two suspended
 constraint could be needed to allow solving a third one.
 
 \end{version}
-Given a stuck constraint  $\c$, a suspended subconstraint
-$\suspcb$ depends on another suspended subconstraint~$\suspca$ if there
+Given a stuck constraint  $\c$, a suspended sub-constraint
+$\suspcb$ depends on another suspended sub-constraint~$\suspca$ if there
 exists a strategy $\S$ that can solve $\suspcb$ only after defaulting
 $\suspca$.  That is, if successively defaulting $\suspca, \bar \suspcs$
 solves $\cb$ while $\bar \suspcs$ does not.
@@ -7787,7 +7787,7 @@ excluding cases (b) and (c) which cannot occur with well-formed constraints.
 The solved part of $\cerase {\c}$ defines a partial (structural domination)
 ordering $\cprec$ on variables. It may also contains partial instantiations
 \emath{\cpapp \x \tv \tvc  \inst}, which could in potentially force
-unifitcaion of $\tv and \tvc$.
+unification of $\tv and \tvc$.
 
 We extend the $\cprec$ ordering as follows:
 \begin{itemize}
@@ -7797,7 +7797,7 @@ We extend the $\cprec$ ordering as follows:
   we add $\tv \cprecsucc \tvc$;
 
 For each suspended constraints $\cmatch \tvi {\cbrs_i} \cdefault
-\shi$ of $\c$, let $\tvbs$ be the set of free variabls of $\cbrs_i$
+\shi$ of $\c$, let $\tvbs$ be the set of free variables of $\cbrs_i$
 and add to $\cprec$
 \begin{enumerate*}
 \item $\tvi \cprec \tvbi$ for $\tvbi$ in $\tvbs$;
@@ -7824,9 +7824,9 @@ defaulting given minimality; and for minimal constraints the defaulting
 order does not affect the result.  All constraints that are minimal can also
 be defaulted simultaneously.
 
-However, such a strategy may be stuck if there is no mimimal element, but a
+However, such a strategy may be stuck if there is no minimal element, but a
 minimal cycle of constraints. \XDR{Can we still say that the strategy is
-complete? Is then the empty strategy complete? We should distinguish beeing
+complete? Is then the empty strategy complete? We should distinguish being
 stuck from returning a failure.}
 
 If there is a cycle of constraints that are minimal, then defaulting them
@@ -7874,7 +7874,7 @@ and defaulting $\set {\tva,\tvb}$ fails. This constraint is ambiguous.
 Hence, the whole-cycle strategy \emph{correctly} fails.
 
 Intuitively, treating suspended constraints as opaque is a way to compensate
-for the over-approximation of syntactic dependences by allowing allow to
+for the over-approximation of syntactic dependencies by allowing allow to
 choose for opaque constraints ones some that create dependencies that
 actually match the over approximation.
 
@@ -7915,7 +7915,7 @@ it is not stable by defaulting. Indeed, this may remove (and add) some
 syntactic dependencies, which requires the re-computation of $\prec$.
 Incremental computation of dependencies with both edge removal and insertion
 may be needed. In any case, experimentation will be needed to
-undrerstand whether this is a criticial issue.
+understand whether this is a critical issue.
 \end{version}
 \end{version}
 
@@ -8263,3 +8263,4 @@ TODO: extend the magic rule and the disambiguation rule, and also provide the un
 % LocalWords:  reflexitivity metatheoretic lexicographically Unifiers TODO
 % LocalWords:  rcl env Pcd illtyped inHole Ui unfoldings welltyped mprset
 % LocalWords:  lessskip Xbla Ybla explicitating Composability composability
+% LocalWords:  determinacy subcases
