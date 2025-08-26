@@ -117,7 +117,7 @@ principality and completeness.
 Moreover, these (more or less) ad-hoc restrictions commonly reject examples
 whose type could easily be guessed. For instance, \MLF~\citep*{LeBotlan-Remy/recasting-mlf} accepts
 or rejects the following expression, depending on the position of the
-annotation (using a traffic-light scheme: \smashcolorbox{welltyped}{\struct green} and \smashcolorbox{illtyped}{red} indicate typechecking success
+annotation (using a traffic-light scheme: \smashcolorbox{welltyped}{\strut green} and \smashcolorbox{illtyped}{\strut red} indicate typechecking success
 and failure):
 \begin{program}[input]
 let self' (f : $\forall$'a. 'a -> 'a) = if true then f f else f $
@@ -1393,6 +1393,7 @@ $\Cshape \C \t \sh$ (defined below) ensures that $\sh$ is uniquely determined by
 \end{definition}
 
 \begin{definition}[Unicity]
+  \label{def:unicity}
   We define the unicity condition $\Cshape \C \t \sh$, which states that $\t$
   has a unique canonical shape $\sh$ within the context $\C$ as:
   \begin{mathpar}[inline]
@@ -2179,37 +2180,6 @@ special treatment in our solver. Once their pattern variables are
 substituted---after solving a match constraint---they are desugared into
 constraints already handled by the solver.
 
-\paragraph{Suspended match constraints}
-
-\begin{mathparfig}[t!]%htpb
-  {fig:solver-susp}
-  {Rewriting rules for suspended match constraints.}
-  \rewrite[S-Match-Type]
-    {\cmatch \t \cbrs}
-    {\t \notin \TyVars }
-    {\cmatched \t {\shape \t} \cbrs}
-
-  \rewrite[S-Match-Var]
-    {\C\where{\cmatch \tv \cbrs}}
-    {\cunif \tv {\cunif \t \ueq} \in \C}
-    {\C\where{\cmatched \tv {\shape \t} \cbrs}}
-\end{mathparfig}
-
-\parcomment{S-Match-Type}
-
-\Rule{S-Match-Type} solves suspended match constraints whose scrutinee is
-a non-variable type $\t$ by rewriting them using the sugar $(\cmatched \t
-{\shape \t} \cbrs)$, introduced in \cref{sec:constraints}.
-\parcomment {S-Match-Var}
-Rule \Rule{S-Match-Var} applies when the scrutinee is a variable $\tv$ and
-the context~$\C$ proves that $\tv$ is equal to some non-variable type
-$\t$, which establishes the unicity property
-$\Cshape \C \t {~\shape \t}$.
-%
-To check whether a context $\C$ proves an equality---or more generally,
-a multi-equation $\ueq$---we search for a decomposition $\C = \Ca\where{\ueq
-\cand \Cb}$ where $\fvs \ueq$ is disjoint from the binders of $\Cb$.
-
 \paragraph{Let constraints}
 
 % Let-constraint solving is generalization
@@ -2387,7 +2357,7 @@ There are three cases in which an instantiation constraint is eliminated:
   applications.}
   \rewrite[S-Exists-Lower]
     {\cletr \x \tv {\tvas, \tvbs} \ca \cb\\}
-    {\cdetermines {\cexists {\tv, \tvas} \ca} \tvbs}
+    {\th \cdetermines {\cexists {\tv, \tvas} \ca} \tvbs}
     {\cexists \tvbs \cletr \x \tv \tvas \ca \cb}
 
   \rewrite[S-Let-AppR]
@@ -2442,16 +2412,6 @@ There are three cases in which an instantiation constraint is eliminated:
     {\cletr \x \tv {\tvs}
        {\ca\where{\tvb \is \tvc} \cand
         \cunif \tvc {\ueq\where{\tvb \is \tvc}}} {\cb\where{\x.\tvb \is \tvc}}}
-
-  \rewrite[S-BackProp]
-    {\C\where
-       {\cletr \x \tv {\tvs} {\Ca\where{\cmatch \tvp \cbrs}}
-                           {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}
-    {\tvp \in \reg \tv \tvs \\
-     \cunif {\tvc} {\cunif \t \ueq} \in \C\where\Cb \\
-     \x \disjoint \bvs \Cb}
-    {\C\where{\cletr \x \tv {\tvs} {\Ca\where{\cmatched \tvp {\shape \t} \cbrs}}
-		      {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}
 \end{mathparfig}
 
 
@@ -2499,34 +2459,27 @@ $\tvbs$ are uniquely fixed by the solutions to other variables in $\c$.
 Conceptually, this corresponds to the negation of the generalization condition
 in \ML: a type variable cannot be generalized if it appears in the typing
 context. In the constraint setting, it cannot be generalized if it depends on
-variables from outside the region.
+variables from outside the region. For instance, $\cexists \tvba \cunif \tv
+{\tvba \to \tvbb}$ determines $\tvbb$, as $\tvbb$ is free.
 
 \parcomment{How to decide the relation}
 
-To decide when $\cdetermines {\cexists \tvs \c} \tvbs$ holds for $\tvbs
-\disjoint \tvs$, we search for a multi-equation $\ueq$ in $\c$ of the form:
+To decide when $\cdetermines \c \tvs$, we introduce the judgement $\th \cdetermines \c \tvs$,
+which synatically proves that $\tvs$ are determined in $\c$. 
+%
+If $\c$ is of the form $\cexists \tvbs \cp$ where $\tvbs \disjoint \tvs$, then
+we search for a multi-equation $\ueq$ in $\cp$ of the form:
 \begin{enumerate*}
   \item
     $\cunif \tvc \ueq'$ where $\tvc \disjoint \tvs, \tvbs$ and
-    $\tvbs \subseteq \fvs {\ueq'}$, or
+    $\tvs \subseteq \fvs {\ueq'}$, or
   \item
-    $\cunif \tvbs {\cunif \t \ueq'}$ where
+    $\cunif \tvs {\cunif \t \ueq'}$ where
     $\fvs \t \disjoint \tvs, \tvbs$.
 \end{enumerate*}
-\XDR{The formulation suggests that this defines an algorithm that computes
-the largest set $\tvbs$ such that $\cdetermines {\cexists \tvs \c} \tvbs$.
-But thus is not the case.
 %
-The algorithm is syntactic. It is sound but incomplete with respect to
-the above definition of determinacy, which is semantic.
-\par
-These are just two sound subcases that can be combined to produce that
-largest subset of $\tvbs$ of $\tvas$ such that $\cdetermines {\cexists \tvs
-\c} \tvbs$ \emph{that are only complete when $\c$ is in solved form! as in
-emlti}.  This should be fixed.}
-
-For instance, $\cexists \tvba \cunif \tv {\tvba \to \tvbb}$ determines
-$\tvbb$, as $\tvbb$ is free.
+This syntactic relation coincides with the semantic definition of determinacy whenever 
+$\c$ is in solved form. 
 
 \parcomment{Why we lower?}
 
@@ -2535,19 +2488,59 @@ duplication of work that would otherwise occur via \Rule{S-Inst-Copy}. By
 reducing the number of variables that need to be copied, lowering directly
 reduces instantiation overhead.
 
-\paragraph{Backpropagation}
+\paragraph{Suspended match constraints}
 
-Finally, \Rule{S-BackProp} expresses \emph{backpropagation}, previously
+\begin{mathparfig}[htpb!]
+  {fig:solver-susp}
+  {Rewriting rules for suspended match constraints.}
+  \rewrite[S-Match-Ctx]
+    {\C\where{\cmatch \t \cbrs}}
+    {\th \Cshape \C \t \sh}
+    {\C\where{\cmatched \t {\sh} \cbrs}}
+
+  \infer[Uni-Type]
+    {{\color{gray}\t \notin \TyVars}}
+    {\th \Cshape \C \t {~\shape \t}}
+
+  \infer[Uni-Var]
+    {\color{gray}\tv \disjoint \bvs \Cb}
+    {\th \Cshape {\Ca\where{\cunif \tv {\cunif \t \ueq} \cand \Cb\where{-}}} \tv {~\shape \t}}
+
+  \infer[Uni-BackProp]
+    {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand -}}} \tvc \sh \\ 
+     \color{gray}\tvp \in \tv, \tvs \\ 
+     \color{gray}\x \disjoint \bvs \Cb \\ 
+     \color{gray}\tvp \disjoint \bvs \Ca}
+    {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{-}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}} \tv \sh}
+\end{mathparfig}
+
+\parcomment{S-Match-Ctx}
+
+\Rule{S-Match-Ctx} solves suspended match constraints when the surrounding
+context $\C$ \emph{proves} that the scruitinee $\t$ has the unique shape $\sh$,
+denoted $\th \Cshape \C \t \sh$. 
+%
+Case \Rule{Uni-Type} handles when $\t$ is a non-variable type $\t$, in which
+case the shape is simply $\shape \t$. \Rule{Uni-Var} applies when the scrutinee
+is a variable $\tv$ and the context establishes that $\tv$ is equal to some
+non-variable type $\t$ by exhibiting an equality $\cunif \tv {\cunif \t \ueq}$
+and $\t$ is a non-variable type. In this case, the shape of $\tv$ is $\shape
+\t$.
+% 
+Finally, \Rule{Uni-BackProp} expresses \emph{backpropagation}, previously
 illustrated in \cref{ex:backprop}. In particular, the shape of a regional
 variable can sometimes be determined from its instantiations. If an abstraction
-contains a suspended match constraint on a regional variable $\tvp$, and the
-constraint context includes a partial instantiation $\cpapp \x \tvp \tvc \inst$
-together with a multi-equation constraining the copy of $\tvp$
-($\tvc$)\XDR{should be \emph{the copy $\tvc$ of $\tvp$}---if this is what
-you mean. See comment in Rule \Rule{S-BackProp}}\Xalistair{I do mean the copy of $\tvp$, namely that $\tvc$ is this 
-copy. I think we're saying the same thing? Just that the rule \Rule{S-BackProp} was wrong.}
-to a non-variable type $\t$, then $\shape \t$ must be the unique shape of
-$\tvp$. Any other shape would render the instantiation unsatisfiable.
+contains a regional variable $\tvp$, and the constraint context includes a
+partial instantiation $\cpapp \x \tvp \tvc \inst$ together with a proof that the copy of
+$\tvc$ has the unique shape $\sh$. Then $\tvp$ must also have shape $\sh$, 
+as any other shape would render the instantiation unsatisfiable.
+%
+This final case (\Rule{Uni-BackProp}) may raise concerns about the well-foundedness of $\th \Cshape \C \t \sh$. 
+However, well-foundedness follows directly from the fact that in \Rule{Uni-BackProp} the regional depth 
+of the hole strictly decreases. 
+%
+For a solved context $\hat\C$, this relation is moreover sound and complete with respect 
+to the semantic definition of unicity (\cref{def:unicity}).
 
 % Properties
 % May look like space hacks, but restatable introduces its own space
