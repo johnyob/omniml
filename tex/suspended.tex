@@ -1252,6 +1252,8 @@ be represented as the shape application $\shapp (\tint \tlist)$.
 We have left the syntax of shape patterns deliberately abstract.
 \XDR{Shape patterns are never defined! in the body of the paper.
 What aren't shape patterns just a subset of principal shapes}
+\Xalistair{Because principal shapes cannot express $\cpatpoly \cscm$ or $\cpatrcd \ct$. They lack 
+binders.}
 We also assume a matching relation:
 % mathpar instead of mathline since spacing was odd. If spacing is fixed,
 % use mathline
@@ -1275,7 +1277,10 @@ any shape and binds nothing:
   $\sh$, we introduce the syntactic sugar $(\cmatched \t \sh \cbrs)$ for the
   \emph{discharged match constraint} that selects the branch in $\cbrs$ that
   matches $\sh$:\XDR{$\cmatches \cpati \sh \tvs \theta$ is never defined in
-  the body of the paper}
+  the body of the paper} \Xalistair{It is left abstract, the matching 
+  semantics is informally defined in \cref{sec:constraints}. We should link this 
+  and the appendix. I don't think the definition is interesting enough to 
+  spend much time on it. Unless you think otherwise?}
 \begin{mathpar}
   \cmatched \t \sh {\cbranch \cpats \cs} \uad\eqdef\uad
   \begin{cases}
@@ -1424,6 +1429,9 @@ induces a linear partial order between the suspended match constraints within a
 constraint, reflecting a \emph{temporal} dependency: a match constraint may only
 be discharged once all of its dependencies have been discharged.\XDR{Is this
 really true? What is the \emph{formal} definition of this temporal order?}
+\Xalistair{The order in which you apply \Rule{Susp-Ctx} in the derivation. 
+I don't see the use of formally defining the order, since we mainly use it 
+intuitively in explainations.}
 
 The erasure $\cerase{\C\where{\cunif \t \gt}}$ is simple, so the use of
 $\thsimple$ avoids well-foundedness issues that would arise from
@@ -1743,7 +1751,6 @@ construct into the robust, explicit counterpart:
 \\
 \entry[Labels]{l}{
   \elab \and \elab / \T
-\Xdidier{was commented out, but should be kept visible}
 }
 \\[1ex]
 \entry[Types]{\t}{
@@ -2441,7 +2448,7 @@ There are three cases in which an instantiation constraint is eliminated:
        {\cletr \x \tv {\tvs} {\Ca\where{\cmatch \tvp \cbrs}}
                            {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}
     {\tvp \in \reg \tv \tvs \\
-     \cunif {\tvp\XDR{$\tvc$?}} {\cunif \t \ueq} \in \C\where\Cb \\
+     \cunif {\tvc} {\cunif \t \ueq} \in \C\where\Cb \\
      \x \disjoint \bvs \Cb}
     {\C\where{\cletr \x \tv {\tvs} {\Ca\where{\cmatched \tvp {\shape \t} \cbrs}}
 		      {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}
@@ -2537,7 +2544,8 @@ contains a suspended match constraint on a regional variable $\tvp$, and the
 constraint context includes a partial instantiation $\cpapp \x \tvp \tvc \inst$
 together with a multi-equation constraining the copy of $\tvp$
 ($\tvc$)\XDR{should be \emph{the copy $\tvc$ of $\tvp$}---if this is what
-you mean. See comment in Rule \Rule{S-BackProp}}
+you mean. See comment in Rule \Rule{S-BackProp}}\Xalistair{I do mean the copy of $\tvp$, namely that $\tvc$ is this 
+copy. I think we're saying the same thing? Just that the rule \Rule{S-BackProp} was wrong.}
 to a non-variable type $\t$, then $\shape \t$ must be the unique shape of
 $\tvp$. Any other shape would render the instantiation unsatisfiable.
 
@@ -2554,6 +2562,10 @@ an suspended constraint.}
 instantiation clauses \emath{\cpapp \x \tv \tvc \inst}
 since Rule \Rule {S-Inst-Poly} may not fire because of
 $\tvp$ occurring in $\C$}
+\Xalistair{Yes, but this is a special case of (d), since 
+this occurs if $\tv \in \fvs \c$ and $\c$ is stuck. Thus the 
+`root' cause of the constraint being stuck isn't the instantiation 
+but the body of the abstraction being stuck.}
 
 
 \begin{restatable}[Progress]{theorem}{progress}
@@ -2577,6 +2589,7 @@ $\tvp$ occurring in $\C$}
         \XDR{Idem.}
         \XDR{$\insts$ is undefined in the body of the paper---and its
         appendices.}
+        \Xalistair{TODO: define $\insts \c$ in appendices.}
       \item
         \label {item/progress/suspended}
         for every match constraint $\hat\C\where{\cmatch \tv \cbrs}$ in
