@@ -4,7 +4,7 @@
 %% No macros before \documentclass
 
 
-\documentclass[acmsmall,screen,nonacm,review]{acmart}
+\documentclass[acmsmall,screen,nonacm,review,anonymous]{acmart}
 \input{suspended.cfg}
 
 \newcommand{\acmart}{\True}
@@ -17,6 +17,15 @@
 %%   \Xfirstname{free comment}
 %% Uncomment this line to hide all comments.
 % \UNXXX{}
+
+\author{Alistair O'Brien}
+\orcid{0009-0009-0055-7793}
+\affiliation{
+  \instuition{University of Cambridge}
+  \city{Cambridge}
+  \country{United Kingdom}
+}
+\email{ajo41@cam.ac.uk}
 
 \usepackage{marginnote}
 
@@ -38,8 +47,9 @@ allow taking instances of a partially solved type scheme containing
 suspended constraints, with a mechanism to incrementally update instances as
 the scheme is refined.
 %
-While the benefits of omnidirectional type inference are minor for core \ML,
-which truly enjoy principal types, they are striking for several advanced
+\Xalistair[Changed, preferred the submitted version. Was]{While the benefits of omnidirectional type inference are minor for core \ML,
+  which truly enjoy principal types, they} 
+The benefits of omnidirectional type inference are striking for several advanced
 \ML extensions, typically those that rely on optional type annotations where
 principality is fragile.  We illustrate them with \OCaml's static
 overloading of record labels and datatype constructors, semi-explicit
@@ -55,7 +65,8 @@ first-class polymorphism, and tuple projections \ala \SML.
 The Damas-Hindley-Milner (\HM) \citep*{Damas-Milner/W@popl82} type system
 has long occupied a sweet spot in the design space of strongly typed
 programming languages, as it enjoys the \emph{principal types property}:
-every well-typed expression $\e$ has a most general type $\ts$.
+every well-typed expression $\e$ has a most general type $\ts$ \Xalistair{We should still give 
+some informal hint of what `most' general is.}.
 For example, the identity function
 $\efun \x \x$ has the principal type $\tfor \tv \tv \to \tv$, generalizing
 types like $\tint \to \tint$ and $\tbool \to \tbool$.
@@ -78,19 +89,19 @@ framework. Others such as GADTs, higher-rank polymorphism, or static
 overloading, are \emph{fragile}, as they sometimes require explicit
 type annotations. The return type of overloaded datatype constructors may
 be annotated; polymorphic expressions can be annotated with a type
-scheme; and for GADTs, the type of the \texttt{match} scrutinee and return
-type can be annotated to a rigid type which will be refined by type
-equalities in each branch.
-Those type annotations may sometimes---but
+scheme; and for GADTs, both the type of the \texttt{match} scrutinee and return
+type can be annotated with a rigid type, which is refined by type
+equalities introduced in each branch.
+These type annotations may sometimes---but
 not always---be omitted.
 
-For instance, consider impredicative higher-rank polymorphism :
+For instance, consider impredicative higher-rank polymorphism:
 \begin{program}[input]
 let self f = f f
 \end{program}
 One could \emph{guess} the (higher-rank) type of \code{f} to be
 either $\tfor \tv \tv \to \tv$ or $\tfor \tv \tv \to \tv \to \tv$ in order
-to typecheck \code{self}, while neither of them is more general than the other,
+to typecheck \code{self}---neither of which is strictly more general than the other,
 violating principality.
 
 \parcomment {Current approaches are kinda bad}
@@ -98,7 +109,7 @@ violating principality.
 To fix this, inference algorithms require a minimal amount of
 \emph{known} type information to restore principality; in this example
 the binding of \code{f} should be annotated with a polymorphic type
-scheme. Yet specifying such requirements declaratively is
+scheme. Yet specifying annotatability declaratively is
 difficult. As a result, the specifications are often twisted with some
 direct or indirect algorithmic flavor in order to preserve
 principality and completeness.
@@ -106,8 +117,8 @@ principality and completeness.
 Moreover, these (more or less) ad-hoc restrictions commonly reject examples
 whose type could easily be guessed. For instance, \MLF~\citep*{LeBotlan-Remy/recasting-mlf} accepts
 or rejects the following expression, depending on the position of the
-annotation (using a traffic-light scheme: green and red indicate typechecking success
-and failure; orange signals a warning):
+annotation (using a traffic-light scheme: \smashcolorbox{welltyped}{\struct green} and \smashcolorbox{illtyped}{red} indicate typechecking success
+and failure):
 \begin{program}[input]
 let self' (f : $\forall$'a. 'a -> 'a) = if true then f f else f $
 $   °\Ocamlcomment{\ocamlFlag {\MLF}0}°
@@ -132,15 +143,16 @@ robust counterpart.
 % inference.
 %
 The difficulty lies in finding a specification
-that is sufficiently expressive, principled, intuitive for the user,
-and for which we have a complete and effective elaboration algorithm.
+that is sufficiently expressive, principled, and intuitive to the user,
+and that also admits a complete and principal inference algorithm.
 
 The solutions proposed so far all enforce some ordering in which type
 inference is performed, which can be used to propagate both inferred
 types and user-provided type annotations as \emph{known} types that can be
 used for disambiguation and enable the omission of some annotations.
-They are two main strategies, \emph{\geninst-directional} and
-\emph{bidirectional} type inference, which may also be combined.
+
+\Xalistair[We should move this to the end of the section]{They are two main strategies, \emph{\geninst-directional} and
+\emph{bidirectional} type inference, which may also be combined.}
 
 \paragraph{\Geninst-directional type inference}
 
@@ -154,32 +166,23 @@ are treated as \emph{known} and may guide disambiguation, whereas
 monomorphic (parts of) types are considered not-yet-known and cannot be
 relied on for disambiguation.
 
-\parcomment{What is it, and what does it solve}
+\parcomment{What is it, and what does it solve (by example)}
 
 We call this \textbf{\geninst}-directional (read as
 ``\textbf{pi}-directional'') type inference, to mean that
 \textbf{p}olymorphic expressions must be typed before their
 \textbf{i}nstances.
-
-\parcomment{An instance of the problem (implementation directionality in
-inference)}
-
-\XDR [The following idea has been moved further down after we explain
-      the basic examples.]
-  {This strategy ensures principality for fragile constructs, but can lead
-  to counter-intuitive behavior.}
-
-
-For instance, consider the following two record types with overlapping field
+%
+To illustrate \geninst-directionality, consider the following two record types with overlapping field
 names:
 \begin{program}[input]
 type 'a one = {x : 'a; y : int}
 type two = {x : int; z : int}
 \end{program}
 In \OCaml, both definitions are in scope, and the compiler must
-statically disambiguate field usage.
+statically disambiguate each field usage.
 \begin{program}[input,check]
-let one = { x = 1; y = 1; }                               °\ocamlflags 00°
+let one = { x = 1; y = 1 }                               °\ocamlflags 00°
 \end{program}
 The expression \ocaml!one! can only be \code{int one}.
 Similarly, \code{r.y} necessarily infers \code{one} for the type of \code{r}.
@@ -198,11 +201,9 @@ fails.\footnote
   instead of failing
   when the type is ambiguous, which is to emit a warning and use the last
   definition in scope. To check all examples, use the options
-  \texttt{-principal -w +41 -warn-error +41}, which enforces principality
+  \texttt{-principal -w +41+18 -warn-error +41+18} \Xalistair{I added that non-principal inference should be an error here.}, which enforces principality
   enables the warning and turn it into an error when the default resolution
-  is  used. Well-typedness is shown in
-  \smashcolorbox{welltyped}{\strut green} and ill-typedness (warnings and errors)
-  is show in \smashcolorbox{illtyped}{red}.\label{fn/principal}}
+  is  used. \label{fn/principal}}
 \relax
 At first glance, \code{ex_2} and \code{ex_3} appear equivalent: in both,
 the expression \code{r.x} can only refer to the field from type \code{int one}.
@@ -225,33 +226,37 @@ While these terms are semantically equivalent, they highlight a potential
 hazard: their typability may vary under a directionally biased inference
 algorithm, depending on whether the function or argument is typed first.  To
 limit such implementation-dependent behavior, \OCaml infers all
-subexpressions until they are \code{let}-bound.\footnote
+subexpressions \emph{simulatenously}, until they are \code{let}-bound.\footnote
 %
-  {With our setting\cref{fn/principal}, it warns then fail
-  whenever using disambiguation before the expression is
-  \code{let}-bound, here on \ocaml[indices]{ex_3_3}.}
+  {With our options\cref{fn/principal}, \OCaml raises an error instead 
+  of a warning whenever non-principal disambiguation is used, 
+  as in \ocaml[indices]{ex_3_3}.}
 %
-Consequently, it does not make any difference between
+Consequently, \OCaml does not make any difference between
 \ocaml[indices]{ex_3}, \ocaml[indices]{ex_3_2}, and \ocaml[indices]{ex_3_3}.
-This criterion also fails on examples \ocaml[indices]{ex_4_1} and
-\ocaml[indices]{ex_4_2} below, since even \code{r} has an annotation, it is
-$\lambda$-bound and therefore has a monomorphic type.
+The same criterion also fails on \ocaml[indices]{ex_4_1} and
+\ocaml[indices]{ex_4_2} below, since although \code{r} is annotated, it is
+$\lambda$-bound and therefore assigned a monomorphic type.
 \begin{program}[input,check]
 let ex_4_1 p r = if p then (r : 'a one).x else r.x         °\ocamlflags 20°
 let ex_4_2 p r = if p then r.x else (r : 'a one).x         °\ocamlflags 10°
 \end{program}
-While treating both examples in the same way is a benefit , it is also a
-limitation of $\pi$-directional inference that type
-annotations must dominate their use, $\pi$-directionally,
-to be effective.
+Treating both examples uniformly is in one sense a strength of 
+\geninst-directionality, but it also reveals a limitation: 
+annotatability is fragile, in that well-typedness depends on the 
+\emph{precise} placement of annotations, often forcing the programmer 
+to introduce annotations that would otherwise be unnecessary. 
 
+\parcomment{Summary / uses}
+
+\Xalistair{This feels a bit out of place, should we say this earlier?}
 \Geninst-directional inference offers a way to specify and implement principal
 type inference for fragile features, aligning with the implicit inference order
 present in most \ML-like typecheckers.
 %
 This mechanism was originally proposed by~\citet*{Garrigue-Remy/poly-ml} for
 semi-explicit first-class polymorphism, and later used
-by~\citet*{LeBotlan-Remy/recasting-mlf} for empowering MLF.
+by~\citet*{LeBotlan-Remy/recasting-mlf} for empowering \MLF.
 %
 It has since been adopted in \OCaml for features such as polymorphic object
 methods and the overloading of record fields and variant constructors. More
@@ -287,8 +292,9 @@ the downsides of bidirectional type inference.
 
 \paragraph{Limitations of directional type inference}
 
-While both strategies for directional type inference have some virtues, and
-have proved quite useful in the past, they also have some limitations.
+\Xalistair{Redundant? We give uses above?}While both strategies for directional
+type inference have some virtues, and have proved quite useful in the past,
+they also have some limitations.
 
 Bidirectional type inference is lightweight, practical, and well-suited for
 complex language features. It supports the propagation of type information with
@@ -300,29 +306,32 @@ On the other hand, \emph{\Geninst-directional} type inference appears better
 suited for \ML, relying on polymorphism, the essence of \ML. But it remains
 surprisingly weak in some cases: it does not even allow the propagation of
 user-provided type annotations from a function to its argument!
-This sometimes makes them counter intuitive.
+This weakness is sometimes counter-intuitive to the user.  
 For example,
 the following would be rejected as ambiguous with \geninst-directional
-type---but is accepted by \OCaml:
+type alone:
 \begin{program}[input,check]
 let ex_5 = let g (f : 'a one -> int) = f one in g (fun r -> r.x)$
 $ °\ocamlflags 00°
 \end{program}
-\OCaml uses \geninst-directional type inference as its primary mechanism,
-alongside a weak form of bidirectional propagation. In this example, the type
-of the argument of \code{g} is known \Geninst-directionally, but \OCaml then
-propagates this expected type within the function definition
-\ocaml{(fun r -> r.x)} in a bidirectional fashion, which would otherwise be
-considered ambiguous.
+Here, \code{r} is $\lambda$-bound and therefore monomorphic. Without further
+propagation, the term \code{r.x} would be ambiguous, as no polymorphic (and
+thus \emph{known}) type can be ascribed to \code{r}. \OCaml resolves this by
+supplementing  \geninst-directional inference with a weak form of bidirectional
+propagation: the expected type of \code{g}'s argument (\code{'a one -> int}) is
+bidirectionally propagated to the $\lambda$-function, assigning \code{r} to have the
+\emph{known} type \code{'a one} and thereby disambiguating \code{r.x}. 
 
-Besides, the implementation of \geninst-directional type inference has an
-algorithmic cost. For technical reasons, type annotations must unshare types
-(from acyclic graphs as naturally produced by unification to trees), which
-may increase the size of types and the cost of type inference. For that
-reason, the implementation of \OCaml cheats and is incomplete by
+\Xalistair{A couple proof readers have found this point odd (since it is a
+rather technical point), perhaps it is sufficient to say that
+\geninst-directionality incurs a cost and that \OCaml by default disables
+principal inference?} Besides, the implementation of \geninst-directional type
+inference has an algorithmic cost. For technical reasons, type annotations must
+unshare types (from acyclic graphs as naturally produced by unification to
+trees), which may increase the size of types and the cost of type inference.
+For that reason, the implementation of \OCaml cheats and is incomplete by
 default. The user must explicitly pass the \texttt{\small -principal}
-flag\cref{fn/principal} to require the more expensive computation when
-desired.
+flag\cref{fn/principal} to require the more expensive computation when desired.
 
 \subsection{Omnidirectional type inference}
 
@@ -376,8 +385,10 @@ a cost, which is that everything is hard:
   \emph{known} rather than \emph{guessed}.
 
 \item
-  Implementing partial types schemes efficiently, to avoid duplication of
-  work and trigger re-instantiation on changes, is also hard.
+
+  Implementing partial types schemes efficiently is equally hard, as it
+    requires triggering re-instantiations upon refinements to the scheme, while
+    avoiding redundant constraint solving across instantiations. 
 
 \end{enumerate}
 In return, the techniques we developed for the semantics
@@ -424,7 +435,7 @@ inferring the $\Let$-body to disambiguate the $\Let$-definition.
 %
 In \code{ex_8}, disambiguation information flows from an instance back
 to the definition, opposite to the \Geninst-order; we call this
-%% \emph{backpropagation}.
+\emph{backpropagation}.
 
 The example \ocaml{ex_9} can be disambiguated from the return type of
 the projection, rather than from the type of \code{r}. The typing rules for
@@ -455,7 +466,7 @@ The paper is organized as follows:
 
 \item
   In \cref{sec:constraints}, we give an overview of suspended constraints
-  and their application to three extensions for \ML of various kind.
+  and their application to three extensions for \ML of various kinds.
 
 \item
   In \cref{sec:semantics}, we describe suspended match constraints and their semantics.
