@@ -1303,7 +1303,7 @@ To provide semantics for our suspended constraints, a first idea
 is to propose the following rule---henceforth referred to as the
 \emph{natural semantics} of suspended constraints.
 \begin{mathpar}
-  \infer[Susp-Nat]
+  \infer[Match-Nat]
   {\sh = \shape {\semenv(\t)} \\ \semenv \th \cmatched \t \sh \cbrs}
   {\semenv \th \cmatch \t \cbrs}
 \end{mathpar}
@@ -1324,7 +1324,7 @@ semantics:
 \begin{mathpar}
 \def \cmatchex {\cmatch \tv {\cbranch \cpatwild {\cunif \tv \tint}}}
 \def \semenvex {\semenv\where{\tv \is \tint}}
-    \infer*[Right=Susp-Nat]
+    \infer*[Right=Match-Nat]
     {
       \cmatches \cpatwild \tint \eset \eset
       \\
@@ -1360,7 +1360,7 @@ constraints, and raises several problems:
 \begin{version}{}
 \begin{wraphbox}{}{}
 \begin{mathpar}[inline]
-  \infer[Susp-Ctx]
+  \infer[Match-Ctx]
     {\Cshape \C \t \sh \\\\
       \semenv \th \C \where {\cmatched \t \sh \cbrs}
     }
@@ -1371,7 +1371,7 @@ constraints, and raises several problems:
 To rule out guessing, we instead adopt a \emph{contextual} semantics: a
 match constraint is satisfiable only if the shape of the type is determined
 by the surrounding context. The corresponding rule for suspended
-constraints, \Rule {Susp-Ctx} in \cref {fig:contextual-semantics}, is the
+constraints, \Rule {Match-Ctx} in \cref {fig:contextual-semantics}, is the
 only non-syntax-directed rule in our semantics.
 %
 In this rule, the shape $\sh$ is not guessed from $\semenv$, but it must be
@@ -1388,7 +1388,7 @@ $\Cshape \C \t \sh$ (defined below) ensures that $\sh$ is uniquely determined by
   We say that $\c$ is \emph{simple} if it contains no suspended match
   constraints. We write $\semenv \thsimple \c$ for a derivation of $\semenv \th
   \c$ that only uses the rules listed in \cref{fig:constraint-semantics},
-  without using \Rule{Susp-Ctx}. This judgment coincides with $\semenv \th \c$
+  without using \Rule{Match-Ctx}. This judgment coincides with $\semenv \th \c$
   on simple constraints.
 \end{definition}
 
@@ -1406,7 +1406,7 @@ $\Cshape \C \t \sh$ (defined below) ensures that $\sh$ is uniquely determined by
 \begin{mathparfig}[htpb!]
   {fig:contextual-semantics}
   {Semantics of suspended constraints.}
-\infer[Susp-Ctx]
+\infer[Match-Ctx]
     {\Cshape \C \t \sh \and
       \semenv \th \C\where{\cmatched \t \sh \cbrs}
     }
@@ -1429,20 +1429,20 @@ induces a linear partial order between the suspended match constraints within a
 constraint, reflecting a \emph{temporal} dependency: a match constraint may only
 be discharged once all of its dependencies have been discharged.\XDR{Is this
 really true? What is the \emph{formal} definition of this temporal order?}
-\Xalistair{The order in which you apply \Rule{Susp-Ctx} in the derivation. 
+\Xalistair{The order in which you apply \Rule{Match-Ctx} in the derivation. 
 I don't see the use of formally defining the order, since we mainly use it 
 intuitively in explainations.}
 
 The erasure $\cerase{\C\where{\cunif \t \gt}}$ is simple, so the use of
 $\thsimple$ avoids well-foundedness issues that would arise from
-a negative occurrence of $(\th)$ in a premise of \Rule{Susp-Ctx}.
+a negative occurrence of $(\th)$ in a premise of \Rule{Match-Ctx}.
 %
 Note that, when $\t$ is not a variable, then $\Cshape \square \t \sh$
 holds trivially for $\sh = \shape \t$. Likewise, when $\C$ is unsatisfiable,
 then $\Cshape \C \tv \sh$ holds vacuously for any $\sh$. The interesting cases
 arise when $\t$ is a type variable and $\C$ is satisfiable.
 
-We summarize the definition of the unicity condition and \Rule{Susp-Ctx} in
+We summarize the definition of the unicity condition and \Rule{Match-Ctx} in
 \cref{fig:contextual-semantics}. Together with the rules of
 \cref{fig:constraint-semantics}, this forms the complete semantics of our
 constraint language.
@@ -1489,7 +1489,7 @@ Consider the more intricate example:
       {\def \and{)\wide\wedge(}\parens{\EX}}
   }
 \end{mathpar}
-Suppose we attempt to apply \Rule{Susp-Ctx} to the match on $\tvb$ first.
+Suppose we attempt to apply \Rule{Match-Ctx} to the match on $\tvb$ first.
 We want to show $\Cshape \C \tvb \tbool$ for the context
 $\C$ equal to
 \begin{mathpar}[inline]
@@ -1502,10 +1502,10 @@ Its erasure is
 In this constraint $\tvb$ is unconstrained, so for example
 \relax $\cerase {{\C\where{\cunif \tvb \tint}}}$ and
 \relax $\cerase {\C\where{\cunif \tvb \tbool}}$
-are both satisfiable: unicity does not hold and \Rule{Susp-Ctx} cannot be
+are both satisfiable: unicity does not hold and \Rule{Match-Ctx} cannot be
 applied.
 
-Now consider instead applying \Rule{Susp-Ctx} to the match on $\tva$
+Now consider instead applying \Rule{Match-Ctx} to the match on $\tva$
 first. To do so, we must show that $\tva$ has a uniquely determined shape in
 the context $\C$ equal to
 \begin{mathpar}[inline]
@@ -1534,7 +1534,7 @@ are left to satisfy the constraint $\C \where {\tva = \tint \cand \cunif
 \end{mathpar}.
 
 At this point, we can safely
-apply \Rule{Susp-Ctx} to the remaining match constraint on $\tvb$.  The
+apply \Rule{Match-Ctx} to the remaining match constraint on $\tvb$.  The
 unicity condition now holds, as the erasure of the context includes the
 discharged constraint $\cunif \tvb \tbool$, allowing us to eliminate the
 final match constraint.
@@ -1565,13 +1565,13 @@ earlier: by guessing the assignment $\tva \is \tint, \tvb \is
 \tbool$, the two match constraints succeed. However, our solver
 and the contextual semantics reject it.
 
-Without loss of generality, suppose we attempt to apply \Rule{Susp-Ctx} on
+Without loss of generality, suppose we attempt to apply \Rule{Match-Ctx} on
 $\tva$ first. We must show $\Cshape \C \tva \tint$ where $\C$ is
 \begin{mathpar}[inline]
     \square \cand \cmatch \tvb {\cbranch \cpatwild {\cunif \tva \tint}}
 \end{mathpar}
 But the erasure $\cerase \C$ is $\square \cand \ctrue$ imposes no constraint
-on $\tva$, so unicity fails, and \Rule{Susp-Ctx} cannot be applied.
+on $\tva$, so unicity fails, and \Rule{Match-Ctx} cannot be applied.
 \end{example}
 
 \begin{example}
@@ -1587,7 +1587,7 @@ The typing constraint generated for \code{ex_7} contains the following, where $\
       {\cinst x \tint \cand \cunif \tv {\Tapp[\mathsf{one}] \tvc}}
 \end{mathpar}
 The suspended constraint can be discharged under our semantics, as
-intended. We apply the \Rule{Susp-Ctx} rule with context
+intended. We apply the \Rule{Match-Ctx} rule with context
 $\C$ equal to
 \begin{mathpar}[inline]
   \clet \x \tvb \square \capp \x \tint \cand
@@ -3033,7 +3033,7 @@ formal claims in the article. They are typically written tersely.
 \item \cref{app:proofs-constraints} proves properties of the
   constraint language and its semantics. The main result is
   canonicalization, which morally establishes that uses of the
-  contextual rule \Rule{Susp-Ctx} can be ``permuted down'' in the
+  contextual rule \Rule{Match-Ctx} can be ``permuted down'' in the
   proof until they are all at the bottom of the derivation, followed
   by a proof on a simple constraint.
 \item \cref{app:proofs-solving} proves the correctness of the
@@ -4444,7 +4444,7 @@ definition in full, or when studying the meta-theory of the system.
     {\semenv(\t) \in \semenv(\x)}
     {\semenv \th \capp \x \t}
 
-  \infer[Susp-Ctx]
+  \infer[Match-Ctx]
     {\Cshape \C \t \sh \\
       \semenv \th \C\where{\cmatched \t \sh \cbrs}
     }
@@ -4680,7 +4680,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\semenv \thsimple \c}
     {\semenv \Th \c}
 
-  \inferrule[Can-Susp-Ctx]
+  \inferrule[Can-Match-Ctx]
     {\Cshape \C \t \sh \\ \semenv \Th \C\where{\cmatched \t \sh \cbrs}}
     {\semenv \Th \C\where{\cmatch \t \cbrs}}
 \end{judgboxmathpar}
@@ -5592,7 +5592,7 @@ soundness and completeness in \cref{app/oml/proofs}.
 \subsection{Canonicalization of satisfiability}
 
 They key result in this section is that our semantic derivations $\semenv \th
-\c$ can always be rewritten to only apply the rule \Rule{Susp-Ctx} at the very
+\c$ can always be rewritten to only apply the rule \Rule{Match-Ctx} at the very
 bottom of the derivation, rather than in the middle of derivations. This
 corresponds to explicitating the unique shapes of all suspended constraints (in
 some order that respects the dependency between suspended constraints), and
@@ -5801,7 +5801,7 @@ composability property.
 
 
 	\proofcasederivationdouble
-	  {Can-Susp-Ctx}
+	  {Can-Match-Ctx}
 	  {\Cshape \C \t \sh \\ \semenv \Th \C\where{\cmatched \t \sh \cbrs}}
 	  {\semenv \Th \underbrace{\C\where{\cmatch \t \cbrs}}_\ca}
 	  {}
@@ -5816,14 +5816,14 @@ composability property.
  	    \VdashPf{\semenv}{\C\where{\cmatched \t \sh \cbrs} \cand \cb}{By \ih}
 	    \Pf{}{}{\Cshape \C \tv \sh}{Premise}
 	    \Pf{}{}{\Cshape {\parens {\C \cand \cb}} \tv \sh}{\cref{lem:compose-unicity}}
-\Hand 	    \VdashPf{\semenv}{\C\where{\cmatch \t \cbrs}}{By \Rule{Can-Susp-Ctx}}
+\Hand 	    \VdashPf{\semenv}{\C\where{\cmatch \t \cbrs}}{By \Rule{Can-Match-Ctx}}
 	  \end{llproof}
 
 	\proofcasederivationdouble
 	  {}
 	  {}
 	  {\semenv \Th \ca}
-	  {Can-Susp-Ctx}
+	  {Can-Match-Ctx}
 	  {\Cshape \C \t \sh \\ \semenv \Th \C\where{\cmatched \t \sh \cbrs}}
 	  {\semenv \Th \underbrace{\C\where{\cmatch \t \cbrs}}_\cb}
 
@@ -5856,7 +5856,7 @@ composability property.
 
 
 	      \proofcasederivation
-		{Can-Susp-Ctx}
+		{Can-Match-Ctx}
 		{\Cshape \C \t \sh \\ \semenv\where{\tv \is \gt} \Th \C\where{\cmatched \t \sh \cbrs}}
 		{\semenv \Th \underbrace{\C\where{\cmatch \t \cbrs}}_\c}
 
@@ -5868,7 +5868,7 @@ composability property.
 		  \VdashPf{\semenv}{\cexists \tv \C\where{\cmatched \t \sh \cbrs}}{By \ih}
 		  \Pf{}{}{\Cshape \C \t \sh}{Premise}
 		  \Pf{}{}{\Cshape {\parens {\cexists \tv \C}} \t \sh}{\cref{lem:compose-unicity}}
-\Hand             \VdashPf{\semenv}{\cexists \tv \C\where{\cmatch \t \cbrs}}{By \Rule{Can-Susp-Ctx}}
+\Hand             \VdashPf{\semenv}{\cexists \tv \C\where{\cmatch \t \cbrs}}{By \Rule{Can-Match-Ctx}}
 		\end{llproof}
 	\end{proofcases}
 
@@ -5909,7 +5909,7 @@ composability property.
 	      \end{llproof}
 
 	    \proofcasederivationdouble
-	      {Can-Susp-Ctx}
+	      {Can-Match-Ctx}
 	      {\Cshape {\parens {\cexists \tv \ca}} \t \sh \\ \semenv \Th \cexists \tv \C\where{\cmatched \t \sh \cbrs}}
 	      {\semenv \Th \cexists \tv \underbrace{\C\where{\cmatch \t \cbrs}}_\ca}
 	      {}
@@ -5928,14 +5928,14 @@ composability property.
 		\vdashPf{\semenv}{\clet \x \tv {\C\where{\cmatched \t \sh \cbrs}} \cb}{By \Rule{Let}}
 		\VdashPf{\semenv}{\clet \x \tv {\C\where{\cmatched \t \sh \cbrs}} \cb}{By \ih}
 		\shapePf{\parens{\clet \x \tv \C \cb}}{\t}{\sh}{\cref{lem:compose-unicity}}
-\Hand 		\VdashPf{\semenv}{\clet \x \tv {\C\where{\cmatch \t \cbrs}} \cb}{By \Rule{Can-Susp-Ctx}}
+\Hand 		\VdashPf{\semenv}{\clet \x \tv {\C\where{\cmatch \t \cbrs}} \cb}{By \Rule{Can-Match-Ctx}}
 	      \end{llproof}
 
 	    \proofcasederivationdouble
 		{}
 		{}
 		{\semenv \Th \cexists \tv \ca}
-		{Can-Susp-Ctx}
+		{Can-Match-Ctx}
 		{\Cshape \C \t \sh \\ \semenv\where{\x \is \semenv(\cabs \tv \ca)} \Th \C\where{\cmatched \t \sh \cbrs}}
 		{\semenv\where{\x \is \semenv(\cabs \tv \ca)} \Th \underbrace{\C\where{\cmatch \t \cbrs}}_\cb}
 
@@ -5946,7 +5946,7 @@ composability property.
 		  \vdashPf{\semenv\where{\x \is \semenv(\cabs \tv \ca)}}{\C\where{\cmatched \t \sh \cbrs}}{\cref{lem:decanonicalization}}
 		  \vdashPf{\semenv}{\clet \x \tv \ca {\C\where{\cmatched \t \sh \cbrs}}}{By \Rule{Let}}
 		  \VdashPf{\semenv}{\clet \x \tv \ca {\C\where{\cmatched \t \sh \cbrs}}}{By \ih}
-\Hand 		  \VdashPf{\semenv}{\clet \x \tv \ca {\C\where{\cmatch \t \sh}}}{By \Rule{Can-Susp-Ctx}}
+\Hand 		  \VdashPf{\semenv}{\clet \x \tv \ca {\C\where{\cmatch \t \sh}}}{By \Rule{Can-Match-Ctx}}
 		\end{llproof}
 	  \end{proofcases}
 
@@ -6040,7 +6040,7 @@ composability property.
         The second premise is a contradiction.
 
       \proofcasederivation
-	{Can-Susp-Ctx}
+	{Can-Match-Ctx}
 	{\Cshape \Cp \tp \shp \\ \semenv \Th \Cp\where{\cmatched \tp \shp \cbrs'}}
 	{\semenv \Th \underbrace{\Cp\where{\cmatch \tp \cbrs'}}_{\C\where{\cmatch {~\t~} {~\cbrs}}}}
 
@@ -6089,7 +6089,7 @@ composability property.
 	      \shapePf{\Cp}{\tp}{\shp}{Premise}
 	      \eqPf{\shape \gtp}{\shp}{$\implies$E on $\Cshape \Cp \tp \shp$}
 	      \shapePf{\Ctwo\where{\cmatched \t \sh \cbrs, \square}}{\tp}{\shp}{Above}
-\Hand 	      \VdashPf{\semenv}{\Ctwo\where{\cmatched \t \sh \cbrs, \cmatch \tp \cbrs'}}{By \Rule{Con-Susp-Ctx}}
+\Hand 	      \VdashPf{\semenv}{\Ctwo\where{\cmatched \t \sh \cbrs, \cmatch \tp \cbrs'}}{By \Rule{Con-Match-Ctx}}
 	    \end{llproof}
 	\end{proofcases}
     \end{proofcases}
@@ -6117,7 +6117,7 @@ composability property.
 	\begin{llproof}
 	  \shapePf{\C}{\t}{\sh}{Premise}
 	  \vdashPf{\semenv\where{\tv \is \gt}}{\C\where{\cmatched \t \sh \cbrs}}{Premise}
-\Hand 	  \vdashPf{\semenv\where{\tv \is \gt}}{\C\where{\cmatch \t \cbrs}}{By \Rule{Susp-Ctx}}
+\Hand 	  \vdashPf{\semenv\where{\tv \is \gt}}{\C\where{\cmatch \t \cbrs}}{By \Rule{Match-Ctx}}
 	\end{llproof}
     \end{proofcases}
 
@@ -6197,7 +6197,7 @@ generally in our system.
 	  \begin{llproof}
 	    \vdashPf{\semenv}{\C\where{\ca}}{Premise}
 	    \VdashPf{\semenv}{\C\where{\ca}}{\cref{thm:canonicalization}}
-	    \shapePf\Cp\t\sh{Inversion of \Rule{Can-Susp-Ctx}}
+	    \shapePf\Cp\t\sh{Inversion of \Rule{Can-Match-Ctx}}
 	    \VdashPf{\semenv}{\Cp\where{\cmatched \t \sh \cbrs}}{\ditto}
 	    \eqPf{\C\where{\ca}}{\Cp\where{\cmatched \t \sh \cbrs}}{\ditto}
 	    \continueeqPf{\Ctwo\where{\cmatched \t \sh \cbrs, \ca}}{For some two-hole context $\Ctwo$}
@@ -6209,7 +6209,7 @@ generally in our system.
 	    \eqPf{\shape \gt}{\sh}{$\implies$E on $\Cshape \Cp \t \sh$}
 	    \decolumnizePf
 	    \shapePf{\Ctwo\where{\square, \cb}}{\t}{\sh}{Above}
-\Hand	    \vdashPf{\semenv}{\Ctwo\where{\cmatch \t \cbrs, \cb}}{By \Rule{Susp-Ctx}}
+\Hand	    \vdashPf{\semenv}{\Ctwo\where{\cmatch \t \cbrs, \cb}}{By \Rule{Match-Ctx}}
 	  \end{llproof}
 
 	  \proofcase{$\impliedby$}
@@ -6288,7 +6288,7 @@ generally in our system.
 	    \Pf{P(\cs)}{}{}{Premise}
 	    \vdashPf{\semenv}{\C\where\Ca\where\cs}{Premise}
 	    \VdashPf{\semenv}{\C\where\Ca\where\cs}{\cref{thm:canonicalization}}
-	    \VdashPf{\semenv}{\Cp\where{\cmatched \t \sh \cbrs}}{Inversion of \Rule{Can-Susp-Ctx}}
+	    \VdashPf{\semenv}{\Cp\where{\cmatched \t \sh \cbrs}}{Inversion of \Rule{Can-Match-Ctx}}
 	    \shapePf{\Cp}{\t}{\sh}{\ditto}
 	    \eqPf{\C\where\Ca\where\cs}{\Cp\where{\cmatch \t \cbrs}}{\ditto}
 	    \commentPf{Cases on $\C, \cs$.}{}
@@ -6309,7 +6309,7 @@ generally in our system.
 		\vdashPf{\semenvp}{\cerase{\Ctwo\where{\cunif \t \gt, \Ca\where\cs}}}{$\dagger$}
 		\eqPf{\shape \gt}{\sh}{$\implies$E on $\Cshape \Cp \t \sh$}
 		\shapePf{\Ctwo\where{\square, \Cb\where\cs}}{\t}{\sh}{Above}
-\Hand		\vdashPf{\semenv}{\Ctwo\where{\cmatch \t \cbrs, \Cb\where\cs}}{By \Rule{Susp-Ctx}}
+\Hand		\vdashPf{\semenv}{\Ctwo\where{\cmatch \t \cbrs, \Cb\where\cs}}{By \Rule{Match-Ctx}}
 	      \end{llproof}
 
 	    \proofcase{$\ci$ contains $\Cp$'s hole}
@@ -6539,7 +6539,7 @@ generally in our system.
 	  \begin{llproof}
 	    \ForallPf{\semenv}{}{}
 	    \vdashPf{\semenv}{\cmatched \t {\shape \t} \cbrs}{Premise}
-\Hand 	    \vdashPf{\semenv}{\cmatch \t \cbrs}{By \Rule{Susp-Ctx}}
+\Hand 	    \vdashPf{\semenv}{\cmatch \t \cbrs}{By \Rule{Match-Ctx}}
 	  \end{llproof}
 	\end{proofcases}
 
@@ -6568,7 +6568,7 @@ generally in our system.
 	  \begin{llproof}
 	    \ForallPf{\semenv}{}{}
 	    \vdashPf{\semenv}{\C\where{\cmatched \tv {\shape \t} \cbrs}}{Premise}
-\Hand 	    \vdashPf{\semenv}{\C\where{\cmatch \tv \cbrs}}{By \Rule{Susp-Ctx}}
+\Hand 	    \vdashPf{\semenv}{\C\where{\cmatch \tv \cbrs}}{By \Rule{Match-Ctx}}
 	  \end{llproof}
 	\end{proofcases}
 
@@ -7639,7 +7639,7 @@ and $\sub(\tvs) = \tys$.
 		\thTypPf{\eset}{\eerase {\E\where{\emagic {\eannot \e {} \gt}}}}{\semenv(\tv)}{\cref{lem:decanonicalization-typing}}
 		\eqPf{\shape \gt}{\any \tvcs \Pi\iton \tvcs}{$\implies$E}
 		\shapePf \C \tvaa {\any \tvcs \Pi\iton \tvcs}{Above}
-		\UnifierPf{\sub}{\C\where{\cmatch \tvaa {\cbranch {\cpatprod \tvc j} {\cunif \tvb \tvc}}}}{By \Rule{Susp-Ctx}}
+		\UnifierPf{\sub}{\C\where{\cmatch \tvaa {\cbranch {\cpatprod \tvc j} {\cunif \tvb \tvc}}}}{By \Rule{Match-Ctx}}
 		\eqPf{\cinfer {\eproj \e j} \tvb}{\cexists \tvaa \cinfer \e \tvaa \cand \cmatchdots \tvaa}{By definition}
 		\eqPf{\C\where{\cmatchdots \tvaa}}{\cletG \ctxinfer \E \tvb \tv\where{\cexists \tvaa \cinfer \e \tvaa \cand \ldots}}{\ditto}
 		\continueeqPf{\cletG \ctxinfer \E \tvb \tv \where{\cinfer {\eproj \e j} \tvb}}{Above}
@@ -7659,7 +7659,7 @@ and $\sub(\tvs) = \tys$.
 
 	  \begin{proofcases}
 	    \proofcasederivation
-	      {Can-Susp-Ctx}
+	      {Can-Match-Ctx}
 	      {\Cshape \C \tvaa {\any \tvcs \Pi\iton \tvcs} \\
 	       \sub \text{ unifies } \C\where{\cmatched \tvaa {\any \tvcs \Pi\iton \tvcs} {\ldots}}}
 	      {\sub \text{ unifies } \underbrace{\C\where{\cmatch \tvaa {\cbranch {\cpatprod \tvc j} {\cunif \tvb \tvc}}}}_{\cinfer \e \tv}}
