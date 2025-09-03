@@ -48,7 +48,8 @@ suspended constraints, with a mechanism to incrementally update instances as
 the scheme is refined.
 %
 \Xalistair[Changed, preferred the submitted version. Was]{While the benefits of omnidirectional type inference are minor for core \ML,
-  which truly enjoy principal types, they} 
+  which truly enjoy principal types, they}\XDR{The meaning is not the
+  same. I find the formulation you like overselling, and lying by omission}
 The benefits of omnidirectional type inference are striking for several advanced
 \ML extensions, typically those that rely on optional type annotations where
 principality is fragile.  We illustrate them with \OCaml's static
@@ -65,8 +66,9 @@ first-class polymorphism, and tuple projections \ala \SML.
 The Damas-Hindley-Milner (\HM) \citep*{Damas-Milner/W@popl82} type system
 has long occupied a sweet spot in the design space of strongly typed
 programming languages, as it enjoys the \emph{principal types property}:
-every well-typed expression $\e$ has a most general type $\ts$ \Xalistair{We should still give 
-some informal hint of what `most' general is.}.
+every well-typed expression $\e$ has a most general type $\ts$ \Xalistair{We should still give
+some informal hint of what `most' general is.}\XDR{If you wish, but we are
+already over the space limit, so it means removing something else.}
 For example, the identity function
 $\efun \x \x$ has the principal type $\tfor \tv \tv \to \tv$, generalizing
 types like $\tint \to \tint$ and $\tbool \to \tbool$.
@@ -228,8 +230,8 @@ algorithm, depending on whether the function or argument is typed first.  To
 limit such implementation-dependent behavior, \OCaml infers all
 subexpressions \emph{simulatenously}, until they are \code{let}-bound.\footnote
 %
-  {With our options\cref{fn/principal}, \OCaml raises an error instead 
-  of a warning whenever non-principal disambiguation is used, 
+  {With our options\cref{fn/principal}, \OCaml raises an error instead
+  of a warning whenever non-principal disambiguation is used,
   as in \ocaml[indices]{ex_3_3}.}
 %
 Consequently, \OCaml does not make any difference between
@@ -241,11 +243,11 @@ $\lambda$-bound and therefore assigned a monomorphic type.
 let ex_4_1 p r = if p then (r : 'a one).x else r.x         °\ocamlflags 20°
 let ex_4_2 p r = if p then r.x else (r : 'a one).x         °\ocamlflags 10°
 \end{program}
-Treating both examples uniformly is in one sense a strength of 
-\geninst-directionality, but it also reveals a limitation: 
-annotatability is fragile, in that well-typedness depends on the 
-\emph{precise} placement of annotations, often forcing the programmer 
-to introduce annotations that would otherwise be unnecessary. 
+Treating both examples uniformly is in one sense a strength of
+\geninst-directionality, but it also reveals a limitation:
+annotatability is fragile, in that well-typedness depends on the
+\emph{precise} placement of annotations, often forcing the programmer
+to introduce annotations that would otherwise be unnecessary.
 
 \parcomment{Summary / uses}
 
@@ -292,9 +294,10 @@ the downsides of bidirectional type inference.
 
 \paragraph{Limitations of directional type inference}
 
-\Xalistair{Redundant? We give uses above?}While both strategies for directional
-type inference have some virtues, and have proved quite useful in the past,
-they also have some limitations.
+\Xalistair{Redundant? We give uses above?}\XDR{Do you mean next sentence,
+next two paragraphs, or the whole section?}While both strategies for
+directional type inference have some virtues, and have proved quite useful
+in the past, they also have some limitations.
 
 Bidirectional type inference is lightweight, practical, and well-suited for
 complex language features. It supports the propagation of type information with
@@ -306,7 +309,7 @@ On the other hand, \emph{\Geninst-directional} type inference appears better
 suited for \ML, relying on polymorphism, the essence of \ML. But it remains
 surprisingly weak in some cases: it does not even allow the propagation of
 user-provided type annotations from a function to its argument!
-This weakness is sometimes counter-intuitive to the user.  
+This weakness is sometimes counter-intuitive to the user.
 For example,
 the following would be rejected as ambiguous with \geninst-directional
 type alone:
@@ -320,12 +323,14 @@ thus \emph{known}) type can be ascribed to \code{r}. \OCaml resolves this by
 supplementing  \geninst-directional inference with a weak form of bidirectional
 propagation: the expected type of \code{g}'s argument (\code{'a one -> int}) is
 bidirectionally propagated to the $\lambda$-function, assigning \code{r} to have the
-\emph{known} type \code{'a one} and thereby disambiguating \code{r.x}. 
+\emph{known} type \code{'a one} and thereby disambiguating \code{r.x}.
 
 \Xalistair{A couple proof readers have found this point odd (since it is a
 rather technical point), perhaps it is sufficient to say that
 \geninst-directionality incurs a cost and that \OCaml by default disables
-principal inference?} Besides, the implementation of \geninst-directional type
+principal inference?}\XDR{This is important, and be stated,
+rephreased or moved somewhere else in the discussion, but not removed}
+Besides, the implementation of \geninst-directional type
 inference has an algorithmic cost. For technical reasons, type annotations must
 unshare types (from acyclic graphs as naturally produced by unification to
 trees), which may increase the size of types and the cost of type inference.
@@ -388,7 +393,7 @@ a cost, which is that everything is hard:
 
   Implementing partial types schemes efficiently is equally hard, as it
     requires triggering re-instantiations upon refinements to the scheme, while
-    avoiding redundant constraint solving across instantiations. 
+    avoiding redundant constraint solving across instantiations.
 
 \end{enumerate}
 In return, the techniques we developed for the semantics
@@ -1251,9 +1256,10 @@ be represented as the shape application $\shapp (\tint \tlist)$.
 
 We have left the syntax of shape patterns deliberately abstract.
 \XDR{Shape patterns are never defined! in the body of the paper.
-What aren't shape patterns just a subset of principal shapes}
-\Xalistair{Because principal shapes cannot express $\cpatpoly \cscm$ or $\cpatrcd \ct$. They lack 
+What aren't shape patterns just a subset of principal shapes?}
+\Xalistair{Because principal shapes cannot express $\cpatpoly \cscm$ or $\cpatrcd \ct$. They lack
 binders.}
+\XDR{We should say so---and also define them.}
 We also assume a matching relation:
 % mathpar instead of mathline since spacing was odd. If spacing is fixed,
 % use mathline
@@ -1277,10 +1283,14 @@ any shape and binds nothing:
   $\sh$, we introduce the syntactic sugar $(\cmatched \t \sh \cbrs)$ for the
   \emph{discharged match constraint} that selects the branch in $\cbrs$ that
   matches $\sh$:\XDR{$\cmatches \cpati \sh \tvs \theta$ is never defined in
-  the body of the paper} \Xalistair{It is left abstract, the matching 
-  semantics is informally defined in \cref{sec:constraints}. We should link this 
-  and the appendix. I don't think the definition is interesting enough to 
-  spend much time on it. Unless you think otherwise?}
+  the body of the paper} \Xalistair{It is left abstract, the matching
+  semantics is informally defined in \cref{sec:constraints}. We should link this
+  and the appendix. I don't think the definition is interesting enough to
+  spend much time on it. Unless you think otherwise?}\XDR{I think we should
+  not leave anything undefined: it annoys me when I am reading someone else
+  paper. If left abstract, we should defined it by its properties, which is
+  often longer and more complicated. And if left abstract, this should be
+  make clear at  the location when one would expect a definition.}
 \begin{mathpar}
   \cmatched \t \sh {\cbranch \cpats \cs} \uad\eqdef\uad
   \begin{cases}
@@ -1430,9 +1440,11 @@ induces a linear partial order between the suspended match constraints within a
 constraint, reflecting a \emph{temporal} dependency: a match constraint may only
 be discharged once all of its dependencies have been discharged.\XDR{Is this
 really true? What is the \emph{formal} definition of this temporal order?}
-\Xalistair{The order in which you apply \Rule{Match-Ctx} in the derivation. 
-I don't see the use of formally defining the order, since we mainly use it 
-intuitively in explainations.}
+\Xalistair{The order in which you apply \Rule{Match-Ctx} in the derivation.
+I don't see the use of formally defining the order, since we mainly use it
+intuitively in explainations.}\XDR{Then, we should not refer to a
+\emph{temporal} dependency, which assumes that such a formal definition
+exists.}
 
 The erasure $\cerase{\C\where{\cunif \t \gt}}$ is simple, so the use of
 $\thsimple$ avoids well-foundedness issues that would arise from
@@ -2465,7 +2477,7 @@ variables from outside the region. For instance, $\cexists \tvba \cunif \tv
 \parcomment{How to decide the relation}
 
 To decide when $\cdetermines \c \tvs$, we introduce the judgement $\th \cdetermines \c \tvs$,
-which synatically proves that $\tvs$ are determined in $\c$. 
+which synatically proves that $\tvs$ are determined in $\c$.
 %
 If $\c$ is of the form $\cexists \tvbs \cp$ where $\tvbs \disjoint \tvs$, then
 we search for a multi-equation $\ueq$ in $\cp$ of the form:
@@ -2478,8 +2490,8 @@ we search for a multi-equation $\ueq$ in $\cp$ of the form:
     $\fvs \t \disjoint \tvs, \tvbs$.
 \end{enumerate*}
 %
-This syntactic relation coincides with the semantic definition of determinacy whenever 
-$\c$ is in solved form. 
+This syntactic relation coincides with the semantic definition of determinacy whenever
+$\c$ is in solved form.
 
 \parcomment{Why we lower?}
 
@@ -2498,18 +2510,18 @@ reduces instantiation overhead.
     {\th \Cshape \C \t \sh}
     {\C\where{\cmatched \t {\sh} \cbrs}}
 
-  \infer[Uni-Type]
-    {{\color{gray}\t \notin \TyVars}}
-    {\th \Cshape \C \t {~\shape \t}}
-
   \infer[Uni-Var]
     {\color{gray}\tv \disjoint \bvs \Cb}
     {\th \Cshape {\Ca\where{\cunif \tv {\cunif \t \ueq} \cand \Cb\where{-}}} \tv {~\shape \t}}
 
+  \infer[Uni-Type]
+    {{\color{gray}\t \notin \TyVars}}
+    {\th \Cshape \C \t {~\shape \t}}
+
   \infer[Uni-BackProp]
-    {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand -}}} \tvc \sh \\ 
-     \color{gray}\tvp \in \tv, \tvs \\ 
-     \color{gray}\x \disjoint \bvs \Cb \\ 
+    {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand -}}} \tvc \sh \\
+     \color{gray}\tvp \in \tv, \tvs \\
+     \color{gray}\x \disjoint \bvs \Cb \\
      \color{gray}\tvp \disjoint \bvs \Ca}
     {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{-}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}} \tv \sh}
 \end{mathparfig}
@@ -2518,7 +2530,7 @@ reduces instantiation overhead.
 
 \Rule{S-Match-Ctx} solves suspended match constraints when the surrounding
 context $\C$ \emph{proves} that the scruitinee $\t$ has the unique shape $\sh$,
-denoted $\th \Cshape \C \t \sh$. 
+denoted $\th \Cshape \C \t \sh$.
 %
 Case \Rule{Uni-Type} handles when $\t$ is a non-variable type $\t$, in which
 case the shape is simply $\shape \t$. \Rule{Uni-Var} applies when the scrutinee
@@ -2526,20 +2538,20 @@ is a variable $\tv$ and the context establishes that $\tv$ is equal to some
 non-variable type $\t$ by exhibiting an equality $\cunif \tv {\cunif \t \ueq}$
 and $\t$ is a non-variable type. In this case, the shape of $\tv$ is $\shape
 \t$.
-% 
+%
 Finally, \Rule{Uni-BackProp} expresses \emph{backpropagation}, previously
 illustrated in \cref{ex:backprop}. In particular, the shape of a regional
 variable can sometimes be determined from its instantiations. If an abstraction
 contains a regional variable $\tvp$, and the constraint context includes a
 partial instantiation $\cpapp \x \tvp \tvc \inst$ together with a proof that the copy of
-$\tvc$ has the unique shape $\sh$. Then $\tvp$ must also have shape $\sh$, 
+$\tvc$ has the unique shape $\sh$. Then $\tvp$ must also have shape $\sh$,
 as any other shape would render the instantiation unsatisfiable.
 %
-This final case (\Rule{Uni-BackProp}) may raise concerns about the well-foundedness of $\th \Cshape \C \t \sh$. 
-However, well-foundedness follows directly from the fact that in \Rule{Uni-BackProp} the regional depth 
-of the hole strictly decreases. 
+This final case (\Rule{Uni-BackProp}) may raise concerns about the well-foundedness of $\th \Cshape \C \t \sh$.
+However, well-foundedness follows directly from the fact that in \Rule{Uni-BackProp} the regional depth
+of the hole strictly decreases.
 %
-For a solved context $\hat\C$, this relation is moreover sound and complete with respect 
+For a solved context $\hat\C$, this relation is moreover sound and complete with respect
 to the semantic definition of unicity (\cref{def:unicity}).
 
 % Properties
@@ -2549,15 +2561,15 @@ to the semantic definition of unicity (\cref{def:unicity}).
 show that well-scoping is preserved by rewriting rules?}
 
 \XDR {Then, a stuck constraint would either be $\cfalse$ or contain
-an suspended constraint.}
+a suspended constraint.}
 
 \XDR {A stuck constraint may also contain well-scoped
 instantiation clauses \emath{\cpapp \x \tv \tvc \inst}
 since Rule \Rule {S-Inst-Poly} may not fire because of
 $\tvp$ occurring in $\C$}
-\Xalistair{Yes, but this is a special case of (d), since 
-this occurs if $\tv \in \fvs \c$ and $\c$ is stuck. Thus the 
-`root' cause of the constraint being stuck isn't the instantiation 
+\Xalistair{Yes, but this is a special case of (d), since
+this occurs if $\tv \in \fvs \c$ and $\c$ is stuck. Thus the
+`root' cause of the constraint being stuck isn't the instantiation
 but the body of the abstraction being stuck.}
 
 
