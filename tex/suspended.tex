@@ -228,7 +228,7 @@ While these terms are semantically equivalent, they highlight a potential
 hazard: their typability may vary under a directionally biased inference
 algorithm, depending on whether the function or argument is typed first.  To
 limit such implementation-dependent behavior, \OCaml infers all
-subexpressions \emph{simulatenously}, until they are \code{let}-bound.\footnote
+subexpressions \emph{simultaneously}, until they are \code{let}-bound.\footnote
 %
   {With our options\cref{fn/principal}, \OCaml raises an error instead
   of a warning whenever non-principal disambiguation is used,
@@ -329,7 +329,7 @@ bidirectionally propagated to the $\lambda$-function, assigning \code{r} to have
 rather technical point), perhaps it is sufficient to say that
 \geninst-directionality incurs a cost and that \OCaml by default disables
 principal inference?}\XDR{This is important, and be stated,
-rephreased or moved somewhere else in the discussion, but not removed}
+rephrased or moved somewhere else in the discussion, but not removed}
 Besides, the implementation of \geninst-directional type
 inference has an algorithmic cost. For technical reasons, type annotations must
 unshare types (from acyclic graphs as naturally produced by unification to
@@ -1442,7 +1442,7 @@ be discharged once all of its dependencies have been discharged.\XDR{Is this
 really true? What is the \emph{formal} definition of this temporal order?}
 \Xalistair{The order in which you apply \Rule{Match-Ctx} in the derivation.
 I don't see the use of formally defining the order, since we mainly use it
-intuitively in explainations.}\XDR{Then, we should not refer to a
+intuitively in explanations.}\XDR{Then, we should not refer to a
 \emph{temporal} dependency, which assumes that such a formal definition
 exists.}
 
@@ -2476,8 +2476,8 @@ variables from outside the region. For instance, $\cexists \tvba \cunif \tv
 
 \parcomment{How to decide the relation}
 
-To decide when $\cdetermines \c \tvs$, we introduce the judgement $\th \cdetermines \c \tvs$,
-which synatically proves that $\tvs$ are determined in $\c$.
+To decide when $\cdetermines \c \tvs$, we introduce the judgment $\th \cdetermines \c \tvs$,
+which syntactically proves that $\tvs$ are determined in $\c$.
 %
 If $\c$ is of the form $\cexists \tvbs \cp$ where $\tvbs \disjoint \tvs$, then
 we search for a multi-equation $\ueq$ in $\cp$ of the form:
@@ -2529,7 +2529,7 @@ reduces instantiation overhead.
 \parcomment{S-Match-Ctx}
 
 \Rule{S-Match-Ctx} solves suspended match constraints when the surrounding
-context $\C$ \emph{proves} that the scruitinee $\t$ has the unique shape $\sh$,
+context $\C$ \emph{proves} that the scrutinee $\t$ has the unique shape $\sh$,
 denoted $\th \Cshape \C \t \sh$.
 %
 Case \Rule{Uni-Type} handles when $\t$ is a non-variable type $\t$, in which
@@ -3692,8 +3692,8 @@ set.
 \label {app/oml/examples}
 
 The following lemma shows that we can always take a larger context
-$\E$ or $\Lab$ for implicit rules \Rule {Proj-I}, \Rule {Use-I}, \Rule {Poly-I}
-and \Rule{Lab-I}.\XDR{Not illustration of \Rule{Lab-I}...}
+$\E$ or $\Lab$ for implicit rules \Rule {Proj-I}, \Rule {Use-I}, \Rule
+{Poly-I}, and \Rule{Lab-I}.\XDR{No illustration of \Rule{Lab-I}...}
 That is, there is always a derivation using only toplevel contexts.
 \begin{lemma}
 \label{lem/context/largest}
@@ -3771,7 +3771,7 @@ The following example of non-typability illustrates how the typing rules
 still forces to reject typing of some expressions whose elaboration would be
 unambiguous. This is intended, to prevent us from having to focus at several
 terms simultaneously. Our typing rules enforce the resolution of
-shape inference, locally, one at a time.
+shape inference, locally, one occurrence at a time.
 
 \begin{example}
 \newcommand{\tyid}{\ty_{\kwd{id}}}
@@ -7798,94 +7798,91 @@ should seek for sub-optimal, but more efficient good strategies.
 
 \paragraph {Dependencies}
 
-We may look at the dependency order between suspended constraints.
+Given a stuck constraint $\c$, we may look at the dependency order between
+its suspended constraints.
 \begin{version}{}
 
-Intuitively, a suspended constraint $(\cmatch \tvab \cbrbs \cdefault \shb)$,
-say $\suspcb$ depends on another suspended constraint $(\cmatch \tvaa \cbras
-\cdefault \sha)$, say $\suspca$, and we write $\suspca \cprec \suspcb$, if defaulting
-the $\suspca$ allows to solve $\suspcb$---without further defaulting.
-Unfortunately, this is too strong as a suspended constraint may help resolve
-another one without solving it. For instance, defaulting two suspended
-constraint could be needed to allow solving a third one.
+Intuitively, a suspended constraint  $\suspcb$
+%% of the form $(\cmatch \tvab \cbrbs \cdefault \shb)$
+depends on another suspended constraint $\suspca$
+%% of the form $(\cmatch \tvaa \cbras \cdefault \sha)$,
+%% and we write $\suspca \cprec \suspcb$,
+if defaulting  $\suspca$ allows to solve $\suspcb$---without further
+defaulting.  Unfortunately, this is too strong as a suspended constraint may
+help resolve another one without solving it. For instance, defaulting two
+suspended constraints could be needed to allow solving a third one.
 
 \end{version}
-Given a stuck constraint  $\c$, a suspended sub-constraint
-$\suspcb$ depends on another suspended sub-constraint~$\suspca$ if there
-exists a strategy $\S$ that can solve $\suspcb$ only after defaulting
-$\suspca$.  That is, if successively defaulting $\suspca, \bar \suspcs$
-solves $\cb$ while $\bar \suspcs$ does not.
+A suspended constraint $\suspcb$ depends on another suspended
+constraint~$\suspca$ if there exists a strategy $\S$ that can solve
+$\suspcb$ only after defaulting $\suspca$.  That is, if successively
+defaulting $\suspca, \bar \suspcs$ solves $\suspcb$ while $\bar \suspcs$
+does not.
 %
-This defines a partial ordering $\cprec$ on suspended constraints of $\c$,
-but it is expensive to compute.
+This defines a partial ordering~$\cprec^s$ on suspended constraints of~$\c$,
+which is however expensive to compute.
 
-We may define a syntactical over approximation of $\cprec$ that is easier to
-compute. We assume that $\c$ is partially solved. That is, it is stuck, but
-excluding cases (\ref{item/progress/scope/x}) and
+Therefore, we define a syntactical over approximation of $\cprec$ that is
+easier to compute. We assume that $\c$ is partially solved. That is, it is
+stuck, but excluding cases (\ref{item/progress/scope/x}) and
 (\ref{item/progress/scope/i}) which cannot occur with well-formed
 constraints.  The solved part of $\cerase {\c}$ defines a partial
-(structural domination) ordering $\cprec$ on variables. It may also contains
-partial instantiations
-\emath{\cpapp \x \tv \tvc  \inst},
-which could in potentially force unification of $\tv$ and $\tvc$.
+(structural domination) ordering $\cprec$ on variables.
 
-We extend the $\cprec$ ordering as follows:
-\begin{enumerate}
+$\cerase {\c}$ may also contains partial instantiations
+\emath{\cpapp \x \tv \tvc  \inst}, which implies that
+knowing shape of $\tv$ will also determine the shape of $\tvc$.  We thus
+extend the $\cprec$ ordering with $\tv \cprec \tvc$ for each partial
+instantiation \emath{\cpapp \x \tv \tvc \inst}.
 
-\item \label {item/pi}
-  For each partial instantiation \emath{\cpapp \x \tv \tvc  \inst},
-  we add $\tv \cprec \tvc$;
+Notice that \emath{\cpapp \x \tv \tvc \inst} has also the potential to force
+the unification of $\tv$ and $\tvc$, which will happen whenever the scope of
+$\tv$ is lowered, \eg by instantiation of $\tv$ without necessarily
+determining the shape of $\tv$.  Hence, one may be tempted to add a reverse
+edge from $\tvc$ to $\tv$. However, this may only happen if $\tv$ has been
+reached, hence $\tvc$ is already considered as reached, hence determined,
+even if its shape is not yet known.
 
-\item \label {item/sc}
-  For each suspended constraints $\cmatch \tvi {\cbrs_i} \cdefault
-  \shi$ of $\c$, let $\bar\tvbs_i$ be the set of free variables of $\cbrs_i$
-  and add $\tvi \cprec \tvci$ for each $\tvci$ in $\tvbs_i$.
-\end{enumerate}
-The contribution of (\ref {item/pi}) is obvious as the shape of $\tv$ will
-be directly propagated to $\tvc$ by instantiation. Notice that an
-instantiation of $\tv$ may lower $\tv$ without determining its shape.  This
-will turn the instantiation constraint into a unification constraint, hence
-the shape of $\tv$ may also be determined by the shape of $\tvc$.
-So we may be tempted to add a reverse edge from $\tvc$ to $\tv$. However,
-this may only happen if $\tv$ has been reached, hence $\tvc$ is already
-considered as reached, hence determined.
+Finally,   for each suspended constraints $\cmatch \tvi {\cbrs_i} \cdefault
+\shi$ of $\c$, let $\bar\tvbs_i$ be the set of free variables of $\cbrs_i$
+and add $\tvi \cprec \tvci$ for each $\tvci$ in $\tvbs_i$.  Indeed, whenever
+the shape of $\tvi$ is determined, the constraint $\suspci$ will be
+released, and since it is being treated opaquely, it could do anything with
+its free variables, hence fully determined they shapes.  This may release
+unification constraints between variables of $\tvbs_i$. Hence, we may be
+tempted to claim equivalences between them. However, this may only happened
+if $\tvi$ has been reached, and thus all variables of $\tvbs_i$ are
+considered as reached as well, hence potentially determined.
 
-The contribution of (\ref {item/sc}) is obvious: when the shape of $\tvi$ is
-determined, the constraint $\suspc \ci$ will be released, which being
-treated opaquely, could do anything with its free variables, hence fully
-determined they shapes.  This may just release unifications between
-variables of $\tvbs_i$. Hence, we may be tempted to equivalences between
-them. However, this may only happened if $\tvi$ has been reached, and thus
-all variables of $\tvbs_i$ are considered as reached as well, hence
-potentially determined.
+The partial ordering between variables induces a partial ordering between
+suspended constrains: $\suspca \cprec \suspcb$ whenever $\tvaa \cprec \tvab$
+and $\suspci$'s are of the form $(\cmatch \tvai {\bar\cbri} \cdefault
+\shi)$.
 
-We then say that $\suspca \cprec \suspcb$ if $\tvaa \cprec \tvab$ where
-$\suspci$ is of the form $(\cmatch \tvai {\bar\cbri} \cdefault \shi)$.
-
-The syntactic dependency ordering is an over approximation of the semantic
-dependency ordering.  Hence, a suspended constraint that is minimal for the
-syntactic ordering is also minimal for the semantics ordering---it depends
-on no other suspended constraints.
+The syntactic dependency ordering $\cprec$ is an over approximation of the
+semantic dependency ordering $\cprec^s$.  Hence, a suspended constraint that
+is minimal for the syntactic ordering is also minimal for the semantics
+ordering---it depends on no other suspended constraints.
 
 A strategy that always defaults a minimal constraint is
 \begin{enumerate*}
 \item reasonable;
-\item non-ambiguous;
-\item \emph{complete}, it preserves the set of solutions $\Sols$.
+\item non-ambiguous; and\goodbreak
+\item \emph{complete}, \ie it preserves the set of solutions $\Sols$.
 \end{enumerate*}
 Indeed, either a strategy does not discharge this minimal constraint, and it
 fails on $\c$, or it discharges this constraint and this must be via
-defaulting given minimality; and for minimal constraints the defaulting
-order does not affect the result.  All constraints that are minimal can also
-be defaulted simultaneously.
+defaulting, given minimality, and for minimal constraints the defaulting
+order does not affect the result.  In fact, all constraints that are minimal
+can also be defaulted simultaneously.
 
-However, such a strategy may be stuck if there is no minimal element, but a
-minimal cycle of constraints. \XDR{Can we still say that the strategy is
-complete? Is then the empty strategy complete? We should distinguish being
-stuck from returning a failure.}
+However, such a strategy may be stuck if there is no minimal element, but
+only a minimal cycle of constraints (there is always one). \XDR{Can we still
+say that the strategy is complete? Is then the empty strategy complete? We
+should distinguish being stuck from returning a failure.}
 
 If there is a cycle of constraints that are minimal, then defaulting them
-altogether (we call this the “whole-cycle” strategy) is reasonable and
+altogether, which we call the \emph{whole-cycle} strategy, is reasonable and
 non-ambiguous, but not complete.  For example, consider the constraint:
 \begin{mathpar}
 \Wedges {
@@ -7904,8 +7901,9 @@ strategy $\set{\tva, \tvb}$ fails here, so it is not complete.
 
 \paragraph {Opaque suspended constraints}
 
-Notice however, that if we treat the suspended parts as opaque, we cannot
-distinguish this example from the following where defaulting only $\set
+Notice however, that if we treat the suspended constraints as opaque, we
+cannot distinguish this example from the following where defaulting only
+$\set
 \tva$ would incorrectly succeed in an ambiguous situation. Hence, it would
 not be a non-ambiguous strategy:
 \begin{mathpar}
@@ -7921,7 +7919,7 @@ not be a non-ambiguous strategy:
     } \cdefault \tbool
 }
 \end{mathpar}
-Indeed defaulting $\set{\tva}$ gives
+Indeed, defaulting $\set{\tva}$ gives
 \relax $\wedges {\cunif \tva \tint \\ \cunif \tvb \tint}$,
 whereas defaulting $\set \tvb$ gives
 \relax $\wedges {\cunif \tva \tint \\ \cunif \tvb \tbool}$;
@@ -7929,9 +7927,9 @@ and defaulting $\set {\tva,\tvb}$ fails. This constraint is ambiguous.
 Hence, the whole-cycle strategy \emph{correctly} fails.
 
 Intuitively, treating suspended constraints as opaque is a way to compensate
-for the over-approximation of syntactic dependencies by allowing allow to
-choose for opaque constraints ones some that create dependencies that
-actually match the over approximation.
+for the over-approxi\-mation of syntactic dependencies by allowing allow to
+choose for opaque constraints concrete constraints that actually create
+all the dependencies used in the approximation.
 
 We call a strategy \emph{opaque} when it only depends on the syntactic
 dependency relation and not on the actual branches of the suspended
@@ -8320,4 +8318,5 @@ TODO: extend the magic rule and the disambiguation rule, and also provide the un
 % LocalWords:  reflexitivity metatheoretic lexicographically Unifiers TODO
 % LocalWords:  rcl env Pcd illtyped inHole Ui unfoldings welltyped mprset
 % LocalWords:  lessskip Xbla Ybla explicitating Composability composability
-% LocalWords:  determinacy subcases unifications
+% LocalWords:  determinacy subcases unifications annotatability approxi
+% LocalWords:  mation
