@@ -199,13 +199,16 @@ let ex_3 = (fun r -> r.x) one                              °\ocamlflags 10°
 In \ocaml{ex_1}, the type of \code{r} is unconstrained, so disambiguation
 fails.\footnote
 %
-  {In fact, \OCaml uses a default resolution strategy
-  instead of failing
-  when the type is ambiguous, which is to emit a warning and use the last
-  definition in scope. To check all examples, use the options
-  \texttt{-principal -w +41+18 -warn-error +41+18} \Xalistair{I added that non-principal inference should be an error here.}, which enforces principality
-  enables the warning and turn it into an error when the default resolution
-  is  used. \label{fn/principal}}
+{
+  In fact, \OCaml does not fail on ambiguous types, but instead applies a
+    default resolution strategy: it emits a warning and selects the last
+    matching type definition in scope. Here, this will amount to choosing the
+    type \code{two} for \code{r}. To check all our examples, use the options
+    \texttt{-principal -w +41+18 -warn-error +41+18}, which enables principal
+    type inference and escalates the associated warnings to errors.
+    \label{fn/principal}
+}
+%
 \relax
 At first glance, \code{ex_2} and \code{ex_3} appear equivalent: in both,
 the expression \code{r.x} can only refer to the field from type \code{int one}.
@@ -228,12 +231,7 @@ While these terms are semantically equivalent, they highlight a potential
 hazard: their typability may vary under a directionally biased inference
 algorithm, depending on whether the function or argument is typed first.  To
 limit such implementation-dependent behavior, \OCaml infers all
-subexpressions \emph{simultaneously}, until they are \code{let}-bound.\footnote
-%
-  {With our options\cref{fn/principal}, \OCaml raises an error instead
-  of a warning whenever non-principal disambiguation is used,
-  as in \ocaml[indices]{ex_3_3}.}
-%
+subexpressions \emph{simultaneously}, until they are \code{let}-bound.
 Consequently, \OCaml does not make any difference between
 \ocaml[indices]{ex_3}, \ocaml[indices]{ex_3_2}, and \ocaml[indices]{ex_3_3}.
 The same criterion also fails on \ocaml[indices]{ex_4_1} and

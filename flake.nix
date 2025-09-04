@@ -103,6 +103,9 @@
             ocamlPackages.ocaml
             ocamlPackages.dune
 
+            # OCaml examples
+            gnused
+
             # Typst
             typst
             tinymist
