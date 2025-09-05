@@ -116,7 +116,7 @@
 \newcommand{\ctxinfer}[3]{\csem {#1 \where {\square : #2} : #3}}
 \newcommand{\csem}[1]{\bbrackets {#1}}
 \newcommand{\cinfer}[2]{\csem {#1 : #2}}
-\newcommand{\cinferlab}[3]{\csem {#1 : #2 \to #3}}
+\newcommand{\cinferlab}[4]{\csem {#1 : \Tapp[#2] #3 \to #4}}
 \newcommand{\cinferlabuni}[2]{\csem {#1 \uni #2}}
 \newcommand{\cinferassn}[3]{\csem {#1 = #2 : #3}}
 
@@ -205,7 +205,7 @@
 
 \defmetavar {\x} {x}
 \defmetavar{\M}{M} % module prefix for Leijen
-\defmetavar[n]{\e}{e}
+\defmetavar[n,s]{\e}{e}
 \newcommand{\econstr}[2]{#1 \@ #2}
 \newcommand{\einst}[2][]{\angles {#2\ifempty{#1}{}{:#1}}}
 \newcommand{\exinst}[3]{\angles {#1 : \exi {#2} {#3}}}
@@ -228,10 +228,11 @@
 \newcommand{\exproj}[3]{\eproj[#3] {#1} {#2}}
 \newcommand{\eproj}[3][]{#2.#3\ifempty{#1}{}{/#1}}
 \newcommand{\erecord}[1]{\braces{#1}}
+\newcommand{\exrecord}[2]{{#1}.\braces{#2}}
 \defmetavar[s]{\el}{l}
 \newcommand{\elmagic}[1]{\braces {#1}}
 \newcommand{\elannot}[3]{\parens {{#1} : \ifempty{#2}{#3}{\exi {#2} {#3}}}}
-\defmetavar{\elab}{\ell}
+\defmetavar[s]{\elab}{\ell}
 \newcommand{\eannot}[3]{\parens {#1 : \ifempty{#2}{#3}{\exi #2 #3}}}
 \newcommand{\etuple}[1]{\parens{#1}}
 \newcommand \emagic[1]{\set{#1}}
@@ -327,6 +328,11 @@
 \newcommand{\exi}[2]{\exists #1.\,#2}
 \newcommand{\any}[2]{\nu #1.\,#2}
 \newcommand{\uni}[1]{\mathop{!}{#1}}
+\newcommand{\unii}[1]{\mathop{!!}{#1}}
+
+\newcommand{\labuni}[2]{#1 \mathrel{\triangleright} #2}
+\newcommand{\nlabuni}[2]{#1 \mathrel{\not\triangleright} #2}
+\newcommand{\labsuni}[2]{#1 \mathrel{\blacktriangleright} #2}
 
 \newcommand{\eqdef}{\mathrel{\triangleq}}
 
