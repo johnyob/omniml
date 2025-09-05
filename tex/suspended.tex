@@ -50,6 +50,10 @@ the scheme is refined.
 \Xalistair[Changed, preferred the submitted version. Was]{While the benefits of omnidirectional type inference are minor for core \ML,
   which truly enjoy principal types, they}\XDR{The meaning is not the
   same. I find the formulation you like overselling, and lying by omission}
+
+  \TODO{Change to mention that omnidirectional doesn't Core \ML, issue with striking, frame it that the framework 
+  makes a striking improvement.}
+
 The benefits of omnidirectional type inference are striking for several advanced
 \ML extensions, typically those that rely on optional type annotations where
 principality is fragile.  We illustrate them with \OCaml's static
@@ -63,15 +67,13 @@ first-class polymorphism, and tuple projections \ala \SML.
 
 \parcomment {Introduction (ML, principality)}
 
-The Damas-Hindley-Milner (\HM) \citep*{Damas-Milner/W@popl82} type system
-has long occupied a sweet spot in the design space of strongly typed
-programming languages, as it enjoys the \emph{principal types property}:
-every well-typed expression $\e$ has a most general type $\ts$ \Xalistair{We should still give
-some informal hint of what `most' general is.}\XDR{If you wish, but we are
-already over the space limit, so it means removing something else.}
-For example, the identity function
-$\efun \x \x$ has the principal type $\tfor \tv \tv \to \tv$, generalizing
-types like $\tint \to \tint$ and $\tbool \to \tbool$.
+The Damas-Hindley-Milner (\HM) \citep*{Damas-Milner/W@popl82} type system has
+long occupied a sweet spot in the design space of strongly typed programming
+languages, as it enjoys the \emph{principal types property}: every well-typed
+expression $\e$ has a most general type $\ts$ from which all other valid types
+for $\e$ are instances of $\ts$. For example, the identity function $\efun \x
+\x$ has the principal type $\tfor \tv \tv \to \tv$, generalizing types like
+$\tint \to \tint$ and $\tbool \to \tbool$.
 
 \parcomment {Benefits of principality}
 
@@ -153,8 +155,23 @@ inference is performed, which can be used to propagate both inferred
 types and user-provided type annotations as \emph{known} types that can be
 used for disambiguation and enable the omission of some annotations.
 
-\Xalistair[We should move this to the end of the section]{They are two main strategies, \emph{\geninst-directional} and
-\emph{bidirectional} type inference, which may also be combined.}
+\TODO{Give overview of the current state of directionality (and the problems we face) }
+\TODO{Consider moving both these paragraphs to related work. Make the introduction more 
+vague (but still true)}
+\Xalistair{This feels a bit out of place, should we say this earlier?}
+\Geninst-directional inference offers a way to specify and implement principal
+type inference for fragile features, aligning with the implicit inference order
+present in most \ML-like typecheckers.
+%
+This mechanism was originally proposed by~\citet*{Garrigue-Remy/poly-ml} for
+semi-explicit first-class polymorphism, and later used
+by~\citet*{LeBotlan-Remy/recasting-mlf} for empowering \MLF.
+%
+It has since been adopted in \OCaml for features such as polymorphic object
+methods and the overloading of record fields and variant constructors. More
+generally, \OCaml uses \geninst-directionality whenever the typechecker
+disambiguates on type information.
+
 
 \paragraph{\Geninst-directional type inference}
 
@@ -175,6 +192,8 @@ We call this \textbf{\geninst}-directional (read as
 \textbf{p}olymorphic expressions must be typed before their
 \textbf{i}nstances.
 %
+\parcomment{Summary / uses}
+
 To illustrate \geninst-directionality, consider the following two record types with overlapping field
 names:
 \begin{program}[input]
@@ -246,22 +265,6 @@ Treating both examples uniformly is in one sense a strength of
 annotatability is fragile, in that well-typedness depends on the
 \emph{precise} placement of annotations, often forcing the programmer
 to introduce annotations that would otherwise be unnecessary.
-
-\parcomment{Summary / uses}
-
-\Xalistair{This feels a bit out of place, should we say this earlier?}
-\Geninst-directional inference offers a way to specify and implement principal
-type inference for fragile features, aligning with the implicit inference order
-present in most \ML-like typecheckers.
-%
-This mechanism was originally proposed by~\citet*{Garrigue-Remy/poly-ml} for
-semi-explicit first-class polymorphism, and later used
-by~\citet*{LeBotlan-Remy/recasting-mlf} for empowering \MLF.
-%
-It has since been adopted in \OCaml for features such as polymorphic object
-methods and the overloading of record fields and variant constructors. More
-generally, \OCaml uses \geninst-directionality whenever the typechecker
-disambiguates on type information.
 
 \paragraph{Bidirectional type inference}
 
@@ -446,6 +449,7 @@ records that we present in this work restrict disambiguation to the
 record type alone, and thus rejects this example. Alternative typing rules
 using omnidirectional type inference could support this example as
 well.
+\TODO{Point to discussion in future work.}
 
 Finally, \ocaml{ex_1_0} is an example where none of the field
 projections has enough type information to be disambiguated on its own, but the
@@ -531,6 +535,7 @@ Our contributions are:
 
 \end{enumerate*}
 
+\TODO{Move 1.1 to 2. Rename section title to include discussion on \ML extensions}
 \section{Suspended constraints: an overview}
 \label{sec:constraints}
 
@@ -899,15 +904,12 @@ though
 
 \parcomment {Record field disambiguation in suspended constraints}
 
-We assume a global typing environment $\labenv$ mapping labels to type
-schemes, written $\elab : \tlab [\tvs]{{\Tapp \tys}}{\t} \in \labenv$
-where $\tlab [\tvs]{{\Tapp \tys}}{\t}$ is the type of the projection on
-label $\elab$ from a record of type $\t$.
-\XDR{Shouldn't we write $\tlab [\tvs]{{\Tapp \tvs}}{\t}$, since record type
-definitions are all of the form?}. A given label $\elab$ may be defined
-several times in $\labenv$, but at most once at a given record type~$\T$. We
-write $\labenv(\elab / \T)$ for the type scheme of $\elab$ in $\T$ when it
-exists.
+We assume a global typing environment $\labenv$ mapping labels to type schemes,
+written $\elab : \tlab [\tvs]{{\Tapp \tvs}}{\t} \in \labenv$ where $\tlab
+[\tvs]{{\Tapp \tvs}}{\t}$ is the type of the projection on label $\elab$ from a
+record of type $\t$. A given label $\elab$ may be defined several times in
+$\labenv$, but at most once at a given record type~$\T$. We write
+$\labenv(\elab / \T)$ for the type scheme of $\elab$ in $\T$ when it exists.
 
 We propose an alternative account of static overloading using suspended
 match constraints.  For example, in the case of an ambiguous record
@@ -1258,6 +1260,7 @@ What aren't shape patterns just a subset of principal shapes?}
 \Xalistair{Because principal shapes cannot express $\cpatpoly \cscm$ or $\cpatrcd \ct$. They lack
 binders.}
 \XDR{We should say so---and also define them.}
+\TODO{Add figure and reference here. Doesn't need prose explaination.}
 We also assume a matching relation:
 % mathpar instead of mathline since spacing was odd. If spacing is fixed,
 % use mathline
@@ -1435,14 +1438,9 @@ $\Cshape \C \t \sh$ ensures that the unicity of $\sh$ is determined only by the
 constraints that have already been discharged in $\C$; it excludes suspended
 match constraints, which may be discharged in the future. Implicitly, this
 induces a linear partial order between the suspended match constraints within a
-constraint, reflecting a \emph{temporal} dependency: a match constraint may only
-be discharged once all of its dependencies have been discharged.\XDR{Is this
-really true? What is the \emph{formal} definition of this temporal order?}
-\Xalistair{The order in which you apply \Rule{Match-Ctx} in the derivation.
-I don't see the use of formally defining the order, since we mainly use it
-intuitively in explanations.}\XDR{Then, we should not refer to a
-\emph{temporal} dependency, which assumes that such a formal definition
-exists.}
+constraint. In fact this corresponds to an order in which the solver is able to
+discharge match constraints: a match constraint may only be discharged once all
+of its dependencies have been discharged.
 
 The erasure $\cerase{\C\where{\cunif \t \gt}}$ is simple, so the use of
 $\thsimple$ avoids well-foundedness issues that would arise from
@@ -2598,11 +2596,15 @@ but the body of the abstraction being stuck.}
         for every match constraint $\hat\C\where{\cmatch \tv \cbrs}$ in
         $\c$, $\Cshape {\hat\C} \tv \sh$ does not hold for any $\sh$.
 
+        \Xalistair{Name: stuck suspended constraints?}
+
       \end{enumerate*}
      Here, $\hat\C$ is a normal context, \ie such that no other
      rewrites can be applied.
   \end{enumerate}
 \end{restatable}
+
+\TODO{Add corollary for correctness to focus on the closed case. Keep the appendix proof as is.}
 %% \vspace{-1ex}
 %
 %% This is unconditional skiping is fragile, You may insteat will only
