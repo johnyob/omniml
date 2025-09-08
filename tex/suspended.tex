@@ -3837,9 +3837,9 @@ ground type schemes $\gscm$, that is type schemes with no unbound variables
 \\
 \Crule
   {\cinfer {\einst \e} \tv}
-  {\cexists \tva
-    \cinfer \e \tva
-    \cand \cmatch \tva {\cbranch {\cpatpoly \cscm} \cscm \leq \tv}}
+  {\cexists \tvb
+    \cinfer \e \tvb
+    \cand \cmatch \tvb {\cbranch {\cpatpoly \cscm} \cscm \leq \tv}}
 \\
 \Crule
   {\cinfer {\epoly \e} \tv}
@@ -3854,7 +3854,7 @@ ground type schemes $\gscm$, that is type schemes with no unbound variables
   \end{cases}}
 \\
 \Crule
-  {\cinfer {\exfield \e \T \elab} \tv}
+  {\cinfer {\exfield \e {\T~} \elab} \tv}
   {\cexists \tvb \cinfer \e \tvb \cand \labenv(\elab/\T) \leq \tvb \to \tva}
 \\
 \Crule
@@ -4042,8 +4042,6 @@ types\footnote{We discuss relaxing this constraint in \cref{sec/rec-types}.}.
 This is formalized by the relation $\tv \prec_\up \tvb$ indicating that $\tv$
 occurs in a type assigned to $\tvb$ in $\up$. A unification problem is cyclic,
 written $\cyclic \up$, if $\tv \prec_\up^* \tv$ for some $\tv$.
-
-\pagebreak
 
 \section{Full technical reference}
 \label{appendix:figures}
@@ -4707,9 +4705,9 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 \\
 \Crule
   {\cinfer {\einst \e} \tv}
-  {\cexists \tva
-    \cinfer \e \tva
-    \cand \cmatch \tva {\cbranch {\cpatpoly \cscm} \cscm \leq \tv}}
+  {\cexists \tvb
+    \cinfer \e \tvb
+    \cand \cmatch \tvb {\cbranch {\cpatpoly \cscm} \cscm \leq \tv}}
 \\
 \Crule
   {\cinfer {\epoly \e} \tv}
@@ -7385,7 +7383,69 @@ and $\sub(\tvs) = \tys$.
 
 \subsection{Soundness and completeness of constraint generation}
 
-\TODO{ctxt-gen is not defined!}
+\begin{judgboxmathpar}
+  {\ctxinfer \E \tvp \tv}
+  {$\ctxinfer \E \tvp \tv$ is a satisfiable context iff the context $\E$ has \\ the expected type $\tv$ given the hole has the type $\tvp$.}
+\newcommand {\Crule}[2]{#1 &\eqdef& #2}
+\def \arraystretch{1.4}%4
+  \scalebox{0.9}{
+\begin{tabular}{LCL}
+  \Crule{\ctxinfer \square \tv \tv}{\square}\\
+  \Crule{\ctxinfer {\parens{\eapp \E \e}} \tvp \tv}{\cexists {\tvb \tvc} \cunif \tvc {\tvb \to \tv} \cand \ctxinfer \E \tvp \tvc \cand \cinfer \e \tvb}\\
+  \Crule{\ctxinfer {\parens{\eapp \e \E}} \tvp \tv}{\cexists {\tvb \tvc} \cunif \tvc {\tvb \to \tv} \cand \cinfer \e \tvc \cand \ctxinfer \E \tvp \tvb}\\
+  \Crule{\ctxinfer {\parens{\elet \x \E \e}} \tvp \tv}{\clet \x \tvb {\ctxinfer \E \tvp \tvb} {\cinfer \e \tv}}\\
+  \Crule{\ctxinfer {\parens{\elet \x \e \E}} \tvp \tv}{\clet \x \tvb {\cinfer \e \tvb} {\ctxinfer \E \tvp \tv}}\\
+  \Crule{\ctxinfer {{\eannot \E \tvs \t}} \tvp \tv}{\cexists \tvs \cunif \tv \t \cand \ctxinfer \E \tvp \tv}\\
+  \Crule{\ctxinfer {\etuple {\ea, \ldots, \E_j, \ldots, \en}} \tvp \tv}{\cexists \tvs \cunif \tv {\tProd \tvi} \cand \cAnd_{i \neq j} \cinfer \ei \tvi \cand \ctxinfer {\E_j} \tvp \tvj} \\
+  \Crule{\ctxinfer {\parens{\exproj \E j n}} \tvp \tv}{\cexists {\tvb, \tvbs} \ctxinfer \E \tvp \tvb \cand \cunif \tvb {\tProd \tvbi} \cand \cunif \tv \tvbj}\\
+  \Crule{\ctxinfer {\parens{\eproj \E j}} \tvp \tv}{\cexists \tvb \ctxinfer \E \tvp \tvb \cand \cmatch \tvb {\cbranch {\cpatprod \tvc j} {\cunif \tv \tvc}}}\\
+  \Crule{\ctxinfer {\expoly \E \tvs \ts} \tvp \tv}{\cexists \tvs \ctxinfer \E \tvp \ts \cand \cunif \tv {\tpoly \ts}}\\
+  \Crule{\ctxinfer {\exinst \E \tvs \ts} \tvp \tv}{\cexists {\tvs, \tvb} \ctxinfer \E \tvp \tvb \cand \cunif \tvb {\tpoly \ts} \cand \cleq \ts \tv}\\
+  \Crule{\ctxinfer {\epoly \E} \tvp \tv}{\clet \x \tvb {\ctxinfer \E \tvp \tvb} {\\&&\cmatch \tv {\cbranch {\cpatpoly \cscm} {\cleq \x \cscm}}}}\\
+  \Crule{\ctxinfer {\einst \E} \tvp \tv}{\cexists \tvb {\ctxinfer \E \tvp \tvb \cand \cmatch \tvb {\cbranch {\cpatpoly \cscm} {\cleq \cscm \tv}}}}\\
+\Crule
+  {\ctxinfer {\parens{\efield \E \elab}} \tvp \tv}
+  {\begin{cases}
+    \cexists {\tvb} \ctxinfer \E \tvp \tvb \cand \labenv(\elab/\T) \leq \tvb \to \tva & \text{if } \labuni \elab \T \\
+    \cexists \tvb \ctxinfer \E \tvp \tvb \\ \cand \cmatch \tvb {\cbranch {\cpatrcd \ct} {\labenv(\elab/\ct) \leq \tvb \to \tv}} & \text{otherwise}
+  \end{cases}}
+\\
+\Crule
+  {\ctxinfer {\parens{\exfield \E \T \elab}} \tvp \tv}
+  {\cexists \tvb \ctxinfer \E \tvp \tvb \cand \labenv(\elab/\T) \leq \tvb \to \tva}
+\\
+\Crule
+  {\ctxinfer {\erecord {\elaba = \ea; \ldots; \elab_j = \E_j; \ldots; \elab_n = \en}} \tvp \tv}
+  {\begin{cases} 
+    \cexists \tvbs \cAnd_{i \neq j} \cinfer \ei \tvbi \cand \ctxinfer {\E_j} \tvp \tvbj     & \text{if } \labsuni \elabs \T \\
+    \cand \cAnd\iton \labenv(\elabi/\T) \leq \tv \to \tvbi \\
+    \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi & \text{otherwise} \\
+    \uad\cand~\cmatch \tv {\cbranch {\cpatrcd \ct} 
+      {\dom {\ct} = \elabs \\ 
+      \hspace{3cm}\cand \cAnd\iton \labenv(\elabi/\ct) \leq \tv \to \tvbi}}
+  \end{cases} }
+\\
+\Crule
+  {\ctxinfer {\exrecord \T {\elaba = \ea; \ldots; \elab_j = \E_j; \ldots; \elab_n = \en}} \tvp \tv}
+  {\cexists \tvbs \cAnd_{i \neq j} \cinfer \ei \tvbi \cand \ctxinfer {\E_j} \tvp \tvbj \cand \dom {\T} = \elabs \\ 
+  &&\cand \cAnd\iton \labenv(\elabi/\T) \leq \tv \to \tvbi }
+\\
+\Crule
+  {\ctxinfer {\emagic {\ea, \ldots, \E_j, \ldots, \en}} \tvp \tv}
+  {\cexists \tvbs \cAnd_{i \neq j} \cinfer \ei \tvbi \cand \ctxinfer {\E_j} \tvp \tvbj}
+\\\\
+\Crule
+  {\ctxinfer \E \tvp \t}
+  {\cexists \tv \cunif \tv \t \cand \ctxinfer \E \tvp \tv}
+\\
+\Crule
+  {\ctxinfer \E \tvp {\tfor \tvs \t}}
+  {\cfor \tvs \ctxinfer \E \tvp \t}
+\\\\
+\end{tabular}
+  }
+\end{judgboxmathpar}
+
 \begin{lemma}
   \label{lem:ctxt-gen-correctness}
   For any term context $\E$, term $\e$, $\ctxinfer \E \tv \tvb \where{\cinfer \e \tv} = \cinfer {\E\where{\e}} \tvb$.
