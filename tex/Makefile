@@ -33,6 +33,7 @@ clean:
 	rm -rf _build
 
 cleaner vacuum: clean
+	rm -f suspended.pdf
 	rm -f suspended.*.pdf
 
 clean-alistair: vacuum
