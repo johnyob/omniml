@@ -2528,7 +2528,7 @@ reduces instantiation overhead.
      \color{gray}\tvp \in \tv, \tvs \\
      \color{gray}\x \disjoint \bvs \Cb \\
      \color{gray}\tvp \disjoint \bvs \Ca}
-    {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{-}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}} \tv \sh}
+    {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{-}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}} \tvp \sh}
 \end{mathparfig}
 
 \parcomment{S-Match-Ctx}
@@ -2561,7 +2561,10 @@ to the semantic definition of unicity (\cref{def:unicity}).
 
 % Properties
 % May look like space hacks, but restatable introduces its own space
+\Xalistair{@Didier, can you take a look at the new correctness corollary to check if 
+this is what you wanted in terms of scoping?}
 
+\begin{version}{}
 \XDR {Shouldn't we defined a notion of well-scoped constraints and
 show that well-scoping is preserved by rewriting rules?}
 
@@ -2576,6 +2579,7 @@ $\tvp$ occurring in $\C$}
 this occurs if $\tv \in \fvs \c$ and $\c$ is stuck. Thus the
 `root' cause of the constraint being stuck isn't the instantiation
 but the body of the abstraction being stuck.}
+\end{version}
 
 \begin{restatable}[Progress]{theorem}{progress}
   \label{thm:progress}
@@ -2590,15 +2594,10 @@ but the body of the abstraction being stuck.}
       \item
         \label {item/progress/scope/x}
         $\hat\C\where{\capp \x \t}$ where $\x \disjoint \hat\C$;
-        \XDR{This case should not occur in well-scoped constraints}
       \item
         \label {item/progress/scope/i}
         $\hat\C\where{\cpapp \x \tv \tvc \inst}$ where
         $\x \disjoint \hat\C$ and $\inst.\tv \disjoint \insts {\hat\C}$;
-        \XDR{Idem.}
-        \XDR{$\insts$ is undefined in the body of the paper---and its
-        appendices.}
-        \Xalistair{TODO: define $\insts \c$ in appendices.}
       \item
         \label {item/progress/suspended}
         for every match constraint $\hat\C\where{\cmatch \tv \cbrs}$ in
@@ -2612,7 +2611,6 @@ but the body of the abstraction being stuck.}
   \end{enumerate}
 \end{restatable}
 
-\TODO{Add corollary for correctness to focus on the closed case. Keep the appendix proof as is.}
 %% \vspace{-1ex}
 %
 %% This is unconditional skiping is fragile, You may insteat will only
@@ -2628,6 +2626,11 @@ but the body of the abstraction being stuck.}
   \label{thm:preservation}
   If $\ca \csolve \cb$, then $\ca \cequiv \cb$.
 \end{restatable}
+
+\begin{corollary}[Correctness]
+  For the closed-term-variable constraint $\c$, $\c$ is satisfiable if and only if
+  $\c \csolve^* \hat\c$ and $\hat\c$ is a solved form equivalent to $\c$.
+\end{corollary}
 
 \section{Implementation}
 \label{sec:implementation}
@@ -3879,9 +3882,9 @@ ground type schemes $\gscm$, that is type schemes with no unbound variables
 \\
 \Crule
   {\cinfer {\einst \e} \tv}
-  {\cexists \tva
-    \cinfer \e \tva
-    \cand \cmatch \tva {\cbranch {\cpatpoly \cscm} \cscm \leq \tv}}
+  {\cexists \tvb
+    \cinfer \e \tvb
+    \cand \cmatch \tvb {\cbranch {\cpatpoly \cscm} \cscm \leq \tv}}
 \\
 \Crule
   {\cinfer {\epoly \e} \tv}
@@ -3896,7 +3899,7 @@ ground type schemes $\gscm$, that is type schemes with no unbound variables
   \end{cases}}
 \\
 \Crule
-  {\cinfer {\exfield \e \T \elab} \tv}
+  {\cinfer {\exfield \e {\T~} \elab} \tv}
   {\cexists \tvb \cinfer \e \tvb \cand \labenv(\elab/\T) \leq \tvb \to \tva}
 \\
 \Crule
@@ -4129,7 +4132,7 @@ definition in full, or when studying the meta-theory of the system.
   \nextline
   \and  \cmatch \t \cbrs
   \nextline
-  \and \ueqs
+  \and \ueq
   \and \cletr \x \tv \tvs \ca \cb
   \and \cexistsi \inst \x \c
   \and \cpinst \inst \tv \t
@@ -4747,9 +4750,9 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 \\
 \Crule
   {\cinfer {\einst \e} \tv}
-  {\cexists \tva
-    \cinfer \e \tva
-    \cand \cmatch \tva {\cbranch {\cpatpoly \cscm} \cscm \leq \tv}}
+  {\cexists \tvb
+    \cinfer \e \tvb
+    \cand \cmatch \tvb {\cbranch {\cpatpoly \cscm} \cscm \leq \tv}}
 \\
 \Crule
   {\cinfer {\epoly \e} \tv}
@@ -5060,14 +5063,10 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
      \x \disjoint \cc}
     {\cc \cand \Clet \x \tv \ca \cb}
 
-  \rewrite[S-Match-Type]
-    {\cmatch \t \cbrs }{ \t \notin \TyVars}
-    {\cmatched \t {\shape \t} \cbrs}
-
-  \rewrite[S-Match-Var]
-    {\C\where{\cmatch \tv \cbrs} }{
-     \cunif \tv {\cunif \t \ueq} \in \C}
-    {\C\where{\cmatched \tv {\shape \t} \cbrs}}
+  \rewrite[S-Match-Ctx]
+    {\C\where{\cmatch \t \cbrs}}
+    {\th \Cshape \C \t \sh}
+    {\C\where{\cmatched \t {\sh} \cbrs}}
 
    \rewrite[S-Inst-Name]
     {\cpinst \inst \tv \t}
@@ -5131,21 +5130,8 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 
   \rewrite[S-Exists-Lower]
     {\cletr \x \tv {\tvas, \tvbs} \ca \cb}
-    {\cdetermines {\cexists {\tv, \tvas} \ca} \tvbs}
+    {\th \cdetermines {\cexists {\tv, \tvas} \ca} \tvbs}
     {\cexists \tvbs \cletr \x \tv \tvas \ca \cb}
-
-  \rewrite[S-BackProp]
-    {\C\where
-       {\cletr \x \tv {\tvs}
-          {\Ca\where{\cmatch \tvp \cbrs}}
-          {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}
-    {\tvp \in \reg \tv \tvs \\
-     \cunif {\tvc} {\cunif \t \ueq} \in \C\where\Cb \\
-     \x \disjoint \bvs \Cb}
-    {\C\where
-       {\cletr \x \tv {\tvs}
-           {\Ca\where{\cmatched \tvp {\shape \t} \cbrs}}
-	   {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}
 
   \rewrite[S-Exists-Exists-Inst]
     {\cexistsi \inst \x \cexists \tv \c}
@@ -5174,7 +5160,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 
   \rewrite[S-Exists-All]
     {\cfor \tvs {\cexists {\tvbs, \tvcs} \c}}
-    {\cdetermines {\cexists {\tvs, \tvbs} \c} \tvcs}
+    {\th \cdetermines {\cexists {\tvs, \tvbs} \c} \tvcs}
     {\cexists \tvcs \cfor \tvs {\cexists \tvbs \c}}
 
   \rewrite[S-All-Escape]
@@ -5196,6 +5182,26 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\ctrue}
 \end{judgboxmathpar}
 
+\begin{judgboxmathpar}
+  {\th \Cshape \C \t \sh}
+  {Under $\C$, the type $\t$ has the provably unique canonical shape $\sh$.}
+  \infer[S-Uni-Var]
+    {\color{gray}\tv \disjoint \bvs \Cb}
+    {\th \Cshape {\Ca\where{\cunif \tv {\cunif \t \ueq} \cand \Cb\where{-}}} \tv {~\shape \t}}
+
+  \infer[S-Uni-Type]
+    {{\color{gray}\t \notin \TyVars}}
+    {\th \Cshape \C \t {~\shape \t}}
+
+  \infer[S-Uni-BackProp]
+    {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand -}}} \tvc \sh \\
+     \color{gray}\tvp \in \tv, \tvs \\
+     \color{gray}\x \disjoint \bvs \Cb \\
+     \color{gray}\tvp \disjoint \bvs \Ca}
+    {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{-}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}} \tv \sh}
+
+\end{judgboxmathpar}
+
 \begin{definition}
   $\cdetermines \c \tvbs$ if and only if every ground assignments
   $\semenv$ and $\semenvp$ that satisfy (the erasure of) $\c$ and coincide outside of $\tvb$
@@ -5210,11 +5216,40 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
   \end{mathpar}
 \end{definition}
 
-\begin{definition}
-A context $\C$ proves a multi-equation $\ueq$, written $\ueq \in \C$,  if there exists a decomposition
-  $\C = \Ca[\ueq \cand \Cb]$ such that $\fvs \ueq \disjoint \bvs \Cb$
-\end{definition}
+\begin{judgboxmathpar}
+  {\th \cdetermines \c \tvs}
+  {$\c$ provably determines $\tvs$.}
 
+  \inferrule
+    [S-Det-Dom]
+    {\tvc \disjoint \tvbs, \tvas \\ \tvs \subseteq \fvs \ueq}
+    {\th \cdetermines {\cexists \tvbs \c \cand \cunif \tvc \ueq} \tvs}
+
+  \inferrule
+    [S-Det-Esc]
+    {\fvs \t \disjoint \tvs, \tvbs}
+    {\th \cdetermines {\cexists \tvbs \c \cand \cunif \tvs {\cunif \t \ueq}} \tvs}
+\end{judgboxmathpar}
+
+\begin{judgboxmathpar}
+  {\insts \c}
+  {The set of instantiations in $\c$.}
+  \newcommand{\Srule}[2]{#1 &\eqdef& #2}
+  \begin{tabular}{RCL}
+    \Srule{\insts \ctrue}{\eset}\\
+    \Srule{\insts \cfalse}{\eset}\\
+    \Srule{\insts {\ca \cand \cb}}{\insts \ca \cup \insts \cb}\\
+    \Srule{\insts {\cexists \tv \c}}{\insts \c}\\
+    \Srule{\insts {\cfor \tv \c}}{\insts \c}\\
+    \Srule{\insts {\cunif \t \tp}}{\eset}\\
+    \Srule{\insts {\clet \x \tv \ca \cb}}{\insts \ca \cup \insts \cb}\\
+    \Srule{\insts {\capp \x \t}}{\eset}\\
+    \Srule{\insts {\ueq}}{\eset}\\
+    \Srule{\insts {\cletr \x \tv \tvs \ca \cb}}{\insts \ca \cup \insts \cb}\\
+    \Srule{\insts {\cexistsi \inst \x \c}}{\insts \c}\\
+    \Srule{\insts {\cpapp \x \tv \tvc \inst}}{\set {\inst.\tv}}
+  \end{tabular}
+\end{judgboxmathpar}
 
 
 \begin{definition}[Measure]
@@ -5999,17 +6034,17 @@ generally in our system.
 \end{definition}
 
 \begin{definition}[Match-closed]
-  A predicate $P$ on constraints is \emph{match-closed} if, for all constraints $\cs, \cs'$, matches $\cmatch \t \cbrs$ and shapes $\sh$,
+  A predicate $P$ on constraints is \emph{match-closed} if, for all constraints $\cs, \cs'$, contexts $\C$, matches $\cmatch \t \cbrs$ and shapes $\sh$,
   \begin{mathpar}
-    P(\cs, \cmatch \t \cbrs, \cs') \implies P(\cs, \cmatched \t \sh \cbrs, \cs')
+    P(\cs, \C\where{\cmatch \t \cbrs}, \cs') \implies P(\cs, \C\where{\cmatched \t \sh \cbrs}, \cs')
   \end{mathpar}
 \end{definition}
 
 \begin{lemma}[Determines is match-closed]
   \label{lem:determines-is-match-closed}
-  $\cdetermines \c \tvbs$ is match-closed.
+  $\cdetermines \c \tvbs$ is match-closed. Similarly, $\th \cdetermines \c \tvbs$ is matched closed.
   \begin{proof}
-    Follows from the definition of $\cdetermines \c \tvbs$ and \cref{lem:cong-simple}.
+    Follows from the definitions of $\cdetermines \c \tvbs$, $\th \cdetermines \c \tvbs$, and \cref{lem:cong-simple}.
   \end{proof}
 \end{lemma}
 
@@ -6160,46 +6195,153 @@ generally in our system.
 \end{lemma}
 
 \newcommand{\disjointPf}[3]{\Pf{#1}{\disjoint}{#2}{#3}}
-\begin{lemma}
-  \label{lem:unicity-match-var}
-  If $\cunif \tv {\cunif \t \ueq} \in \C$ and $\t \notin \TyVars$, then
-  $\Cshape \C \tv {~\shape \t}$.
-  \begin{proof}~
+\begin{lemma}  
+  \label{lem:unicity-soundness}
+  If $\th \Cshape \C \t \sh$, then $\Cshape \C \t \sh$. 
 
-    \begin{llproof}
-      \inPf{\cunif \tv {\cunif \t \ueq}}{\C}{Premise}
-      \notinPf{\t}{\TyVars}{Premise}
-      \eqPf{\t}{\shapp[\shape \t] \tys}{For some $\tys$}
-      \eqPf{\C}{\Ca\where{\cunif \tv {\cunif \t \ueq} \cand \Cb}}{By definition}
-      \disjointPf{\fvs {\tv, \t, \ueq}}{\bvs \Cb}{\ditto}
-      \ForallPf{\semenv, \gt}{}{Defn. of $\Cshape \C \tv {~\shape \t}$}
-      \vdashPf{\semenv}{\cerase{\Ca\where{\cunif \tv {\cunif {\shapp[\shape \t] \tys} \ueq} \cand \Cb\where{\cunif \tv \gt}}}}{Premise}
-      \vdashPf{\semenva}{\cunif \tv {\cunif {\shapp[\shape \t] \tys} \ueq}}{Inversion of $\Ca$}
-      \vdashPf{\semenvb}{\cunif \tv \gt}{Inversion of $\Cb$}
-      \eqPf{\gt}{\semenvb(\tv)}{Simple inversion}
-      \continueeqPf{\semenva(\tv)}{$\tv \disjoint \bvs \Cb$}
-      \continueeqPf{\shapp[\shape \t] {\semenva(\tys)}}{Simple inversion}
-\Hand \eqPf{\shape \gt}{\shape \t}{Applying shape to both sides}
-    \end{llproof}
-  \end{proof}
-\end{lemma}
-
-\begin{lemma}
-  \label{lem:unicity-back-prop}
-  If $\cunif {\tvc} {\cunif \t \ueq} \in \C\where\Cb$ and $\t \notin \TyVars$,
-  then
-  \begin{mathpar}
-    \Cshape {\C\where
-       {\cletr \x \tv {\tvs} {\Ca\where{\square}}
-			     {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}
-      \tvp
-      {~\shape \t}
-  \end{mathpar}
   \begin{proof}
-    Similar proof to \cref{lem:unicity-match-var}.
+    \begin{proofcases}
+      \proofcasederivation
+      {S-Uni-Type}
+      {{\t \notin \TyVars}}
+      {\th \Cshape \C \t {~\shape \t}}
+
+      \begin{llproof}
+        \notinPf{\t}{\TyVars}{Premise}
+        \eqPf{\t}{\shapp[\shape \t] \tys}{For some $\tys$}
+        \ForallPf{\semenv, \gt}{}{Defn. of $\Cshape \C \t {~\shape \t}$}
+        \vdashPf{\semenv}{\cerase{\C\where{\cunif \t \gt}}}{Premise}
+        \vdashPf{\semenva}{\cunif \t \gt}{Inversion of $\cerase \Ca$}
+        \eqPf{\gt}{\semenva(\t)}{Simple inversion}
+        \continueeqPf{\shapp[\shape \t] {\semenva(\tys)}}{\ditto}
+\Hand   \eqPf{\shape \gt}{\shape \t}{Applying shape to both sides}
+      \end{llproof}
+
+
+      \proofcasederivation
+        {S-Uni-Var}
+        {\tv \disjoint \bvs \Cb}
+        {\th \Cshape {\Ca\where{\cunif \tv {\cunif \t \ueq} \cand \Cb\where{-}}} \tv {~\shape \t}}
+
+      \begin{llproof}
+        \disjointPf{\tv}{\bvs \Cb}{Premise}
+        \eqPf{\t}{\shapp[\shape \t] \tys}{For some $\tys$}
+        \ForallPf{\semenv, \gt}{}{Defn. of $\Cshape \C \tv {~\shape \t}$}
+        \vdashPf{\semenv}{\cerase{\Ca\where{\cunif \tv {\cunif {\shapp[\shape \t] \tys} \ueq} \cand \Cb\where{\cunif \tv \gt}}}}{Premise}
+        \vdashPf{\semenva}{\cunif \tv {\cunif {\shapp[\shape \t] \tys} \ueq}}{Inversion of $\cerase \Ca$}
+        \vdashPf{\semenvb}{\cunif \tv \gt}{Inversion of $\cerase \Cb$}
+        \eqPf{\gt}{\semenvb(\tv)}{Simple inversion}
+        \continueeqPf{\semenva(\tv)}{$\tv \disjoint \bvs \Cb$}
+        \continueeqPf{\shapp[\shape \t] {\semenva(\tys)}}{Simple inversion}
+  \Hand \eqPf{\shape \gt}{\shape \t}{Applying shape to both sides}
+      \end{llproof}
+
+
+      \proofcasederivation
+        {S-Uni-BackProp}
+        {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand -}}} \tvc \sh \\
+         \tvp \in \tv, \tvs \\
+         \x \disjoint \bvs \Cb \\
+         \tvp \disjoint \bvs \Ca}
+        {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{-}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}} \tvp \sh}
+
+        \begin{llproof}
+          \inPf{\tvp}{\tv,\tvs}{Premise}
+          \disjointPf{\x}{\bvs \Cb}{\ditto}
+          \disjointPf{\tvp}{\bvs \Ca}{\ditto}
+          \vdashPf{}{\Cshape{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand -}}} \tvc \sh}{\ditto}
+          \shapePf{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand -}}}{\tvc}{\sh}{By \ih}
+          \ForallPf{\semenv, \gt}{}{Defn. of $\Cshape \ldots \tv {~\shape \t}$}
+          \vdashPf{\semenv}{\cerase{\cletr \x \tv \tvs {\Ca\where{\cunif \tvp \gt}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}{Premise}
+          \LetPf{\semenva}{\semenv[\x \is \semenv(\cabsr \tv \tvs {\cerase {\Ca\where{\cunif \tvp \gt}}})]}{}
+          \eqPf{\semenvp(\tvp)}{\gt}{For any $\greg \tv \semenvp \in \semenva(\x)$}
+          \vdashPf{\semenvb}{\cpapp \x \tvp \tvc \inst}{Inversion of $\cerase \Cb$}
+          \eqPf{\semenvb(\inst^\x)(\tvp)}{\semenvb(\tvc)}{Simple inversion}
+          \inPf{\semenvb(\inst^\x)}{\semenvb(\x)}{Since $\cexistsi \inst \x \in \Cb$, $\semenvb$ extends $\semenva$}
+          \eqPf{\semenvb(\inst^\x)(\tvp)}{\gt}{Above}
+          \continueeqPf{\semenvb(\tvc)}{\ditto}
+          \vdashPf{\semenva}{\cerase {\Cb\where{\cpapp \x \tvp \tvc \inst \cand \cunif \tvc \gt}}}{Entailment for $\cerase \Cb$}
+          \vdashPf{\semenv}{\cerase {\cletr \x \tv \tvs {\Ca\where{\cunif \tvp \gt}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand \cunif \tvc \gt}}}}{By \Rule{LetR}}
+          \vdashPf{\semenv}{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand \cunif \tvc \gt}}}{Simple congruence}
+\Hand     \eqPf{\shape \gt}{\sh}{$\implies E$ on $\Cshape \ldots \tvc \sh$}
+        \end{llproof}
+
+    \end{proofcases}
   \end{proof}
 \end{lemma}
 
+\begin{lemma}
+  \label{lem:unicity-completeness}
+
+  If $\C$ is normalized, then $\Cshape \C \t \sh$ if and only $\th \Cshape \C \t \sh$. 
+  \begin{proof}~
+    \begin{proofcases}
+
+      \proofcase{$\implies$}
+        \newcommand{\NC}{R}
+
+        Let us assume $\Cshape \C \t \sh$ and $\C$ is normalized.
+
+        Given $\C$ is normalized, every constraint in $\C$ is of the form: \\
+
+        \begin{bnfgrammar}
+          \entry[]{\NC}{
+            \bar{\hat\ueq}
+            \cand \overline{\cmatch \tv \cbrs}
+            \cand \cexists {\overline{\inst^\x}} {\overline{\cpapp \x \tvb \tvc \inst}}
+            \cand \overline{\cletr \x \tvd \tvds {\NC_1} {\NC_2}}
+          }
+        \end{bnfgrammar}
+        \\
+
+        By assumptions, we have $\all {\phi, \gt} {\phi \th \cerase
+        \C\where{\cunif \tv \gt}} \implies \shape \gt = \sh$. Hence $\cerase
+        \C$ contains $\cerase \NC$ where: \\
+
+        \begin{bnfgrammar}
+          \entry[]{\cerase \NC}{
+            \bar{\hat\ueq}
+            \cand \cexists {\overline{\inst^\x}} {\overline{\cpapp \x \tvb \tvc \inst}}
+            \cand \overline{\cletr \x \tvd \tvds {\cerase {\NC_1}} {\cerase {\NC_2}}}
+          }
+        \end{bnfgrammar}
+        \\
+
+        \Wlog all constraints that may determine the shape of $\tv$ are located
+        with the regional binder (following the \Rule{S-Lower-Exists} and
+        \Rule{S-Let-ConjLeft} rules). There are two cases: 
+
+        \begin{proofcases}  
+
+          \proofcase{$\cunif \tv {\cunif \t \ueq} \in \bar{\hat\ueq}$} Apply \Rule{S-Uni-Var}.
+
+
+          \proofcase{Otherwise}
+
+            Since $\C$ is normalized, it must be that case that no equality
+            constraint determines the shape of $\tv$. Since any such equality
+            would normalize to $\cunif \tv {\cunif \t \ueq}$, contradicting our
+            assumption that $\C$ is normalized.
+
+            By elimination on the structure of $\NC$, the only constraints that
+            could determine the shape of $\tv$ are partial instantiation
+            constraints that copy $\tv$. So there exists a partial
+            instantiation constraint $\cpapp \x \tv \tvc \inst$ such that $\Cp
+            \where{\cpapp \x \tv \tvc \inst} = \C\where{\ctrue}$ and $\Cshape
+            \Cp \tvc \sh$. 
+
+            By induction, we have $\th \Cshape \Cp \tvc \sh$. From
+            \Rule{S-Uni-BackProp}, we have $\th \Cshape \C \tv \sh$. 
+ 
+
+        \end{proofcases}
+
+      \proofcase{$\impliedby$} Follows from \cref{lem:unicity-soundness}.
+
+    \end{proofcases}
+
+  \end{proof}
+\end{lemma}
 
 \begin{lemma}[Unification preservation]
   \label{lem:unification-preservation}
@@ -6276,41 +6418,13 @@ generally in our system.
       \end{llproof}
 
     \proofcaserewrite
-      {S-Match-Type}
-      {\cmatch \t \cbrs \\ \t \notin \TyVars}
-      {\cmatched \t {\shape \t} \cbrs}
+      {S-Match-Ctx}
+      {\C\where{\cmatch \t \cbrs} \\ \th \Cshape \C \t \sh}
+      {\C\where{\cmatched \t \sh \cbrs}}
 
 	\begin{llproof}
-	    \notinPf{\t}{\TyVars}{Premise}
-	    \shapePf{\square}{\t}{~\shape \t}{By definition}
-	    \sufficientPf{equivalences between constraints}{}{\cref{lem:compose-unicity}}
-	\end{llproof}
-	\begin{proofcases}
-	  \proofcase{$\implies$}
-
-	  \begin{llproof}
-	    \ForallPf{\semenv}{}{}
-	    \vdashPf{\semenv}{\cmatch \t \cbrs}{Premise}
-\Hand 	    \vdashPf{\semenv}{\cmatched \t {\shape \t} \cbrs}{\cref{lem:susp-inversion}}
-	  \end{llproof}
-
-	  \proofcase{$\impliedby$}
-
-	  \begin{llproof}
-	    \ForallPf{\semenv}{}{}
-	    \vdashPf{\semenv}{\cmatched \t {\shape \t} \cbrs}{Premise}
-\Hand 	    \vdashPf{\semenv}{\cmatch \t \cbrs}{By \Rule{Match-Ctx}}
-	  \end{llproof}
-	\end{proofcases}
-
-    \proofcaserewrite
-      {S-Match-Var}
-      {\C\where{\cmatch \tv \cbrs} \\ \cunif \tv {\cunif \t \ueq} \in \C}
-      {\C\where{\cmatched \tv {\shape \t} \cbrs}}
-
-	\begin{llproof}
-	  \inPf{\cunif \tv {\cunif \t \ueq}}{\C}{Premise}
-	  \shapePf{\C}{\tv}{~ \shape \t}{\cref{lem:unicity-match-var}}
+    \vdashPf{}{\Cshape \C \t \sh}{Premise}
+	  \shapePf{\C}{\t}{\sh}{\cref{lem:unicity-soundness}}
 	  \sufficientPf{equivalences between constraints}{}{\cref{lem:compose-unicity}}
 	\end{llproof}
 
@@ -6636,23 +6750,6 @@ generally in our system.
 
     \end{proofcases}
 
-
-  \proofcaserewrite
-    {S-BackProp}
-    {\C\where
-       {\cletr \x \tv {\tvs} {\Ca\where{\cmatch \tvp \cbrs}}
-                           {\Cb\where{\cpapp \x \tvp \tvc \inst}}} \\
-    \tvp \in \reg \tv \tvs \\
-     \cunif {\tvc} {\cunif \t \ueq} \in \C\where\Cb \\
-     \x \disjoint \bvs \Cb}
-    {\C\where{\cletr \x \tv {\tvs} {\Ca\where{\cmatched \tvp {\shape \t} \cbrs}}
-		      {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}
-
-
-    \begin{llproof}
-      Similar argument to \Rule{S-Match-Var}, using \cref{lem:unicity-back-prop}.
-    \end{llproof}
-
   \proofcase{\Rule{S-Compress}, \Rule{S-Gc}, \Rule{S-Exists-All}, \Rule{S-All-Escape}, \Rule{S-All-Rigid}, \Rule{S-All-Solve}}
 
   \begin{llproof}
@@ -6684,7 +6781,7 @@ generally in our system.
     \proofcase{$\cmatch \t \cbrs$}
       We have two cases:
       \begin{proofcases}
-	\proofcase{$\t$ is a non-variable type} Apply \Rule{S-Match-Type}.
+  \proofcase{$\t$ is a non-variable type} Apply \Rule{S-Match-Ctx} using \Rule{S-Uni-Type}
 	\proofcase{$\t$ is a type variable $\tv$}
 
 	  We have $\nCshape \square \tv$. It suffices
@@ -6734,13 +6831,10 @@ generally in our system.
 
 	    Consider a match constraint $\cmatch \tvp \cbrs$ in $\ca$.
 
-	    If $\cunif \tvp {\cunif \t \ueq} \in \cb$ and $\t \notin \TyVars$. By the above logic, it must be at the root (otherwise $\cb$
-	    is not stuck). So we have $\cunif \tvp {\cunif \t \ueq} \in \hat \Ca \cand \cb$. Thus we can apply \Rule{S-Match-Type}.
+      If $\th \Cshape {\where{\hat\Ca\where{-} \cand \cb}} \tvp \sh$. Then we can apply \Rule{S-Match-Ctx}.
 
-	    If $\cunif \tvc {\cunif \t \ueq} \in \cb$, $\t \notin \TyVars$, and $\hat\Ca$ contains $\cletr \x \tv \tvs {\hat\Cc\where{\cmatch \tvp \cbrs}} {\hat\C_4\where{\cpapp \x \tvp \tvc \inst}}$.
-	    Apply \Rule{S-BackProp}.
-
-	    Otherwise, we are stuck and $\nCshape {(\Ca \cand \cb)} \tvp$.
+      Otherwise $\not \th \Cshape {\where{\hat\Ca\where{-} \cand \cb}} \tvp \sh$. We have \cref{lem:unicity-completeness},
+      so we are stuck and $\nCshape {(\Ca \cand \cb)} \tvp$.
 	\end{proofcases}
 
     \end{proofcases}
@@ -6807,12 +6901,12 @@ generally in our system.
 
 		\end{itemize}
 
-		If $\ca$ is stuck, then neither case regarding instantiations
+		If $\ca$ is stuck, then neither stuck case regarding instantiations
 		in $\ca$ is fixed, so in these cases the constraint remains
 		stuck. If $\ca$ is stuck with $\hat\Cp\where{\cmatch \tvb
-		\cbrs'}$. Then either backpropagation (\Rule{S-BackProp})
+    \cbrs'}$. Then either backpropagation (via \Rule{S-Uni-BackProp} and \Rule{S-Match-Ctx})
 		applies with an equation in $\hat\C$, or the entire constraint
-		is stuck.
+    is stuck (by \cref{lem:unicity-completeness}).
 
 		\proofcase{$\tvp \notin \reg \tv \tvs$} Apply \Rule{S-Inst-Mono}.
 
@@ -6939,8 +7033,8 @@ rules that are not inherently destructive.
 
 \termination
 \begin{proof}
-  The difficulty for termination comes from the ``discharge'' rules
-  \Rule{S-Match-Type}, \Rule{S-Match-Var} which can make arbitrary
+  The difficulty for termination comes from the ``suspended match discharge'' rule
+  \Rule{S-Match-Ctx} which can make arbitrary
   sub-constraints appear in the non-suspended part of the constraint;
   and from the instantiation rules that copy/duplicate existing
   structure in another part of the constraint, increasing its total
@@ -7071,10 +7165,18 @@ rules that are not inherently destructive.
   \end{proof}
 \end{lemma}
 
+\begin{lemma}
+  \label{lem:scoping-preservation}
+  For all $\ca, \cb$, if $\ca \csolve \cb$, then $\fvs \ca \supseteq \fvs \cb$.
+  \begin{proof}
+    By induction on $\ca \csolve \cb$. 
+  \end{proof}
+\end{lemma}
+
 \begin{corollary}
   \label{corollary:correctness}
   For the closed-term-variable constraint $\c$, $\c$ is satisfiable if and only if
-  $\c \csolve^* \hat\c$ and $\hat\c$ is a solved form equivalence to $\c$.
+  $\c \csolve^* \hat\c$ and $\hat\c$ is a solved form equivalent to $\c$.
   \begin{proof}
     We show each direction individually:
     \begin{proofcases}
@@ -7093,7 +7195,7 @@ rules that are not inherently destructive.
 	  \proofcase{$\c$ is stuck}
 	    Given $\c$ is a closed-term-variable constraint,
 	    it must be the case that either $\c$ is $\cfalse$
-	    \emph{or} $\hat\C\where{\cmatch \t \cbrs}$ and $\nCshape \C \t \sh$ for any shape $\sh$.
+      \emph{or} $\hat\C\where{\cmatch \t \cbrs}$ and $\nCshape \C \t$.
 
 	    If $\c$ is $\cfalse$, this contradicts our assumption that $\c$ is satisfiable.
 	    Similarly, by \cref{lem:unsat-match}, if $\c$ is $\hat\C\where{\cmatch \t \cbrs}$,
@@ -7102,6 +7204,7 @@ rules that are not inherently destructive.
 	  \proofcase{$\c \csolve \cp$}
 
 	  By \cref{thm:preservation}, we have $\c \cequiv \cp$, thus $\cp$ is satisfiable.
+    Additionally, by \cref{lem:scoping-preservation}, we have $\fvs \cp = \eset$.
 	  So by induction, we have $\cp \csolve^* \hat \c$ and $\hat\c$
 	  is a solved form equivalent to $\cp$.
 	  By transitivity of equivalence, we therefore have $\hat\c \cequiv \c$, as
@@ -7325,7 +7428,69 @@ and $\sub(\tvs) = \tys$.
 
 \subsection{Soundness and completeness of constraint generation}
 
-\TODO{ctxt-gen is not defined!}
+\begin{judgboxmathpar}
+  {\ctxinfer \E \tvp \tv}
+  {$\ctxinfer \E \tvp \tv$ is a satisfiable context iff the context $\E$ has \\ the expected type $\tv$ given the hole has the type $\tvp$.}
+\newcommand {\Crule}[2]{#1 &\eqdef& #2}
+\def \arraystretch{1.4}%4
+  \scalebox{0.9}{
+\begin{tabular}{LCL}
+  \Crule{\ctxinfer \square \tv \tv}{\square}\\
+  \Crule{\ctxinfer {\parens{\eapp \E \e}} \tvp \tv}{\cexists {\tvb \tvc} \cunif \tvc {\tvb \to \tv} \cand \ctxinfer \E \tvp \tvc \cand \cinfer \e \tvb}\\
+  \Crule{\ctxinfer {\parens{\eapp \e \E}} \tvp \tv}{\cexists {\tvb \tvc} \cunif \tvc {\tvb \to \tv} \cand \cinfer \e \tvc \cand \ctxinfer \E \tvp \tvb}\\
+  \Crule{\ctxinfer {\parens{\elet \x \E \e}} \tvp \tv}{\clet \x \tvb {\ctxinfer \E \tvp \tvb} {\cinfer \e \tv}}\\
+  \Crule{\ctxinfer {\parens{\elet \x \e \E}} \tvp \tv}{\clet \x \tvb {\cinfer \e \tvb} {\ctxinfer \E \tvp \tv}}\\
+  \Crule{\ctxinfer {{\eannot \E \tvs \t}} \tvp \tv}{\cexists \tvs \cunif \tv \t \cand \ctxinfer \E \tvp \tv}\\
+  \Crule{\ctxinfer {\etuple {\ea, \ldots, \E_j, \ldots, \en}} \tvp \tv}{\cexists \tvs \cunif \tv {\tProd \tvi} \cand \cAnd_{i \neq j} \cinfer \ei \tvi \cand \ctxinfer {\E_j} \tvp \tvj} \\
+  \Crule{\ctxinfer {\parens{\exproj \E j n}} \tvp \tv}{\cexists {\tvb, \tvbs} \ctxinfer \E \tvp \tvb \cand \cunif \tvb {\tProd \tvbi} \cand \cunif \tv \tvbj}\\
+  \Crule{\ctxinfer {\parens{\eproj \E j}} \tvp \tv}{\cexists \tvb \ctxinfer \E \tvp \tvb \cand \cmatch \tvb {\cbranch {\cpatprod \tvc j} {\cunif \tv \tvc}}}\\
+  \Crule{\ctxinfer {\expoly \E \tvs \ts} \tvp \tv}{\cexists \tvs \ctxinfer \E \tvp \ts \cand \cunif \tv {\tpoly \ts}}\\
+  \Crule{\ctxinfer {\exinst \E \tvs \ts} \tvp \tv}{\cexists {\tvs, \tvb} \ctxinfer \E \tvp \tvb \cand \cunif \tvb {\tpoly \ts} \cand \cleq \ts \tv}\\
+  \Crule{\ctxinfer {\epoly \E} \tvp \tv}{\clet \x \tvb {\ctxinfer \E \tvp \tvb} {\\&&\cmatch \tv {\cbranch {\cpatpoly \cscm} {\cleq \x \cscm}}}}\\
+  \Crule{\ctxinfer {\einst \E} \tvp \tv}{\cexists \tvb {\ctxinfer \E \tvp \tvb \cand \cmatch \tvb {\cbranch {\cpatpoly \cscm} {\cleq \cscm \tv}}}}\\
+\Crule
+  {\ctxinfer {\parens{\efield \E \elab}} \tvp \tv}
+  {\begin{cases}
+    \cexists {\tvb} \ctxinfer \E \tvp \tvb \cand \labenv(\elab/\T) \leq \tvb \to \tva & \text{if } \labuni \elab \T \\
+    \cexists \tvb \ctxinfer \E \tvp \tvb \\ \cand \cmatch \tvb {\cbranch {\cpatrcd \ct} {\labenv(\elab/\ct) \leq \tvb \to \tv}} & \text{otherwise}
+  \end{cases}}
+\\
+\Crule
+  {\ctxinfer {\parens{\exfield \E \T \elab}} \tvp \tv}
+  {\cexists \tvb \ctxinfer \E \tvp \tvb \cand \labenv(\elab/\T) \leq \tvb \to \tva}
+\\
+\Crule
+  {\ctxinfer {\erecord {\elaba = \ea; \ldots; \elab_j = \E_j; \ldots; \elab_n = \en}} \tvp \tv}
+  {\begin{cases} 
+    \cexists \tvbs \cAnd_{i \neq j} \cinfer \ei \tvbi \cand \ctxinfer {\E_j} \tvp \tvbj     & \text{if } \labsuni \elabs \T \\
+    \cand \cAnd\iton \labenv(\elabi/\T) \leq \tv \to \tvbi \\
+    \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi & \text{otherwise} \\
+    \uad\cand~\cmatch \tv {\cbranch {\cpatrcd \ct} 
+      {\dom {\ct} = \elabs \\ 
+      \hspace{3cm}\cand \cAnd\iton \labenv(\elabi/\ct) \leq \tv \to \tvbi}}
+  \end{cases} }
+\\
+\Crule
+  {\ctxinfer {\exrecord \T {\elaba = \ea; \ldots; \elab_j = \E_j; \ldots; \elab_n = \en}} \tvp \tv}
+  {\cexists \tvbs \cAnd_{i \neq j} \cinfer \ei \tvbi \cand \ctxinfer {\E_j} \tvp \tvbj \cand \dom {\T} = \elabs \\ 
+  &&\cand \cAnd\iton \labenv(\elabi/\T) \leq \tv \to \tvbi }
+\\
+\Crule
+  {\ctxinfer {\emagic {\ea, \ldots, \E_j, \ldots, \en}} \tvp \tv}
+  {\cexists \tvbs \cAnd_{i \neq j} \cinfer \ei \tvbi \cand \ctxinfer {\E_j} \tvp \tvbj}
+\\\\
+\Crule
+  {\ctxinfer \E \tvp \t}
+  {\cexists \tv \cunif \tv \t \cand \ctxinfer \E \tvp \tv}
+\\
+\Crule
+  {\ctxinfer \E \tvp {\tfor \tvs \t}}
+  {\cfor \tvs \ctxinfer \E \tvp \t}
+\\\\
+\end{tabular}
+  }
+\end{judgboxmathpar}
+
 \begin{lemma}
   \label{lem:ctxt-gen-correctness}
   For any term context $\E$, term $\e$, $\ctxinfer \E \tv \tvb \where{\cinfer \e \tv} = \cinfer {\E\where{\e}} \tvb$.
