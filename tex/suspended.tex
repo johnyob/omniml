@@ -51,7 +51,7 @@ the scheme is refined.
   which truly enjoy principal types, they}\XDR{The meaning is not the
   same. I find the formulation you like overselling, and lying by omission}
 
-  \TODO{Change to mention that omnidirectional doesn't Core \ML, issue with striking, frame it that the framework 
+  \TODO{Change to mention that omnidirectional doesn't Core \ML, issue with striking, frame it that the framework
   makes a striking improvement.}
 
 The benefits of omnidirectional type inference are striking for several advanced
@@ -156,7 +156,7 @@ types and user-provided type annotations as \emph{known} types that can be
 used for disambiguation and enable the omission of some annotations.
 
 \TODO{Give overview of the current state of directionality (and the problems we face) }
-\TODO{Consider moving both these paragraphs to related work. Make the introduction more 
+\TODO{Consider moving both these paragraphs to related work. Make the introduction more
 vague (but still true)}
 \Xalistair{This feels a bit out of place, should we say this earlier?}
 \Geninst-directional inference offers a way to specify and implement principal
@@ -539,6 +539,12 @@ Our contributions are:
 \section{Suspended constraints: an overview}
 \label{sec:constraints}
 
+\XDR{I changed the syntax of explicit record projection to $\exfield \e
+\elab \T$ to make it looked like qualified labels, labels prefixed with
+their type. I think this is more intuitive and make it look like qualified
+records. This is macroified and can then be easily undone. (Tuple
+and record projections should not share their macros)}
+
 \begin{bnffig}[t]%
   {fig:constraint-syntax}%
   {Syntax of types and constraints.}
@@ -551,7 +557,7 @@ Our contributions are:
     \ta \to \tb \color{gray} \and
     \Pi\iton \ti \and
     \T \tys \and
-    \tpoly \ts
+    \tpoly \ts\
 }\\
 \entry[Type schemes]{\ts}{
     \t \and
@@ -1260,7 +1266,7 @@ What aren't shape patterns just a subset of principal shapes?}
 \Xalistair{Because principal shapes cannot express $\cpatpoly \cscm$ or $\cpatrcd \ct$. They lack
 binders.}
 \XDR{We should say so---and also define them.}
-\TODO{Add figure and reference here. Doesn't need prose explaination.}
+\TODO{Add figure and reference here. Doesn't need prose explanation.}
 We also assume a matching relation:
 % mathpar instead of mathline since spacing was odd. If spacing is fixed,
 % use mathline
@@ -1686,11 +1692,11 @@ problem! In particular, na\"ive specifications often fail to ensure principal ty
 %\begin{mathpar}[inline]
 %   \inferrule*
 %      {\G \th \e : \Pi\iton \ti \\ 1 \leq j \leq n }
-%      {\G \th \exfield \e n j : \tj}
+%      {\G \th \exproj \e j n : \tj}
 %\end{mathpar}
 %\end{wraphbox}
 Take overloaded tuple projections \ala \SML. We can ask the user to provide the
-length of the tuple explicitly, via an annotated syntax $\exfield \e n j$,
+length of the tuple explicitly, via an annotated syntax $\exproj \e j n$,
 which has a simple typing rule (\Rule{Proj-X}).
 \begin{mathpar}
   \infer[Proj-X]
@@ -1699,7 +1705,7 @@ which has a simple typing rule (\Rule{Proj-X}).
 
   \infer[Proj-I-Nat]
     {\G \th \e : \Pi\iton \ti \\ 1 \leq j \leq n}
-    {\G \th \efield \e j : \tj}
+    {\G \th \eproj \e j : \tj}
 \end{mathpar}
 %
 %\begin{wraphbox}[11em]{}{}
@@ -1707,7 +1713,7 @@ which has a simple typing rule (\Rule{Proj-X}).
 %\begin{mathpar}[inline]
 %  \infer
 %    {\G \th \e : \Pi\iton \ti \\ 1 \leq j \leq n}
-%    {\G \th \efield \e j : \tj}
+%    {\G \th \eproj \e j : \tj}
 %\end{mathpar}
 %\end{wraphbox}
 %
@@ -1720,8 +1726,8 @@ infinitely many typings for $\e$, provided the tuple is of sufficient length.
 %\begin{mathpar}[inline]
 %\infer
 %  {\eshape \E \e {\any \tvcs \Pi\iton \tvcs} \\\\
-%   \G \th E[\exfield \e n j] : \t}
-%  {\G \th \E[\efield \e j] : \t}
+%   \G \th E[\exproj \e j n] : \t}
+%  {\G \th \E[\eproj \e j] : \t}
 %\end{mathpar}
 %\hfil
 %\end{wraphbox}
@@ -1733,8 +1739,8 @@ construct into the robust, explicit counterpart:
 \begin{mathpar}
   \infer[Proj-I]
   {\eshape \E \e {\any \tvcs \Pi\iton \tvcs} \\
-   \G \th \E[\exfield \e n j] : \t}
-  {\G \th \E[\efield \e j] : \t}
+   \G \th \E[\exproj \e j n] : \t}
+  {\G \th \E[\eproj \e j] : \t}
 \end{mathpar}
 
 \subsection{Syntax}
@@ -1748,14 +1754,14 @@ construct into the robust, explicit counterpart:
   \elet x \ea \eb \and
   \eannot \e \tvs \t \andcr
   (\ea, \ldots, \en) \and
-   \efield e j \and
-   \exfield e n j \and%\andcr
+   \eproj e j \and
+   \exproj e j n \and%\andcr
    \epoly e \and
    \expoly e \tvs \ts \and
    \einst e \and
    \exinst e \tvs \ts \andcr
   \erecord {\overline{\elab = \e} } \and
-  \efield e \elab \and 
+  \efield e \elab \and
   \exrecord \T {\overline{\elab = \e}} \and
   \exfield e \T \elab
    }
@@ -1787,7 +1793,7 @@ Our extensions include:
 \begin{enumerate}
 \item
   Tuples $(\ea, \ldots, \en)$ with implicit projections
-  $\efield \e j$ and explicit projections $\exproj \e j n$.
+  $\eproj \e j$ and explicit projections $\exproj \e j n$.
 
 \item
   For semi-explicit first-class polymorphism, we have implicit and explicit
@@ -1847,7 +1853,7 @@ $\cerase \c$, which erases all not-yet-elaborated implicit constructs
 $\e^i$ in $\e$ with typed holes around their subterms. This ensures the
 subterms---such as type annotations---remain present, so that any constraints
 they introduce can still contribute to unicity.
-For example, $\eerase {\efield \e j}$ is $\emagic {\cerase \e}$.
+For example, $\eerase {\eproj \e j}$ is $\emagic {\cerase \e}$.
 The full definition is given in Appendix \cref{app:full-reference}.
 
 We can now formalize the two unicity conditions:
@@ -3055,14 +3061,15 @@ formal claims in the article. They are typically written tersely.
 \section{The \OML calculus: typing rules and constraint generation}
 \label{app/oml}
 
-The \OML calculus extends \ML with three fragile constructs: structural tuples,
-polytypes, and nominal records.  Each fragile construct $e^i$ is paired with a
-robust counterpart $e^x$, which carries more explicit type information and
-admits straightforward typing rules. Typing rules for the original \ML
-calculus, together with those for the robust forms of structural tuples, polytypes and
-nominal records, are given in \cref{app/oml/typing/X}. The robust typing of nominal
-records, includes the more intricate (yet largely folklore), treatment of \emph{closed world} 
-reasoning. 
+The \OML calculus extends \ML with three fragile constructs: structural
+tuples, polytypes, and nominal records.  Each fragile construct $e^i$ is
+paired with a robust counterpart $e^x$, which carries more explicit type
+information and admits straightforward typing rules. Typing rules for the
+original \ML calculus, together with those for the robust forms of
+structural tuples, polytypes and nominal records, are given in
+\cref{app/oml/typing/X}. The robust typing of nominal records, includes the
+more intricate (yet largely folklore), treatment of \emph{closed world}
+reasoning.
 
 The crux of our work is the novel typing of all three fragile constructs,
 presented in~\cref {app/oml/typing/I}, and illustrated with examples in \cref
@@ -3074,7 +3081,7 @@ in~\cref {app/oml/proofs}.
 \subsection{Typing rules for robust, explicit constructs}
 \label{app/oml/typing/X}
 
-\begin{mathparfig}[htpb!]{fig/typing/core}{Traditional \ML typing rules in \OML.}
+\begin{mathparfig}[t]{fig/typing/core}{Traditional \ML typing rules in \OML.}
   \inferrule[Var]
     {x : \sigma \in \G}
     {\G \th x : \sigma}
@@ -3133,16 +3140,17 @@ in~\cref {app/oml/proofs}.
 As usual, the main typing judgment $\G \th \e : \ts$ states that in
 context~$\G$, expression~$\e$ has type scheme~$\ts$.
 %
-For completeness, we recall the typing rules of the standard \ML calculus 
-in \cref{fig/typing/core} and briefly review them here. 
+For completeness, we recall the typing rules of the standard \ML calculus
+in \cref{fig/typing/core} and briefly review them here.
 
 %
+\XDR{Why removing \emph{Rule} in front of single-rule names?}
 \Rule{Var} retrieves the type scheme $\x : \ts$ from the context $\G$.
 Function types are introduced via lambda abstractions: in \Rule{Fun}, the
 system guesses a well-formed type $\ta$ for the type of $\x$, typechecks the
 body $e$ is under the extended context $\G, \x : \tya$ producing the return
 type $\tyb$, and assigns the abstraction the function type $\tya \to \tyb$.
-Conversely, function types are eliminated by applications; in 
+Conversely, function types are eliminated by applications; in
 \Rule{App}, the type of the argument must match the function's parameter
 type $\tya$ and application returns the type $\tyb$. \Rule{Unit}
 asserts that $\eunit$ has the unit type $\tunit$.
@@ -3170,12 +3178,13 @@ Finally, annotations $\eannot \e \tvs \t$ ensures that the type of $\e$ is
 (an instance of) the type $\t$. The type variables $\tvs$ are
 \emph{flexibly} (or existentially) bound in $\t$, meaning that $\tvs$ may be
 unified with some types $\tys$ to produce a well-typed term. For instance,
-the term $(\efun \x \x + 1 : \exi \tv \tv \to \tv)$ is well-typed with $\tv
-\is \tint$ in \Rule{Annot}.
+the term $(\efun \x \x + 1 : \exi \tv \tv \to \tv)$ is well-typed with
+the substitution $\where {\tv \is \tint}$ in \Rule{Annot}.
 
 
-\begin{mathparfig}[htpb!]{fig/typing/X}
+\begin{mathparfig}[t]{fig/typing/X}
         {Typing rules of \OML---robust, explicitly typed extensions.}
+\mprset{sep=1.75em}
   \inferrule[Tuple]
     {\parens{\G \th \ei : \ti}\iton}
     {\G \th (\ea, \ldots, \en) : \Pi\iton \ti}
@@ -3183,7 +3192,7 @@ the term $(\efun \x \x + 1 : \exi \tv \tv \to \tv)$ is well-typed with $\tv
   \inferrule[Proj-X]
     {\G \th \e : \Pi\iton \ti \\
      1 \leq j \leq n}
-    {\G \th \exfield \e n j : \tj}
+    {\G \th \exproj \e j n : \tj}
 
   \inferrule [Poly-X]
     {\G \th \e : \ts\where {\tvs \is \tys}}
@@ -3195,81 +3204,89 @@ the term $(\efun \x \x + 1 : \exi \tv \tv \to \tv)$ is well-typed with $\tv
 
   \inferrule[Rcd-X]
     {\parens{\G \th \ei : \ti}\iton \\\\
-     \parens{{\elabi/\T} \leq \t \to \ti}\iton \\
-     \dom {\labenv/\T} = \elabs}
+     \parens{{\labfrom \elabi \T} \leq \t \to \ti}\iton \\
+     \dom {(\Labenv[\T])} = \elabs}
     {\G \th \exrecord \T {\elaba = \ea; \ldots; \elab_n = \en} : \t}
 
-  \inferrule[Rcd-I-Closed]
-    {\G \th \exrecord \T {\overline{\elab = \e}} : \t \\ 
+  \inferrule[Rcd-Closed]
+    {\G \th \exrecord \T {\overline{\elab = \e}} : \t \\
      \labsuni \elabs \T }
     {\G \th \erecord {\overline{\elab = \e}} : \t}
 
   \inferrule[Rcd-Proj-X]
-    {\G \th \e : \tya \\ {\elab/\T} \leq \tya \to \tyb}
+    {\G \th \e : \tya \\ {\labfrom \elab \T} \leq \tya \to \tyb}
     {\G \th \exfield \e \T \elab : \tyb}
 
-  \inferrule[Rcd-Proj-I-Closed]
-    {\G \th \exfield \e \T \elab : \t \\ 
+  \inferrule[Rcd-Proj-Closed]
+    {\G \th \exfield \e \T \elab : \t \\
      \labuni \elab \T}
     {\G \th \efield \e \elab : \t}
 
   \inferrule[Lab-Inst]
-    {\labenv(\elab/\T) = \tfor \tvs {\Tapp \tvs} \to \t}
-    {{\elab/\T} \leq \Tapp \tys \to \t\where{\tvs \is \tys}}
+    {\labenv(\labfrom \elab\T) = \tfor \tvs {\Tapp \tvs} \to \t}
+    {{\labfrom \elab \T} \leq \Tapp \tys \to \t\where{\tvs \is \tys}}
 \end{mathparfig}
 
 \paragraph {Typing rules for explicit tuples and polytypes}
 
 The typing rules for tuples and polytypes are given in \cref {fig/typing/X}.
-These rules are straightforward and largely considered folklore. 
+These rules are straightforward and largely considered folklore.
 %
 \parcomment{Structural tuples}
 %
-\Rule {Tuple} introduces tuple types in the expected way, assining an $n$-ary 
-tuple expression the type $\tProd \ti$. Conversely, \Rule {Proj-X} eliminates 
-tuple types by projecting the $i$-th component from a tuple of an explicit size $n$. 
+\Rule {Tuple} introduces tuple types in the expected way, assigning an $n$-ary
+tuple expression the type $\tProd \ti$. Conversely, \Rule {Proj-X} eliminates
+tuple types by projecting the $i$-th component from a tuple of an explicit size $n$.
 %
 \parcomment{Polytypes}
 %
-Explicit polytypes likewise have introduction and elimination forms. When the
-annotation is a closed type schemes $\ts$, \Rule {Poly-X} introduces a
-first-class polytype $\tpoly \ts$, requiring the expression $\e$ to be at least
-as polymorphic as $\ts$. \Rule {Use-X} eliminates a first-class polytype
-$\tpoly \ts$ into the type scheme $\ts$, which may then be freely instantiated
-(via \Rule{Inst}). Both rules also allow partially annotated type schemes,
-where the free variables $\tvs$ in $\ts$ are flexibly bound and instantiated
-with inferred monotypes (as in \Rule{Annot}). 
+Explicit polytypes likewise have introduction and elimination forms. When
+the annotation is a closed type schemes $\ts$ ($\tvs$ is empty), \Rule
+{Poly-X} introduces a first-class polytype $\tpoly \ts$, requiring the
+expression $\e$ to be at least as polymorphic as $\ts$. \Rule {Use-X}
+eliminates a first-class polytype $\tpoly \ts$ into the type scheme $\ts$,
+which may then be freely instantiated (via \Rule{Inst}).
+Both rules also allow polytype annotations to be partial,
+\ie $\ts$ to have free type variables $\tvs$, which
+should be existentially quantified so that the annotation is itself
+closed\XDR{Should we put this invariant as a premise?};
+then, \emph{monotypes} $\tys$ will be inferred for $\tvs$.
+
 
 \paragraph{Typing rules for explicit nominal records}
 \label {app/typing/X/records}
 
 \parcomment{Nominal records}
 
-The rules for overloaded nominal records are a bit more technical.  We assume
-that record types have been previously defined, building a global environment
-$\labenv$ that maps labels to their projection type, \ie type schemes of the form
-$\all \tvs \Tapp \tvs \to \t$. A label $\elab$ may belong to several record
-types, but it is unique within a given record type $\T$ (if defined).
+The rules for overloaded nominal records are a bit more technical.
+%% , as we allow disambiguation by qualified labels $\labfrom \elab \T$
+We assume that record types have been previously defined, building a global
+environment $\labenv$ that maps labels to their projection type, \ie type
+schemes of the form $\all \tvs \Tapp \tvs \to \t$. A label $\elab$ may
+belong to several record types, but it is unique within a given record type
+$\T$ (if defined).
 
-We write $\Labenv$ for the restriction of $\labenv$ to the labels of $\T$: 
+We write $\Labenv$ for the restriction of $\labenv$ to the labels of $\T$:
 ${\Labenv} \eqdef \set {\elab : \all \tvs \T \tvs \to \t
 \in \labenv}$ . Hence, $\dom (\Labenv)$ is
-the set of labels belonging to type $\T$,  and $\labtyp \elab$, 
-abbreviated as $\labenv (\ell/\T)$, is (when defined) the unique type scheme
-$\tfor \tvs {\Tapp \tvs} \to \t$ associated to $\elab$ in type $\T$.
+the set of labels belonging to type $\T$,  and $\labtyp \elab$,
+abbreviated as $\labenv (\labfrom \elab \T)$, is (when defined) the unique
+type scheme $\tfor \tvs {\Tapp \tvs} \to \t$ associated to $\elab$ in type $\T$.
 
-Label instantiations are typed by an auxillary judgement ${\elab/\T} \leq \tya
-\to \tyb$, defined by \Rule{Lab-Inst}. Explicit field projections are typed by
-\Rule{Rcd-Proj-X}, which asserts that an explicitly annotated label can project
-from a record $\e$ of type $\tya$, yielding $\tyb$, provided that $\tya \to
-\tyb$ is an instance of the projection type of $\elab/\T$. 
+Label instantiations are typed by an auxiliary judgment ${\labfrom \elab
+\T} \leq \tya \to \tyb$, defined by \Rule{Lab-Inst}. Explicit field
+projections are typed by \Rule{Rcd-Proj-X}, which asserts that an explicitly
+annotated label can project from a record $\e$ of type $\tya$, yielding
+$\tyb$, provided that $\tya \to \tyb$ is an instance of the projection type
+of $\labfrom \elab \T$.
 %
 Explicit records (\Rule {Rcd-X}) are typed similarly, checking that each field
-as the appropriate type. In addition, the premise $\dom {\Labenv} = \elabs$
-ensures that the sequence of labels underlying $\elabs$ are exactly the labels
-of the record type $\T$.
+has the appropriate type. In addition, the premise $\dom {(\Labenv)} = \elabs$
+ensures that the set of labels underlying~$\elabs$ is exactly the set of labels
+of the record type~$\T$.
 
-% Closed world reasoning
+\parcomment {Closed world reasoning}
+
 Our explicit system also supports \emph{closed-world} reasoning, which exploits
 the absence of ambiguity in the global environment $\labenv$ to infer nominal
 record type annotations.
@@ -3278,42 +3295,58 @@ In particular, in a record expression $\erecord {\elaba = \ea; \ldots; \elab_n
 = \en}$, if the set of labels ${ \elaba, \ldots, \elab_n }$ uniquely identifies
 a record type $\T$ in the typing context $\labenv$, then the record has the
 type of $\exrecord \T {\elaba = \ea; \ldots; \elab_n = \en}$ (via
-\Rule{Rcd-I-Closed}).
+\Rule{Rcd-Closed}).
 %
 Similarly, if the label $\elab$ is associated with exactly one record type $\T$
 in $\labenv$, then the projection $\efield \e \elab$ has the type of $\exfield
-\e \T \elab$ (by \Rule{Rcd-Proj-I-Closed}).
+\e \T \elab$ (by \Rule{Rcd-Proj-Closed}).
 
-%
 These two forms of uniqueness are not equivalent. A \emph{closed set} of labels
 may uniquely identify a record type without any of its constituent labels begin
 unique. Conversely, if a label is unique, any closed set containing it is also
-unique. For example:
+unique. For instance, consider the program:
 \begin{program}[input]
-  type three = { x : int; y : int } 
-  type four = { x : string; y : bool; z : int }
-
+  type point  = { x : int; y : int }
+  type cpoint = { x : int; y : int; c : color }
+\end{program}
+\programjoin[-1ex]
+\begin{program}[input]
   let ex_1_2 = { x = 42; y = 1337 }           °\ocamlflags 00°
 \end{program}
-Here the label set $\set {x, y}$ in \code{ex_1_2} uniquely identifies \code{three}, even though
-the individual labels $x$ and $y$ are not unique (both also appear in
-\code{four}). 
+\XDR{I changed the examples to show that the types of fields are
+irrelevant---they do not help disambiguate}
+Here the label set $\set {x, y}$ in \code{ex_1_2} uniquely identifies
+\code{point}, even though the individual labels $x$ and $y$ are not unique
+(both also appear in \code{cpoint}).
 %
-We formalize uniqueness using the judgements $\labuni \elab \T$ (a label uniquely identifies $\T$) and 
-$\labsuni \elabs \T$ (a closed label set uniquely identifies $\T$): 
+\XDR{I understand that $\labuni \elab \T$ should be distinct from $\labsuni
+\elabs \T$, since when $\elabs$ is a singleton, they do not mean the same
+thing, but it should note resemble $\eshape \E \e \sh$ and $\Eshape \E \e \sh$,
+which instead involve types. Hence, we should use another symbol for $\elab
+\labuni \T$}
+
+We formalize uniqueness using the judgments\XDR{We should rather use math
+predicates than judgments and present them in math rather than with one
+clause inference rules. I think this would give a simpler reading.}
+$\labuni \elab \T$ (a label uniquely identifies $\T$) and $\labsuni \elabs
+\T$ (a closed label set uniquely identifies $\T$):
 \begin{mathpar}
   \inferrule
-    {\elab \in \dom {\Labenv} \\ \all \Tp \uad \elab \in \dom {\Labenv[\Tp]} \implies {\T} = \Tp}
+    {\elab \in \dom {(\Labenv)} \\\\
+     \forall \Tp, \;
+        \parens {\elab \in \dom {(\Labenv[\Tp])} \implies {\T} = \Tp}}
     {\labuni \elab \T}
 
-  \inferrule 
-    {\dom {\Labenv} = \elabs \\ \all \Tp \uad \dom {\Labenv[\Tp]} = \elabs \implies {\T} = \Tp}
+  \inferrule
+    {\dom {(\Labenv)} = \elabs \\\\
+     \forall \Tp, \;
+        \parens {\dom {(\Labenv[\Tp])} = \elabs \implies {\T} = \Tp}}
     {\labsuni \elabs \T}
 \end{mathpar}
-
 Notice that these predicates only depend on the global environment
-$\labenv$, and require no contextual information. They are used in the
-typing rules in the two robust typing rules to ensure that there is actually
+$\labenv$, and require no contextual information and ignore the types of
+fields. They are used in the two robust typing rules \Rule {Rcx-X} and
+\Rule {Rcd-Proj-X} to ensure that there is actually
 no type-directed overloading is involved.
 
 
@@ -3329,18 +3362,18 @@ no type-directed overloading is involved.
 
   \inferrule[Proj-I]
     {\eshape \E \e {\any \tvcs \Pi\iton \tvcs} \\\\
-     \G \th \E\where{\exfield \e n j} : \t}
-    {\G \th \E\where{\efield \e j} : \t}
-
-  \inferrule [Poly-I]
-    {\Eshape \E \e {{\any \tvcs \tpoly \ts}} \\\\
-     \G \th \E \where{\epoly[\exi \tvcs \ts] \e} : \t}
-    {\G \th \E \where{\epoly \e} : \t}
+     \G \th \E\where{\exproj \e j n} : \t}
+    {\G \th \E\where{\eproj \e j} : \t}
 
   \inferrule [Use-I]
     {\eshape \E  \e {\any \tvcs \tpoly \ts} \\\\
      \G \th \E\where{\exinst \e \tvcs \ts} : \t}
     {\G \th \E\where{\einst \e} : \t}
+
+  \inferrule [Poly-I]
+    {\Eshape \E \e {{\any \tvcs \tpoly \ts}} \\\\
+     \G \th \E \where{\epoly[\exi \tvcs \ts] \e} : \t}
+    {\G \th \E \where{\epoly \e} : \t}
 \\
   \inferrule[Rcd-I]
     {\Eshape \E \es {\any \tvcs \Tapp \tvcs} \\ \G \th \E\where{\exrecord \T {\overline{\elab = \e}}} : \t }
@@ -3348,7 +3381,7 @@ no type-directed overloading is involved.
 
 
   \inferrule[Rcd-Proj-I]
-    {\eshape \E \e {\any \tvcs \Tapp \tvcs} \\ 
+    {\eshape \E \e {\any \tvcs \Tapp \tvcs} \\
      \G \th \E\where{\exfield \e \T \elab} : \t}
     {\G \th \E\where{\efield \e \elab} : \t}
 \begin{version}{}
@@ -3380,7 +3413,7 @@ typing rules for terms  with omitted type annotations ($\e^i$)
 are new---and non-compositional.
 %
 They all share a common framework that ensures that some omitted type
-annotations are uniquely determined from the context. Still each construct
+annotations are uniquely determined from the context. Still, each construct
 requires a specific instantiation of the framework.
 %
 We first describe the framework, then present each feature separately,
@@ -3390,7 +3423,7 @@ starting with the easiest case---structural tuples.
 
 Typing rules for fragile features depend on a surrounding one-hole context
 $\E$. They assert that the typability of the expression $\G \th \E \where
-{\e^i}: \t$ where $\e^i$ is an expression with an implicit type annotation.
+{\e^i}: \t$ where $\e^i$ is an expression with an implicit annotation.
 %
 We first request a typing for the expression with an explicit annotation $\G
 \th \E \where {\e^x}: \t$ where $\e^x$ is a fully annotated variant of $\e^i$.
@@ -3399,16 +3432,18 @@ context, either from the type of the expression $\e$, which we write $\eshape
 \E \e \sh$, or from the type of the hole containing subexpressions $\es$, which
 we write $\Eshape \E \es \sh$.
 
-In order to describe the judgments $\eshape \E \e \sh$ and $\Eshape \E \es \sh$,
-we introduce a \emph{typed hole} construct $\emagic \es$. Here $\es$ 
-is treated as a collection of well-typed expression,  whose types are independent of the 
-hole: the hole itself may be assigned an arbitrary type (\Rule{Magic}). 
-Typed holes are not allowed in source terms and are just a device for
-the definition of non-ambiguous shapes.  
+In order to describe the judgments $\eshape \E \e \sh$ and $\Eshape \E \es
+\sh$, we introduce a \emph{typed hole} construct~$\emagic \es$. Here,~$\es$
+is treated as a collection of expressions that are well-typed in the current
+environment (\Rule{Magic}) but whose types are independent of the type of
+the hole: the hole itself may be assigned an arbitrary type.  It is a
+key\XDR{We never enforce this} that typed holes are not allowed in source
+terms and are just a device for the definition of non-ambiguous shapes.
 
-Finally, we now formalize what it means for a shape to be determined from the
-type of an expression ($\eshape \E \e \sh$) or a context's hole ($\Eshape \E
-\es \sh$): 
+Finally, we now formalize what it means for a shape to be determined from
+the type of an expression $\e$ in the context $\E$, \ie $\eshape \E \e \sh$,
+or from the context hole of $\E$ with expressions $\es$, \ie $\Eshape \E \es
+\sh$:
 \begin{mathpar}
 \def \Eqdef {&\eqdef&}
 {\begin{tabular}{RCL}
@@ -3429,33 +3464,41 @@ written $\eerase \e$ (defined in \cref{app/ref/eerase}).
 
 \paragraph{Overloaded tuples and polytypes}
 
-The implicit rule \Rule{Proj-I} types the projection $\eproj \e j$ provided the
-context $\E$ \emph{infers} that the shape of $\e$ must be a tuple of arity $n$.
-Similarly, \Rule{Use-I} permits instantiating a polytype in $\einst e$ if
-the context $\E$ infers that the type of $\e$ must be a polytype with shape
-$\any \tvcs \tpoly \ts$.  The rule \Rule{Poly-I} types the implicit boxing
-construct $\epoly \e$ by \emph{checking} the expected type of $\epoly \e$ in the
-context $\E$ is a polytype with the shape $\any \tvcs \tpoly \ts$. This rule
-differs from the previous two as the shape is determined by the expected type
-within the context as opposed to the inferred type of $\e$.
+The implicit rule \Rule{Proj-I} types the projection $\eproj \e j$ as as
+$\eproj[n] \e j$ provided the shape of the type of $\e$ in context $\E$
+is a tuple of arity $n$.
+%
+Similarly, Rule \Rule{Use-I} permits instantiating a polytype in $\einst e$
+as $\einst[\exi \tvcs \ts] \e$ provided the shape  of the type of $\e$
+in the context $\E$ is $\any \tvcs \tpoly \ts$.
+%
+Rule \Rule{Poly-I} types the implicit boxing construct $\epoly \e$ as
+$\epoly [\exi \tvcs \ts] \e$ provided the context $\E$ with
+expressions $\e$ expects a polytype of shape $\any \tvcs \tpoly \ts$.
+%
+This rule differs from the previous two as the shape is determined by the
+expected type within the context as opposed to the type of $\e$.
+
 
 \paragraph{Overloaded record labels}
 
 We adopt a similar non-compositional approach for elaborating overloaded
 labels, whether in record projection ($\efield e \elab$) or record construction
-($\erecord {\overline{\elab = \e}}$). 
+($\erecord {\overline{\elab = \e}}$).
 %
-\Rule{Rcd-I} types an overloaded record expressions $\erecord {\overline{\elab
-= \e}}$ by \emph{checking} that its expected type in the context $\E$ is a
-nominal record type $\any \tvcs \Tapp \tvcs$. This rule differs from earlier
-cases: here, several subexpressions may appear in the unicity judgement, since
-any field assignment expression can contribute to determining the record's type
-\eg $\efun r r = {\erecord { x = (r : \mathtt{three}).x; y = 10 }}$. 
+Similarly to polytypes, Rule \Rule{Rcd-I} types an overloaded record
+$\erecord {\overline{\elab = \e}}$ as $\exrecord \T {\overline{\elab =
+\e}}$, provided the context $\E$ with expressions $\es$ expects a nominal
+record type of shape $\any \tvcs \Tapp \tvcs$.
+This rule differs from \Rule {Poly-I} in the use of several subexpressions
+that may appear in the unicity judgment, since
+any field assignment expression can contribute to determining the record's
+type, \eg as in $\efun r r = {\erecord { x = (r : \mathtt{three}).x; y = 10 }}$.
 %
 Typing record projections in \Rule{Rcd-Proj-I} is analogous to tuple
-projections: the projection $\efield \e \elab$ is well-typed provided the
-context $\E$ infers that the shape of $\e$ is a nominal record type $\any \tvcs
-\Tapp \tvcs$. 
+projections: the projection $\efield \e \elab$ is typed as $\exfield  \e
+\Tapp \elab$ provided the shape of the type of expression $\e$ in context
+$\E$ is a nominal record $\any \tvcs \Tapp \tvcs$.
 
 
 
@@ -3653,10 +3696,10 @@ is the term to be translated and $\tv$ is the expected type of $\e$.
 \paragraph{Pattern constraints}
 
 Thus far, our formal presentation of constraint patterns has remained
-abstract, deliberately leaving the syntax and semantics of patterns unspecified to
-accommodate a range of language features. We now concertize this by specifying
-the patterns used in \OML (in \cref{fig:patterns-oml}), and introducing the
-corresponding constraints for the variables they bind.
+abstract, deliberately leaving the syntax and semantics of patterns
+unspecified to accommodate a range of language features. We now concretize
+this by specifying the patterns used in \OML (in \cref{fig:patterns-oml}),
+and introducing the corresponding constraints for the variables they bind.
 %
 Patterns include:
 \begin{enumerate*}
@@ -3690,8 +3733,8 @@ ground type schemes $\gscm$, that is type schemes with no unbound variables
     } \\
     \entry[Constraints]{\c}{
       \dots
-      \and \labenv(\elab/\ct) \leq \ta \to \tb
-      \and \labenv(\elab/\T) \leq \ta \to \tb
+      \and \labenv(\labfrom \elab \ct) \leq \ta \to \tb
+      \and \labenv(\labfrom \elab \T) \leq \ta \to \tb
       \andcr \cscm \leq \t
       \and \ts \leq \t
       \andcr \x \leq \cscm
@@ -3699,18 +3742,19 @@ ground type schemes $\gscm$, that is type schemes with no unbound variables
     }
  \end{bnfgrammar}
   \\
+  \def \>{\noalign{\vskip .8ex}}
   \newcommand{\Mrule}[5][]{{#2} \Matches {(#3)} \; #4 &\eqdef& {#5} & #1}
   \begin{tabular}{RCLL}
     \Mrule[\text{if } n \geq j]
       {\cpatprod \tv j}
       {\any \tvcs \Pi\iton \tvcs} \tvbs
       {[\tv \is \tvb_j]}
-    \\[1ex]
+    \\\>
     \Mrule
       {\cpatrcd \ct}
       {\any \tvcs \Tapp} \tvbs
       {[\ct \is \T]}
-    \\[1ex]
+    \\\>
     \Mrule
       {\cpatpoly \cscm}
       {\any \tvcs \tpoly \ts} \tvbs
@@ -3718,11 +3762,11 @@ ground type schemes $\gscm$, that is type schemes with no unbound variables
   \end{tabular}
   \\
   \inferrule[Lab-Inst]
-    {\semenv \th \labenv(\elab/\semenv(\ct)) \leq \ta \to \tb}
-    {\semenv \th \labenv(\elab/\ct) \leq \ta \to \tb}
+    {\semenv \th \labenv(\labfrom \elab {\semenv(\ct)}) \leq \ta \to \tb}
+    {\semenv \th \labenv(\labfrom \elab \ct) \leq \ta \to \tb}
 
   \inferrule[Lab-Dom]
-    {\semenv \th \dom {\phi(\ct)} = \elabs}
+    {\semenv \th \dom {(\phi(\ct))} = \elabs}
     {\semenv \th \dom \ct = \elabs}
 
   \inferrule[Scm-Inst]
@@ -3735,33 +3779,34 @@ ground type schemes $\gscm$, that is type schemes with no unbound variables
   \\
   \newcommand{\Srule}[3][]{{#2} &\eqdef& {#3} & {#1}}
   \newcommand{\Scases}[3]{%
-    \left\{ 
+    \left\{
       \begin{array}{l}
-      #1\\[0.4ex]
+      #1\\%[0.4ex]
       #2
       \end{array}%
     \right.
-    & 
+    &
     \hspace{-1ex}\begin{array}{l}
-      \text{if } #3\\[0.4ex]
+      \text{if } #3\\%[0.4ex]
       \text{otherwise}
     \end{array}%
   }
   \begin{tabular}{RCLL}
     \Srule[\text{if } \labenv(\elab/\T) = \tfor \tvs \t \to \Tapp \tvs]
-      {\labenv(\elab/\T) \leq \ta \to \tb}
+      {\labenv(\labfrom \elab \T) \leq \ta \to \tb}
       {\cexists \tvs \cunif \ta \t \cand \cunif \tb {\Tapp \tvs}}
-    \\[1ex]
-    \dom{\T} = \elabs &\eqdef& \Scases{\ctrue}{\cfalse}{\dom {\labenv/\T} = \elabs} \\[1ex]
+    \\\>
+    \dom{\T} = \elabs &\eqdef&
+       \Scases{\ctrue}{\cfalse}{\dom {(\labfrom \labenv \T)} = \elabs}
+    \\\>
     \Srule
       {(\tfor \tvs \tp) \leq \t}
       {\cexists \tvs \cunif \tp \t}
-    \\[1ex]
+    \\\>
     \Srule
       {\x \leq (\tfor \tvs \t)}
       {\cfor \tvs \capp \x \t}
   \end{tabular}
-
 \end{mathparfig}
 
 
@@ -3856,12 +3901,12 @@ ground type schemes $\gscm$, that is type schemes with no unbound variables
 \\
 \Crule
   {\cinfer {\erecord {\overline{\elab = \e}}} \tv}
-  {\begin{cases} 
+  {\begin{cases}
   \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi \cand \cAnd\iton \labenv(\elabi/\T) \leq \tv \to \tvbi
     & \text{if } \labsuni \elabs \T \\
     \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi & \text{otherwise} \\
-    \uad\cand \cmatch \tv {\cbranch {\cpatrcd \ct} 
-      {\dom {\ct} = \elabs \cand \cAnd\iton \labenv(\elabi/\ct) \leq \tv \to \tvbi}} & 
+    \uad\cand \cmatch \tv {\cbranch {\cpatrcd \ct}
+      {\dom {\ct} = \elabs \cand \cAnd\iton \labenv(\elabi/\ct) \leq \tv \to \tvbi}} &
   \end{cases} }
 \\
 \Crule
@@ -3936,17 +3981,17 @@ is at least as general as $\cscm$, via the constraint $\x \leq \cscm$.
 Record projections generate a fresh variable for the nominal record type and
 constrain $\e$ to this type, suspending until the type of $\e$ ($\tvb$) is
 known to be a nominal record type $\ct$. Once resolved, the type of the
-projected label is retrieved from $\labenv$ and instantiated. 
+projected label is retrieved from $\labenv$ and instantiated.
 %
 For record expressions, we generate a fresh variable $\tvbi$ for each field
-assignment constrainting each assignment $\ei$ to $\tvbi$. The rest of the
+assignment constraining each assignment $\ei$ to $\tvbi$. The rest of the
 constraint is deferred until the context determines the type of the whole
 record type to be $\ct$. Once known, the labels are instantiated to match the
 assignments $\tv \to \tvbi$, and we addition check that the domain of $\ct$ is
-exactly $\elabs$, ensuring that every label is defined. 
+exactly $\elabs$, ensuring that every label is defined.
 %
 Explicit records and projections, along with closed-world disambiguated terms,
-bypass suspension and directly instantiate the appropriate labels. 
+bypass suspension and directly instantiate the appropriate labels.
 
 
 \section{Unification}
@@ -4143,7 +4188,7 @@ definition in full, or when studying the meta-theory of the system.
   \eannot \e \tvs \t \andcr
   \erecord {\overline{\elab = \e} } \and
   \efield e \elab \and
-  \exrecord \T {\overline{\elab = \e}} \and 
+  \exrecord \T {\overline{\elab = \e}} \and
   \exfield \e \T \elab
   \andcr
    (\ea, \ldots, \en) \and
@@ -4270,13 +4315,13 @@ definition in full, or when studying the meta-theory of the system.
 \\
   \newcommand{\Srule}[3][]{{#2} &\eqdef& {#3} & {#1}}
   \newcommand{\Scases}[3]{%
-    \left\{ 
+    \left\{
       \begin{array}{l}
       #1\\[0.4ex]
       #2
       \end{array}%
     \right.
-    & 
+    &
     \hspace{-1ex}\begin{array}{l}
       \text{if } #3\\[0.4ex]
       \text{otherwise}
@@ -4498,12 +4543,12 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
   {\labsuni \elabs \T}
   {The \emph{closed} set of labels $\elabs$ infer the unique nominal record type $\T$.}
   \infer[Lab-Uni]
-    {\elab \in \dom {\labenv/\T} \\ 
+    {\elab \in \dom {\labenv/\T} \\
      \forall \Tp, \uad \elab \in \dom {\labenv/\Tp} \implies {\T} = \Tp}
     {\labuni \elab \T}
 
-  \infer[Labs-Uni] 
-    {\dom {\labenv/\T} = \elabs \\ 
+  \infer[Labs-Uni]
+    {\dom {\labenv/\T} = \elabs \\
      \forall \Tp, \uad \dom{\labenv/\Tp} = \elabs \implies {\T} = \Tp}
     {\labsuni \elabs \T}
 \end{judgboxmathpar}
@@ -4558,12 +4603,12 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
   \inferrule[Proj-X]
     {\G \th \e : \Pi\iton \ti \\
      1 \leq j \leq n}
-    {\G \th \exfield \e n j : \tj}
+    {\G \th \exproj \e j n : \tj}
 
   \inferrule[Proj-I]
     {\eshape \E \e {\any \tvcs \Pi\iton \tvcs} \\
-     \G \th \E\where{\exfield \e n j} : \t}
-    {\G \th \E\where{\efield \e j} : \t}
+     \G \th \E\where{\exproj \e j n} : \t}
+    {\G \th \E\where{\eproj \e j} : \t}
 
   \inferrule [Poly-X]
     {\G \th \e : \ts\where {\tvs \is \tys}}
@@ -4587,7 +4632,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\parens{\G \th \ei : \tyi}\iton \\ \parens{{\elabi / \T} \leq \t \to \tyi}\iton \\ \dom {\labenv/\T} = \elabs }
     {\G \th \exrecord \T {\elaba = \ea; \ldots; \elab_n = \en} : \t }
 
-  \inferrule[Rcd-I-Closed]
+  \inferrule[Rcd-Closed]
     {\G \th \exrecord \T {\overline{\elab = \e}} : \t \\ \labsuni \elabs \T}
     {\G \th \erecord {\overline{\elab = \e}} : \t}
 
@@ -4600,13 +4645,13 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
      {\elab/\T} \leq \tya \to \tyb}
     {\G \th \exfield \e \T \elab : \tyb}
 
-  \inferrule[Rcd-Proj-I-Closed]
-    {\G \th \exfield \e \T \elab : \t \\ 
+  \inferrule[Rcd-Proj-Closed]
+    {\G \th \exfield \e \T \elab : \t \\
      \labuni \elab \T}
     {\G \th \efield \e \elab : \t}
 
   \inferrule[Rcd-Proj-I]
-    {\eshape \E \e {\any \tvcs \Tapp \tvcs} \\ 
+    {\eshape \E \e {\any \tvcs \Tapp \tvcs} \\
      \G \th \E\where{\exfield \e \T \elab} : \t}
     {\G \th \E\where{\efield \e \elab} : \t}
 
@@ -4724,11 +4769,11 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 \\
 \Crule
   {\cinfer {\erecord {\overline{\elab = \e}}} \tv}
-  {\begin{cases} 
+  {\begin{cases}
   \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi \cand \cAnd\iton \labenv(\elabi/\T) \leq \tv \to \tvbi
     & \text{if } \labsuni \elabs \T \\
     \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi & \text{otherwise} \\
-    \uad\cand \cmatch \tv {\cbranch {\cpatrcd \ct} 
+    \uad\cand \cmatch \tv {\cbranch {\cpatrcd \ct}
       {\dom {\ct} = \elabs \cand \cAnd\iton \labenv(\elabi/\ct) \leq \tv \to \tvbi}}
   \end{cases} }
 \\
@@ -4806,7 +4851,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\parens {\ei \simple} \iton}
     {\exrecord \T {\elaba = \ea\; \ldots\; \elab_n = \en}}
 
-  \inferrule[Simple-Rcd-I-Closed]
+  \inferrule[Simple-Rcd-Closed]
     {\parens {\ei \simple} \iton \\ \labsuni \elabs \T}
     {\erecord {\elaba = \ea\; \ldots\; \elab_n = \en}}
 
@@ -4814,7 +4859,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\e \simple}
     {{\exfield \e \T \elab} \simple}
 
-  \inferrule[Simple-Rcd-Proj-I-Closed]
+  \inferrule[Simple-Rcd-Proj-Closed]
     {\e \simple \\ \labuni \elab \T}
     {\efield \e \elab \simple}
 
@@ -4842,12 +4887,12 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
   \Erule{\epoly \e}{\emagic {\eerase \e}}\\
   \Erule{\einst \e}{\emagic {\eerase \e}}\\
   \Erule{\exinst \e \tvs \ts}{\exinst {\eerase \e} \tvs \ts}\\
-    \Erule{\erecord {\elaba = \ea; \ldots; \elab_n = \en}}{\begin{cases} 
+    \Erule{\erecord {\elaba = \ea; \ldots; \elab_n = \en}}{\begin{cases}
       \erecord {\elaba = \eerase \ea; \ldots; \elab_n = \eerase \en} &\text{if } \labsuni \elabs \T \\
       \emagic {\eerase \ea, \ldots, \eerase \en} & \text{otherwise}
     \end{cases}}\\
   \Erule{\exrecord \T {\elaba = \ea; \ldots; \elab_n = \en}}{\exrecord \T {\elaba = \eerase \ea; \ldots; \elab_n = \eerase \en}}\\
-    \Erule{\efield \e \elab}{\begin{cases} 
+    \Erule{\efield \e \elab}{\begin{cases}
       \efield \e \elab & \text{if } \labuni \elab \T \\
       \emagic {\eerase \e} & \text{otherwise}
     \end{cases}}\\
@@ -4880,8 +4925,8 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 
   \inferrule[Can-Proj-I]
     {\eshape \E \e {\any \tvcs \Pi\iton \tvcs} \\
-     \Th \E\where{\exfield \e n j} : \t}
-    {\Th \E\where{\efield \e j} : \t}
+     \Th \E\where{\exproj \e j n} : \t}
+    {\Th \E\where{\eproj \e j} : \t}
 
   \inferrule [Can-Poly-I]
     {\Eshape \E \e {{\any \tvcs \tpoly \ts}} \\
@@ -4899,12 +4944,12 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\Th \Lab[\elab] : \t}
 
   \inferrule[Can-Rcd-I]
-    {\Eshape \E \es {\any \tvcs \Tapp \tvcs} \\ 
+    {\Eshape \E \es {\any \tvcs \Tapp \tvcs} \\
      \Th \E\where{\exrecord \T {\elaba = \ea; \ldots; \elab_n = \en}} : \t}
     {\Th \E\where{\erecord {\elaba = \ea; \ldots; \elab_n = \en}} : \t}
 
   \inferrule[Can-Rcd-Proj-I]
-    {\Eshape \E \e {\any \tvcs \Tapp \tvcs} \\ 
+    {\Eshape \E \e {\any \tvcs \Tapp \tvcs} \\
      \Th \E\where{\exfield \e \T \elab} : \t}
     {\Th \E\where{\efield \e \elab} : \t}
 \end{judgboxmathpar}
@@ -7141,7 +7186,7 @@ sound and complete with respect to the declarative rules.
   \end{proof}
 \end{theorem}
 
-\paragraph{Inversion} On a simple syntax-directed derivation $\G \thsimplesd \e : \t$, we have the usual inversion 
+\paragraph{Inversion} On a simple syntax-directed derivation $\G \thsimplesd \e : \t$, we have the usual inversion
 principle:
 \begin{lemma}[Simple inversion]
   \label{lem:simple-inversion-sd}
@@ -7160,7 +7205,7 @@ principle:
     \item If $\G \thsimplesd \exinst \e \tvs \ts : \t$, then $\G \thsimplesd \e : \tpoly \ts\where{\tvs \is \tys}$ and $\ts \leq \t$.
     \item If $\G \thsimplesd \emagic \es : \t$, then $\G \thsimplesd \ei : \tip$ for all $1 \leq i \leq n$.
     \item If $\G \thsimplesd \exrecord \T {\overline{\elab = \e}} : \t$, then $\G \thsimplesd \ei : \ti$ and ${\elab/\T} \leq \t \to \ti$ for $1 \leq i \leq n$ and $\dom {\labenv/\T} = \elabs$.
-    \item If $\G \thsimplesd \erecord {\overline{\elab = \e}} : \t$, then $\labsuni \elabs \T$ and $\G \thsimplesd \exrecord \T {\overline{\elab = \e}} : \t$. 
+    \item If $\G \thsimplesd \erecord {\overline{\elab = \e}} : \t$, then $\labsuni \elabs \T$ and $\G \thsimplesd \exrecord \T {\overline{\elab = \e}} : \t$.
     \item If $\G \thsimplesd \exfield \e \T \elab : \t$, then $\G \thsimplesd \e : \tp$, ${\elab/\T} \leq \tp \to \t$.
     \item If $\G \thsimplesd \efield \e \elab : \t$, then $\labuni \elab \T$ and $\G \thsimplesd \exfield \e \T \elab : \t$.
   \end{enumerate}
@@ -7813,12 +7858,12 @@ TODO: a figure with the magic rule and the two unicity criterion (not for labels
   \inferrule[Proj-X]
     {\G \th \e : \Pi\iton \ti \\
      1 \leq j \leq n}
-    {\G \th \exfield \e n j : \tj}
+    {\G \th \exproj \e j n : \tj}
 
   \inferrule[Proj-I]
     {\eshape \E \e {\any \tvcs \Pi\iton \tvcs} \\
-     \G \th \E\where{\exfield \e n j} : \t}
-    {\G \th \E\where{\efield \e j} : \t}
+     \G \th \E\where{\exproj \e j n} : \t}
+    {\G \th \E\where{\eproj \e j} : \t}
 \\
   \newcommand{\Mrule}[5][]{{#2} \Matches {(#3)} \; #4 &\eqdef& {#5} & #1}
  \begin{array}{rcl@{\qquad}l@{\qquad\qquad} r}
@@ -7844,7 +7889,7 @@ TODO: a figure with the magic rule and the two unicity criterion (not for labels
     \cand \cunif \t {\tvb_j}}
 \\
 \Crule
-  {\cinfer {\efield \e j} \t}
+  {\cinfer {\eproj \e j} \t}
   {\cexists \tv \cinfer \e \tv
     \cand \cmatch \tv {\cbranch {\cpatprod \tvb j} {\cunif \t \tvb}}}
 \end{array}
@@ -8030,5 +8075,5 @@ TODO: extend the magic rule and the disambiguation rule, and also provide the un
 % LocalWords:  reflexitivity metatheoretic lexicographically Unifiers TODO
 % LocalWords:  rcl env Pcd illtyped inHole Ui unfoldings welltyped mprset
 % LocalWords:  lessskip Xbla Ybla explicitating Composability composability
-% LocalWords:  determinacy subcases unifications annotatability approxi
-% LocalWords:  mation
+% LocalWords:  determinacy subcases unifications annotatability approxi Rcx
+% LocalWords:  mation macroified cpoint concretize Dom
