@@ -3804,7 +3804,7 @@ ground type schemes $\gscm$, that is type schemes with no unbound variables
       {\cexists \tvs \cunif \ta \t \cand \cunif \tb {\Tapp \tvs}}
     \\\>
     \dom{\T} = \elabs &\eqdef&
-       \Scases{\ctrue}{\cfalse}{\dom {(\labfrom \labenv \T)} = \elabs}
+       \Scases{\ctrue}{\cfalse}{\Dom {\labfrom \labenv \T} = \elabs}
     \\\>
     \Srule
       {(\tfor \tvs \tp) \leq \t}
@@ -4350,7 +4350,7 @@ definition in full, or when studying the meta-theory of the system.
       {\labenv(\labfrom \elab \T) \leq \ta \to \tb}
       {\cexists \tvs \cunif \ta {\Tapp \tvs} \cand \cunif \tb \t }
     \\[1ex]
-    \dom{\T} = \elabs &\eqdef& \Scases{\ctrue}{\cfalse}{\dom {\labfrom \labenv \T} = \elabs} \\[1ex]
+    \dom{\T} = \elabs &\eqdef& \Scases{\ctrue}{\cfalse}{\Dom {\labfrom \labenv \T} = \elabs} \\[1ex]
     \Srule
       {(\tfor \tvs \tp) \leq \t}
       {\cexists \tvs \cunif \tp \t}
@@ -4558,13 +4558,13 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
   {\labsuni \elabs \T}
   {The \emph{closed} set of labels $\elabs$ infer the unique nominal record type $\T$.}
   \infer[Lab-Uni]
-    {\elab \in \dom {\labfrom \labenv \T} \\
-     \forall \Tp, \uad \elab \in \dom {\labfrom \labenv \Tp} \implies {\T} = \Tp}
+    {\elab \in \Dom {\labfrom \labenv \T} \\
+     \forall \Tp, \uad \elab \in \Dom {\labfrom \labenv \Tp} \implies {\T} = \Tp}
     {\labuni \elab \T}
 
   \infer[Labs-Uni]
-    {\dom {\labfrom \labenv \T} = \elabs \\
-     \forall \Tp, \uad \dom{\labfrom \labenv \Tp} = \elabs \implies {\T} = \Tp}
+    {\Dom {\labfrom \labenv \T} = \elabs \\
+     \forall \Tp, \uad \Dom{\labfrom \labenv \Tp} = \elabs \implies {\T} = \Tp}
     {\labsuni \elabs \T}
 \end{judgboxmathpar}
 
@@ -4644,7 +4644,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\G \th \E\where{\einst \e} : \t}
 
   \inferrule[Rcd-X]
-    {\parens{\G \th \ei : \tyi}\iton \\ \parens{{\labfrom \elabi \T} \leq \t \to \tyi}\iton \\ \dom {\labfrom \labenv \T} = \elabs }
+    {\parens{\G \th \ei : \tyi}\iton \\ \parens{{\labfrom \elabi \T} \leq \t \to \tyi}\iton \\ \Dom {\labfrom \labenv \T} = \elabs }
     {\G \th \exrecord \T {\elaba = \ea; \ldots; \elab_n = \en} : \t }
 
   \inferrule[Rcd-Closed]
@@ -7319,7 +7319,7 @@ principle:
       $\t = \tpoly {\tfor \tvbs \tp}\where{\tvs \is \tys}$.
     \item If $\G \thsimplesd \exinst \e \tvs \ts : \t$, then $\G \thsimplesd \e : \tpoly \ts\where{\tvs \is \tys}$ and $\ts \leq \t$.
     \item If $\G \thsimplesd \emagic \es : \t$, then $\G \thsimplesd \ei : \tip$ for all $1 \leq i \leq n$.
-    \item If $\G \thsimplesd \exrecord \T {\overline{\elab = \e}} : \t$, then $\G \thsimplesd \ei : \ti$ and ${\labfrom \elab \T} \leq \t \to \ti$ for $1 \leq i \leq n$ and $\dom {\labfrom \labenv \T} = \elabs$.
+    \item If $\G \thsimplesd \exrecord \T {\overline{\elab = \e}} : \t$, then $\G \thsimplesd \ei : \ti$ and ${\labfrom \elab \T} \leq \t \to \ti$ for $1 \leq i \leq n$ and $\Dom {\labfrom \labenv \T} = \elabs$.
     \item If $\G \thsimplesd \erecord {\overline{\elab = \e}} : \t$, then $\labsuni \elabs \T$ and $\G \thsimplesd \exrecord \T {\overline{\elab = \e}} : \t$.
     \item If $\G \thsimplesd \exfield \e \T \elab : \t$, then $\G \thsimplesd \e : \tp$, ${\labfrom \elab \T} \leq \tp \to \t$.
     \item If $\G \thsimplesd \efield \e \elab : \t$, then $\labuni \elab \T$ and $\G \thsimplesd \exfield \e \T \elab : \t$.
