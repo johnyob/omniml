@@ -628,8 +628,11 @@ returns $\c \where {\tv \is \t}$. Constraint abstractions are
 introduced by a let construct $(\clet \x \tv \ca \cb)$ which binds
 the constraint abstraction to the term variable $\x$ in
 $\cb$---additionally ensuring the abstraction is satisfiable. They
-are eliminated using the application constraint $(\capp \x \t)$ which
-applies the type $\t$ to the abstraction constraint bound to $x$.
+are eliminated using the application constraint $(\capp \x \t)$, which
+applies the constraint abstraction bound to $\x$ to the type $\t$.
+
+\Xalistair{The above was `applies the type $\t$ to the constraint abstraction
+bound to $\x$'. I slightly prefer this reading, but have no strong preferences}
 
 \parcomment {Suspended match constraints}
 
