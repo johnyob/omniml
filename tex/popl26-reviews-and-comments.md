@@ -1,7 +1,6 @@
 > POPL 2026 Paper #127 Reviews and Comments
 > ===========================================================================
 > Paper #127 Omnidirectional type inference for ML: principality any way
->
 
 > Review #127A
 > ===========================================================================
@@ -190,16 +189,28 @@ We believe choice types can be combined with omnidirectional type inference for 
 >       a good justification of why one would want to use your system
 >       rather than MLF (possibly complemented with something like SML’s
 >       monomorphic row types for variant/field overloading).
->
+
+There seems to be two questions in one:
+
+- MLF certainly improves over semi-explicit polyorphism, but it relies and extend the same basic \pi-directionality idea. The point or our work is not to compare several uses
+
+
 >         On the one hand, the argument made in the introduction of this
 >         submission (and also in 2.1) is not very convincing: why would
 >         someone want to annotate a *use* of a variable and expect
 >         other unrelated uses to non-locally benefit from that
->         annotation? On the other hand, the requirement of
+>         annotation?
+
+In the absence of let-polymorphism, type inference is plain unification and becomes obvious to the user that type information should be propagated --- users prefer to avoid repeating type annotations. We argue that this should not be broken by let-polymorphism.
+
+
+>         On the other hand, the requirement of
 >         semi-explicit polymorphism seems to make programming worse
 >         than in a system like MLF, so it is not clear at all that you
 >         are reaching for the right tradeoff, here.
->
+
+Our system aims to target features present in OCaml, which does not include the higher-rank polymorphism present in MLF. We're aware that our system could be combined with MLF (in lines 1196-1197, we suggest that omnidirectionality could benefit MLF as well)
+
 >     - *Jiří Beneš and Jonathan Immanuel Brachthäuser. 2025. The Simple Essence of Overloading: Making ad-hoc polymorphism more algebraic with flow-based variational type-checking. OOPSLA ‘25.*
 >
 >         Of course, you could not have known about this paper, since it
@@ -492,3 +503,4 @@ In other words, our efficiency claims are not based on experiment, but on the us
 >   polymorphic variants?
 
 Probably not, as polymorphic variants use fairly different type-system mechanism -- they are not among the "fragile implicit features" we consider, as they are based on structural types with row variables.
+
