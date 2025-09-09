@@ -878,7 +878,7 @@ resolve ambiguities in record types. For instance:
 \begin{program}[input,check]
 let ex_1_1 = {x = 42; z = 1337} °\ocamlflags 00°
 \end{program}
-Here, \code{x} and \code{y} appear together only in the type \code{two},
+Here, \code{x} and \code{z} appear together only in the type \code{two},
 allowing the type checker to unambiguously infer the type of \ocaml{e$_{11}$} as
 \code{two}.
 %
