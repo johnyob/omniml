@@ -915,7 +915,8 @@ written $\elab : \tlab [\tvs]{{\Tapp \tvs}}{\t} \in \labenv$ where $\tlab
 [\tvs]{{\Tapp \tvs}}{\t}$ is the type of the projection on label $\elab$ from a
 record of type $\t$. A given label $\elab$ may be defined several times in
 $\labenv$, but at most once at a given record type~$\T$. We write
-$\labenv(\elab / \T)$ for the type scheme of $\elab$ in $\T$ when it exists.
+$\labenv(\labfrom \elab \T)$ for the type scheme of $\elab$ in $\T$ when it
+exists.
 
 We propose an alternative account of static overloading using suspended
 match constraints.  For example, in the case of an ambiguous record
@@ -926,7 +927,7 @@ projection $\efield \e \elab$, we generate the typing constraint:
   \cand
   \cmatch \tvb
       {\cbranch {\cpatrcd \ct}
-	{\parens {\labenv(\elab / \ct) \leq \tva \to \tvb}}
+	{\parens {\labenv(\labfrom \elab \ct) \leq \tva \to \tvb}}
       }
 \end{mathpar}
 This constraint suspends resolution of the return type $\alpha$ until the
@@ -2561,7 +2562,7 @@ to the semantic definition of unicity (\cref{def:unicity}).
 
 % Properties
 % May look like space hacks, but restatable introduces its own space
-\Xalistair{@Didier, can you take a look at the new correctness corollary to check if 
+\Xalistair{@Didier, can you take a look at the new correctness corollary to check if
 this is what you wanted in terms of scoping?}
 
 \begin{version}{}
@@ -3379,33 +3380,14 @@ no type-directed overloading is involved.
     {\G \th \E \where{\epoly \e} : \t}
 \\
   \inferrule[Rcd-I]
-    {\Eshape \E \es {\any \tvcs \Tapp \tvcs} \\ \G \th \E\where{\exrecord \T {\overline{\elab = \e}}} : \t }
+    {\Eshape \E \es {\any \tvcs \Tapp \tvcs} \\
+     \G \th \E\where{\exrecord \T {\overline{\elab = \e}}} : \t }
     {\G \th \E\where{\erecord {\overline{\elab = \e}}} : \t}
-
 
   \inferrule[Rcd-Proj-I]
     {\eshape \E \e {\any \tvcs \Tapp \tvcs} \\
      \G \th \E\where{\exfield \e \T \elab} : \t}
     {\G \th \E\where{\efield \e \elab} : \t}
-\begin{version}{}
-
-\infer[Lab-inX]
-    {\elab / {\T} \in \labenv}
-    {(\elab / \T) / {\T} \in \labenv}
-
-  \infer[Lab-inHole]
-    {\elab / {\T} \in \labenv}
-    {\elmagic \elab / {\T} \in \labenv}
-
-  \infer[Labs-Ui]
-    {\bar \el / {\T} \in \labenv \\
-     \all \Tp \uad\bar \el / \Tp \in \labenv \implies {\T} = \T'}
-    {\bar \el \uni \T \in \labenv}
-
-  \infer[Lab-inAnnot]
-      {\el / {\T} \in \labenv}
-      {\elannot \el \tvs \t / {\t} \in \labenv}
-\end{version}
 \end{mathparfig}
 
 We now turn to the typing of fragile implicit constructs, given in
@@ -3443,10 +3425,21 @@ the hole: the hole itself may be assigned an arbitrary type.  It is a
 key\XDR{We never enforce this} that typed holes are not allowed in source
 terms and are just a device for the definition of non-ambiguous shapes.
 
-Finally, we now formalize what it means for a shape to be determined from
-the type of an expression $\e$ in the context $\E$, \ie $\eshape \E \e \sh$,
-or from the context hole of $\E$ with expressions $\es$, \ie $\Eshape \E \es
-\sh$:
+\XDR{I think the infer/checking modes counter-intuitive as we are always
+\emph{inferring} the shape. So,  I change the wording from here till to the
+end of the section as an attempt to better carry the flow of information.  I
+am also more explicit on the reading of typing rules emphasized that once
+the shape has been inferred the rule always calls/behaves as its explicit
+counterpart.}
+
+Finally, we formalize what it means for a shape $\sh$ to be determined
+from the type of either
+\begin{enumerate*}
+\item an expression $\e$ in the context $\E$, written
+$\eshape \E \e \sh$, or
+\item the context hole of $\E$ containing
+expressions~$\es$, written $\Eshape \E \es \sh$:
+\end{enumerate*}
 \begin{mathpar}
 \def \Eqdef {&\eqdef&}
 {\begin{tabular}{RCL}
@@ -3471,16 +3464,16 @@ The implicit rule \Rule{Proj-I} types the projection $\eproj \e j$ as as
 $\eproj[n] \e j$ provided the shape of the type of $\e$ in context $\E$
 is a tuple of arity $n$.
 %
-Similarly, Rule \Rule{Use-I} permits instantiating a polytype in $\einst e$
-as $\einst[\exi \tvcs \ts] \e$ provided the shape  of the type of $\e$
-in the context $\E$ is $\any \tvcs \tpoly \ts$.
+Similarly, Rule \Rule{Use-I} permits instantiating a polytype in expression
+$\einst e$ as in expression $\einst[\exi \tvcs \ts] \e$ provided the shape
+of the type of $\e$ in the context $\E$ is $\any \tvcs \tpoly \ts$.
 %
 Rule \Rule{Poly-I} types the implicit boxing construct $\epoly \e$ as
 $\epoly [\exi \tvcs \ts] \e$ provided the context $\E$ with
 expressions $\e$ expects a polytype of shape $\any \tvcs \tpoly \ts$.
 %
 This rule differs from the previous two as the shape is determined by the
-expected type within the context as opposed to the type of $\e$.
+ztype of the context hole as opposed to the type of $\e$.
 
 
 \paragraph{Overloaded record labels}
@@ -3489,29 +3482,40 @@ We adopt a similar non-compositional approach for elaborating overloaded
 labels, whether in record projection ($\efield e \elab$) or record construction
 ($\erecord {\overline{\elab = \e}}$).
 %
-Similarly to polytypes, Rule \Rule{Rcd-I} types an overloaded record
-$\erecord {\overline{\elab = \e}}$ as $\exrecord \T {\overline{\elab =
-\e}}$, provided the context $\E$ with expressions $\es$ expects a nominal
-record type of shape $\any \tvcs \Tapp \tvcs$.
-This rule differs from \Rule {Poly-I} in the use of several subexpressions
-that may appear in the unicity judgment, since
-any field assignment expression can contribute to determining the record's
-type, \eg as in $\efun r r = {\erecord { x = (r : \mathtt{three}).x; y = 10 }}$.
-%
 Typing record projections in \Rule{Rcd-Proj-I} is analogous to tuple
 projections: the projection $\efield \e \elab$ is typed as $\exfield  \e
 \Tapp \elab$ provided the shape of the type of expression $\e$ in context
 $\E$ is a nominal record $\any \tvcs \Tapp \tvcs$.
+%
+Similarly to polytypes, Rule \Rule{Rcd-I} types an overloaded record
+$\erecord {\overline{\elab = \e}}$ as $\exrecord \T {\overline{\elab =
+\e}}$, provided the context $\E$ with expressions $\es$ expects a nominal
+record type of shape $\any \tvcs \Tapp \tvcs$.  This rule differs from \Rule
+{Poly-I} in the use of several subexpressions that may appear in the unicity
+judgment, since any field assignment expression can contribute to
+determining the record's type, \eg as in the expression
+\relax
+$\efun r r = {\erecord { x = (r :\ \mathtt{cpoint}).x; y = 10 }}$.
+\XDR{I do not understand the example: here the type of the record
+$\set { x = \ldots; y = \ldots}$is
+fully determined by the two fields $\set {x, y}$ without any type
+information, as explained just above. We need another conflicting
+definition, e.g. as follows.}
+\begin{program}[input]
+type surface = { x : int; y : int}              °\ocamlflags 10°
+$\efun r r = {\erecord { x = (r :\ \mathtt{point}).x; y = 10 }}$.
+\end{program}
+
 
 
 
 \subsection {Examples of typings}
 \label {app/oml/examples}
 
-The following lemma shows that we can always take a larger context
-$\E$ for implicit rules \Rule {Proj-I}, \Rule {Use-I}, \Rule
-{Poly-I}, \Rule{Rcd-I}, and \Rule{Rcd-Proj-I}.
-That is, there is always a derivation using only toplevel contexts.
+The following lemma shows that we can always take a larger context $\E$ for
+implicit rules \Rule {Proj-I}, \Rule {Use-I}, \Rule {Poly-I}, \Rule{Rcd-I},
+and \Rule{Rcd-Proj-I}.  That is, there is always a derivation using only
+toplevel contexts.
 \begin{lemma}
 \label{lem/context/largest}
 \newcommand {\Eab}{\parens{\Ea\where \Eb}}
@@ -3795,7 +3799,7 @@ ground type schemes $\gscm$, that is type schemes with no unbound variables
     \end{array}%
   }
   \begin{tabular}{RCLL}
-    \Srule[\text{if } \labenv(\elab/\T) = \tfor \tvs \t \to \Tapp \tvs]
+    \Srule[\text{if } \labenv(\labfrom \elab \T) = \tfor \tvs \t \to \Tapp \tvs]
       {\labenv(\labfrom \elab \T) \leq \ta \to \tb}
       {\cexists \tvs \cunif \ta \t \cand \cunif \tb {\Tapp \tvs}}
     \\\>
@@ -3894,27 +3898,35 @@ ground type schemes $\gscm$, that is type schemes with no unbound variables
 \Crule
   {\cinfer {\efield \e \elab} \tv}
   {\begin{cases}
-    \cexists {\tvb} \cinfer \e \tvb \cand \labenv(\elab/\T) \leq \tvb \to \tva & \text{if } \labuni \elab \T \\
-    \cexists \tvb \cinfer \e \tvb \cand \cmatch \tvb {\cbranch {\cpatrcd \ct} {\labenv(\elab/\ct) \leq \tvb \to \tv}} & \text{otherwise}
+    \cexists {\tvb} \cinfer \e \tvb \cand
+    \labenv(\labfrom \elab \T) \leq \tvb \to \tva
+    & \text{if } \labuni \elab \T
+    \\
+    \cexists \tvb \cinfer \e \tvb \cand
+    \cmatch \tvb
+      {\cbranch {\cpatrcd \ct} {\labenv(\labfrom \elab \ct) \leq \tvb \to \tv}}
+    & \text{otherwise}
   \end{cases}}
 \\
 \Crule
   {\cinfer {\exfield \e {\T~} \elab} \tv}
-  {\cexists \tvb \cinfer \e \tvb \cand \labenv(\elab/\T) \leq \tvb \to \tva}
+  {\cexists \tvb \cinfer \e \tvb \cand
+   \labenv(\labfrom \elab \T) \leq \tvb \to \tva}
 \\
 \Crule
   {\cinfer {\erecord {\overline{\elab = \e}}} \tv}
   {\begin{cases}
-  \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi \cand \cAnd\iton \labenv(\elabi/\T) \leq \tv \to \tvbi
+  \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi \cand
+   \cAnd\iton \labenv(\labfrom \elabi \T) \leq \tv \to \tvbi
     & \text{if } \labsuni \elabs \T \\
     \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi & \text{otherwise} \\
     \uad\cand \cmatch \tv {\cbranch {\cpatrcd \ct}
-      {\dom {\ct} = \elabs \cand \cAnd\iton \labenv(\elabi/\ct) \leq \tv \to \tvbi}} &
+      {\dom {\ct} = \elabs \cand \cAnd\iton \labenv(\labfrom \elabi \ct) \leq \tv \to \tvbi}} &
   \end{cases} }
 \\
 \Crule
   {\cinfer {\exrecord \T {\overline{\elab = \e}}} \tv}
-  {\cexists \tvbs \cAnd\iton \cinfer \ei \tvbi \cand \dom {\T} = \elabs \cand \cAnd\iton \labenv(\elabi/\T) \leq \tv \to \tvbi }
+  {\cexists \tvbs \cAnd\iton \cinfer \ei \tvbi \cand \dom {\T} = \elabs \cand \cAnd\iton \labenv(\labfrom \elabi \T) \leq \tv \to \tvbi }
 \\
 \Crule
   {\cinfer {\emagic \es} \tv}
@@ -4137,9 +4149,9 @@ definition in full, or when studying the meta-theory of the system.
   \and \cexistsi \inst \x \c
   \and \cpinst \inst \tv \t
   \nextline
-  \and \labenv(\elab/\ct) \leq \ta \to \tb
+  \and \labenv(\labfrom \elab \ct) \leq \ta \to \tb
   \and \dom \ct = \elabs
-  \and \labenv(\elab/\T) \leq \ta \to \tb
+  \and \labenv(\labfrom \elab \T) \leq \ta \to \tb
   \and \dom {\T} = \elabs
   \nextline
   \and \cscm \leq \t \mid \ts \leq \t \mid \x \leq \cscm \mid \x \leq \ts
@@ -4302,7 +4314,7 @@ definition in full, or when studying the meta-theory of the system.
 
   \inferrule[Lab-Inst]
     {\semenv \th \labenv(\elab/\semenv(\ct)) \leq \ta \to \tb}
-    {\semenv \th \labenv(\elab/\ct) \leq \ta \to \tb}
+    {\semenv \th \labenv(\labfrom \elab \ct) \leq \ta \to \tb}
 
   \inferrule[Lab-Dom]
     {\semenv \th \dom {\phi(\ct)} = \elabs}
@@ -4334,11 +4346,11 @@ definition in full, or when studying the meta-theory of the system.
     \Srule[\text{if } \cmatches \cpati \sh \tvs \theta]{\cmatched \t \sh {\cbranch \cpat \cs}}
       {\cexists \tvs \cunif \t \shapp \tvs \cand \theta(\ci)}
     \\[1ex]
-    \Srule[\text{if } \labenv(\elab/\T) = \tfor \tvs {\Tapp \tvs} \to \t]
-      {\labenv(\elab/\T) \leq \ta \to \tb}
+    \Srule[\text{if } \labenv(\labfrom \elab \T) = \tfor \tvs {\Tapp \tvs} \to \t]
+      {\labenv(\labfrom \elab \T) \leq \ta \to \tb}
       {\cexists \tvs \cunif \ta {\Tapp \tvs} \cand \cunif \tb \t }
     \\[1ex]
-    \dom{\T} = \elabs &\eqdef& \Scases{\ctrue}{\cfalse}{\dom {\labenv/\T} = \elabs} \\[1ex]
+    \dom{\T} = \elabs &\eqdef& \Scases{\ctrue}{\cfalse}{\dom {\labfrom \labenv \T} = \elabs} \\[1ex]
     \Srule
       {(\tfor \tvs \tp) \leq \t}
       {\cexists \tvs \cunif \tp \t}
@@ -4531,11 +4543,11 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 \end{judgboxmathpar}
 
 \begin{judgboxmathpar}
-  {{\elab/\T} \leq \tya \to \tyb}
+  {{\labfrom \elab \T} \leq \tya \to \tyb}
   {The label $\elab$ in the nominal record type $\T$ has the field type $\tyb$ and record type $\tya$.}
   \inferrule[Lab-Inst]
-    {\labenv(\elab / \T) = \tfor \tvs {\T \tvs} \to \t }
-    {{\elab/\T} \leq \Tapp \tys \to \t\where{\tvs \is \tys} }
+    {\labenv(\labfrom \elab \T) = \tfor \tvs {\T \tvs} \to \t }
+    {{\labfrom \elab \T} \leq \Tapp \tys \to \t\where{\tvs \is \tys} }
 \end{judgboxmathpar}
 
 \judgbox
@@ -4546,13 +4558,13 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
   {\labsuni \elabs \T}
   {The \emph{closed} set of labels $\elabs$ infer the unique nominal record type $\T$.}
   \infer[Lab-Uni]
-    {\elab \in \dom {\labenv/\T} \\
-     \forall \Tp, \uad \elab \in \dom {\labenv/\Tp} \implies {\T} = \Tp}
+    {\elab \in \dom {\labfrom \labenv \T} \\
+     \forall \Tp, \uad \elab \in \dom {\labfrom \labenv \Tp} \implies {\T} = \Tp}
     {\labuni \elab \T}
 
   \infer[Labs-Uni]
-    {\dom {\labenv/\T} = \elabs \\
-     \forall \Tp, \uad \dom{\labenv/\Tp} = \elabs \implies {\T} = \Tp}
+    {\dom {\labfrom \labenv \T} = \elabs \\
+     \forall \Tp, \uad \dom{\labfrom \labenv \Tp} = \elabs \implies {\T} = \Tp}
     {\labsuni \elabs \T}
 \end{judgboxmathpar}
 
@@ -4632,7 +4644,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\G \th \E\where{\einst \e} : \t}
 
   \inferrule[Rcd-X]
-    {\parens{\G \th \ei : \tyi}\iton \\ \parens{{\elabi / \T} \leq \t \to \tyi}\iton \\ \dom {\labenv/\T} = \elabs }
+    {\parens{\G \th \ei : \tyi}\iton \\ \parens{{\labfrom \elabi \T} \leq \t \to \tyi}\iton \\ \dom {\labfrom \labenv \T} = \elabs }
     {\G \th \exrecord \T {\elaba = \ea; \ldots; \elab_n = \en} : \t }
 
   \inferrule[Rcd-Closed]
@@ -4645,7 +4657,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 
   \inferrule[Rcd-Proj-X]
     {\G \th \e : \tya \\
-     {\elab/\T} \leq \tya \to \tyb}
+     {\labfrom \elab \T} \leq \tya \to \tyb}
     {\G \th \exfield \e \T \elab : \tyb}
 
   \inferrule[Rcd-Proj-Closed]
@@ -4762,27 +4774,27 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 \Crule
   {\cinfer {\efield \e \elab} \tv}
   {\begin{cases}
-    \cexists {\tvb} \cinfer \e \tvb \cand \labenv(\elab/\T) \leq \tvb \to \tva & \text{if } \labuni \elab \T \\
-    \cexists \tvb \cinfer \e \tvb \cand \cmatch \tvb {\cbranch {\cpatrcd \ct} {\labenv(\elab/\ct) \leq \tvb \to \tv}} & \text{otherwise}
+    \cexists {\tvb} \cinfer \e \tvb \cand \labenv(\labfrom \elab \T) \leq \tvb \to \tva & \text{if } \labuni \elab \T \\
+    \cexists \tvb \cinfer \e \tvb \cand \cmatch \tvb {\cbranch {\cpatrcd \ct} {\labenv(\labfrom \elab \ct) \leq \tvb \to \tv}} & \text{otherwise}
   \end{cases}}
 \\
 \Crule
   {\cinfer {\exfield \e \T \elab} \tv}
-  {\cexists \tvb \cinfer \e \tvb \cand \labenv(\elab/\T) \leq \tvb \to \tva}
+  {\cexists \tvb \cinfer \e \tvb \cand \labenv(\labfrom \elab \T) \leq \tvb \to \tva}
 \\
 \Crule
   {\cinfer {\erecord {\overline{\elab = \e}}} \tv}
   {\begin{cases}
-  \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi \cand \cAnd\iton \labenv(\elabi/\T) \leq \tv \to \tvbi
+  \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi \cand \cAnd\iton \labenv(\labfrom \elabi \T) \leq \tv \to \tvbi
     & \text{if } \labsuni \elabs \T \\
     \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi & \text{otherwise} \\
     \uad\cand \cmatch \tv {\cbranch {\cpatrcd \ct}
-      {\dom {\ct} = \elabs \cand \cAnd\iton \labenv(\elabi/\ct) \leq \tv \to \tvbi}}
+      {\dom {\ct} = \elabs \cand \cAnd\iton \labenv(\labfrom \elabi \ct) \leq \tv \to \tvbi}}
   \end{cases} }
 \\
 \Crule
   {\cinfer {\exrecord \T {\overline{\elab = \e}}} \tv}
-  {\cexists \tvbs \cAnd\iton \cinfer \ei \tvbi \cand \dom {\T} = \elabs \cand \cAnd\iton \labenv(\elabi/\T) \leq \tv \to \tvbi }
+  {\cexists \tvbs \cAnd\iton \cinfer \ei \tvbi \cand \dom {\T} = \elabs \cand \cAnd\iton \labenv(\labfrom \elabi \T) \leq \tv \to \tvbi }
 \\
 \Crule
   {\cinfer {\emagic \es} \tv}
@@ -4943,7 +4955,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 
   \inferrule[Can-Lab-I]
     {\Lshape \Lab \elab \T \\
-      \Th \Lab[\elab / \T] : \t}
+      \Th \Lab[\labfrom \elab \T] : \t}
     {\Th \Lab[\elab] : \t}
 
   \inferrule[Can-Rcd-I]
@@ -6195,9 +6207,9 @@ generally in our system.
 \end{lemma}
 
 \newcommand{\disjointPf}[3]{\Pf{#1}{\disjoint}{#2}{#3}}
-\begin{lemma}  
+\begin{lemma}
   \label{lem:unicity-soundness}
-  If $\th \Cshape \C \t \sh$, then $\Cshape \C \t \sh$. 
+  If $\th \Cshape \C \t \sh$, then $\Cshape \C \t \sh$.
 
   \begin{proof}
     \begin{proofcases}
@@ -6273,7 +6285,7 @@ generally in our system.
 \begin{lemma}
   \label{lem:unicity-completeness}
 
-  If $\C$ is normalized, then $\Cshape \C \t \sh$ if and only $\th \Cshape \C \t \sh$. 
+  If $\C$ is normalized, then $\Cshape \C \t \sh$ if and only $\th \Cshape \C \t \sh$.
   \begin{proof}~
     \begin{proofcases}
 
@@ -6309,9 +6321,9 @@ generally in our system.
 
         \Wlog all constraints that may determine the shape of $\tv$ are located
         with the regional binder (following the \Rule{S-Lower-Exists} and
-        \Rule{S-Let-ConjLeft} rules). There are two cases: 
+        \Rule{S-Let-ConjLeft} rules). There are two cases:
 
-        \begin{proofcases}  
+        \begin{proofcases}
 
           \proofcase{$\cunif \tv {\cunif \t \ueq} \in \bar{\hat\ueq}$} Apply \Rule{S-Uni-Var}.
 
@@ -6328,11 +6340,11 @@ generally in our system.
             constraints that copy $\tv$. So there exists a partial
             instantiation constraint $\cpapp \x \tv \tvc \inst$ such that $\Cp
             \where{\cpapp \x \tv \tvc \inst} = \C\where{\ctrue}$ and $\Cshape
-            \Cp \tvc \sh$. 
+            \Cp \tvc \sh$.
 
             By induction, we have $\th \Cshape \Cp \tvc \sh$. From
-            \Rule{S-Uni-BackProp}, we have $\th \Cshape \C \tv \sh$. 
- 
+            \Rule{S-Uni-BackProp}, we have $\th \Cshape \C \tv \sh$.
+
 
         \end{proofcases}
 
@@ -7169,7 +7181,7 @@ rules that are not inherently destructive.
   \label{lem:scoping-preservation}
   For all $\ca, \cb$, if $\ca \csolve \cb$, then $\fvs \ca \supseteq \fvs \cb$.
   \begin{proof}
-    By induction on $\ca \csolve \cb$. 
+    By induction on $\ca \csolve \cb$.
   \end{proof}
 \end{lemma}
 
@@ -7307,9 +7319,9 @@ principle:
       $\t = \tpoly {\tfor \tvbs \tp}\where{\tvs \is \tys}$.
     \item If $\G \thsimplesd \exinst \e \tvs \ts : \t$, then $\G \thsimplesd \e : \tpoly \ts\where{\tvs \is \tys}$ and $\ts \leq \t$.
     \item If $\G \thsimplesd \emagic \es : \t$, then $\G \thsimplesd \ei : \tip$ for all $1 \leq i \leq n$.
-    \item If $\G \thsimplesd \exrecord \T {\overline{\elab = \e}} : \t$, then $\G \thsimplesd \ei : \ti$ and ${\elab/\T} \leq \t \to \ti$ for $1 \leq i \leq n$ and $\dom {\labenv/\T} = \elabs$.
+    \item If $\G \thsimplesd \exrecord \T {\overline{\elab = \e}} : \t$, then $\G \thsimplesd \ei : \ti$ and ${\labfrom \elab \T} \leq \t \to \ti$ for $1 \leq i \leq n$ and $\dom {\labfrom \labenv \T} = \elabs$.
     \item If $\G \thsimplesd \erecord {\overline{\elab = \e}} : \t$, then $\labsuni \elabs \T$ and $\G \thsimplesd \exrecord \T {\overline{\elab = \e}} : \t$.
-    \item If $\G \thsimplesd \exfield \e \T \elab : \t$, then $\G \thsimplesd \e : \tp$, ${\elab/\T} \leq \tp \to \t$.
+    \item If $\G \thsimplesd \exfield \e \T \elab : \t$, then $\G \thsimplesd \e : \tp$, ${\labfrom \elab \T} \leq \tp \to \t$.
     \item If $\G \thsimplesd \efield \e \elab : \t$, then $\labuni \elab \T$ and $\G \thsimplesd \exfield \e \T \elab : \t$.
   \end{enumerate}
 \end{lemma}
@@ -7451,29 +7463,29 @@ and $\sub(\tvs) = \tys$.
 \Crule
   {\ctxinfer {\parens{\efield \E \elab}} \tvp \tv}
   {\begin{cases}
-    \cexists {\tvb} \ctxinfer \E \tvp \tvb \cand \labenv(\elab/\T) \leq \tvb \to \tva & \text{if } \labuni \elab \T \\
-    \cexists \tvb \ctxinfer \E \tvp \tvb \\ \cand \cmatch \tvb {\cbranch {\cpatrcd \ct} {\labenv(\elab/\ct) \leq \tvb \to \tv}} & \text{otherwise}
+    \cexists {\tvb} \ctxinfer \E \tvp \tvb \cand \labenv(\labfrom \elab \T) \leq \tvb \to \tva & \text{if } \labuni \elab \T \\
+    \cexists \tvb \ctxinfer \E \tvp \tvb \\ \cand \cmatch \tvb {\cbranch {\cpatrcd \ct} {\labenv(\labfrom \elab \ct) \leq \tvb \to \tv}} & \text{otherwise}
   \end{cases}}
 \\
 \Crule
   {\ctxinfer {\parens{\exfield \E \T \elab}} \tvp \tv}
-  {\cexists \tvb \ctxinfer \E \tvp \tvb \cand \labenv(\elab/\T) \leq \tvb \to \tva}
+  {\cexists \tvb \ctxinfer \E \tvp \tvb \cand \labenv(\labfrom \elab \T) \leq \tvb \to \tva}
 \\
 \Crule
   {\ctxinfer {\erecord {\elaba = \ea; \ldots; \elab_j = \E_j; \ldots; \elab_n = \en}} \tvp \tv}
-  {\begin{cases} 
+  {\begin{cases}
     \cexists \tvbs \cAnd_{i \neq j} \cinfer \ei \tvbi \cand \ctxinfer {\E_j} \tvp \tvbj     & \text{if } \labsuni \elabs \T \\
-    \cand \cAnd\iton \labenv(\elabi/\T) \leq \tv \to \tvbi \\
+    \cand \cAnd\iton \labenv(\labfrom \elabi \T) \leq \tv \to \tvbi \\
     \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi & \text{otherwise} \\
-    \uad\cand~\cmatch \tv {\cbranch {\cpatrcd \ct} 
-      {\dom {\ct} = \elabs \\ 
-      \hspace{3cm}\cand \cAnd\iton \labenv(\elabi/\ct) \leq \tv \to \tvbi}}
+    \uad\cand~\cmatch \tv {\cbranch {\cpatrcd \ct}
+      {\dom {\ct} = \elabs \\
+      \hspace{3cm}\cand \cAnd\iton \labenv(\labfrom \elabi \ct) \leq \tv \to \tvbi}}
   \end{cases} }
 \\
 \Crule
   {\ctxinfer {\exrecord \T {\elaba = \ea; \ldots; \elab_j = \E_j; \ldots; \elab_n = \en}} \tvp \tv}
-  {\cexists \tvbs \cAnd_{i \neq j} \cinfer \ei \tvbi \cand \ctxinfer {\E_j} \tvp \tvbj \cand \dom {\T} = \elabs \\ 
-  &&\cand \cAnd\iton \labenv(\elabi/\T) \leq \tv \to \tvbi }
+  {\cexists \tvbs \cAnd_{i \neq j} \cinfer \ei \tvbi \cand \ctxinfer {\E_j} \tvp \tvbj \cand \dom {\T} = \elabs \\
+  &&\cand \cAnd\iton \labenv(\labfrom \elabi \T) \leq \tv \to \tvbi }
 \\
 \Crule
   {\ctxinfer {\emagic {\ea, \ldots, \E_j, \ldots, \en}} \tvp \tv}
@@ -8144,12 +8156,12 @@ TODO: extend the magic rule and the disambiguation rule, and also provide the un
     {\G \th \efield \e \el : \t}
 
   \inferrule[Lab-X]
-    {\labenv(\elab / \T) = \tfor \tvs \t \to \tvs \T }
-    {\G \th \elab / \T : \tys\where{\tvs \is \tys} \to \tys \T}
+    {\labenv(\labfrom \elab \T) = \tfor \tvs \t \to \tvs \T }
+    {\G \th \labfrom \elab \T : \tys\where{\tvs \is \tys} \to \tys \T}
 
   \inferrule[Lab-I]
     {\Lshape \Lab \elab \T \\
-      \G \th \Lab[\elab / \T] : \t}
+      \G \th \Lab[\labfrom \elab \T] : \t}
     {\G \th \Lab[\elab] : \t}
 
   \inferrule[Lab-!]
@@ -8164,8 +8176,8 @@ TODO: extend the magic rule and the disambiguation rule, and also provide the un
  \begin{array}{rcl@{}l@{\qquad} r}
    \cpat & ::= & \dots \mid \cpatrcd \ct & & \text{record patterns} \\
    \c & ::= & \dots
-              \mid \labenv(\elab/\ct) \leq \ta \to \tb
-              \mid \labenv(\elab/\T) \leq \ta \to \tb
+              \mid \labenv(\labfrom \elab \ct) \leq \ta \to \tb
+              \mid \labenv(\labfrom \elab \T) \leq \ta \to \tb
             & & \text{record constraints} \\
     \Mrule
       {\cpatrcd \ct}
@@ -8183,11 +8195,11 @@ TODO: extend the magic rule and the disambiguation rule, and also provide the un
 \\
 \Crule
   {\cinferlab \elab \ta \tb}
-  {\cmatch \tb {\cbranch {\cpatrcd \ct} {\labenv(\elab/\ct) \leq \ta \to \tb}}}
+  {\cmatch \tb {\cbranch {\cpatrcd \ct} {\labenv(\labfrom \elab \ct) \leq \ta \to \tb}}}
 \\
 \Crule
-  {\cinferlab {\elab/\T} \ta \tb}
-  {\labenv(\elab/\T) \leq \ta \to \tb}
+  {\cinferlab {\labfrom \elab \T} \ta \tb}
+  {\labenv(\labfrom \elab \T) \leq \ta \to \tb}
 \\
 \Crule
   {\cinferlab {\elmagic \elab} \ta \tb}
