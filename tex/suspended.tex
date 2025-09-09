@@ -46,19 +46,17 @@ information about a type variable; and \emph{partial type schemes}, which
 allow taking instances of a partially solved type scheme containing
 suspended constraints, with a mechanism to incrementally update instances as
 the scheme is refined.
-%
-\Xalistair[Changed, preferred the submitted version. Was]{While the benefits of omnidirectional type inference are minor for core \ML,
-  which truly enjoy principal types, they}\XDR{The meaning is not the
-  same. I find the formulation you like overselling, and lying by omission}
 
-  \TODO{Change to mention that omnidirectional doesn't Core \ML, issue with striking, frame it that the framework
-  makes a striking improvement.}
-
-The benefits of omnidirectional type inference are striking for several advanced
-\ML extensions, typically those that rely on optional type annotations where
-principality is fragile.  We illustrate them with \OCaml's static
+The benefits of omnidirectional type inference are most apparant for advanced
+\ML extensions that rely on optional type annotations, where
+principality is \emph{fragile}.  We illustrate these advantages with \OCaml's static
 overloading of record labels and datatype constructors, semi-explicit
 first-class polymorphism, and tuple projections \ala \SML.
+%
+By contrast, extensions that integrate seamlessly into the traditional 
+\ML framework---such as row polymorphism---already enjoy \emph{robust} 
+principality and do not gain from omnidirectionality.
+  \Xalistair{@Didier, does this work?}
 \end{abstract}
 \maketitle
 
