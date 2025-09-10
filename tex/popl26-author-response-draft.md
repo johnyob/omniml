@@ -15,6 +15,191 @@ Our response is too long, but it discusses the important points first that we ho
 
 ## 1. Revision plan
 
+A common theme across reviews is that the paper is difficult to read:
+definitions are scattered, essential material is deferred to appendices, and
+the line of contributions is obscured by staging and breadth. We acknowledge
+these issues (and were in fact aware of them prior to your reviews). Below we
+outline concrete changes we will make in a revision.
+
+### Contributions
+
+We will shorten and rewrite the introduction (~2 pages) to adequately highlight
+the novelty of omnidirectionality *with* local let-generalization.
+
+We will state our main contributions earlier (and more directly):
+1. A novel characterization of 'known' type information that does *not* rely on
+   a *static* ordering of solving inference constraints (unlike bidirectional
+   or pi-directional approaches), but a *dynamic* ordering.
+
+   We will illustrate that this is more flexible by typing more OCaml programs
+   that would otherwise be ill-typed under the current approach (the
+   combination of pi-directionality and bidirectional).
+
+2. The introduction of partial type schemes: the device that permits our
+   approach to scale to ML in a modular fashion. In particular, they handle the
+   interaction between suspended constraints and let-generalization.
+
+We will emphasize that preserving local let-generalization with suspended
+constraints is mandatory in the setting of OCaml, and a key scientific
+contribution of our work.
+
+Prior work (helpfully highlighted by reviewer B) only deals with top-level
+let-generalization. Local let bindings are treated monomorphically, and
+therefore do not address this troubling interaction.
+
+### Related work
+
+We will expand and restructure related work into three focused parts:
+1. Works involving 'delayed' or 'suspended' constraints. We will discuss
+   Pottier's conditional constraints (B), OutsideIn(X) (in more detail), and
+   dependent type systems.
+
+2. Works involving overloading in ML. We will discuss qualified types (and why
+   they're not suitable for our setting) and choice types (and why existing
+   work in this direction is does not handle local-let generalization).
+
+3. Polymorphism. We will relate polytypes to MLF and recent bidirectional
+   accounts (e.g. DK, Haskell's Quic).
+
+### Clearer treatment of features
+
+At present the paper tries to cover too much. To reduce breadth and improve
+narrative continuity, the main text will focus **exclusively** on OCaml
+features:
+
+- Tuple overloading will be removed from the main text.
+
+- Section 2 will explicitly relate semi-explicit first-class polymorphism to
+  OCaml's polymorphic methods, showing their reduction into object methods
+  (which are orthogonal to our work) and polytypes.
+
+  This addresses the gap noted by B and C.
+
+
+### Consolidation of technical material
+
+Reviewers B and C found the paper insufficiently self-contained, with
+definitions introduced haphazardly and many details relegated to appendices.
+
+We will make the sections presenting technical contributions more
+self-contained and easier to navigate:
+
+- Section 3 (Constraints). A single, consolidated presentation of the
+  constraint language: syntax and semantics of constraints, shapes, and patterns.
+
+- Section 4 (The OmniML calculus). Definition of OmniML with complete syntax,
+  representative typing rules (records and polytypes), and the formal constraint
+  generation function, followed by the metatheory.
+
+  This ordering addresses the concerns about the missing typing rules and
+  constraint generation (B, C).
+
+- Relocate examples. Move several of the more involved constraint generation
+  examples (currently in Section 3) into the consolidated account in Section 4.
+
+Figures in each section will be consolidated, acting as notational cheat sheets
+within the main body of the paper. We cannot bring the entire technical reference
+(in the appendix) into the paper, but we hope this addresses reviewer B and C's
+comments regarding difficulty reading technical sections.
+
+### Space
+
+We fund the added self-contained material by (i) removing tuple overloading from
+the main text (~1-2 pages), (ii) pruning conclusion/future work (~1 page),
+(iii) consolidating split definitions into single figures (net-neutral), and
+(iv) removing duplicated exposition by consolidating sections (net-neutral).
+
+### Overview: Revised paper sections
+
+Below is the revised paper sections:
+
+- Introduction (1)
+  - Contributions (1.1)
+
+- Overview (2)
+  - Static overloading of constructors and record labels (2.1)
+
+  - Polymorphic methods (2.2)
+    - Semi-explicit first-class polymorphism
+
+  - Directional type inference (2.3)
+    - $\pi$-directional type inference
+    - Bidirectional type inference
+    - Limitations of directional inference
+
+  - Omnidirectional type inference (2.4)
+    - Suspended constraints
+      - Two mini examples of constraint generation for records and polytypes
+    - Scaling to ML
+      - Back-propagation and the requirement of local let-generalization
+
+- Constraints (3)
+
+  *Cheat sheet: syntax and semantics*
+  - Syntax and semantics outlined.
+
+  - Shapes and patterns (3.1)
+
+  - Suspended constraints (3.2)
+    Examples
+
+- The OmniML calculus (4)
+
+  *Cheat sheet: syntax*
+  - Syntax outlined
+
+  - Typing rules (4.1)
+
+    *Cheat sheet: typing rules and unicity definition*
+    - Examples
+
+  - Constraint generation (4.2)
+    Examples
+
+  - Metatheory (4.3)
+
+- Solving constraints (5)
+
+  *Cheat sheet (constraints): new syntax and semantics. e.g. unification problems, regional let constraints, partial instantiations*
+
+  - Unification (5.1)
+
+    - Re-frame unification as an abstract rewriting relation that
+    satisfies termination, preservation, progress. This parameterizes
+    our solver by an arbitrary equational system.
+
+    - Definition of solved form
+
+  - Solving rules (5.2)
+
+    *Cheat sheet: rewriting rules for constraint solving and associated definitions (e.g. C determines 'bs)*
+
+    - Basic rules
+    - Let constraints
+    - Suspended match constraints
+      - Back-propagation
+
+  - Metatheory (5.3)
+
+- Implementation (6)
+  - Remains unchanged
+
+- Related work (7)
+  - Suspended constraints
+    - OutsideIn and OutsideIn(X)
+    - Pottier's conditional constraints
+    - Dependent type systems
+  - Polymorphism
+    - MLF
+    - Bidirectional approaches (DK, Quic)
+  - Overloading
+    - Qualified types
+    - Choice types
+
+- Conclusion (8)
+  - Future work
+
+
 ## 2. Explaining the feature space
 
 
