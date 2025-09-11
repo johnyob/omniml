@@ -90,13 +90,16 @@ We will expand and restructure related work into three focused parts:
 3. Polymorphism. We will relate polytypes to MLF and recent bidirectional
    accounts (e.g. DK, Haskell's Quic).
 
+XXX: What is Haskell's "Quic"? Do you mean Quicklook? 
+
 ### Removing content
 
-We want to emphasize that suspended constraints is a general approach
+We want to emphasize that suspended constraints are a general approach
 to handle several language features. But it was too ambitious to try
 to cover (1) tuples, (2) records, and (3) semi-explicit
-polymorphism. We will remove tuples to save space -- they are
-a didactic example, but the least convincing of the three.
+polymorphism (and some other forms of ad hoc static overloading, which we also
+explored but intendedly omitted).  We will remove tuples to save space --
+they are a didactic example, but the least convincing of the three.
 
 ### Consolidation of technical material
 
@@ -135,91 +138,101 @@ the main text (~1-2 pages), (ii) pruning conclusion/future work (~1 page),
 
 Below is the revised paper sections:
 
-- Introduction (1)
-  - Contributions (1.1)
+1. Introduction
 
-- Overview (2)
-  - Static overloading of constructors and record labels (2.1)
+   1.1. Contributions
 
-  - Polymorphic methods (2.2)
+2. Overview
+
+   2.1. Static overloading of constructors and record labels
+
+   2.2. Polymorphic methods
+  
     - Semi-explicit first-class polymorphism
 
-  - Directional type inference (2.3)
+   2.3 Directional type inference
+   
     - $\pi$-directional type inference
     - Bidirectional type inference
     - Limitations of directional inference
 
-  - Omnidirectional type inference (2.4)
+   2.4. Omnidirectional type inference
+  
     - Suspended constraints
       - Two mini examples of constraint generation for records and polytypes
     - Scaling to ML
       - Back-propagation and the requirement of local let-generalization
 
-- Constraints (3)
+3. Constraints
 
-  *Cheat sheet: syntax and semantics*
-  - Syntax and semantics outlined.
+   - *Cheat sheet: syntax and semantics*
+   - Syntax and semantics outlined.
 
-  - Shapes and patterns (3.1)
+   3.1. Shapes and patterns
 
-  - Suspended constraints (3.2)
-    Examples
+   3.2. Suspended constraints
+ 
+     - Examples
 
-- The OmniML calculus (4)
+4. The OmniML calculus
 
-  *Cheat sheet: syntax*
-  - Syntax outlined
+   - *Cheat sheet: syntax*
+   - Syntax outlined
 
-  - Typing rules (4.1)
+   4.1. Typing rules
 
-    *Cheat sheet: typing rules and unicity definition*
-    - Examples
+     - *Cheat sheet: typing rules and unicity definition*
+     - Examples
 
-  - Constraint generation (4.2)
-    Examples
+   4.2. Constraint generation
+     
+     - Examples
 
-  - Metatheory (4.3)
+   4.3. Metatheory
 
-- Solving constraints (5)
+5. Solving constraints
 
-  *Cheat sheet (constraints): new syntax and semantics. e.g. unification problems, regional let constraints, partial instantiations*
+   - *Cheat sheet (constraints): new syntax and semantics. e.g. unification problems, regional let constraints, partial instantiations*
 
-  - Unification (5.1)
+   5.1. Unification
 
-    - Re-frame unification as an abstract rewriting relation that
-    satisfies termination, preservation, progress. This parameterizes
-    our solver by an arbitrary equational system.
+     - Re-frame unification as an abstract rewriting relation that
+     satisfies termination, preservation, progress. This parameterizes
+     our solver by an arbitrary equational system.
 
-    - Definition of solved form
+     - Definition of solved form
 
-  - Solving rules (5.2)
+   5.2. Solving rules
 
-    *Cheat sheet: rewriting rules for constraint solving and associated definitions (e.g. C determines 'bs)*
+    - *Cheat sheet: rewriting rules for constraint solving and associated definitions (e.g. C determines 'bs)*
 
     - Basic rules
     - Let constraints
     - Suspended match constraints
-      - Back-propagation
+    - Back-propagation
 
-  - Metatheory (5.3)
+   5.3. Metatheory
 
-- Implementation (6)
-  - Remains unchanged
+6. Implementation
 
-- Related work (7)
-  - Suspended constraints
-    - OutsideIn and OutsideIn(X)
-    - Pottier's conditional constraints
-    - Dependent type systems
-  - Polymorphism
-    - MLF
-    - Bidirectional approaches (DK, Quic)
-  - Overloading
-    - Qualified types
-    - Choice types
+   - Remains unchanged
 
-- Conclusion (8)
-  - Future work
+7. Related work
+
+   - Suspended constraints
+     - OutsideIn and OutsideIn(X)
+     - Pottier's conditional constraints
+     - Dependent type systems
+   - Polymorphism
+     - MLF
+     - Bidirectional approaches (DK, Quic)
+   - Overloading
+     - Qualified types
+     - Choice types
+
+8. Conclusion
+
+   - Future work
 
 
 ### Timeline
