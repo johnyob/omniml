@@ -28,6 +28,8 @@ following:
    scientific exchange is as satisfactory as possible if you have the curiosity
    to read them.
 
+6. Contains a table of contents for the revised paper plan
+
 ## 1. The key points.
 
 This work started from the question of how to improve OCaml's support for
