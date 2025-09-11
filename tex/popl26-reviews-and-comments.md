@@ -224,6 +224,9 @@ Our system aims to target features present in OCaml, which does not include the 
 >       USA, 193–204. https://doi.org/10.1145/141471.141540
 >
 > - Geoffrey S. Smith. Principal type schemes for functional programs with overloading and subtyping. Science of Computer Programming, Volume 23, Issues 2–3, 1994. [https://doi.org/10.1016/0167-6423(94)00020-4](https://doi.org/10.1016/0167-6423(94)00020-4).
+
+This uses a form of qualified types in type schemes, so it corresponds to dynamic overloading.
+
 >
 > 2. **Lack of comparison with alternatives.** The purported advantage
 >    of the presented system over existing work, such as OutsideIn(X),
