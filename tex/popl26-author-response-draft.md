@@ -36,6 +36,7 @@ The work of [Pottier, 2000] on conditional constraints deserves a specific menti
 
 Our failure semantics may a-priori mean that a complete solver should exhaustively try all possibilities to discharge a suspended constraint. [Beneš and Brachthaüser, 2025] go impressively far in this direction: they avoid backtracking and share a lot of common work between the different possibilities, but still explore the whole space, at the cost of a worst-case blow up.  We favor implementations that fail if the solution is not propagated by unification, then solving constraints locally but just looking at the toplevel shape of one constraint at a time. However, capturing this notion of being "known" rather than "guessed by luck or backtracking" at the level of the semantics is very difficult, and this is the key contribution of our unicity conditions.
 
+Finally, we certainly agree that MLF is a promising way to handle polymorphism: it does better than semi-explicit polymorphism as in OCaml, but to our knowledge no one knows how to scale MLF to the full set of feature that OCaml contains so adopting MLF there is not an option for now. But MLF does not deal with type-based disambiguation or in general static overloading, so it does not answer the research problem of our paper.
 
 ## 3. Revision plan
 
@@ -266,6 +267,99 @@ Note that we are not covering the same language features and design issues as th
 
 ### Review A
 
+> A general concern I have is that usually you first define the
+> declarative type system and then constraint generation.
+> Maybe this would be a better presentation, or at least you could
+> discuss the choice?
+
+We hesitated as well. The opinion of a majority of the co-authors is that the formulation of uniqueness in constraints is more general and more regular, so hopefully easier to understand, than the uniqueness conditions in the type systems which are slightly different for each feature. (The most general form for record overloading is too complex for a first introduction.)
+
+Also, it may be the case that some type-inference authors will find constraints easier to relate to their own work, rather than the particular surface-syntax type system we present. (We do find it more natural to think of constraints first.)
+
+This being said, we are still torn on this question. The proposed revision plan still puts constraints first before the type system, but we might swap them around depending on how the writing goes.
+
+> Fig.1 and its explanation: could you specify which constraint forms
+> are novelties of your approach, and which are introduced in [Pottier
+> and Remy 2005]? Certainly suspended match constraints are a novelty,
+> but, e.g., constraint abstraction and application?
+
+Constraint abstraction and application are not new, mostly a syntactic reformulation that also appears in previous works, for example [Pottier, 2014]. (Technically there is a difference between solved constraint-abstractions and type schemes, but it is mostly a superficial/cosmetic difference.)
+
+[Pottier, 2014] Hindley-Milner Elaboration in Applicative Style
+https://pauillac.inria.fr/~fpottier/publis/fpottier-elaboration.pdf
+
+We will try to clarify this in the presentation.
+
+> 451: the set of types associated to term variables is infinite, right?
+> I see at line 498 that membership test is done by substitution, do you
+> not need then to have a finite representation of the environment?
+
+Just to make sure there is no misunderstanding, we are defining declarative semantics here, not a decision procedure / a judgment that would be implemneted. (Our solver corresponds to a program, and it is shown to capture satisfiability in the semantics.) Lines 498 mentions a logical equivalence between membership and satisfaction in a substituted context, but none of the two sides are computed.
+
+
 ### Review B
 
+Let us mention again that we are grateful to review B for its detailed and well-structured exposition of its criticsm. We believe that we have implicitly addressed each point of the the "few concerns" list in the main body of our response. (We did not discuss the related works in detail, but this will go in the revised paper.) This sub-section discusses the more minor/local comments.
+
+
+>     - There is no quantitative and little qualitative evaluation to
+>       indicate that the presented system indeed performs better than
+>       the existing ones. The authors write, in the context of
+>       OutsideIn(X), “we believe that we have solved the troubling
+>       interactions between let-generalization and suspended
+>       constraints in this work”, but this belief is never
+>       substantiated. However, it is a at the core of deciding whether
+>       the paper makes a significant contribution or not!
+
+We apologize for the too-careful wording. Let us *claim* that we have solved the interaction between suspended constraints and let-generalization (via partial type schemes), both in theory and in practice: this is the very point of our submission indeed.
+
+>     Now, one could imagine implicitly boxing every record field and
+>     every argument and implicitly unboxing all parameters and field
+>     selections. This could allow users to explicitly annotate record
+>     fields and parameters with polymorphic types, while leaving their
+>     provider and consumer expressions handle that polymorphism
+>     implicitly.
+
+This is precisely the elaboration of polymorphic methods into semi-explicit first-class polymorphic primitives, as used by OCaml, including in the type-checker implementation. For *nominal* record fields the situation is a bit simpler, as OCaml knows (after type-based disambiguation) which record fields are polymorphic, and at which type. Object types are structural, so polymorphic methods need the approach you mention.
+
+
+> What is the worst-case complexity of your approach? You might want to
+> consider a simplified setting with no let-generalization to make this
+> analysis more informative. With let-generalization, does your approach
+> make the complexity of constraint solving significantly worse? What
+> makes you think it is still practical in usual user-written programs?
+
+With no let-generalization, solving constraints becomes plain unification, so there is no extra cost to suspended constraints. (Implementation-wise: it's possible to add a check on each variable-structure unification, and discharge any constraint suspended on this variable). Note: suspended constraints without generalization are folklore in other type-inference systems (eg. dependent type-checkers) and not something we claim is novel.
+
+The interesting setting is in presence of let-generalization. ML inference is doubly-exponential, but let us assume that let-nesting depth in bounded. A key point is that we never backtrack nor duplicate the body of suspended constraints. When a polymorphic region makes progress (discharges a suspended constrant), our partial instantiation machinery implies some extra work for each instantiation of the partial polymorphic scheme. We cannot make precise complexity claims at this point, but we have tried our best to avoid unnecesary repeated work and use appropriate data structures.
+
+> What are the error messages like, in your new framework? OCaml’s type
+> error messages are notoriously bad. Could they now get even worse? Or
+> do you have a specific plan to handle this problem?
+
+Not yet, unfortunately. (We would live in a better world indeed if each type-system publication was conditioned on a solid plan for error messages :-)
+
+Optimistically, it may be the case that our system may make the system feel more pleasant to end-user, thanks to our support for more propagation of type-information: OCaml errors related to type-directed disambiguation come when the program is not annotated enough, but sometimes users are irritated because the type-checker obviously _should see_ that a unique type is possible here.
+
+
 ### Review C
+
+> There is a claim about the description of an *efficient*
+> implementation. However, despite a few explanations in section 6 about
+> efficiency-driven decisions, the efficiency of the implementation is
+> not validated at all; there are no benchmarks comparing with other
+> approaches and/or showing the benefits of said decisions. I'd suggest
+> to tone down that efficiency claim.
+
+It is difficult to benchmark new type-systems, as there are no large, representative user programs to measure, and writing large synthetic terms is hardly representative. (One could also think of translating existing ML programs to our system, but few only cover a few representative features and practical programs are outside this subset.)
+
+On the other hand, we do have expertise in implementing ML-family type-inference engines. Our implementation is state-of-the-art in its choice of data sturctures (union-find rather than substitutions for unification, efficient level-based generalization, etc.). Previous prototypes written by some of us in this style have been observed to have at least comparable performance to the OCaml type-checker on certain programs. We expect this one to compare favorably as well: it should be as efficient as OCaml on programs that do not use suspended constraints. (Of course, suspended constraints in themselves cannot be compared, because they are not supported by existing type systems.)
+
+In other words, our efficiency claims are not based on experiment, but on the use of state-of-the-art implementation techniques. We will rephrase the paper to clarify, thanks.
+
+
+> - would omnidirectional type inference enhance the support for
+>   polymorphic variants?
+
+Probably not, as polymorphic variants use fairly different type-system mechanism -- they are not among the "fragile implicit features" we consider, as they are based on structural types with row variables.
+

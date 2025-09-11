@@ -102,6 +102,7 @@ FIXME: Proposed fix, highlight the novelities? (e.g. in grey bg / yellow?)
 > I see at line 498 that membership test is done by substitution, do you
 > not need then to have a finite representation of the environment?
 
+Just to make sure there is no misunderstanding, we are defining declarative semantics here, not a decision procedure / a judgment that would be implemneted. (Our solver corresponds to a program, and it is shown to capture satisfiability in the semantics.) Lines 498 mentions a logical equivalence between membership and satisfaction in a substituted context.
 
 Not correct. 498 comments on a interpretation between application and substitution. The satisfiability of application (and the associated membership test) is not decided by substitution.
 
