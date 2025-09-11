@@ -27,6 +27,7 @@ We will shorten and rewrite the introduction (~2 pages) to adequately highlight
 the novelty of omnidirectionality *with* local let-generalization.
 
 We will state our main contributions earlier (and more directly):
+
 1. A novel characterization of 'known' type information that does *not* rely on
    a *static* ordering of solving inference constraints (unlike bidirectional
    or pi-directional approaches), but a *dynamic* ordering.
@@ -50,13 +51,14 @@ therefore do not address this troubling interaction.
 ### Related work
 
 We will expand and restructure related work into three focused parts:
+
 1. Works involving 'delayed' or 'suspended' constraints. We will discuss
    Pottier's conditional constraints (B), OutsideIn(X) (in more detail), and
    dependent type systems.
 
 2. Works involving overloading in ML. We will discuss qualified types (and why
    they're not suitable for our setting) and choice types (and why existing
-   work in this direction is does not handle local-let generalization).
+   work in this direction does not handle local-let generalization).
 
 3. Polymorphism. We will relate polytypes to MLF and recent bidirectional
    accounts (e.g. DK, Haskell's Quic).
@@ -229,13 +231,16 @@ Let us quote the journal version (section 6.5, pages 50-51).
 > The obvious way to restore completeness is is to tighten up the specification, so that it rejects both (a) bad programs and (b) programs that the inference algorithm cannot type. The trouble is that the cure is worse than the disease: the specification becomes as complicated and hard to understand as the algorithm.
 > For one such attempt the reader is encouraged to read our earlier version of the OutsideIn(X) algorithm, which had a fairly complicated specification, and one that worked only for the special case of GADTs in (Schrijvers et al., 2009), and neglected ambiguity entirely. For the general case of arbitrary constraint domains and local constraints, we are not optimistic about this approach.
 
-We believe that our declarative semantics is of comparable difficulty to the declarative semantics that the OutsideIn(X) authors were looking for and failed to be able to formulate in a general enough way. Here is an explanation for our intuition: in the OutsideIn work, each GADT match is type-checked independently with no flow of information from inside to outside, so in particular there is no communication between GADT matches that are not syntactically nested. In contrast, our suspended constraints can exchange information, discharging one can disambiguate another and lead to its discharge; our declarative semantics has to support this "causality" between syntactically-separate constraints (without allowing self-justification cycles, which has plagued several of our attempts).
+We believe that our declarative semantics is at least of comparable difficulty to the declarative semantics that the OutsideIn(X) authors were looking for and failed to be able to formulate in a general enough way. Here is an explanation for our intuition: in the OutsideIn work, each GADT match is type-checked independently with no flow of information from inside to outside, so in particular there is no communication between GADT matches that are not syntactically nested. In contrast, our suspended constraints can exchange information, discharging one can disambiguate another and lead to its discharge; our declarative semantics has to support this "causality" between syntactically-separate constraints (without allowing self-justification cycles, which has plagued several of our attempts).
 
 Simplifying their specification was also a major reason why the JFP removes local let-generalization (end of page 32):
 
 > In summary, generalisation of local let bindings (without annotations) is a device that is almost never used, and its abolition yields a dramatic simplificationin both the specification and implementation of a typechecker.
 
-Note that we are not covering the same language features and design issues as the OutsideIn(X) work (we do not consider type families, for example), so we are not claiming to subsume their work, but we claim that the difficulty (the non-straightforwardness) is comparable.
+Note that we are not covering the same language features and design issues
+as the OutsideIn(X) work (we do not consider type families, for example), so
+we are not claiming to subsume their work, but we claim that the difficulty
+(the non-straightforwardness) is at least comparable.
 
 
 ## 4. Local comments

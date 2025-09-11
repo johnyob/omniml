@@ -89,16 +89,16 @@
 
 \newdimen \lst@mydim
 \newenvironment{programsplit}[1][0.5\hsize]
-   {\hfil \vspace{-2ex}\penalty -50
+   {\hfil \vskip -2ex\penalty -50
     \def \programjoin{&}%
     \lst@mydim=#1\relax
     \lst@mydim=-\lst@mydim
     \advance \lst@mydim by \hsize
     \begin{tabular}[t]{.p{#1}.p{\lst@mydim}}\ignorespaces}
-   {\end{tabular}\vspace{-1em}\hfil\penalty -50\ignorespacesafterend}
+   {\end{tabular}\vskip -1em\hfil\penalty -50\ignorespacesafterend}
 
 %% \newenvironment{programsplit}
-%%    {\hfil \vspace{-1ex}\penalty -50
+%%    {\hfil \vskip -1ex\penalty -50
 %%     \def \programjoin{&}%
 %%     $\vcenter \bgroup
 %%     \begin{tabular}[t]{.*2{p{.5\hsize}.}}\ignorespaces}
@@ -114,10 +114,10 @@
 \newcommand{\programjoin}[1][0ex]
     {\@tempdima #1\advance \@tempdima by -\lst@belowskip
      %% \advance \@tempdima by -\lst@aboveskip
-    \vspace{\@tempdima}}
+    \vskip \@tempdima}
 \let \lst \lstinline
 
-\newcommand{\halfline}[1][1ex]{\vadjust{\vspace {-#1}}}
+\newcommand{\halfline}[1][1ex]{\vadjust{\@tempdima #1\vskip -\@tempdima}}
 
 \define@key{lst}{indices}[]{}
 \define@cmdkey{lst}{indices}
