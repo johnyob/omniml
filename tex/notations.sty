@@ -132,7 +132,7 @@
 \defmetavar[s,ps]{\tvd}{\delta}
 %% Aliases for \tva
 \defmetavar[s,ps,j]{\tv}{\alpha}
-\defmetavar {\av} {\varepsilon}
+\defmetavar[s]{\av} {\varepsilon}
 \defmetavar[s,j] {\ty} {\tau}
 \newcommand{\typs}{{\bar\ty'}}
 
@@ -151,6 +151,7 @@
 \newcommand{\tprod}{\mathbin\ast}
 \newcommand{\tProd}[1]{\Pi\iton {#1}}
 \newcommand{\tpoly}[1]{\brackets {#1}}
+\newcommand{\topoly}[1]{\angles { f : #1}}
 \newcommand{\tapoly}[2]{\tpoly{#1}^{#2}}
 \newcommand{\tunit}{1}
 \newcommand{\tint}{\mathsf{int}}
@@ -233,7 +234,7 @@
 \newcommand{\elmagic}[1]{\braces {#1}}
 \newcommand{\elannot}[3]{\parens {{#1} : \ifempty{#2}{#3}{\exi {#2} {#3}}}}
 \defmetavar[s]{\elab}{\ell}
-\newcommand{\eannot}[3]{\parens {#1 : \ifempty{#2}{#3}{\exi #2 #3}}}
+\newcommand{\eannot}[3]{\parens {#1 : \ifempty{#2}{#3}{\exi {#2} #3}}}
 \newcommand{\etuple}[1]{\parens{#1}}
 \newcommand \emagic[1]{\set{#1}}
 \newcommand{\eerase}[1]{\floor {#1}}
