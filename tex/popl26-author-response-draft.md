@@ -14,7 +14,7 @@ following:
 
 2. We discuss the feature space of ML-family-and-neighbors type inference
    topics related to overloading, guided by the helpful reference list of
-   reviewer B, in relation to the focus of this work clarified in (0).
+   reviewer B, in relation to the focus of this work clarified in (1).
 
 3. We propose a workable plan to revise the paper to make it more focused and
    more self-contained, and to rewrite the introduction so that *future readers* 
@@ -32,7 +32,7 @@ following:
 
 This work started from the question of how to improve OCaml's support for
 type-based disambiguation, which currently uses a mix of pi-directional and
-bi-directional type inference, and is found to be lacking by users. The OCaml
+bidirectional type inference, and is found to be lacking by users. The OCaml
 features we consider are using a form of static overloading (but semi-explicit
 first-class polymoprhism is not really overloading), and it would not be
 acceptable to consider using dynamic overloading as it would change the dynamic
@@ -165,9 +165,7 @@ We will expand and restructure related work into three focused parts:
    work in this direction does not handle local-let generalization).
 
 3. Polymorphism. We will relate polytypes to MLF and recent bidirectional
-   accounts (e.g. DK, Haskell's Quic).
-
-        [XXX: What is Haskell's "Quic"? Do you mean Quicklook?]
+   accounts (e.g. DK, Haskell's Quicklook).
 
 ### Removing content
 
@@ -210,107 +208,6 @@ We fund the added self-contained material by (i) removing tuple overloading from
 the main text (~1-2 pages), (ii) pruning conclusion/future work (~1 page),
 (iii) consolidating split definitions into single figures (net-neutral), and
 (iv) removing duplicated exposition by consolidating sections (net-neutral).
-
-### Overview: Revised paper sections
-
-Below is the revised paper sections:
-
-1. Introduction
-
-   1.1. Contributions
-
-2. Overview
-
-   2.1. Static overloading of constructors and record labels
-
-   2.2. Polymorphic methods
-  
-    - Semi-explicit first-class polymorphism
-
-   2.3 Directional type inference
-   
-    - $\pi$-directional type inference
-    - Bidirectional type inference
-    - Limitations of directional inference
-
-   2.4. Omnidirectional type inference
-  
-    - Suspended constraints
-      - Two mini examples of constraint generation for records and polytypes
-    - Scaling to ML
-      - Back-propagation and the requirement of local let-generalization
-
-3. Constraints
-
-   - *Cheat sheet: syntax and semantics*
-   - Syntax and semantics outlined.
-
-   3.1. Shapes and patterns
-
-   3.2. Suspended constraints
- 
-     - Examples
-
-4. The OmniML calculus
-
-   - *Cheat sheet: syntax*
-   - Syntax outlined
-
-   4.1. Typing rules
-
-     - *Cheat sheet: typing rules and unicity definition*
-     - Examples
-
-   4.2. Constraint generation
-     
-     - Examples
-
-   4.3. Metatheory
-
-5. Solving constraints
-
-   - *Cheat sheet (constraints): new syntax and semantics. e.g. unification problems, regional let constraints, partial instantiations*
-
-   5.1. Unification
-
-     - Re-frame unification as an abstract rewriting relation that
-     satisfies termination, preservation, progress. This parameterizes
-     our solver by an arbitrary equational system.
-
-     - Definition of solved form
-
-   5.2. Solving rules
-
-    - *Cheat sheet: rewriting rules for constraint solving and associated definitions (e.g. C determines 'bs)*
-
-    - Basic rules
-    - Let constraints
-    - Suspended match constraints
-    - Back-propagation
-
-   5.3. Metatheory
-
-6. Implementation
-
-   - Remains unchanged
-
-7. Related work
-
-   - Suspended constraints
-     - OutsideIn and OutsideIn(X)
-     - Pottier's conditional constraints
-     - Dependent type systems
-   - Polymorphism
-     - MLF
-     - Bidirectional approaches (DK, Quic)
-   - Overloading
-     - Qualified types
-     - Choice types
-
-8. Conclusion
-
-   - Future work
-
 
 ### Timeline
 
@@ -447,6 +344,7 @@ In any case, we could point the user to a precise program location where an impl
 It is difficult to benchmark new type-systems, as there are no large, representative user programs to measure, and writing large synthetic terms is hardly representative. (One could also think of translating existing ML programs to our system, but few only cover a few representative features and practical programs are outside this subset.)
 
     [XXX: I don't understand "few only cover a few representative features]
+    [XXX Alistair: I think this means "few [programs] only exists strictly within our subset of representative features"]
 
 On the other hand, we do have expertise in implementing ML-family type-inference engines. Our implementation is state-of-the-art in its choice of data structures (union-find rather than substitutions for unification, efficient level-based generalization, etc.). Previous prototypes written by some of us in this style have been observed to have at least comparable performance to the OCaml type-checker on certain programs. We expect this one to compare favorably as well: it should be as efficient as OCaml on programs that do not use suspended constraints. (Of course, suspended constraints in themselves cannot be compared, because they are not supported by existing type systems.)
 
@@ -459,7 +357,7 @@ In fact, there is a trivial, brute force implementation of suspended constraints
 
 Probably not, as polymorphic variants use fairly different type-system mechanism -- they are not among the "fragile implicit features" we consider, as they are based on structural types with row variables.  (Similarly, omnidirectional type inference should not help with typechecking of polymorphic records or objects.)
 
-## XXX
+## Revised TOC
 
 Below is the revised paper sections:
 
