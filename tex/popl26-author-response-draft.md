@@ -341,10 +341,7 @@ In any case, we could point the user to a precise program location where an impl
 > approaches and/or showing the benefits of said decisions. I'd suggest
 > to tone down that efficiency claim._
 
-It is difficult to benchmark new type-systems, as there are no large, representative user programs to measure, and writing large synthetic terms is hardly representative. (One could also think of translating existing ML programs to our system, but few only cover a few representative features and practical programs are outside this subset.)
-
-    [XXX: I don't understand "few only cover a few representative features]
-    [XXX Alistair: I think this means "few [programs] only exists strictly within our subset of representative features"]
+It is difficult to benchmark new type-systems, as there are no large, representative user programs to measure, and writing large synthetic terms is hardly representative. (One could also think of translating existing ML programs to our system, but programs in the wild almost never fit any given simple subset, so automatically extracting substantial amounts of well-typed programs is infeasiable in practice.)
 
 On the other hand, we do have expertise in implementing ML-family type-inference engines. Our implementation is state-of-the-art in its choice of data structures (union-find rather than substitutions for unification, efficient level-based generalization, etc.). Previous prototypes written by some of us in this style have been observed to have at least comparable performance to the OCaml type-checker on certain programs. We expect this one to compare favorably as well: it should be as efficient as OCaml on programs that do not use suspended constraints. (Of course, suspended constraints in themselves cannot be compared, because they are not supported by existing type systems.)
 
