@@ -281,34 +281,34 @@ Note that we are not covering the same language features and design issues as th
 
 ### Review A
 
-> A general concern I have is that usually you first define the
-> declarative type system and then constraint generation.
-> Maybe this would be a better presentation, or at least you could
-> discuss the choice?
+>  _A general concern I have is that usually you first define the
+>  declarative type system and then constraint generation.
+>  Maybe this would be a better presentation, or at least you could
+>  discuss the choice?_
 
-We hesitated as well. The opinion of a majority of the co-authors is that the formulation of uniqueness in constraints is more general and more regular, so hopefully easier to understand, than the uniqueness conditions in the type systems which are slightly different for each feature. (The most general form for record overloading is too complex for a first introduction.)
+We hesitated as well. The opinion  that the formulation of uniqueness in constraints seemed more general and more regular, so hopefully easier to understand, than the uniqueness conditions in the type systems which are slightly different for each feature. 
 
-Also, it may be the case that some type-inference authors will find constraints easier to relate to their own work, rather than the particular surface-syntax type system we present. (We do find it more natural to think of constraints first.)
+Also, it may be the case that some type-inference authors will find constraints easier to relate to their own work, rather than the particular surface-syntax type system we present. (It sometimes help to think of constraints first.)
 
 This being said, we are still torn on this question. The proposed revision plan still puts constraints first before the type system, but we might swap them around depending on how the writing goes.
 
-> Fig.1 and its explanation: could you specify which constraint forms
+> _Fig.1 and its explanation: could you specify which constraint forms
 > are novelties of your approach, and which are introduced in [Pottier
 > and Remy 2005]? Certainly suspended match constraints are a novelty,
-> but, e.g., constraint abstraction and application?
+> but, e.g., constraint abstraction and application?_
 
 Constraint abstraction and application are not new, mostly a syntactic reformulation that also appears in previous works, for example [Pottier, 2014]. (Technically there is a difference between solved constraint-abstractions and type schemes, but it is mostly a superficial/cosmetic difference.)
+We will definitely clarify this in the presentation.
 
 [Pottier, 2014] Hindley-Milner Elaboration in Applicative Style
 https://pauillac.inria.fr/~fpottier/publis/fpottier-elaboration.pdf
 
-We will try to clarify this in the presentation.
 
-> 451: the set of types associated to term variables is infinite, right?
+> _451: the set of types associated to term variables is infinite, right?
 > I see at line 498 that membership test is done by substitution, do you
-> not need then to have a finite representation of the environment?
+> not need then to have a finite representation of the environment?_
 
-Just to make sure there is no misunderstanding, we are defining declarative semantics here, not a decision procedure / a judgment that would be implemneted. (Our solver corresponds to a program, and it is shown to capture satisfiability in the semantics.) Lines 498 mentions a logical equivalence between membership and satisfaction in a substituted context, but none of the two sides are computed.
+Just to make sure there is no misunderstanding, we are defining declarative semantics here, not a decision procedure / a judgment that would be implemneted. (Our solver corresponds to a program, and it is shown to capture satisfiability in the semantics.)  Line 498 mentions a logical equivalence between membership and satisfaction in a substituted context, but none of the two sides are computed.
 
 
 ### Review B
