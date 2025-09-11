@@ -1,6 +1,6 @@
 We are grateful to our reviewers for their interest in our work and their copious, high-quality feedback. Thanks!
 
-We are particularly grateful for the very detailed criticisms in review B. Some criticism we realize that we agree on, and we have proposals to fix them. Some comments suggest that we did not get some important points across as clearly as we should have, and they also inform our plan to clarify the paper.
+We are particularly grateful for the very detailed criticisms in review B.  We agree with some of the criticism and have proposals for addressing it.  Some comments suggest that we did not get some important points across as clearly as we should have, and they also inform our plan to clarify the paper.
 
 Our response is too long, but it discusses the important points first that we hope may be of interest to all reviewers, and you can stop at any point. In the following:
 
