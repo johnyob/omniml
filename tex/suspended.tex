@@ -2232,7 +2232,7 @@ the \mgu of $\ueqs$. This optimization underlies efficient implementations of
 However, this approach \emph{does not} extend to suspended constraints. To
 illustrate this, let us reexamine \ocaml{ex_7} from \cref{sec/introduction}:
 \begin{program}[input]
-let ex_7 r = let x = r.x in x + r.y °\ocamlflags10°
+let ex_7 r = let x = r.x in x + r.y             °\ocamlflags10°
 \end{program}
 The generated typing constraint contains:
 \begin{mathpar}
@@ -2874,6 +2874,7 @@ original motivations]{Does not bring much to the reader}.
 \label{sec:discussion}
 \label{sec:future-work}
 
+
 %% In this work,
 We developed a constraint-based framework for omnidirectional
 type inference, capable of supporting fragile features that would otherwise
@@ -2886,6 +2887,48 @@ Our constraint solver is omnidirectional: constraints may be solved in any
 order, made possible by our introduction of \emph{partial type schemes}.
 We formalized the solver as a non-deterministic, terminating rewrite system,
 and implemented an efficient prototype to demonstrate its practicality.
+
+\XDR{We are missing a discussion of limitations. See source or
+draft version}
+\begin{version}{\Draft}
+\paragraph {Limitations}
+
+Currently, our framework only disambiguate on the shape of types, which are
+shallow, \ie only describe the toplevel structure of types.  For instance,
+for nominal records, this means that we can only disambiguate on the set of
+record fields, and not on the type of fields: given the existing definition
+of \ocaml{point}, the following example fails:
+\begin{program}[input]
+type complex = {x : float; y : float}
+let p = {x = 1; y = 2}          °\ocamlflags 11°
+\end{program}
+Indeed, both \ocaml{point} and \ocaml{complex} have the set of fields. Even
+though the fields are of different types these are not taken into account
+for disambiguation.  What the system sees are constructor and destructor
+functions with the following types:
+\begin{center}
+\vskip -\lastskip
+\begin{tabular*}{\hsize}{.p{0.45\hsize}Zp{0.52\hsize}.}%
+\begin{program}[input,aboveskip=0em]
+point_make : int -> int -> point
+point_getx : point -> int
+point_gety : point -> int
+\end{program}
+&&
+\begin{program}[input,aboveskip=0em]]
+complex_make : float -> float -> complex
+complex_getx : complex -> float
+complex_gety : complex -> float
+\end{program}
+\end{tabular*}
+\end{center}
+However, our setup only disambiguate on the shape of the either the domain
+of destructors or the codomain of constructors, thus ignoring the types of
+the fields. Taking the whole type of constructors or destructors, hence
+deeper shapes, would allow more disambiguation.  In fact, extending our
+framework to suspend on deeper shapes would also allow to solve general
+(static) overloading, \ie between expressions of arbitrary types.
+\end{version}
 
 Through three instantiations of our framework---static overloading of
 tuples, nominal records and variant constructors, and semi-explicit
@@ -2970,7 +3013,7 @@ defaulting one over the other may force an unsatisfiable branch to be taken.
 
 Is there an optimal or principled strategy for applying defaults in such
 cases? Should we fire all default rules of all suspended
-constraints that remain after the solver terminates simultaneously, or in
+constraints that remain after the solver terminates, simultaneously, or in
 batches, \eg. restricted to connected components of mutually dependent suspended
 constraints?  Our prototype opts for the latter, but this warrants further
 study. More details can be found in Appendix \cref {app/default-rules}.
@@ -3502,11 +3545,9 @@ fully determined by the two fields $\set {x, y}$ without any type
 information, as explained just above. We need another conflicting
 definition, e.g. as follows.}
 \begin{program}[input]
-type surface = { x : int; y : int}              °\ocamlflags 10°
-$\efun r r = {\erecord { x = (r :\ \mathtt{point}).x; y = 10 }}$.
+type surface = { x : int; y : int}
+let f r = r =  { x = (r : point).x; y = 10 }    °\ocamlflags 10°
 \end{program}
-
-
 
 
 \subsection {Examples of typings}
@@ -7667,6 +7708,7 @@ Let $\e$ be an arbitrary closed well-typed term; that is, there exists a type
 \section {Further study}
 
 \subsection {Defaulting}
+\label {app/default-rules}
 
 Default rules, which does not fit well with \Geninst-inference are still
 often used in practice, and therefore would deserve further investigation.
@@ -8253,4 +8295,5 @@ TODO: extend the magic rule and the disambiguation rule, and also provide the un
 % LocalWords:  rcl env Pcd illtyped inHole Ui unfoldings welltyped mprset
 % LocalWords:  lessskip Xbla Ybla explicitating Composability composability
 % LocalWords:  determinacy subcases unifications annotatability approxi Rcx
-% LocalWords:  mation macroified cpoint concretize Dom
+% LocalWords:  mation macroified cpoint concretize Dom destructor Zp
+% LocalWords:  destructors
