@@ -51,6 +51,7 @@ implement and to (2) provide precise declarative semantics for. We solve these
 two significant problems. We believe this solution is of interest to many other
 HM-based languages.
 
+
 ## 2. The research space
 
 A common and elegant approach to perform type inference with overloading is to
@@ -60,13 +61,14 @@ when inferring "let f = ..." will lead to the type scheme "f : Eq a => ...".
 This is simple in theory and easy to implement, but it crucially introduces
 *dynamic* overloading: each user/caller of `f` can provide their own instance
 of `Eq`. This approach cannot be used for *static* overloading, which imposes
-that a single global solution is selected within the definition of `f`.
+that a single global solution is selected within the definition of `f`. As we
+mentioned earlier, dynamic overloading imposes a different compilation strategy
+and has non-trivial consequences in term of observable behavior, efficiency,
+etc.
 
 Among the works cited in review B, [Kaes, 1992] and [Smith, 1994] and [Pottier,
 2000] all infer constrained type schemes in this way, so they correspond to a
-form of dynamic overloading rather than static overloading. (Dynamic
-overloading requires either passing extra values at runtime or user a richer
-runtime where values carry an extra header that can be examined at runtime.)
+form of dynamic overloading rather than static overloading.
 
 If we consider static overloading, but work in absence of local
 let-generalization, then delayed constraints can simply bubble up to each
@@ -103,19 +105,20 @@ exhaustively try all possibilities to discharge a suspended constraint. [Beneš
 and Brachthaüser, 2025] go impressively far in this direction: they avoid
 backtracking and share a lot of common work between the different
 possibilities, but still explore the whole space, at the cost of a worst-case
-blow up.  We favor implementations that fail if the solution is not propagated
-by unification, then solving constraints locally but just looking at the
-toplevel shape of one constraint at a time. However, capturing this notion of
-being "known" rather than "guessed by luck or backtracking" at the level of the
-semantics is very difficult, and this is the key contribution of our unicity
-conditions.
+blow up. Instead we ask that disambiguation information be known from the rest
+of the constraint, with no need for exhaustive search, so constraint-solving
+remains efficient. However, capturing this notion of being "known" rather than
+"guessed by luck or backtracking" at the level of the declarative semantics is
+very difficult, and this is the key contribution of our unicity conditions.
 
-Finally, we certainly agree that MLF is a promising way to handle polymorphism:
-it does better than semi-explicit polymorphism as in OCaml, but to our
-knowledge no one knows how to scale MLF to the full set of feature that OCaml
-contains so adopting MLF there is not an option for now. But MLF does not deal
-with type-based disambiguation or in general static overloading, so it does not
-answer the research problem of our paper.
+Finally, we certainly agree that MLF is a promising way to handle
+polymorphism: it does better than semi-explicit polymorphism as in
+OCaml, but to our knowledge no one knows how to scale MLF to the full
+set of feature that OCaml contains, so adopting MLF there is not an
+option for now. In the context of our work, MLF does not deal with
+type-based disambiguation or in general static overloading, so it does
+not answer our research question.
+
 
 ## 3. Revision plan
 
@@ -124,7 +127,11 @@ definitions are scattered, essential material is deferred to
 appendices, and the line of contributions is obscured by staging and
 breadth. We acknowledge these issues, which we believe comes from bad
 decisions we made to fit the page limit, too close to the deadline for
-comfort. Below we outline concrete changes we will make in a revision.
+comfort. Below we outline concrete changes we will make in a revision
+to address those concerns.
+
+(The table of content for our proposed version is included at the end
+of the response.)
 
 ### Contributions
 
@@ -167,16 +174,17 @@ We will expand and restructure related work into three focused parts:
    work in this direction does not handle local-let generalization).
 
 3. Polymorphism. We will relate polytypes to MLF and recent bidirectional
-   accounts (e.g. DK, Haskell's Quicklook).
+   accounts (e.g. Dunfield-Krishnaswami, Haskell's Quicklook).
 
 ### Removing content
 
 We want to emphasize that suspended constraints are a general approach
 to handle several language features. But it was too ambitious to try
-to cover (1) tuples, (2) records, and (3) semi-explicit
-polymorphism (and some other forms of ad hoc static overloading, which we also
-explored but intendedly omitted).  We will remove tuples to save space --
-they are a didactic example, but the least convincing of the three.
+to cover (1) tuples, (2) records, and (3) semi-explicit polymorphism
+(and some other forms of ad hoc static overloading, which we also
+explored but intendedly omitted).  We will remove tuples to save
+space -- they are a didactic example, but the least convincing of the
+three.
 
 ### Consolidation of technical material
 
