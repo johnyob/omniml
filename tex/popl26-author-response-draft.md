@@ -313,47 +313,49 @@ Just to make sure there is no misunderstanding, we are defining declarative sema
 
 ### Review B
 
-Let us mention again that we are grateful to review B for its detailed and well-structured exposition of its criticsm. We believe that we have implicitly addressed each point of the the "few concerns" list in the main body of our response. (We did not discuss the related works in detail, but this will go in the revised paper.) This sub-section discusses the more minor/local comments.
+Let us mention again that we are grateful to review B for its detailed and well-structured exposition of its criticsm. We believe that we have implicitly addressed each point of the "few concerns" list in the main body of our response. (We did not discuss the related works in detail, but this will go in the revised paper.) This sub-section discusses the more minor/local comments.
 
 
->     - There is no quantitative and little qualitative evaluation to
+>    - _There is no quantitative and little qualitative evaluation to
 >       indicate that the presented system indeed performs better than
 >       the existing ones. The authors write, in the context of
 >       OutsideIn(X), “we believe that we have solved the troubling
 >       interactions between let-generalization and suspended
 >       constraints in this work”, but this belief is never
 >       substantiated. However, it is a at the core of deciding whether
->       the paper makes a significant contribution or not!
+>       the paper makes a significant contribution or not!_
 
 We apologize for the too-careful wording. Let us *claim* that we have solved the interaction between suspended constraints and let-generalization (via partial type schemes), both in theory and in practice: this is the very point of our submission indeed.
 
->     Now, one could imagine implicitly boxing every record field and
+>    _Now, one could imagine implicitly boxing every record field and
 >     every argument and implicitly unboxing all parameters and field
 >     selections. This could allow users to explicitly annotate record
 >     fields and parameters with polymorphic types, while leaving their
 >     provider and consumer expressions handle that polymorphism
->     implicitly.
+>     implicitly._
 
 This is precisely the elaboration of polymorphic methods into semi-explicit first-class polymorphic primitives, as used by OCaml, including in the type-checker implementation. For *nominal* record fields the situation is a bit simpler, as OCaml knows (after type-based disambiguation) which record fields are polymorphic, and at which type. Object types are structural, so polymorphic methods need the approach you mention.
 
 
-> What is the worst-case complexity of your approach? You might want to
-> consider a simplified setting with no let-generalization to make this
-> analysis more informative. With let-generalization, does your approach
-> make the complexity of constraint solving significantly worse? What
-> makes you think it is still practical in usual user-written programs?
+>  _What is the worst-case complexity of your approach? You might want to
+>  consider a simplified setting with no let-generalization to make this
+>  analysis more informative. With let-generalization, does your approach
+>  make the complexity of constraint solving significantly worse? What
+>  makes you think it is still practical in usual user-written programs?_
 
 With no let-generalization, solving constraints becomes plain unification, so there is no extra cost to suspended constraints. (Implementation-wise: it's possible to add a check on each variable-structure unification, and discharge any constraint suspended on this variable). Note: suspended constraints without generalization are folklore in other type-inference systems (eg. dependent type-checkers) and not something we claim is novel.
 
-The interesting setting is in presence of let-generalization. ML inference is doubly-exponential, but let us assume that let-nesting depth in bounded. A key point is that we never backtrack nor duplicate the body of suspended constraints. When a polymorphic region makes progress (discharges a suspended constrant), our partial instantiation machinery implies some extra work for each instantiation of the partial polymorphic scheme. We cannot make precise complexity claims at this point, but we have tried our best to avoid unnecesary repeated work and use appropriate data structures.
+The interesting setting is in presence of _local_ let-generalization. ML inference is doubly-exponential, but let us assume that let-nesting depth is bounded. A key point is that we never backtrack nor duplicate the body of suspended constraints. When a polymorphic region makes progress (discharges a suspended constraint), our partial instantiation machinery implies some extra work for each instantiation of the partial polymorphic scheme. We cannot make precise complexity claims at this point, but we have tried our best to avoid unnecessary repeated work and use appropriate data structures.
 
-> What are the error messages like, in your new framework? OCaml’s type
+> _What are the error messages like, in your new framework? OCaml’s type
 > error messages are notoriously bad. Could they now get even worse? Or
-> do you have a specific plan to handle this problem?
+> do you have a specific plan to handle this problem?_
 
 Not yet, unfortunately. (We would live in a better world indeed if each type-system publication was conditioned on a solid plan for error messages :-)
 
-Optimistically, it may be the case that our system may make the system feel more pleasant to end-user, thanks to our support for more propagation of type-information: OCaml errors related to type-directed disambiguation come when the program is not annotated enough, but sometimes users are irritated because the type-checker obviously _should see_ that a unique type is possible here.
+Optimistically, it may be the case that our system may make the system feel more pleasant to end-user, thanks to our support for more propagation of type-information: OCaml errors related to type-directed disambiguation come when the program is not annotated enough, but sometimes users are irritated because the type-checker obviously _should see_ that a unique type is possible here. 
+
+In any case, we could point the user to a precise program location where an implicit construct is missing some known (shape) information, and it should be obvious for the user to tell at this location what the shape should be. Hence, we do not think that suspended constraints should worsen the understanding of error messages.
 
 
 ### Review C
