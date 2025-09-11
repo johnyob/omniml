@@ -382,3 +382,78 @@ In fact, there is a trivial, brute force implementation of suspended constraints
 
 Probably not, as polymorphic variants use fairly different type-system mechanism -- they are not among the "fragile implicit features" we consider, as they are based on structural types with row variables.  (Similarly, omnidirectional type inference should not help with typechecking of polymorphic records or objects.)
 
+## XXX
+
+Below is the revised paper sections:
+
+```
+1. Introduction
+   1.1. Contributions
+
+2. Overview
+   2.1. Static overloading of constructors and record labels
+   2.2. Polymorphic methods
+    - Semi-explicit first-class polymorphism
+   2.3 Directional type inference
+     - $\pi$-directional type inference
+     - Bidirectional type inference
+     - Limitations of directional inference
+   2.4. Omnidirectional type inference
+     - Suspended constraints
+       - Two mini examples of constraint generation for records and polytypes
+     - Scaling to ML
+      - Back-propagation and the requirement of local let-generalization
+
+3. Constraints
+     - *Cheat sheet: syntax and semantics*
+     - Syntax and semantics outlined.
+   3.1. Shapes and patterns
+   3.2. Suspended constraints
+      - Examples
+
+4. The OmniML calculus
+     - *Cheat sheet: syntax*
+     - Syntax outlined
+   4.1. Typing rules
+     - *Cheat sheet: typing rules and unicity definition*
+     - Examples
+   4.2. Constraint generation
+     - Examples
+   4.3. Metatheory
+
+5. Solving constraints
+     - *Cheat sheet (constraints): new syntax and semantics. 
+       e.g. unification problems, regional let constraints, 
+       partial instantiations*
+   5.1. Unification
+     - Re-frame unification as an abstract rewriting relation that
+       satisfies termination, preservation, progress. This parameterizes
+       our solver by an arbitrary equational system.
+     - Definition of solved form
+   5.2. Solving rules
+     - *Cheat sheet: rewriting rules for constraint solving and
+       associated definitions (e.g. C determines 'bs)*
+     - Basic rules
+     - Let constraints
+     - Suspended match constraints
+     - Back-propagation
+   5.3. Metatheory
+
+6. Implementation
+     - Remains unchanged
+
+7. Related work
+   - Suspended constraints
+     - OutsideIn and OutsideIn(X)
+     - Pottier's conditional constraints
+     - Dependent type systems
+   - Polymorphism
+     - MLF
+     - Bidirectional approaches (DK, Quic)
+   - Overloading
+     - Qualified types
+     - Choice types
+
+8. Conclusion
+   - Future work
+```
