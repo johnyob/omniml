@@ -237,10 +237,7 @@ Simplifying their specification was also a major reason why the JFP removes loca
 
 > In summary, generalisation of local let bindings (without annotations) is a device that is almost never used, and its abolition yields a dramatic simplificationin both the specification and implementation of a typechecker.
 
-Note that we are not covering the same language features and design issues
-as the OutsideIn(X) work (we do not consider type families, for example), so
-we are not claiming to subsume their work, but we claim that the difficulty
-(the non-straightforwardness) is at least comparable.
+Note that we are not covering the same language features and design issues as the OutsideIn(X) work (we do not consider type families, for example), so we are not claiming to subsume their work, but we claim that the difficulty (the non-straightforwardness) is at least comparable.
 
 
 ## 4. Local comments
