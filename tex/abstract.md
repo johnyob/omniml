@@ -10,9 +10,13 @@ taking instances of a partially solved type scheme containing suspended
 constraints, with a
 mechanism to incrementally update instances as the scheme is refined.
 
-The benefits of omnidirectional type inference are striking for several
-advanced ML extensions, typically those that rely on optional type
-annotations where principality is fragile. We illustrate them with OCaml's
-static overloading of record labels and datatype constructors, semi-explicit
+The benefits of omnidirectional type inference are most apparant for advanced
+ML extensions that rely on optional type annotations, where
+principality is fragile.  We illustrate these advantages with OCaml's static
+overloading of record labels and datatype constructors, semi-explicit
 first-class polymorphism, and tuple projections à la SML.
+
+By contrast, extensions that integrate seamlessly into the traditional 
+ML framework---such as row polymorphism---already enjoy robust 
+principality and do not gain from omnidirectionality.
 

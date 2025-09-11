@@ -46,19 +46,17 @@ information about a type variable; and \emph{partial type schemes}, which
 allow taking instances of a partially solved type scheme containing
 suspended constraints, with a mechanism to incrementally update instances as
 the scheme is refined.
-%
-\Xalistair[Changed, preferred the submitted version. Was]{While the benefits of omnidirectional type inference are minor for core \ML,
-  which truly enjoy principal types, they}\XDR{The meaning is not the
-  same. I find the formulation you like overselling, and lying by omission}
 
-  \TODO{Change to mention that omnidirectional doesn't Core \ML, issue with striking, frame it that the framework
-  makes a striking improvement.}
-
-The benefits of omnidirectional type inference are striking for several advanced
-\ML extensions, typically those that rely on optional type annotations where
-principality is fragile.  We illustrate them with \OCaml's static
+The benefits of omnidirectional type inference are most apparant for advanced
+\ML extensions that rely on optional type annotations, where
+principality is \emph{fragile}.  We illustrate these advantages with \OCaml's static
 overloading of record labels and datatype constructors, semi-explicit
 first-class polymorphism, and tuple projections \ala \SML.
+%
+By contrast, extensions that integrate seamlessly into the traditional 
+\ML framework---such as row polymorphism---already enjoy \emph{robust} 
+principality and do not gain from omnidirectionality.
+  \Xalistair{@Didier, does this work?}
 \end{abstract}
 \maketitle
 
@@ -528,7 +526,7 @@ Our contributions are:
   A complete yet efficient constraint-solving type inference algorithm.
 
 \item
-  Three instantiation of our framework that give new declarative type
+  Three instantiations of our framework that give new declarative type
   systems and their implementation using suspended constraints for tuple
   projection in the style of \SML, static overloading of record fields and
   datatype constructors, and for semi-explicit first-class polymorphism.
@@ -598,12 +596,12 @@ and record projections should not share their macros)}
 The syntax of types and constraints is given
 in~\Cref{fig:constraint-syntax}. Monotypes (or just types) include, as
 usual, type variables $\tv$, the unit type $\tunit$, arrow types, but
-also\footnote{These are grayed, as they which will be introduced in the
+also\footnote{These are grayed, as they will be introduced in the
 following subsections.}  structural tuples $\Pi\iton \ti$, nominal
 types\footnote {Type constructors are prefixed, except in \OCaml code, where
 they are postfixed.}  $\T \tys$, and polytypes $\tpoly \ts$.  Type schemes
 $\ts$ are of the form $\all \tvs \t$, they are equal up to the reordering of
-binders and removal of useless variables. We write $\TyVars$ the set of type variables.
+binders and removal of useless variables. We write $\TyVars$ for the set of type variables.
 
 Building atop the constraint-based type inference framework of
 \citet*{Pottier-Remy/emlti}, we adopt a constraint language that includes both
@@ -630,8 +628,11 @@ returns $\c \where {\tv \is \t}$. Constraint abstractions are
 introduced by a let construct $(\clet \x \tv \ca \cb)$ which binds
 the constraint abstraction to the term variable $\x$ in
 $\cb$---additionally ensuring the abstraction is satisfiable. They
-are eliminated using the application constraint $(\capp \x \t)$ which
-applies the type $\t$ to the abstraction constraint bound to $x$.
+are eliminated using the application constraint $(\capp \x \t)$, which
+applies the constraint abstraction bound to $\x$ to the type $\t$.
+
+\Xalistair{The above was `applies the type $\t$ to the constraint abstraction
+bound to $\x$'. I slightly prefer this reading, but have no strong preferences}
 
 \parcomment {Suspended match constraints}
 
@@ -877,7 +878,7 @@ resolve ambiguities in record types. For instance:
 \begin{program}[input,check]
 let ex_1_1 = {x = 42; z = 1337} °\ocamlflags 00°
 \end{program}
-Here, \code{x} and \code{y} appear together only in the type \code{two},
+Here, \code{x} and \code{z} appear together only in the type \code{two},
 allowing the type checker to unambiguously infer the type of \ocaml{e$_{11}$} as
 \code{two}.
 %
@@ -927,7 +928,7 @@ projection $\efield \e \elab$, we generate the typing constraint:
   \cand
   \cmatch \tvb
       {\cbranch {\cpatrcd \ct}
-	{\parens {\labenv(\labfrom \elab \ct) \leq \tva \to \tvb}}
+	{\parens {\labenv(\labfrom \elab \ct) \leq \tvb \to \tva}}
       }
 \end{mathpar}
 This constraint suspends resolution of the return type $\alpha$ until the
@@ -1005,7 +1006,7 @@ overloaded tuples using suspended constraints. On the other hand, it only works
 for structural types. It cannot be applied to disambiguate between
 nominal records or variants that share field or constructor names, particularly
 when some field projections or constructors need non-uniform typing rules,
-such polymorphic fields or GADT constructors.
+such as polymorphic fields or GADT constructors.
 
 %% BEWARE: Can only be located as the top of a page---otherwise  it would be
 %% misplaced
@@ -1100,7 +1101,7 @@ assignments indeed satisfy $\c$. Let us write $\Ground$ for the set of
 of some base types such as $\tint$. In \cref{sec/rec-types}, we
 discuss the alternative choice of regular trees for the set of ground
 types that models equirecursive types.}. $\semenv$ maps each type
-variable $\tv$ to a ground types $\gt \in \Ground$, and each term
+variable $\tv$ to a ground type $\gt \in \Ground$, and each term
 variable $x$ to sets of ground types $\gabs \subseteq \Ground$
 (the set of ground instances of a type scheme for $\x$).
 %
