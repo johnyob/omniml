@@ -64,6 +64,20 @@
        \label{\LABEL}%
      \end{figure}}
 
+\newenvironment{mathparsubfig}[3][\linewidth]
+   {\begin{subfigure}{#1}
+       \abovedisplayskip 0em
+       \belowdisplayskip 0em
+       \def \LABEL{#2}%
+       \def \CAPTION{#3}%
+       \begin{mathpar}}
+       {\end{mathpar}%
+       \vskip -1ex
+       \caption{\CAPTION}%
+       \label{\LABEL}%
+     \end{subfigure}}
+
+
 \newenvironment{mathline}
    {\abovedisplayskip 0.4ex
     \belowdisplayskip 0.4ex
@@ -100,6 +114,9 @@
 \newcommand {\bnf@entryset}[3][]
   {\bnf@flushentry \gdef\@bnf@entry {&&#1}
    & #2 &\bnf@in & #3\bnf@flushentry}
+\newcommand {\bnf@entrysubseteq}[3][]
+   {\bnf@flushentry \gdef\@bnf@entry {&&#1}
+   & #2 &\bnf@subseteq & #3\bnf@flushentry}
 \newcommand {\bnf@emptyentry}[2][]
   {\bnf@flushentry \gdef\@bnf@entry {&&#1}
    & #2&&\bnf@flushentry}
@@ -108,6 +125,7 @@
    & #2&\ifempty{#2}{}{\ifempty{#3}{}{\bnf@is}}& #3\bnf@flushentry}
 \def \bnf@empty{\gdef \@bnf@entry{}}\bnf@empty
 \def \bnf@in {\in}
+\def \bnf@subseteq {\subseteq}
 \def \bnf@is {::=}
 \def \bnf@mid {\mid}
 \def \bnf@flushentry{\@bnf@entry \bnf@empty}
@@ -117,6 +135,7 @@
 \newenvironment{bnfgrammar}[1][]
   {\let \entry \bnf@entry
    \let \entryset \bnf@entryset
+   \let \entrysubseteq \bnf@entrysubseteq
    \let \bnfis \bnf@is
    \let \and \bnf@mid
    \let \andcr \bnf@andcr
@@ -135,6 +154,11 @@
 \newenvironment{bnffig}[3][htb!]
   {\begin{mathparfig}[#1]{#2}{#3}\begin{bnfgrammar}}
   {\end{bnfgrammar}\end{mathparfig}}
+
+\newenvironment{bnfsubfig}[3][htb!]
+  {\begin{mathparsubfig}[#1]{#2}{#3}\begin{bnfgrammar}}
+  {\end{bnfgrammar}\end{mathparsubfig}}
+
 
 % Judgement boxes should precede a mathpar
 
