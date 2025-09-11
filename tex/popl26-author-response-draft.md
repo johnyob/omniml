@@ -8,7 +8,7 @@ Our response is too long, but it discusses the important points first that we ho
 
 2. We discuss the feature space of ML-family-and-neighbors type inference topics related to overloading, guided by the helpful reference list of reviewer B, to clarify what is the focus of *this* work.
 
-3. We convince reviewer B (or, as a backup plan, both A and C :-) that providing declarative semantics for suspended constraints is in fact the opposite of "rather straightforward": a substantial scientific contribution.
+3. We convince reviewer B that providing declarative semantics for suspended constraints is in fact the opposite of "rather straightforward": a substantial scientific contribution.
 
 4. Finally we discuss local comments of each review in order, so that our scientific exchange is as satisfactory as possible if you have the curiosity to read them.
 
@@ -16,10 +16,11 @@ Our response is too long, but it discusses the important points first that we ho
 ## 1. Revision plan
 
 A common theme across reviews is that the paper is difficult to read:
-definitions are scattered, essential material is deferred to appendices, and
-the line of contributions is obscured by staging and breadth. We acknowledge
-these issues (and were in fact aware of them prior to your reviews). Below we
-outline concrete changes we will make in a revision.
+definitions are scattered, essential material is deferred to
+appendices, and the line of contributions is obscured by staging and
+breadth. We acknowledge these issues, which we believe comes from bad
+decisions we made to fit the page limit, too close to the deadline for
+comfort. Below we outline concrete changes we will make in a revision.
 
 ### Contributions
 
@@ -44,9 +45,10 @@ We will emphasize that preserving local let-generalization with suspended
 constraints is mandatory in the setting of OCaml, and a key scientific
 contribution of our work.
 
-Prior work (helpfully highlighted by reviewer B) only deals with top-level
-let-generalization. Local let bindings are treated monomorphically, and
-therefore do not address this troubling interaction.
+Prior work (helpfully highlighted in review B) typically only deals
+with top-level let-generalization. Local let bindings are treated
+monomorphically, and therefore do not address this troubling
+interaction.
 
 ### Related work
 
@@ -63,24 +65,17 @@ We will expand and restructure related work into three focused parts:
 3. Polymorphism. We will relate polytypes to MLF and recent bidirectional
    accounts (e.g. DK, Haskell's Quic).
 
-### Clearer treatment of features
+### Removing content
 
-At present the paper tries to cover too much. To reduce breadth and improve
-narrative continuity, the main text will focus **exclusively** on OCaml
-features:
-
-- Tuple overloading will be removed from the main text.
-
-- Section 2 will explicitly relate semi-explicit first-class polymorphism to
-  OCaml's polymorphic methods, showing their reduction into object methods
-  (which are orthogonal to our work) and polytypes.
-
-  This addresses the gap noted by B and C.
-
+We want to emphasize that suspended constraints is a general approach
+to handle several language features. But it was too ambitious to try
+to cover (1) tuples, (2) records, and (3) semi-explicit
+polymorphism. We will remove tuples to save space -- they are
+a didactic example, but the least convincing of the three.
 
 ### Consolidation of technical material
 
-Reviewers B and C found the paper insufficiently self-contained, with
+Reviews B and C found the paper insufficiently self-contained, with
 definitions introduced haphazardly and many details relegated to appendices.
 
 We will make the sections presenting technical contributions more
@@ -101,7 +96,7 @@ self-contained and easier to navigate:
 
 Figures in each section will be consolidated, acting as notational cheat sheets
 within the main body of the paper. We cannot bring the entire technical reference
-(in the appendix) into the paper, but we hope this addresses reviewer B and C's
+(in the appendix) into the paper, but we hope this addresses review B and C's
 comments regarding difficulty reading technical sections.
 
 ### Space
@@ -200,6 +195,15 @@ Below is the revised paper sections:
 
 - Conclusion (8)
   - Future work
+
+
+### Timeline
+
+In this proposal the introduction is entirely new, and the related
+work section is significantly rewritten, but for the other parts of
+the paper this is mostly a matter of moving content around. We are
+confident that we can achieve this within the required time frame --
+we already have a draft of the new introduction.
 
 
 ## 2. Explaining the feature space
