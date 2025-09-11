@@ -90,7 +90,7 @@ We will expand and restructure related work into three focused parts:
 3. Polymorphism. We will relate polytypes to MLF and recent bidirectional
    accounts (e.g. DK, Haskell's Quic).
 
-XXX: What is Haskell's "Quic"? Do you mean Quicklook? 
+        [XXX: What is Haskell's "Quic"? Do you mean Quicklook?]
 
 ### Removing content
 
@@ -308,12 +308,12 @@ https://pauillac.inria.fr/~fpottier/publis/fpottier-elaboration.pdf
 > I see at line 498 that membership test is done by substitution, do you
 > not need then to have a finite representation of the environment?_
 
-Just to make sure there is no misunderstanding, we are defining declarative semantics here, not a decision procedure / a judgment that would be implemneted. (Our solver corresponds to a program, and it is shown to capture satisfiability in the semantics.)  Line 498 mentions a logical equivalence between membership and satisfaction in a substituted context, but none of the two sides are computed.
+Just to make sure there is no misunderstanding, we are defining declarative semantics here, not a decision procedure / a judgment that would be implemented. (Our solver corresponds to a program, and it is shown to capture satisfiability in the semantics.)  Line 498 mentions a logical equivalence between membership and satisfaction in a substituted context, but none of the two sides are computed.
 
 
 ### Review B
 
-Let us mention again that we are grateful to review B for its detailed and well-structured exposition of its criticsm. We believe that we have implicitly addressed each point of the "few concerns" list in the main body of our response. (We did not discuss the related works in detail, but this will go in the revised paper.) This sub-section discusses the more minor/local comments.
+Let us mention again that we are grateful to review B for its detailed and well-structured exposition of its criticism. We believe that we have implicitly addressed each point of the "few concerns" list in the main body of our response. (We did not discuss the related works in detail, but this will go in the revised paper.) This sub-section discusses the more minor/local comments.
 
 
 >    - _There is no quantitative and little qualitative evaluation to
@@ -345,7 +345,7 @@ This is precisely the elaboration of polymorphic methods into semi-explicit firs
 
 With no let-generalization, solving constraints becomes plain unification, so there is no extra cost to suspended constraints. (Implementation-wise: it's possible to add a check on each variable-structure unification, and discharge any constraint suspended on this variable). Note: suspended constraints without generalization are folklore in other type-inference systems (eg. dependent type-checkers) and not something we claim is novel.
 
-The interesting setting is in presence of _local_ let-generalization. ML inference is doubly-exponential, but let us assume that let-nesting depth is bounded. A key point is that we never backtrack nor duplicate the body of suspended constraints. When a polymorphic region makes progress (discharges a suspended constraint), our partial instantiation machinery implies some extra work for each instantiation of the partial polymorphic scheme. We cannot make precise complexity claims at this point, but we have tried our best to avoid unnecessary repeated work and use appropriate data structures.
+The interesting setting is in presence of _local_ let-generalization. ML inference is doubly-exponential, but let us assume that let-nesting depth is bounded. A key point is that we never backtrack nor duplicate the body of suspended constraints.  When a polymorphic region makes progress (discharges a suspended constraint), our partial instantiation machinery implies some extra work for each instantiation of the partial polymorphic scheme.  We cannot make precise complexity claims at this point, but we have tried our best to avoid unnecessary repeated work and use appropriate data structures for that purpose.
 
 > _What are the error messages like, in your new framework? OCaml’s type
 > error messages are notoriously bad. Could they now get even worse? Or
@@ -360,22 +360,25 @@ In any case, we could point the user to a precise program location where an impl
 
 ### Review C
 
-> There is a claim about the description of an *efficient*
+> _There is a claim about the description of an *efficient*
 > implementation. However, despite a few explanations in section 6 about
 > efficiency-driven decisions, the efficiency of the implementation is
 > not validated at all; there are no benchmarks comparing with other
 > approaches and/or showing the benefits of said decisions. I'd suggest
-> to tone down that efficiency claim.
+> to tone down that efficiency claim._
 
 It is difficult to benchmark new type-systems, as there are no large, representative user programs to measure, and writing large synthetic terms is hardly representative. (One could also think of translating existing ML programs to our system, but few only cover a few representative features and practical programs are outside this subset.)
 
-On the other hand, we do have expertise in implementing ML-family type-inference engines. Our implementation is state-of-the-art in its choice of data sturctures (union-find rather than substitutions for unification, efficient level-based generalization, etc.). Previous prototypes written by some of us in this style have been observed to have at least comparable performance to the OCaml type-checker on certain programs. We expect this one to compare favorably as well: it should be as efficient as OCaml on programs that do not use suspended constraints. (Of course, suspended constraints in themselves cannot be compared, because they are not supported by existing type systems.)
+    [XXX: I don't understand "few only cover a few representative features]
+
+On the other hand, we do have expertise in implementing ML-family type-inference engines. Our implementation is state-of-the-art in its choice of data structures (union-find rather than substitutions for unification, efficient level-based generalization, etc.). Previous prototypes written by some of us in this style have been observed to have at least comparable performance to the OCaml type-checker on certain programs. We expect this one to compare favorably as well: it should be as efficient as OCaml on programs that do not use suspended constraints. (Of course, suspended constraints in themselves cannot be compared, because they are not supported by existing type systems.)
 
 In other words, our efficiency claims are not based on experiment, but on the use of state-of-the-art implementation techniques. We will rephrase the paper to clarify, thanks.
 
+In fact, there is a trivial, brute force implementation of suspended constraints that would restart typechecking every time a new suspended constraint has been discharged!  Instead, our implementation of partial type schemes is very careful to resume instantiation from where it was suspended so as to avoid repeating work---which is actually not so trivial.
 
-> - would omnidirectional type inference enhance the support for
->   polymorphic variants?
+> - _would omnidirectional type inference enhance the support for
+>   polymorphic variants?_
 
-Probably not, as polymorphic variants use fairly different type-system mechanism -- they are not among the "fragile implicit features" we consider, as they are based on structural types with row variables.
+Probably not, as polymorphic variants use fairly different type-system mechanism -- they are not among the "fragile implicit features" we consider, as they are based on structural types with row variables.  (Similarly, omnidirectional type inference should not help with typechecking of polymorphic records or objects.)
 
