@@ -1,42 +1,119 @@
-We are grateful to our reviewers for their interest in our work and their copious, high-quality feedback. Thanks!
+We are grateful to our reviewers for their interest in our work and their
+copious, high-quality feedback. Thanks!
 
-We are particularly grateful for the very detailed criticisms in review B.  We agree with some of the criticism and have proposals for addressing it.  Some comments suggest that we did not get some important points across as clearly as we should have, and they also inform our plan to clarify the paper.
+We are particularly grateful for the very detailed criticisms in review B.  We
+agree with some of the criticism and have proposals for addressing it.  Some
+comments suggest that we did not get some important points across as clearly as
+we should have, and they also inform our plan to clarify the paper.
 
-Our response is too long, but it discusses the important points first that we hope may be of interest to all reviewers, and you can stop at any point. In the following:
+Our response is too long, but it discusses the important points first that we
+hope may be of interest to all reviewers, and you can stop at any point. In the
+following:
 
 1. We do the exercise of shortly restating the key points of our paper.
 
-2. We discuss the feature space of ML-family-and-neighbors type inference topics related to overloading, guided by the helpful reference list of reviewer B, in relation to the focus of this work clarified in (0).
+2. We discuss the feature space of ML-family-and-neighbors type inference
+   topics related to overloading, guided by the helpful reference list of
+   reviewer B, in relation to the focus of this work clarified in (0).
 
-3. We propose a workable plan to revise the paper to make it more focused and more self-contained, and to rewrite the introduction so that *future readers* don't need to ask your important questions.
+3. We propose a workable plan to revise the paper to make it more focused and
+   more self-contained, and to rewrite the introduction so that *future readers* 
+   don't need to ask your important questions.
 
-4. We convince reviewer B that providing declarative semantics for suspended constraints is in fact the opposite of "rather straightforward": a substantial scientific contribution.
+4. We convince reviewer B that providing declarative semantics for suspended
+   constraints is in fact the opposite of "rather straightforward": a
+   substantial scientific contribution.
 
-5. Finally we discuss local comments of each review in order, so that our scientific exchange is as satisfactory as possible if you have the curiosity to read them.
+5. Finally, we discuss local comments of each review in order, so that our
+   scientific exchange is as satisfactory as possible if you have the curiosity
+   to read them.
 
 ## 1. The key points.
 
-This work started from the question of how to improve OCaml's support for type-based disambiguation, which currently uses a mix of pi-directional and bi-directional type inference, and is found to be lacking by users. The OCaml features we consider are using a form of static overloading (but semi-explicit first-class polymoprhism is not really overloading), and it would not be acceptable to consider using dynamic overloading as it would change the dynamic semantics (and thus observable side-effects), program efficiency, etc.
+This work started from the question of how to improve OCaml's support for
+type-based disambiguation, which currently uses a mix of pi-directional and
+bi-directional type inference, and is found to be lacking by users. The OCaml
+features we consider are using a form of static overloading (but semi-explicit
+first-class polymoprhism is not really overloading), and it would not be
+acceptable to consider using dynamic overloading as it would change the dynamic
+semantics (and thus observable side-effects), program efficiency, etc.
 
-The natural idea of delaying type-disambiguated feature "until the type is known" is in fact very difficult to combine with local let-polymorphism, which is a key feature of Hindley-Damas-Milner type inference and not something OCaml would consider giving up.
+The natural idea of delaying type-disambiguated feature "until the type is
+known" is in fact very difficult to combine with local let-polymorphism, which
+is a key feature of Hindley-Damas-Milner type inference and not something OCaml
+would consider giving up.
 
-Our work explains how to delay type-inference decisions "until the type we need is known" in presence of local let-polymorphism, which is difficult to (1) implement and to (2) provide precise declarative semantics for. We solve these two significant problems. We believe this solution is of interest to many other HM-based languages.
+Our work explains how to delay type-inference decisions "until the type we need
+is known" in presence of local let-polymorphism, which is difficult to (1)
+implement and to (2) provide precise declarative semantics for. We solve these
+two significant problems. We believe this solution is of interest to many other
+HM-based languages.
 
 ## 2. The research space
 
-A common and elegant approach to perform type inference with overloading is to abstract over the still-undetermined overloading points at generalization time. This approach is exemplified by qualified types: a remaining constraint "Eq a" when inferring "let f = ..." will lead to the type scheme "f : Eq a => ...". This is simple in theory and easy to implement, but it crucially introduces *dynamic* overloading: each user/caller of `f` can provide their own instance of `Eq`. This approach cannot be used for *static* overloading, which imposes that a single global solution is selected within the definition of `f`.
+A common and elegant approach to perform type inference with overloading is to
+abstract over the still-undetermined overloading points at generalization time.
+This approach is exemplified by qualified types: a remaining constraint "Eq a"
+when inferring "let f = ..." will lead to the type scheme "f : Eq a => ...".
+This is simple in theory and easy to implement, but it crucially introduces
+*dynamic* overloading: each user/caller of `f` can provide their own instance
+of `Eq`. This approach cannot be used for *static* overloading, which imposes
+that a single global solution is selected within the definition of `f`.
 
-Among the works cited in review B, [Kaes, 1992] and [Smith, 1994] and [Pottier, 2000] all infer constrained type schemes in this way, so they correspond to a form of dynamic overloading rather than static overloading. (Dynamic overloading requires either passing extra values at runtime or user a richer runtime where values carry an extra header that can be examined at runtime.)
+Among the works cited in review B, [Kaes, 1992] and [Smith, 1994] and [Pottier,
+2000] all infer constrained type schemes in this way, so they correspond to a
+form of dynamic overloading rather than static overloading. (Dynamic
+overloading requires either passing extra values at runtime or user a richer
+runtime where values carry an extra header that can be examined at runtime.)
 
-If we consider static overloading, but work in absence of local let-generalization, then delayed constraints can simply bubble up to each toplevel declaration (since unification constraints can be solved in any order), and there they can be resolved arbitrarily (or fail to force the user to disambiguate). Delaying constraints in this way is commonly done in dependent-type systems.
+If we consider static overloading, but work in absence of local
+let-generalization, then delayed constraints can simply bubble up to each
+toplevel declaration (since unification constraints can be solved in any
+order), and there they can be resolved arbitrarily (or fail to force the user
+to disambiguate). Delaying constraints in this way is commonly done in
+dependent-type systems.
 
-Among the works cited in review B, this is the approach of [Beneš and Brachthaüser, 2025]. Their work discusses the interesting problem of solving variational-type constraints at the toplevel, but it does not support local let-generalization. The details of how [Chen and Erwing, 2016] deal with local let-generalization are less clear -- our current understanding is that their "reconciliation" process will fail with an error if not enough information is known at generalization point, even if a solution might have been found by delaying the problem until later, so we would also qualify it as not interacting so well with let-polymorphism.
+Among the works cited in review B, this is the approach of [Beneš and
+Brachthaüser, 2025]. Their work discusses the interesting problem of solving
+variational-type constraints at the toplevel, but it does not support local
+let-generalization. The details of how [Chen and Erwing, 2016] deal with local
+let-generalization are less clear -- our current understanding is that their
+"reconciliation" process will fail with an error if not enough information is
+known at generalization point, even if a solution might have been found by
+delaying the problem until later, so we would also qualify it as not
+interacting so well with let-polymorphism.
 
-The work of [Pottier, 2000] on conditional constraints deserves a specific mention: as review B points out, it has similarities: it describes a general mechanism to "delay" the resolution of some constraints, and is demonstrated to cover several different language features in interesting ways. Besides the fact that conditional constraints are turned into constrained type scheme at generalization, one key difference is that a conditional constraint (in Pottier's work) that never fires is considered a *success*, whereas a suspended constraint (in our work) that never gets discharged is considered a *failure* (type-inference fails if a construction cannot be disambiguated). This is a big change to the semantics, and it means that the constraint-level feature will be applied to very different user-facing type-system features -- it does not solve our problem.
+The work of [Pottier, 2000] on conditional constraints deserves a specific
+mention: as review B points out, it has similarities: it describes a general
+mechanism to "delay" the resolution of some constraints, and is demonstrated to
+cover several different language features in interesting ways. Besides the fact
+that conditional constraints are turned into constrained type scheme at
+generalization, one key difference is that a conditional constraint (in
+Pottier's work) that never fires is considered a *success*, whereas a suspended
+constraint (in our work) that never gets discharged is considered a *failure*
+(type-inference fails if a construction cannot be disambiguated). This is a big
+change to the semantics, and it means that the constraint-level feature will be
+applied to very different user-facing type-system features -- it does not solve
+our problem.
 
-Our failure semantics may a-priori mean that a complete solver should exhaustively try all possibilities to discharge a suspended constraint. [Beneš and Brachthaüser, 2025] go impressively far in this direction: they avoid backtracking and share a lot of common work between the different possibilities, but still explore the whole space, at the cost of a worst-case blow up.  We favor implementations that fail if the solution is not propagated by unification, then solving constraints locally but just looking at the toplevel shape of one constraint at a time. However, capturing this notion of being "known" rather than "guessed by luck or backtracking" at the level of the semantics is very difficult, and this is the key contribution of our unicity conditions.
+Our failure semantics may a-priori mean that a complete solver should
+exhaustively try all possibilities to discharge a suspended constraint. [Beneš
+and Brachthaüser, 2025] go impressively far in this direction: they avoid
+backtracking and share a lot of common work between the different
+possibilities, but still explore the whole space, at the cost of a worst-case
+blow up.  We favor implementations that fail if the solution is not propagated
+by unification, then solving constraints locally but just looking at the
+toplevel shape of one constraint at a time. However, capturing this notion of
+being "known" rather than "guessed by luck or backtracking" at the level of the
+semantics is very difficult, and this is the key contribution of our unicity
+conditions.
 
-Finally, we certainly agree that MLF is a promising way to handle polymorphism: it does better than semi-explicit polymorphism as in OCaml, but to our knowledge no one knows how to scale MLF to the full set of feature that OCaml contains so adopting MLF there is not an option for now. But MLF does not deal with type-based disambiguation or in general static overloading, so it does not answer the research problem of our paper.
+Finally, we certainly agree that MLF is a promising way to handle polymorphism:
+it does better than semi-explicit polymorphism as in OCaml, but to our
+knowledge no one knows how to scale MLF to the full set of feature that OCaml
+contains so adopting MLF there is not an option for now. But MLF does not deal
+with type-based disambiguation or in general static overloading, so it does not
+answer the research problem of our paper.
 
 ## 3. Revision plan
 
