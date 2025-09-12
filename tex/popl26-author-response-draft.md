@@ -36,7 +36,7 @@ This work started from the question of how to improve OCaml's support for
 type-based disambiguation, which currently uses a mix of pi-directional and
 bidirectional type inference, and is found to be lacking by users. The OCaml
 features we consider are using a form of static overloading (but semi-explicit
-first-class polymoprhism is not really overloading), and it would not be
+first-class polymorphism is not really overloading), and it would not be
 acceptable to consider using dynamic overloading as it would change the dynamic
 semantics (and thus observable side-effects), program efficiency, etc.
 
@@ -63,7 +63,7 @@ This is simple in theory and easy to implement, but it crucially introduces
 of `Eq`. This approach cannot be used for *static* overloading, which imposes
 that a single global solution is selected within the definition of `f`. As we
 mentioned earlier, dynamic overloading imposes a different compilation strategy
-and has non-trivial consequences in term of observable behavior, efficiency,
+and has non-trivial consequences in terms of observable behavior, efficiency,
 etc.
 
 Among the works cited in review B, [Kaes, 1992] and [Smith, 1994] and [Pottier,
@@ -114,7 +114,7 @@ very difficult, and this is the key contribution of our unicity conditions.
 Finally, we certainly agree that MLF is a promising way to handle
 polymorphism: it does better than semi-explicit polymorphism as in
 OCaml, but to our knowledge no one knows how to scale MLF to the full
-set of feature that OCaml contains, so adopting MLF there is not an
+set of features that OCaml contains, so adopting MLF there is not an
 option for now. In the context of our work, MLF does not deal with
 type-based disambiguation or in general static overloading, so it does
 not answer our research question.
@@ -125,12 +125,12 @@ not answer our research question.
 A common theme across reviews is that the paper is difficult to read:
 definitions are scattered, essential material is deferred to
 appendices, and the line of contributions is obscured by staging and
-breadth. We acknowledge these issues, which we believe comes from bad
+breadth. We acknowledge these issues, which we believe come from bad
 decisions we made to fit the page limit, too close to the deadline for
 comfort. Below we outline concrete changes we will make in a revision
 to address those concerns.
 
-(The table of content for our proposed version is included at the end
+(The table of contents for our proposed version is included at the end
 of the response.)
 
 ### Contributions
@@ -264,7 +264,7 @@ We believe that our declarative semantics is at least of comparable difficulty t
 
 Simplifying their specification was also a major reason why the JFP paper removes local let-generalization (end of page 32):
 
-> _In summary, generalisation of local let bindings (without annotations) is a device that is almost never used, and its abolition yields a dramatic simplificationin both the specification and implementation of a typechecker._
+> _In summary, generalisation of local let bindings (without annotations) is a device that is almost never used, and its abolition yields a dramatic simplification in both the specification and implementation of a typechecker._
 
 Note that we are not covering the same language features and design issues as the OutsideIn(X) work (we do not consider type families, for example), so we are not claiming to subsume their work, but we claim that the difficulty (the non-straightforwardness) is at least comparable.
 
@@ -279,7 +279,7 @@ Note that we are not covering the same language features and design issues as th
 
 We hesitated as well. The opinion  that the formulation of uniqueness in constraints seemed more general and more regular, so hopefully easier to understand, than the uniqueness conditions in the type systems which are slightly different for each feature. 
 
-Also, it may be the case that some type-inference authors will find constraints easier to relate to their own work, rather than the particular surface-syntax type system we present. (It sometimes help to think of constraints first.)
+Also, it may be the case that some type-inference authors will find constraints easier to relate to their own work, rather than the particular surface-syntax type system we present. (It sometimes helps to think of constraints first.)
 
 This being said, we are still torn on this question. The proposed revision plan still puts constraints first before the type system, but we might swap them around depending on how the writing goes.
 
@@ -358,7 +358,7 @@ In any case, we could point the user to a precise program location where an impl
 > approaches and/or showing the benefits of said decisions. I'd suggest
 > to tone down that efficiency claim._
 
-It is difficult to benchmark new type-systems, as there are no large, representative user programs to measure, and writing large synthetic terms is hardly representative. (One could also think of translating existing ML programs to our system, but programs in the wild almost never fit any given simple subset, so automatically extracting substantial amounts of well-typed programs is infeasiable in practice.)
+It is difficult to benchmark new type-systems, as there are no large, representative user programs to measure, and writing large synthetic terms is hardly representative. (One could also think of translating existing ML programs to our system, but programs in the wild almost never fit any given simple subset, so automatically extracting substantial amounts of well-typed programs is infeasible in practice.)
 
 On the other hand, we do have expertise in implementing ML-family type-inference engines. Our implementation is state-of-the-art in its choice of data structures (union-find rather than substitutions for unification, efficient level-based generalization, etc.). Previous prototypes written by some of us in this style have been observed to have at least comparable performance to the OCaml type-checker on certain programs. We expect this one to compare favorably as well: it should be as efficient as OCaml on programs that do not use suspended constraints. (Of course, suspended constraints in themselves cannot be compared, because they are not supported by existing type systems.)
 
@@ -438,7 +438,7 @@ Below is the revised paper sections:
      - Dependent type systems
    - Polymorphism
      - MLF
-     - Bidirectional approaches (DK, Quic)
+     - Bidirectional approaches (DK, Quicklook)
    - Overloading
      - Qualified types
      - Choice types
