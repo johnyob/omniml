@@ -239,16 +239,14 @@ we already have a draft of the new introduction.
 >       suspended match constraints is not as obvious as one would
 >       think, but it is still rather straightforward._
 
-We thank review B for noting that our declarative semantics for suspended
+We thank reviewer B for noting that our declarative semantics for suspended
 constraints is "rather straightforward". We agree that, as presented, our
 semantics may appear deceptively simple. This was, in fact, our goal: to arrive
-at a semantics that is comprehensible. However, it was a lot of work to come up with
-satisfying declarative semantics for suspended constraints, we went through
-many iterations which ended up not working, and had to work through the
-detailed proofs to find a suitable definition. We are convinced that coming up
-with a declarative semantics is a significant contribution --- the main reason
-why our work was not published a few years before, as semantics were the
-missing piece.
+at a semantics that is comprehensible. However, we reached our final semantics
+only after multiple unsuccessful attempts and had to work through detailed
+proofs to isolate a suitable definition. We are convinced that coming up with a
+declarative semantics is a significant contribution --- the main reason why our
+work was not published a few years before, as semantics were the missing piece.
 
 To be more objective and less anecdotal about this: we see a connection between our difficulties finding a declarative semantics and what happened in the OutsideIn(X) work. In the conference version of the OutsideIn paper there is a declarative semantics, which is rather subtle and elegant. In the journal version of the work, the declarative semantics is gone, because the authors failed to generalize it to other surface-language features than GADTs. (Note: our paper as submitted claims that OutsideIn does not come with a declarative semantics, because we had only looked at the journal version at first. We re-read the conference version after submission, realized our mistake, and fixed it in our current draft.)
 
