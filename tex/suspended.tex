@@ -85,10 +85,10 @@ transformations such as let-contraction and argument reordering.
 
 Principality, however, is fragile. Many extensions of \ML preserve it
 straightforwardly---for example, extensible records with row-polymorphism
-\XDR{Fix citations for row polymorphism}
-\citep*{conf/popl/RemyV97, conf/lics/Wand89, journals/toplas/Ohori95,
-garrigue1998programming} or higher-kinded types \citep*{journals/jfp/Jones95},
-preserve principality straightforwardly. Others, such as GADTs
+\citep*{Remy/popl89, conf/popl/RemyV97, conf/lics/Wand89,
+journals/toplas/Ohori95, garrigue1998programming} or higher-kinded types
+\citep*{journals/jfp/Jones95}, preserve principality
+straightforwardly. Others, such as GADTs
 \citep*{conf/icfp/SchrijversJSV09, conf/aplas/GarrigueR13}, higher-rank
 polymorphism \citep*{conf/popl/OderskyL96, journals/pacmpl/SerranoHJV20}, and
 static overloading \citep*{Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}, are
@@ -247,6 +247,9 @@ overloading} of record labels and constructors, \emph{polymorphic methods},
 which give rise to semi-explicit first-class polymorphism. Both are useful in
 practice: static overloading is widely relied upon in large programs, and
 polymorphic methods make higher-rank polymorphism available within \OCaml.
+\XDR{Cite Polymorphic parameters as a recent extension of \OCaml that is
+based on the same mecanism, making higher-rank polymorphism easier to use in
+many cases.}
 
 \subsection{Static overloading of constructors and record labels}
 
@@ -274,6 +277,7 @@ type two = {x : int; z : int}
 \end{program}
 With both definitions are in scope, \OCaml must
 statically disambiguate each field usage:
+\XDR{This is the first occurrence of \OML. We should explain in a footnote}
 \begin{program}[input,check]
 let one = { x = 1; y = 1 }                               °\ocamlflags 00°
 let ex_1 r = r.x                                         °\ocamlflags 21°
@@ -281,9 +285,10 @@ let ex_2 (r : two) = r.x + r.z                           °\ocamlflags 00°
 let ex_3 = {x = 42; z = 1337}                            °\ocamlflags 00°
 \end{program}
 %
-The expression \ocaml!one! can only be \code{int one}. Similarly, \code{r.y}
-necessarily infers \code{one} for the type of \code{r}. By constrast,
-\code{r.x} is ambiguous unless the type of \code{r} is \emph{known}.
+The type of expression \ocaml!one! can only be \code{int one}.  Similarly,
+\code{r.y} necessarily infers \code{one} for the type of \code{r}. By
+constrast, \code{r.x} is ambiguous unless the type of \code{r} is
+\emph{known}.
 %
 In \ocaml{ex_1}, the type of \code{r} is unconstrained, so disambiguation
 fails.\footnote
