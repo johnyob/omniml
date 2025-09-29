@@ -3385,23 +3385,20 @@ and suspended constraints in this work, and would be interested in
 studying applications to GADT typing\XDR[, which was also one of our
 original motivations]{Does not bring much to the reader}.
 
-\section{Conclusions and future work}
+\section{Conclusions}
 \label{sec:discussion}
 \label{sec:future-work}
 
+We presented a constraint-based framework for omnidirectional type inference,
+scaled to \ML with \emph{local let-generalization}. Central to our approach is
+a new declarative account of when a type is \emph{known} from the context,
+rather than \emph{guessed}. Our constraint solver is omnidirectional:
+constraints may be solved in \emph{any way}, enabled by partial type schemes.
+Through two instantiations of our \emph{omnidirectional recipe}, we obtained a
+sound, complete, and \emph{principal} type inference algorithm---in short,
+principality held \emph{anyway}, precisely because of omnidirectionality. 
 
-%% In this work,
-We developed a constraint-based framework for omnidirectional
-type inference, capable of supporting fragile features that would otherwise
-break principality.
-%
-Central to our approach is a new declarative account of when a type is
-\emph{known} from the context, rather than \emph{guessed}.
-
-Our constraint solver is omnidirectional: constraints may be solved in any
-order, made possible by our introduction of \emph{partial type schemes}.
-We formalized the solver as a non-deterministic, terminating rewrite system,
-and implemented an efficient prototype to demonstrate its practicality.
+\paragraph{Future work} 
 
 \XDR{We are missing a discussion of limitations. See source or
 draft version}
@@ -3445,17 +3442,16 @@ framework to suspend on deeper shapes would also allow to solve general
 (static) overloading, \ie between expressions of arbitrary types.
 \end{version}
 
-Through three instantiations of our framework---static overloading of
-tuples, nominal records and variant constructors, and semi-explicit
-first-class polymorphism---we showed that our framework yields a sound and
-complete inference algorithm and a principal type system. In short, it
-appears principality holds \emph{anyway} from our approach.
-%
-Naturally, all this begs the question: what else can be done with
-omnidirectional inference beyond the features of \OML?
+We aim to extend our framework to support more advanced features. One direction
+is generalized \emph{static overloading} \citep*{Leijen-Ye/prefix@pldi2025};
+another is \emph{higher-rank polymorphism} in the style of
+\citet*{dunfield-krishnaswami-bidirectional-poly}. We also plan to investigate
+\emph{default rules}---a mechanism where ambiguity is resolved by falling back
+on a default, non-principal choice \eg \OCaml selects the most recent matching
+record type in scope for ambiguous field names.
+>>>>>>> c3e8126 (Section 8)
 
-
-\paragraph{Static overloading}
+\begin{version}{}
 
 Our nominal records use a restricted form of overloading.  We have also
 experimented with a more general overloading mechanism in which several
@@ -3561,6 +3557,7 @@ instantiation might require to instantiate cycles atomically.
 Shapes may also be equi-recursive, though only minimal shapes of polytypes
 can be recursive. In the acyclic setting, shape equality is syntactic; with
 cycles, this no longer holds---but we do not anticipate any fundamental issues.
+\end{version}
 
 % \begin{acks}
 % \end{acks}
