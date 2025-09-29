@@ -200,7 +200,7 @@ constraints} and \emph{partial type schemes}---and show how they are applied to
 these fragile features.
 %
 The subsequent sections present technical contributions: \begin{enumerate}
-  \item[(\cref{sec:semantics})]
+  \item[(\cref{sec:constraints})]
 
     A novel constraint language for omnidirectional inference, equipped with a
     semantics for suspended constraints and a new declarative
@@ -253,6 +253,7 @@ since we cannot type them without default rules. Plus is raises the question: if
 are better, why bother explaining polymorphic methods?}
 
 \subsection{Static overloading of constructors and record labels}
+\label{sec/overview/overloading}
 
 \parcomment{What do we mean by static overloading?}
 
@@ -268,7 +269,8 @@ a \emph{zero-cost} abstraction.
 
 \OCaml supports a limited yet useful form of static overloading for record
 labels and datatype constructors. Ambiguity is resolved using \emph{known
-type information} under its directional inference algorithm (discussed in ??).
+type information} under its directional inference algorithm (discussed in 
+\cref{sec/overview/directional}).
 %
 To illustrate static overloading in \OCaml, consider two record types with
 overlapping field names:
@@ -436,6 +438,7 @@ This reduction is useful for two reasons:
 \end{enumerate*}
 
 \paragraph{Semi-explicit first-class polymorphism}
+\label{sec/overview/polytypes}
 
 For the remainder of this work, we will focus on polytypes---also called
 \emph{semi-explicit first-class polymorphism}
@@ -507,6 +510,7 @@ introduces a fresh variable annotation $\ava$, which can then be generalized,
 yielding $\tfor \ava {\tapoly \ts \ava}$.
 
 \subsection{Directional type inference}
+\label{sec/overview/directional}
 
 We now discuss the two main directional inference approaches:
 \geninst-directional and bidirectional, illustrated using polytypes as a
@@ -716,6 +720,7 @@ bidirectionally propagated to the $\lambda$-function, assigning \code{r} to have
 \emph{known} type \code{'a one} and thereby disambiguating \code{r.x}.
 
 \subsection{Omnidirectional type inference}
+\label{sec/overview/omni}
 
 \parcomment{Idea}
 
@@ -724,8 +729,8 @@ advance \emph{dynamically}; those that require \emph{known} type information
 suspend and resume when other constraints supply it. This stands in contrast to
 the fixed \emph{static} order of bidirectional and \geninst-directional
 inference. As a result, we are able to propagate more type information and type
-more programs due the limitations of (fixed) directionality discussed in
-\cref{??}.
+more programs due to the limitations of (fixed) directionality discussed in
+\cref{sec/overview/directional}.
 
 \parcomment{Suspended match constraints}
 
@@ -744,7 +749,7 @@ that is never discharged is considered unsatisfiable.
 For now, it sufficies to think of shapes as top-level constructors (\eg a
 nominal record type $\Tapp \tys$) and shape patterns $\cpat$ as type `destructors'
 that may bind type information (\eg the name of a nominal record type $\T$) to
-meta-variables used in $\cs$. This will be made precise in \cref{??}
+meta-variables used in $\cs$. This will be made precise in \cref{sec/constraints/shapes}.
 
 \paragraph{Suspended constraints in action}
 
@@ -777,8 +782,8 @@ write $\labenv(\labfrom \elab \T)$ for the type scheme of $\elab$ in $\T$ when
 it exists.
 \end{version}
 
-For records, in the case of an ambiguous record projection $\efield \e \elab$, we generate
-the typing constraint:
+For records, in the case of an ambiguous record projection $\efield \e \elab$, 
+we generate the typing constraint:
 \begin{mathpar}
 \cinfer {\efield \e \elab} \tva \wide\eqdef
   \cexists \tvb \cinfer \e \tvb
@@ -800,8 +805,7 @@ codomain of the instantiated projection type.
 
 \parcomment{Polytypes}
 
-For polytypes,
-when typechecking $\einst e$, if $\e$ is already known to have the type
+When typechecking the polytype unboxing operator $\einst e$, if $\e$ is already known to have the type
 $[\ts]$, then we can simply
 instantiate it.  However, if the type of $\e$ is not yet known---\ie  it is a
 (possibly constrained) type variable $\tv$---then we must defer until more
@@ -943,7 +947,6 @@ NP-hard, even in the absence of let-polymorphism, as shown by an encoding of
 \section{Constraints}
 \label{sec:constraints}
 
-\TODO{Notation for sets}
 %% BEWARE: The following two figures only be located as the top of a page---otherwise  it would be
 %% misplaced
 
@@ -1089,6 +1092,18 @@ and principality proofs of inference. Without it, the meta-theory of our
 approach cannot be stated precisely. 
 
 
+\paragraph{Notation for collections} 
+
+We write $\overline X$ for a (possible empty) set of elements $\set {X_1, ...,
+X_n}$ and a (possibly empty) sequence $X_1, ..., X_n$. The interpretation of
+whether $\overline X$ is a set or a sequence is often implicit. We write
+$\overline{X} \disjoint \overline{X'}$ as a shorthand for when
+$\overline X \cap \overline {X'} = \emptyset$. We write $\overline X,
+\overline {X'}$ as the union or concatenation (depending on the
+interpretation) of $\overline X$ and $\overline X'$. We often write $X$
+for the singleton set (or sequence).
+
+
 \paragraph{Types} Monotypes (or just types) include, as
 usual, type variables $\tv$, the unit type $\tunit$, arrow types, but
 also nominal
@@ -1220,7 +1235,7 @@ variable capture must be avoided. We write $\bvs \C$ for the set of
 variables bound at the hole in $\C$.
 
 \subsection{Shapes}
-\label{sec/shapes}
+\label{sec/constraints/shapes}
 
 \parcomment {Why shapes?}
 
@@ -1346,7 +1361,7 @@ match constraints}.
   \emph{discharged match constraint} that selects the branch in $\cbrs$ that
   matches $\sh$:
 \begin{mathpar}
-  \cmatched \t \sh {\cbranch \cpats \cs} \uad\eqdef\uad
+  \cmatched \t \sh {\overline {\cbranch \cpat \c}} \uad\eqdef\uad
   \begin{cases}
     \cexists \tvs \cunif \t \shapp \tvs \cand \theta(\ci) & \text{if } \cmatches \cpati \sh \tvs \theta\\
     \cfalse & \text{otherwise}
@@ -1457,7 +1472,7 @@ to be \emph{known}.
 \begin{definition}[Simple constraints]
   We say that $\c$ is \emph{simple} if it contains no suspended match
   constraints. We write $\semenv \thsimple \c$ for a derivation of $\semenv \th
-  \c$ that only uses the rules listed in \cref{fig:constraint-semantics},
+  \c$ that uses the rules listed in \cref{fig:constraints},
   without using \Rule{Match-Ctx}. This judgment coincides with $\semenv \th \c$
   on simple constraints.
 \end{definition}
@@ -1729,7 +1744,7 @@ unboxing, via an annotated syntax $\exinst \e \tvs \ts$, which has a simple
 typing rule (\Rule{Use-X}). On the other hand, the natural typing rule for the
 fragile unboxing construct $\einst \e$ breaks principality (\Rule{Use-I-Nat}).
 For example, term $\efun \x \eapp {\einst \x} \x$ admits infinitely many
-typings for $\x$, as explained in ??.  This is precisely the difficulty also
+typings for $\x$, as explained in \cref{sec/introduction}.  This is precisely the difficulty also
 faced in the natural semantics of suspended constraints: $\ts$ must be
 \emph{known}, not \emph{guessed}. Our solution is the same in both cases, impose a unicity
 condition and introduce a contextual rule (\Rule{Use-I}) that transforms the
@@ -2075,7 +2090,7 @@ $n$. Since the codomain of $f$ must be a tuple of size~$2$ (for $\eapp f (1,
   {fig/constraint-gen}
   {The constraint generation translation for \OML.}
 \newcommand {\Crule}[2]{#1 &\eqdef& #2}
-\def \arraystretch{1.2}%4
+\def \arraystretch{1.1}%4
 \begin{tabular}{LCL}
 \Crule
    {\cinfer x \tv}
@@ -2146,35 +2161,33 @@ $n$. Since the codomain of $f$ must be a tuple of size~$2$ (for $\eapp f (1,
 \Crule
   {\cinfer {\efield \e \elab} \tv}
   {\begin{cases}
-    \cexists {\tvb} \cinfer \e \tvb \cand
-    \labenv(\labfrom \elab \T) \leq \tvb \to \tva
+    \cinfer {\exfield \e \T \elab} \tv
     & \text{if } \labuni \elab \T
     \\
     \cexists \tvb \cinfer \e \tvb \cand
     \cmatch \tvb
-      {\cbranch {\cpatrcd \ct} {\labenv(\labfrom \elab \ct) \leq \tvb \to \tv}}
+      {\cbranch {\cpatrcd \ct} {\labfrom \elab \ct \leq \tvb \to \tv}}
     & \text{otherwise}
   \end{cases}}
 \\
 \Crule
-  {\cinfer {\exfield \e {\T~} \elab} \tv}
+  {\cinfer {\exfield \e \T \elab} \tv}
   {\cexists \tvb \cinfer \e \tvb \cand
-   \labenv(\labfrom \elab \T) \leq \tvb \to \tva}
+   \labfrom \elab \T \leq \tvb \to \tva}
 \\
 \Crule
   {\cinfer {\erecord {\overline{\elab = \e}}} \tv}
   {\begin{cases}
-  \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi \cand
-   \cAnd\iton \labenv(\labfrom \elabi \T) \leq \tv \to \tvbi
+    \cinfer {\exrecord \T {\overline{\elab = \e}}} \tv
     & \text{if } \labsuni \elabs \T \\
     \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi & \text{otherwise} \\
     \uad\cand \cmatch \tv {\cbranch {\cpatrcd \ct}
-      {\dom {\ct} = \elabs \cand \cAnd\iton \labenv(\labfrom \elabi \ct) \leq \tv \to \tvbi}} &
+      {\dom {\ct} = \elabs \cand \cAnd\iton \labfrom \elabi \ct \leq \tv \to \tvbi}} &
   \end{cases} }
 \\
 \Crule
   {\cinfer {\exrecord \T {\overline{\elab = \e}}} \tv}
-  {\cexists \tvbs \cAnd\iton \cinfer \ei \tvbi \cand \dom {\T} = \elabs \cand \cAnd\iton \labenv(\labfrom \elabi \T) \leq \tv \to \tvbi }
+  {\cexists \tvbs \cAnd\iton \cinfer \ei \tvbi \cand \dom {\T} = \elabs \cand \cAnd\iton \labfrom \elabi \T \leq \tv \to \tvbi }
 \\
 \Crule
   {\cinfer {\emagic \es} \tv}
@@ -2475,6 +2488,7 @@ preserve typability in its operational semantics.
 \section{Solving constraints}
 \label{sec:solving}
 
+
 \parcomment{Intro}
 We now present a machine for solving constraints in our language. The solver
 operates as a rewriting system on constraints $\c \csolve \cp$. Once no further
@@ -2482,50 +2496,12 @@ transitions are applicable, \ie $\c \cnsolve$, the constraint $\c$ is either in
 solved form---from which we can read off a most general solution---or the
 solver becomes stuck, indicating that $\c$ is unsatisfiable.
 
-\begin{definition}[Solved form $\hat\up$]
-  \label{def:solved-form}
-  A solved form is a constraint $\hat\up$ of the form $\cexists \tvs \cAnd
-\iton \ueqi$, where:
-\begin{enumerate*}
-  \item each $\ueqi$ contains at most one non-variable type;
-  \item head variables do not occur in multiple equations;
-  \item the constraint is acyclic.
-\end{enumerate*}
-\end{definition}
-
 \subsection{Unification}
 
 Our constraints ultimately reduce to equations between types, which we solve
 using first-order unification. Like our solver, we specify unification as a
 non-deterministic rewriting relation between \emph{unification problems} $\upa
 \unif \upb$, that eventually reduces to a solved form $\hat\up$ or to $\cfalse$.
-
-\begin{mathparfig}[t!]%htpb!
-  {fig:unification-syntax-and-semantics}
-  {Syntax and semantics of unification problems.
-   %Constraints are also extended with the administrative multi-equation construct.
-  }
-\begin{minipage}[c]{0.7\textwidth}
-\begin{bnfgrammar}
-  \entry[Unification problems]{\up}{
-    \ctrue \and \cfalse \and \upa \cand \upb \and \cexists \tv \up \and \ueq
-    \uad\strut
-  } \\
-  \entry[Multi-equations]{\ueq}{
-    \eset \mid \cunif \t \ueq
-  } \\
-  \entry[Constraints]{\c}{
-    \dots \and \ueq
-  }
-\end{bnfgrammar}
-\end{minipage}
-\hfill
-\vcenter{\hbox{
-  \infer[Multi-Unif]
-    {\all {\t \in \ueq}\, \semenv(\t) = \gt}
-    {\semenv \th \ueq}
-}}
-\end{mathparfig}
 
 \parcomment{Unification problems and multi-equations}
 
@@ -2538,343 +2514,157 @@ a multi-equation $\ueq$ if all of its members are mapped to a single
 ground type $\gt$ (\Rule{Multi-Unif}). Multi-equations are
 considered equal modulo permutation of their members.
 
-Our algorithm is largely standard, with it main novelty being the use
-of \emph{canonical principal shapes} in place of type constructors. This
-uniform treatment of monotypes and polytypes simplifies unification and improves
-on the previous treatment of polytype unification \citep{Garrigue-Remy/poly-ml}.
-For a detailed discussion of the unification rules, see
-\cref{app:unification} (appendix).
 
-\subsection{Solving rules}
+% DEMONS BE HIDDEN HERE: This figure must begin at the top. The collection of
+% subfigures is carefully crafted to span ~1 1/2 pages. There is some hacking 
+% to avoid LaTeX's float queue getting stuck (and postponing the figures till 
+% the very end). We rely on \clearpage to flush the float queue. To avoid this 
+% being fragile, we use \afterpage (which executes it contents after a pagebreak)
 
-% What we do (introduce / explain the solver)
+\afterpage{
+\clearpage
+\begin{figure}[!tp]
+  \begin{mathparsubfig}
+    {fig:unification-syntax-and-semantics}
+    {Syntax and semantics of unification problems.}
+    \begin{minipage}[c]{0.7\textwidth}
+      \begin{bnfgrammar}
+        \entry[Unification problems]{\up}{
+          \ctrue \and \cfalse \and \upa \cand \upb \and \cexists \tv \up \and \ueq
+          \uad\strut
+        } \\
+        \entry[Multi-equations]{\ueq}{
+          \eset \mid \cunif \t \ueq
+        } \\
+        \entry[Constraints]{\c}{
+          \dots \and \ueq
+        }
+      \end{bnfgrammar}
+    \end{minipage}
+    \hfill
+    \vcenter{\hbox{
+      \infer[Multi-Unif]
+        {\all {\t \in \ueq}\, \semenv(\t) = \gt}
+        {\semenv \th \ueq}
+    }}
+  \end{mathparsubfig}
+  \\[2ex]
 
-We now gradually introduce the rules of the constraint solver itself
-(\cref {fig:solver-basic,fig:solver-susp,fig:solver-schemes}).
-These rules define a non-deterministic rewriting
-system, operating modulo $\alpha$-equivalence, and the associativity and
-commutativity of conjunction. Rewriting takes place under an arbitrary
-one-hole constraint context $\C$.
-%
-% Solved forms
-A constraint $\c$ is satisfiable if it rewrites to a solved form
-$\hat\up$ (\cref{def:solved-form}); otherwise it gets
-stuck.
+  \begin{mathparsubfig}
+    {fig:solver-basic}
+    {Basic rewriting rules $\ca \csolve \cb$.}
 
-\begin{mathparfig}[t!]%htpb
-  {fig:solver-basic}
-  {Basic rewriting rules $\ca \csolve \cb$}
-  \rewrite[S-Unif]
-    {\upa}
-    {\upa \unif \upb}
-    {\upb}
+    \rewrite[S-Unif]
+      {\upa}
+      {\upa \unif \upb}
+      {\upb}
 
-  \rewrite[S-False]
-    {\C\where\cfalse}
-    {\C \neq \square}
-    {\cfalse}
+    \rewrite[S-False]
+      {\C\where\cfalse}
+      {\C \neq \square}
+      {\cfalse}
 
-  \rewrite[S-Let]
-    {\clet \x \tv \ca \cb}
-    {}
-    {\cletr \x \tv \eset \ca \cb}
+    \rewrite[S-Let]
+      {\clet \x \tv \ca \cb}
+      {}
+      {\cletr \x \tv \eset \ca \cb}
 
-  \rewrite[S-Exists-Conj]
-    {(\cexists \alpha \ca) \cand \cb}
-    {\tv \disjoint \cb}
-    {\cexists \tv {\ca \cand \cb}}
+    \rewrite[S-Exists-Conj]
+      {(\cexists \alpha \ca) \cand \cb}
+      {\tv \disjoint \cb}
+      {\cexists \tv {\ca \cand \cb}}
 
-  \rewrite[S-Let-ExistsLeft]
-    {\cletr \x \tv \tvs {\cexists \tvb \ca} \cb}
-    {\tvb \disjoint \tv, \tvs, \cb}
-    {\cletr \x \tv {\tvs, \tvb} \ca \cb}
+    \rewrite[S-Let-ExistsLeft]
+      {\cletr \x \tv \tvs {\cexists \tvb \ca} \cb}
+      {\tvb \disjoint \tv, \tvs, \cb}
+      {\cletr \x \tv {\tvs, \tvb} \ca \cb}
 
-  \rewrite[S-Let-ExistsRight]
-    {\cletr \x \tv \tvs \ca {\cexists \tvb \cb}}
-    {\tvb \disjoint \tv, \tvs, \ca}
-    {\cexists \tvb {\clet \x \tvs \ca \cb}}
+    \rewrite[S-Let-ExistsRight]
+      {\cletr \x \tv \tvs \ca {\cexists \tvb \cb}}
+      {\tvb \disjoint \tv, \tvs, \ca}
+      {\cexists \tvb {\clet \x \tvs \ca \cb}}
 
-  \rewrite[S-Let-ConjLeft]
-    {\cletr \x \tv \tvs {\ca \cand \cb} \cc}
-    {\ca \disjoint \tv, \tvs}
-    {\ca \cand \cletr \x \tv \tvs \cb \cc}
+    \rewrite[S-Let-ConjLeft]
+      {\cletr \x \tv \tvs {\ca \cand \cb} \cc}
+      {\ca \disjoint \tv, \tvs}
+      {\ca \cand \cletr \x \tv \tvs \cb \cc}
 
-  \rewrite[S-Let-ConjRight]
-    {\cletr \x \tv \tvs \ca (\cb \cand \cc)}
-    {\x \disjoint \cc}
-    {\cc \cand \Clet \x \tv \ca \cb}
-\end{mathparfig}
+    \rewrite[S-Let-ConjRight]
+      {\cletr \x \tv \tvs \ca (\cb \cand \cc)}
+      {\x \disjoint \cc}
+      {\cc \cand \Clet \x \tv \ca \cb}
+  \end{mathparsubfig}
 
-\paragraph{Basic rules}
+  \begin{mathparsubfig}
+    {fig:constraint-let-regions}
+    {Syntax and semantics of region-based $\Let$ and partial instantiation constraints.}
 
-\parcomment{Unification}
+    \begin{bnfgrammar}
+      \entry[Instantiation variables]{\inst}{}\\
+      \entry[Constraints]{\c}{
+         \dots 
+         \and \cletr \x \tv \tvs \ca \cb
+         \andcr \cexistsi \inst \x \c 
+         \and \cpinst \inst \tv \t
+      }\\[1ex]
+      \entry[Ground regions]{\GroundRegion \ni \gr}{
+        \greg \tv \semenv
+      }\\
+      \entry[Semantic environments]{\semenv}{
+        \dots
+        \and \semenv\where{\x \is \gr}
+        \and \semenv\where{\inst \is \semenvp}
+      }
+    \end{bnfgrammar}
+    \\
+    \semenv(\cabsr \tv \tvs \c) \uad\eqdef\uad
+      \set {\greg \tv {\semenv\where{\tv \is \gt, \tvs \is \gts}} \in \GroundRegion 
+           : \semenv\where{\tv \is \gt, \tvs \is \gts} \th \c
+           }
+    \\
+    \infer[LetR]
+      {\semenv \th \cexists {\tv, \tvs} \ca \\
+       \semenv\where{\x \is \semenv(\cabsr \tv \tvs \ca)} \th \cb}
+      {\semenv \th \cletr \x \tv \tvs \ca \cb}
 
-\Rule{S-Unif} invokes the unification algorithm to the
-current unification problem. The unification algorithm itself is treated as a
-black box by the solver, so the system could be extended with any
-equational theory of types implemented by the unification algorithm.
-\begin{mathparfig}[t!]%htpb
-  {fig:constraint-let-regions}
-  {Syntax and semantics of region-based $\Let$ constraints.}
-  [mprset=lessskip]
- \begin{bnfgrammar}
-  \entry[Constraints]{\c}{
-     \dots \and \cletr \x \tv \tvs \ca \cb
-   }
- \end{bnfgrammar}
- \vadjust{\vskip -1.2ex}\\
-\begin{tabular}{R;;C;;L}
-%%\c &::=& \ldots \mid \cletr \x \tv \tvs \ca \cb \\
-\semenv(\cabsr \tv \tvs \c) &\eqdef&
-  \set{\greg \tv {\semenv\where{\tv \is \gt, \tvs \is \gts}}
-       \in \GroundRegion : \semenv\where{\tv \is \gt, \tvs \is \gts} \th \c}
-\end{tabular}
-\\
-  \infer[LetR]
-    {\semenv \th \cexists {\tv, \tvs} \ca \\
-     \semenv\where{\x \is \semenv(\cabsr \tv \tvs \ca)} \th \cb}
-    {\semenv \th \cletr \x \tv \tvs \ca \cb}
+    \infer[AppR]
+      {\greg \tv \semenvp \in \semenv(\x) \\
+       \semenv(\t) = \semenvp(\tv) }
+      {\semenv \th \capp \x \t}
 
-  \infer[AppR]
-    {\greg \tv \semenvp \in \semenv(\x) \\
-     \semenv(\t) = \semenvp(\tv) }
-    {\semenv \th \capp \x \t}
-\end{mathparfig}
+    \infer[Exists-Inst]
+      {\greg \tv\semenvp \in \semenv(\x) \\
+       \semenv\where{\inst \is \semenvp} \th \c}
+      {\semenv \th \cexistsi \inst \x \c}
 
-\parcomment{Regional let constraints}
+    \infer[Partial-Inst]
+      {\semenv(\inst)(\tv) = \semenv(\t) }
+      {\semenv \th \cpinst \inst \tv \t}
+  \end{mathparsubfig}
 
-In general, existential quantifiers $\cexists \tv \c$ are lifted to the nearest
-enclosing $\Let$, if one exists, or otherwise to the top of the constraint. The
-resulting existential prefix $\exists \tvs$ is called a \emph{region}. To make
-regions explicit, we introduce the syntax $\cletr \x \tv \tvs \ca \cb$, where
-$\tv$ is the \emph{root} of the region and $\tvs$ are auxiliary existential
-variables. The order of $\tvs$ is immaterial; regions are considered equal up
-to permutation of these variables.
+  % This is the start of the next subfigure, but it is placed here 
+  % to avoid wasting space
+  \begin{mathpar}
+    \rewrite[S-Exists-Lower]
+      {\cletr \x \tv {\tvas, \tvbs} \ca \cb\\}
+      {\th \cdetermines {\cexists {\tv, \tvas} \ca} \tvbs}
+      {\cexists \tvbs \cletr \x \tv \tvas \ca \cb}
 
-Satisfiability of regional $\Let$-constraints is defined in
-\cref{fig:constraint-let-regions}. The semantics of an
-abstraction with a region, written $\semenv(\cabsr \tv \tvs \c)$, is a set of
-\emph{ground regions} that satisfy $\c$. A ground region is a satisfying
-interpretation for the region $\semenvp$ with a designated \emph{root} variable
-$\tv$, written $\greg \tv \semenvp$. Regional $\Let$-constraints strictly
-generalize ordinary constraint abstractions, as captured by the equivalence:
-\begin{mathpar}
-  \clet \x \tv \ca \cb \Wide\cequiv \cletr \x \tv \eset \ca \cb
-\end{mathpar}
-%
-\parcomment{Explanation of rules}
-%
-Rule \Rule{S-Let} rewrites let constraints into regional form.
-%
-\Rule{S-Exists-Conj} lifts existentials across conjunctions;
-\Rule{S-Let-ExistsLeft} and \Rule{S-Let-ExistsRight} lift existentials across
-let-binders; \Rule{S-Let-ConjLeft}, \Rule{S-Let-ConjRight} hoist
-constraints out of let-binders when they are independent of the local
-variables.
-%
-Collectively, these lifting rules normalize the structure of each
-region into a block of existentially bound variables, whose body
-consists of a conjunction of solved multi-equations followed by
-a residual constraint---typically an application, let-binding, or
-suspended constraint.
+    \rewrite[S-Let-AppR]
+      {\cletr \x \tv \tvs \c {\C\where{\capp \x \t}}}
+      {\tvc \disjoint \t \\
+       \x \disjoint \bvs \C}
+      {\cletr \x \tv \tvs \c
+         {\C\where{\cexistsi {\tvc, \inst} \x
+                  {\cunif \tvc \t \cand \cpinst \inst \tv \tvc}}}}
+  \end{mathpar}
+\end{figure}
+\clearpage
+\begin{figure}[!t]\ContinuedFloat
 
-
-\parcomment{\OML constraints do not need dedicated rules}
-
-\OML-specific constraints, such as the label and polytype instantiations from
-\cref{sec/constraints/polytypes} and \cref{sec:constraints:overloading}, require no
-special treatment in our solver. Once their pattern variables are
-substituted---after solving a match constraint---they are desugared into
-constraints already handled by the solver.
-
-\paragraph{Let constraints}
-
-% Let-constraint solving is generalization
-
-\parcomment{Background on efficient solving of applications (aka generalization)}
-
-Application constraints can be solved by copying constraints:
-\begin{mathpar}
-\hfil
-\rewrite
-    {\cletr \x \tv \tvs \ca {\C\where{\capp \x \t}}}
-    {\tv, \tvs \disjoint \t \\ x \disjoint \bvs \C}
-    {\clet \x \tv \ca {\C\where{\cexists {\tv, \tvs} \cunif \tv \t \cand \ca}}}
-\eqno
-{\DefTirName{S-Let-App-Beta}}
-\end{mathpar}
-This resembles $\beta$-reduction, except that the original abstraction is
-retained. While correct for \emph{simple} constraints, it may duplicate
-solving work across applications of the same abstraction.
-%
-A more efficient approach first solves the abstraction once---\eg reducing it
-to $\cabsr \tv \tvs \ueqs$, where $\tvs$ are generalizable variables---and then
-reuses the result at each application site by only copying the solved
-constraint $\ueq$. This mirrors \ML generalization and instantiation, a
-connection formalized by \citet*{Pottier-Remy/emlti}, where $\cabsr \tv \tvs
-\ueqs$ corresponds to the type scheme $\tfor \tvs {\sub(\tv)}$ and $\sub$ is
-the \mgu of $\ueqs$. This optimization underlies efficient implementations of
-\HM inference, such as \OCaml's.
-
-\parcomment{Generalization with suspended constraints is hard}
-
-However, this approach \emph{does not} extend to suspended constraints. To
-illustrate this, let us reexamine \ocaml{ex_7} from \cref{sec/introduction}:
-\begin{program}[input]
-let ex_7 r = let x = r.x in x + r.y             °\ocamlflags10°
-\end{program}
-The generated typing constraint contains:
-\begin{mathpar}
-  \cexists {\tv, \tvc}
-    \clet x \tvb
-      {\cmatch \tvb {\cbranch {(\cpatrcd \ct)} {\C\where {\ct,\tva,\tvb}}}}
-      {\cinst x \tint \cand \cunif \tv {\Tapp[\mathsf{one}] \tvc}}
-\end{mathpar}
-where $\C\where{\ct,\tv,\tvb}$ is ${\Omega(\elab / t) \leq \tva \to \tvb}$.
-Here, $\tv$ stands for \code{r}'s type. The constraint remains suspended until
-\code{r.y} forces \code{r}'s type to be \code{one}. Crucially, the variable
-$\tvb$ (introduced inside the abstraction for the type of \code{y}) is captured
-by the suspended match constraint that is not yet resolved at the point of
-solving the $\Let$ constraint that binds \code{x}.
-
-\parcomment {Partial type schemes}
-
-Nonetheless, to continue solving the let-body, we must assign a scheme to
-\code{x}. We na\"ively pick $\tfor \tvb \tvb$. This appears unsound, since
-$\tvb$ will later unify with $\tint$ once the match constraint is discharged.
-But it would be incomplete to lower $\tvb$ as a monomorphic variable.
-%
-This motivates \emph{partial type schemes}, our second novel mechanism for
-omnidirectional inference. Partial type schemes are type schemes that delay
-commitment to certain quantifications (\eg $\tvb$). Such \emph{partially
-generalized} variables are treated as generalized, but can be incrementally
-refined in future as suspended constraints are discharged.
-
-\begin{mathparfig}[t]
-  {fig:constraint-partial-app}
-  {The syntax and semantics of partial instantiations.}
-\begin{minipage}[b]{0.5\hsize}
-  \indent
-  \begin{bnfgrammar}
-    \entry[Constraints]{\c}{
-      \dots
-      \and \cexistsi \inst \x \c
-      \and \cpinst \inst \tv \t
-    } \\
-    \entry[Semantic environments]{\semenv}{
-      \dots
-      \and \semenv\where{\inst := \semenvp}
-    }
-  \end{bnfgrammar}
-\end{minipage}
-\hfill
-\infer[Exists-Inst]
-  {\greg \tv\semenvp \in \semenv(\x) \\\\
-   \semenv\where{\inst \is \semenvp} \th \c}
-  {\semenv \th \cexistsi \inst \x \c}
-
-\infer[Partial-Inst]
-  {\semenv(\inst)(\tv) = \semenv(\t) }
-  {\semenv \th \cpinst \inst \tv \t}
-\end{mathparfig}
-
-
-\parcomment {Intro partial applications}
-
-To support this, we extend the constraint language with \emph{partial
-instantiation constraints}. Instead of duplicating an abstraction at each
-application site, we introduce:
-\begin{enumerate*}
-  \item
-    $\cexistsi \inst \x \c$, which binds a fresh instantiation $\inst$ of $\x$'s
-    region within $\c$, and
-  \item
-    $\cpinst \inst \tv \t$, which asserts that the copy of $\tv$ in $\inst$
-    equals~$\t$.
-\end{enumerate*}
-%
-The instantiation variable $\inst$ is required to ensure all partial
-instantiations $\cpinst \inst \tv \t$ are solved uniformly. Within the
-solver, we view partial instantiations as markers indicating which parts of
-the abstraction still need to be copied.
-
-Partial instantiations enables efficient incremental instantiation of
-constraint abstractions: solved parts are reused immediately, while
-suspended constraints can be solved later, further refining the
-abstraction and propagation additional equations to the application
-sites.
-
-\parcomment{Semantics of partial applications}
-
-The semantics of the existential constraint $\cexistsi \inst \x \c$
-(\Rule{Exists-Inst}) introduces the fresh instantiation~$\inst$ by ``guessing''
-a region $\semenvp$ that satisfies the regional constraint abstraction bound to
-$\x$.
-%
-Partial instantiations (\Rule{Partial-Inst}) equate the copy of $\tv$ in
-$\inst$ with $\t$.
-%
-The domain of partial instantiation constraints must lie within the closure of
-the abstraction or among the regional variables of $\x$. Consequently, the
-variables $\tv, \tvs$ bound by the $\Let$-constraint $\cletr \x \tv \tvs \ca
-\cb$ are bound not only in the body of the abstraction $\ca$, but also in the
-constraint $\cb$, where they may appear in partial instantiations of $\x$ via
-renamings---and only there. Hence, they cannot appear in $\cb$ when the
-corresponding variable $\x$ does not itself appear in $\cb$.
-
-\parcomment{Solving partial instantiations}
-
-Partial instantiation constraints are reduced using the following rules:
-\begin{enumerate}
-
-\item
-  \Rule{S-Inst-Copy} copies the shape of a type to the instantiation site,
-    introducing fresh variables for each subcomponents and marking them with
-    corresponding instantiation constraints.
-    %
-    We write $\cpapp \x \tv \t \inst$ as a shorthand for $\cpinst \inst \tv \t$
-    when $\inst$ is bound with $\exists \inst^\x$ in the context. To ensure
-    termination, the abstraction must contain acyclic types.
-
-  \item \Rule{S-Inst-Unify} unifies two instantiations if they refer to the
-    same source variable.
-\end{enumerate}
-There are three cases in which an instantiation constraint is eliminated:
-\begin{enumerate}
-  \item
-    A nullary shape is copied and no further instantiations are needed
-    (\Rule{S-Inst-Copy}).
-
-  \item
-    The copied variable $\tvb$ is polymorphic, and thus the instantiation
-    constraint imposes no restriction (\Rule{S-Inst-Poly}), provided no
-    other instantiations of $\tvb$ remain (if not, then apply
-    \Rule{S-Inst-Unify}).
-
-  \item
-    The copy is monomorphic and in scope, so we unify it directly
-    (\Rule{S-Inst-Mono}).
-\end{enumerate}
-
-
-%% Uncomment to restore the old style
-%% \let \rewrite \hrewrite
-\begin{mathparfig}[t]
-  {fig:solver-schemes} {Select rewriting rules for let-bindings and
-  applications.}
-  \rewrite[S-Exists-Lower]
-    {\cletr \x \tv {\tvas, \tvbs} \ca \cb\\}
-    {\th \cdetermines {\cexists {\tv, \tvas} \ca} \tvbs}
-    {\cexists \tvbs \cletr \x \tv \tvas \ca \cb}
-
-  \rewrite[S-Let-AppR]
-    {\cletr \x \tv \tvs \c {\C\where{\capp \x \t}}}
-    {\tvc \disjoint \t \\
-     \x \disjoint \bvs \C}
-    {\cletr \x \tv \tvs \c
-       {\C\where{\cexistsi {\tvc, \inst} \x
-                {\cunif \tvc \t \cand \cpinst \inst \tv \tvc}}}}
-
+  \begin{mathparsubfig}
+  {fig:solver-schemes}
+  {Solving rules for let-bindings and applications.}
   \rewrite[S-Inst-Copy]
     {\cletr \x \tv \tvs {\c}
       \C\where{\cpapp \x \tvp \tvc \inst}}
@@ -2919,8 +2709,268 @@ There are three cases in which an instantiation constraint is eliminated:
     {\cletr \x \tv {\tvs}
        {\ca\where{\tvb \is \tvc} \cand
         \cunif \tvc {\ueq\where{\tvb \is \tvc}}} {\cb\where{\x.\tvb \is \tvc}}}
-\end{mathparfig}
+  \end{mathparsubfig}
 
+  \begin{mathparsubfig}
+  {fig:solver-susp}
+  {Rewriting rules for suspended match constraints.}
+  \rewrite[S-Match-Ctx]
+    {\C\where{\cmatch \t \cbrs}}
+    {\th \Cshape \C \t \sh}
+    {\C\where{\cmatched \t {\sh} \cbrs}}
+
+  \infer[Uni-Var]
+    {\color{gray}\tv \disjoint \bvs \Cb}
+    {\th \Cshape {\Ca\where{\cunif \tv {\cunif \t \ueq} \cand \Cb\where{-}}} \tv {~\shape \t}}
+
+  \infer[Uni-Type]
+    {{\color{gray}\t \notin \TyVars}}
+    {\th \Cshape \C \t {~\shape \t}}
+
+  \infer[Uni-BackProp]
+    {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand -}}} \tvc \sh \\
+     \color{gray}\tvp \in \tv, \tvs \\
+     \color{gray}\x \disjoint \bvs \Cb \\
+     \color{gray}\tvp \disjoint \bvs \Ca}
+    {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{-}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}} \tvp \sh}
+  \end{mathparsubfig}
+\end{figure}
+} % /afterpage
+
+
+Our algorithm is largely standard, with it main novelty being the use
+of \emph{canonical principal shapes} in place of type constructors. This
+uniform treatment of monotypes and polytypes simplifies unification and improves
+on the previous treatment of polytype unification \citep{Garrigue-Remy/poly-ml}.
+For a detailed discussion of the unification rules, see
+\cref{app:unification} (appendix).
+
+\begin{definition}[Solved form $\hat\up$]
+  \label{def:solved-form}
+  A solved form is a constraint $\hat\up$ of the form $\cexists \tvs \cAnd
+\iton \ueqi$, where:
+\begin{enumerate*}
+  \item each $\ueqi$ contains at most one non-variable type;
+  \item head variables do not occur in multiple equations;
+  \item the constraint is acyclic.
+\end{enumerate*}
+\end{definition}
+
+
+\subsection{Solving rules}
+
+% What we do (introduce / explain the solver)
+
+We now gradually introduce the rules of the constraint solver itself
+(\cref {fig:solver-basic,fig:solver-schemes,fig:solver-susp,}).
+These rules define a non-deterministic rewriting
+system, operating modulo $\alpha$-equivalence, and the associativity and
+commutativity of conjunction. Rewriting takes place under an arbitrary
+one-hole constraint context $\C$.
+%
+% Solved forms
+A constraint $\c$ is satisfiable if it rewrites to a solved form
+$\hat\up$ (\cref{def:solved-form}); otherwise it gets
+stuck.
+
+\paragraph{Basic rules}
+
+\parcomment{Unification}
+
+\Rule{S-Unif} (\cref{fig:solver-basic}) invokes the unification algorithm to the
+current unification problem. The unification algorithm itself is treated as a
+black box by the solver, so the system could be extended with any
+equational theory of types implemented by the unification algorithm.
+
+\parcomment{Regional let constraints}
+
+In general, existential quantifiers $\cexists \tv \c$ are lifted to the nearest
+enclosing $\Let$, if one exists, or otherwise to the top of the constraint. The
+resulting existential prefix $\exists \tvs$ is called a \emph{region}. To make
+regions explicit, we introduce the syntax $\cletr \x \tv \tvs \ca \cb$, where
+$\tv$ is the \emph{root} of the region and $\tvs$ are auxiliary existential
+variables. The order of $\tvs$ is immaterial; regions are considered equal up
+to permutation of these variables.
+
+Satisfiability of regional $\Let$-constraints is defined in
+\cref{fig:constraint-let-regions}. The semantics of an
+abstraction with a region, written $\semenv(\cabsr \tv \tvs \c)$, is a set of
+\emph{ground regions} that satisfy $\c$. A ground region is a satisfying
+interpretation for the region $\semenvp$ with a designated \emph{root} variable
+$\tv$, written $\greg \tv \semenvp$. Regional $\Let$-constraints strictly
+generalize ordinary constraint abstractions, as captured by the equivalence:
+\begin{mathpar}
+  \clet \x \tv \ca \cb \Wide\cequiv \cletr \x \tv \eset \ca \cb
+\end{mathpar}
+%
+\parcomment{Explanation of rules}
+%
+In \cref{fig:solver-basic}, \Rule{S-Let} rewrites let constraints into regional
+form.
+%
+\Rule{S-Exists-Conj} lifts existentials across conjunctions;
+\Rule{S-Let-ExistsLeft} and \Rule{S-Let-ExistsRight} lift existentials across
+let-binders; \Rule{S-Let-ConjLeft}, \Rule{S-Let-ConjRight} hoist constraints
+out of let-binders when they are independent of the local variables.
+%
+Collectively, these lifting rules normalize the structure of each region into a
+block of existentially bound variables, whose body consists of a conjunction of
+solved multi-equations followed by a residual constraint---typically an
+application, let-binding, or suspended constraint.
+
+
+\parcomment{\OML constraints do not need dedicated rules}
+
+\OML-specific constraints, such as the label and polytype instantiation
+constraints ($\labfrom \elab \ct \leq \ta \to \tb$, $\cleq \cscm \t$,
+\etc), require no special treatment in our solver. Once their pattern variables
+are substituted---after solving a match constraint---they are desugared into
+constraints already handled by the solver.
+
+\paragraph{Let constraints}
+
+% Let-constraint solving is generalization
+
+\parcomment{Background on efficient solving of applications (aka generalization)}
+
+Application constraints can be solved by copying constraints:
+\begin{mathpar}
+\hfil
+\rewrite
+    {\cletr \x \tv \tvs \ca {\C\where{\capp \x \t}}}
+    {\tv, \tvs \disjoint \t \\ x \disjoint \bvs \C}
+    {\clet \x \tv \ca {\C\where{\cexists {\tv, \tvs} \cunif \tv \t \cand \ca}}}
+\eqno
+{\DefTirName{S-Let-App-Beta}}
+\end{mathpar}
+This resembles $\beta$-reduction, except that the original abstraction is
+retained. While correct for \emph{simple} constraints, it may duplicate
+solving work across applications of the same abstraction.
+%
+A more efficient approach first solves the abstraction once---\eg reducing it
+to $\cabsr \tv \tvs \ueqs$, where $\tvs$ are generalizable variables---and then
+reuses the result at each application site by only copying the solved
+constraint $\ueq$. This mirrors \ML generalization and instantiation, a
+connection formalized by \citet*{Pottier-Remy/emlti}, where $\cabsr \tv \tvs
+\ueqs$ corresponds to the type scheme $\tfor \tvs {\sub(\tv)}$ and $\sub$ is
+the \mgu of $\ueqs$. This optimization underlies efficient implementations of
+\HM inference, such as \OCaml's.
+
+\parcomment{Generalization with suspended constraints is hard}
+
+However, this approach \emph{does not} extend to suspended constraints. To
+illustrate this, let us reexamine \ocaml{ex_4} from \cref{sec/overview/overloading}:
+\begin{program}[input]
+let ex_4 r = let x = r.x in x + r.y °\ocamlflags10°
+\end{program}
+The generated typing constraint contains:
+\begin{mathpar}
+  \cexists {\tv, \tvc}
+    \clet x \tvb
+      {\cmatch \tvb {\cbranch {(\cpatrcd \ct)} {\C\where {\ct,\tva,\tvb}}}}
+      {\cinst x \tint \cand \cunif \tv {\Tapp[\mathsf{one}] \tvc}}
+\end{mathpar}
+where $\C\where{\ct,\tv,\tvb}$ is ${\labfrom \elab \ct \leq \tva \to \tvb}$.
+Here, $\tv$ stands for \code{r}'s type. The constraint remains suspended until
+\code{r.y} forces \code{r}'s type to be \code{one}. Crucially, the variable
+$\tvb$ (introduced inside the abstraction for the type of \code{y}) is captured
+by the suspended match constraint that is not yet resolved at the point of
+solving the $\Let$ constraint that binds \code{x}.
+
+\parcomment {Partial type schemes}
+
+Nonetheless, to continue solving the let-body, we must assign a scheme to
+\code{x}. We na\"ively pick $\tfor \tvb \tvb$. This appears unsound, since
+$\tvb$ will later unify with $\tint$ once the match constraint is discharged.
+But it would be incomplete to lower $\tvb$ as a monomorphic variable.
+%
+This motivates \emph{partial type schemes}, our second novel mechanism for
+omnidirectional inference. Partial type schemes are type schemes that delay
+commitment to certain quantifications (\eg $\tvb$). Such \emph{partially
+generalized} variables are treated as generalized, but can be incrementally
+refined in future as suspended constraints are discharged.
+
+\parcomment {Intro partial applications}
+
+To support this, we extend the constraint language with \emph{partial
+instantiation constraints} (\cref{fig:constraint-let-regions}). Instead of duplicating an abstraction at each
+application site, we introduce:
+\begin{enumerate*}
+  \item
+    $\cexistsi \inst \x \c$, which binds a fresh instantiation $\inst$ of $\x$'s
+    region within $\c$, and
+  \item
+    $\cpinst \inst \tv \t$, which asserts that the copy of $\tv$ in $\inst$
+    equals~$\t$.
+\end{enumerate*}
+%
+The instantiation variable $\inst$ is required to ensure all partial
+instantiations $\cpinst \inst \tv \t$ are solved uniformly. Within the
+solver, we view partial instantiations as markers indicating which parts of
+the abstraction still need to be copied.
+
+Partial instantiations enables efficient incremental instantiation of
+constraint abstractions: solved parts are reused immediately, while
+suspended constraints can be solved later, further refining the
+abstraction and propagation additional equations to the application
+sites.
+
+\parcomment{Semantics of partial applications}
+
+The semantics of the existential constraint $\cexistsi \inst \x \c$
+(\Rule{Exists-Inst}), given in \cref{fig:constraint-let-regions}, introduces
+the fresh instantiation~$\inst$ by ``guessing'' a region $\semenvp$ that
+satisfies the regional constraint abstraction bound to $\x$.
+%
+Partial instantiations (\Rule{Partial-Inst}) equate the copy of $\tv$ in
+$\inst$ with $\t$.
+%
+The domain of partial instantiation constraints must lie within the closure of
+the abstraction or among the regional variables of $\x$. Consequently, the
+variables $\tv, \tvs$ bound by the $\Let$-constraint $\cletr \x \tv \tvs \ca
+\cb$ are bound not only in the body of the abstraction $\ca$, but also in the
+constraint $\cb$, where they may appear in partial instantiations of $\x$ via
+renamings---and only there. Hence, they cannot appear in $\cb$ when the
+corresponding variable $\x$ does not itself appear in $\cb$.
+
+\parcomment{Solving partial instantiations}
+
+Partial instantiation constraints are reduced using the following rules, summarized in 
+\cref{fig:solver-schemes}:
+\begin{enumerate}
+
+\item
+  \Rule{S-Inst-Copy} copies the shape of a type to the instantiation site,
+    introducing fresh variables for each subcomponents and marking them with
+    corresponding instantiation constraints.
+    %
+    We write $\cpapp \x \tv \t \inst$ as a shorthand for $\cpinst \inst \tv \t$
+    when $\inst$ is bound with $\exists \inst^\x$ in the context. To ensure
+    termination, the abstraction must contain acyclic types.
+
+  \item \Rule{S-Inst-Unify} unifies two instantiations if they refer to the
+    same source variable.
+\end{enumerate}
+There are three cases in which an instantiation constraint is eliminated:
+\begin{enumerate}
+  \item
+    A nullary shape is copied and no further instantiations are needed
+    (\Rule{S-Inst-Copy}).
+
+  \item
+    The copied variable $\tvb$ is polymorphic, and thus the instantiation
+    constraint imposes no restriction (\Rule{S-Inst-Poly}), provided no
+    other instantiations of $\tvb$ remain (if not, then apply
+    \Rule{S-Inst-Unify}).
+
+  \item
+    The copy is monomorphic and in scope, so we unify it directly
+    (\Rule{S-Inst-Mono}).
+\end{enumerate}
+
+
+%% Uncomment to restore the old style
+%% \let \rewrite \hrewrite
 
 \parcomment{Cleaning up partial applications and let constraints}
 
@@ -2934,7 +2984,7 @@ instantiation constraints, written as the substitution $\where{\x.\tvb \is
 
 \parcomment{Lowering}
 
-Rule \Rule{S-Exists-Lower} implements the non-trivial case of lowering
+\Rule{S-Exists-Lower} implements the non-trivial case of lowering
 existentials across $\Let$-binders. It identifies a subset of variables in
 the region of a $\Let$ constraint that are unified with variables from
 outside the region. Such variables are considered monomorphic and thus
@@ -2997,37 +3047,13 @@ reduces instantiation overhead.
 
 \paragraph{Suspended match constraints}
 
-\begin{mathparfig}[htpb!]
-  {fig:solver-susp}
-  {Rewriting rules for suspended match constraints.}
-  \rewrite[S-Match-Ctx]
-    {\C\where{\cmatch \t \cbrs}}
-    {\th \Cshape \C \t \sh}
-    {\C\where{\cmatched \t {\sh} \cbrs}}
-
-  \infer[Uni-Var]
-    {\color{gray}\tv \disjoint \bvs \Cb}
-    {\th \Cshape {\Ca\where{\cunif \tv {\cunif \t \ueq} \cand \Cb\where{-}}} \tv {~\shape \t}}
-
-  \infer[Uni-Type]
-    {{\color{gray}\t \notin \TyVars}}
-    {\th \Cshape \C \t {~\shape \t}}
-
-  \infer[Uni-BackProp]
-    {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand -}}} \tvc \sh \\
-     \color{gray}\tvp \in \tv, \tvs \\
-     \color{gray}\x \disjoint \bvs \Cb \\
-     \color{gray}\tvp \disjoint \bvs \Ca}
-    {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{-}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}} \tvp \sh}
-\end{mathparfig}
-
 \parcomment{S-Match-Ctx}
 
-\Rule{S-Match-Ctx} solves suspended match constraints when the surrounding
+\Rule{S-Match-Ctx} (\cref{fig:solver-susp}) solves suspended match constraints when the surrounding
 context $\C$ \emph{proves} that the scrutinee $\t$ has the unique shape $\sh$,
 denoted $\th \Cshape \C \t \sh$.
 %
-Case \Rule{Uni-Type} handles when $\t$ is a non-variable type $\t$, in which
+\Rule{Uni-Type} handles the case when $\t$ is a non-variable type $\t$, in which
 case the shape is simply $\shape \t$. \Rule{Uni-Var} applies when the scrutinee
 is a variable $\tv$ and the context establishes that $\tv$ is equal to some
 non-variable type $\t$ by exhibiting an equality $\cunif \tv {\cunif \t \ueq}$
@@ -3547,6 +3573,7 @@ cycles, this no longer holds---but we do not anticipate any fundamental issues.
 \end{local}
 
 \newpage
+\FloatBarrier % prevents figures floating till the end of the document
 \appendix
 
 \section*{\Large Organization of appendices}
