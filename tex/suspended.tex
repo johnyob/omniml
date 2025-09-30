@@ -906,7 +906,7 @@ inferring parts of a \texttt{let}-body to disambiguate its definition,
 without duplicating constraint-solving work.
 
 \paragraph{Plan}
-These technical devices are introduced once and for all---in a general
+These two technical devices are introduced once and for all---in a general
 framework of constraint-based type inference. Each fragile \ML construct can
 then be implemented by suspended constraints that expand to its robust
 counterpart once the annotation has been inferred. This generality comes at
@@ -1072,6 +1072,10 @@ NP-hard, even in the absence of let-polymorphism, as shown by an encoding of
      \semenv \th \cb}
     {\semenv \th \ca \cand \cb}
 
+  \infer[Unif]
+    {\semenv(\ta) = \semenv(\tb)}
+    {\semenv \th \cunif \ta \tb}
+
   \infer[Exists]
     {\semenv\where{\tv \is \gt} \th \c}
     {\semenv \th \cexists \tv \c}
@@ -1079,10 +1083,6 @@ NP-hard, even in the absence of let-polymorphism, as shown by an encoding of
   \infer[Forall]
     {\forall \gt, ~ \semenv\where{\tv \is \gt} \th \c}
     {\semenv \th \tfor \tv \c}
-
-  \infer[Unif]
-    {\semenv(\ta) = \semenv(\tb)}
-    {\semenv \th \cunif \ta \tb}
 
   \infer[Let]
     {\semenv \th \exists \tv. \ca \\
@@ -1106,17 +1106,6 @@ NP-hard, even in the absence of let-polymorphism, as shown by an encoding of
   \end{tabular}}
 
   \par
-\infer[Match-Ctx]
-    {\Cshape \C \t \sh \and
-      \semenv \th \C\where{\cmatched \t \sh \cbrs}
-    }
-    {\semenv \th \C\where{\cmatch \t \cbrs}}
-\par
-\begin{tabular}{.L.}
-  \Cshape \C \t \sh \eqdef \\[.6ex]
-  \quad \forall \semenv, \gt. \uad \semenv \thsimple \cerase {\C\where{\cunif \t \gt}} \implies \shape \gt = \sh
-\end{tabular}
-
 \begin{tabular}{.L.}
   \cmatched \t \sh {\cbranch \cpats \cs} \eqdef \\[.6ex]
 \uad \begin{cases}
@@ -1131,6 +1120,18 @@ NP-hard, even in the absence of let-polymorphism, as shown by an encoding of
   \cmatches[\eqdef] {\cpatrcd \ct} {\parens{\any \tvcs {\Tapp \tvcs}}} \tvs {\where{\ct \is \T}} \\
   \cmatches[\eqdef] {\cpatpoly \cscm} {\parens{\any \tvcs {\tpoly \ts}}} \tvs {\where{\cscm \is \ts\where{\tvcs \is \tvs}}} \\
 \end{tabular}}
+
+\infer[Match-Ctx]
+    {\Cshape \C \t \sh \and
+      \semenv \th \C\where{\cmatched \t \sh \cbrs}
+    }
+    {\semenv \th \C\where{\cmatch \t \cbrs}}
+\par
+\begin{tabular}{.L.}
+  \Cshape \C \t \sh \eqdef \\[.6ex] 
+  \quad \forall \semenv, \gt. \uad \semenv \thsimple \cerase {\C\where{\cunif \t \gt}} \implies \shape \gt = \sh
+\end{tabular}
+
 
 \end{mathparfig}
 
@@ -1164,6 +1165,8 @@ types\footnote {Type constructors are prefixed, except in \OCaml code, where
 they are postfixed.}  $\T \tys$, and polytypes $\tpoly \ts$.  Type schemes
 $\ts$ are of the form $\all \tvs \t$, they are equal up to the reordering of
 binders and removal of useless variables. We write $\TyVars$ for the set of type variables.
+We write $\tvs \disjoint \t$ as a short-hand for $\tvs \disjoint \fvs \t$, where $\fvs -$ 
+computes the set of free variables of a given type. 
 
 
 \parcomment{Figure / Judgement shape}
@@ -1184,19 +1187,21 @@ $\semenv(\t)$ for the ground type obtained by substitution.
 
 \parcomment{Semantics detailed}
 
-Constraints include basic logical forms: tautological ($\ctrue$), unsatisfiable ($\cfalse$),
-and conjuctive $\ca \cand \cb$ constraints. The unification constraint $\cunif
-\ta \tb$ is satisfied when $\ta$ and $\tb$ are equal.
+Constraints include basic logical forms: tautological $\ctrue$ (\Rule{True}),
+unsatisfiable $\cfalse$, and conjuctive $\ca \cand \cb$ (\Rule{Conj})
+constraints. The unification constraint $\cunif \ta \tb$ is satisfied when
+$\ta$ and $\tb$ are equal (\Rule{Unif}).
 %
-An existential constraint $\cexists \tv \c$ holds if there exists a
-witness $\gt$ for $\tv$ satisfying $\c$, while a universal constraint $\cfor \tv \c$
-holds if $\c$ is satisfied for every binding of $\tv$.
+An existential constraint $\cexists \tv \c$ holds if there exists a witness
+$\gt$ for $\tv$ satisfying $\c$ (\Rule{Exists}), while a universal constraint
+$\cfor \tv \c$ holds if $\c$ is satisfied for every binding of $\tv$
+(\Rule{Forall}). 
 %
-When $\ts$ is a polymorphic type scheme $\tfor \tvs \tp$, we use the
-notation $\cleq \ts \t$ as syntactic sugar for the instantiation
-constraint $\cexists \tvs \cunif \tp \t$. \OML-specific constraints,
-such as record label instantiation $\labenv(\labfrom \elab \ct) \leq \ta \to \tb$,
-are defined using this instantiation form.
+When $\ts$ is a polymorphic type scheme $\tfor \tvs \tp$, we use the notation
+$\cleq \ts \t$ as syntactic sugar for the instantiation constraint $\cexists
+\tvs \cunif \tp \t$. \OML-specific constraints, such as record label
+instantiation $\labfrom \elab \ct \leq \ta \to \tb$, are defined using this
+instantiation form.
 
 \parcomment{Constraint abstractions}
 
@@ -1386,7 +1391,7 @@ decomposed into shapes and treated analogously to type constructors.
   {\def \tsi {\all \tvb {{\parens{\tvb \to #1}}} \tprod \tvb}
   \tpoly {\all \tva {\parens {\tpoly \tsi} \to \tva} \to \tva}}%
 For instance, the polytype $\tsh {\tint \tlist}$ has the principal
-shape $\sh \is \any \tvc {\tsh \tvc}$. The original polytype can thus
+shape $\sh = \any \tvc {\tsh \tvc}$. The original polytype can thus
 be represented as the shape application $\shapp (\tint \tlist)$.
 \endgroup
 
@@ -1396,12 +1401,12 @@ be represented as the shape application $\shapp (\tint \tlist)$.
 
 \parcomment{Defining semantics for suspended constraints is hard}
 
-A central difficult in our work on suspended constraints was defining a
+A central difficulty of our work on suspended constraints was defining a
 satisfying semantics. The challenge lies in formalizing what it means for type
 information to be \emph{known} without presupposing a \emph{static} solving
 order. Our semantics is declarative but, unlike the rules of
 \citet*{Pottier-Remy/emlti}, it is not syntax-directed. This departure
-compilates reasoning and proofs. On the upside, our semantics directly suggest
+complicates reasoning and proofs. On the upside, our semantics directly suggest
 declarative typing rules for the surface language (\cref{sec/oml}).
 
 
@@ -1430,7 +1435,7 @@ determined; but it may not exist as branches need not be exhaustive, in
 which case the discharged constraint is $\cfalse$.
 \end{definition}
 
-The function $\cmatches \cpat \sh \tvcs \theta$ is defined in
+The function ($\cmatches \cpat \sh \tvcs \theta$) is defined in
 \cref{fig:constraints}. It matches a pattern $\cpat$ against a canonical
 principal shape $\sh$ opened with fresh shape variables $\tvcs$ (of the same
 arity as $\sh$), producing a substitution $\theta$ from pattern variables (\eg
@@ -1593,7 +1598,7 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
 \begin{example}
   Consider the more intricate example:
 \begin{mathpar}
-  \cexists {\tva \tvb}
+  \cexists {\tva, \tvb}
   {\def \EX
      {\cmatch \tva {\cbranch \cpatwild {\cunif \tvb \tbool}} \and
       \cmatch \tvb {\cbranch \cpatwild \ctrue} \and
@@ -1644,7 +1649,7 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
   Let us consider a constraint with a cyclic dependency between match
   constraints:
 \begin{mathpar}
-  \cexists {\tva \tvb}
+  \cexists {\tva, \tvb}
   {\def \EX
      {\cmatch \tva {\cbranch \cpatwild {\cunif \tvb \tbool}} \and
       \cmatch \tvb {\cbranch \cpatwild {\cunif \tva \tint}}}
@@ -1776,7 +1781,7 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
 
 \parcomment {We need a spec, but this itself is hard}
 
-To prove correctness of constraint generation, we must first define a surface
+To prove correctness of constraint generation, we must define a surface
 language and its type system. Surprisingly, identifying an appropriate
 declarative type system to use as a specification is itself an interesting
 problem! In particular, na\"ive specifications for fragile features often fail
@@ -1862,7 +1867,7 @@ $\ts$, it forms a first-class polytype $\tpoly \ts$, requiring the expression
 $\e$ to be at least as polymorphic as $\ts$. \Rule {Use-X} is the corresponding
 elimination rule, unpacking a polytype $\tpoly \ts$ into its scheme $\ts$,
 which may be freely instantiated (via \Rule{Inst}). Both rules also allow
-polytype annotations to be partial, \ie $\ts$ may have free typevariables
+polytype annotations to be partial, \ie $\ts$ may have free type variables
 $\tvs$, which are existentially quantified to close the annotation, as in
 \Rule{Annot}.
 
@@ -1884,7 +1889,7 @@ scheme $\tfor \tvs {\Tapp \tvs} \to \t$ associated with $\elab$ in $\T$ (if defi
 
 Label instantiations are typed by an auxiliary judgment ${\labfrom \elab \T}
 \leq \tya \to \tyb$ (\Rule{Lab-Inst}). Explicit field projections
-\Rule{Rcd-Proj-X} require that $\exfield \e \T \elab$ projects from a record
+(\Rule{Rcd-Proj-X}) require that $\exfield \e \T \elab$ projects from a record
 $\e$ of type $\tya$ to $\tyb$, provided that $\tya \to \tyb$ is an instance of
 the projection scheme $\labenv (\labfrom \elab \T)$.
 %
@@ -2067,9 +2072,9 @@ We can now formalize the two unicity conditions as:
 \paragraph{Implicit polytypes}
 
 Unboxing a polytype $\einst \e$ is an \emph{elimination form}. Following the
-omnidirection recipe, \Rule{Use-I} requires that $\e$ (the principal term) has
+omnidirectional recipe, \Rule{Use-I} requires that $\e$ (the principal term) has
 the unique shape $\any \tvcs \tpoly \ts$ in the context $\E$ (\emph{Step 2}).
-Following \emph{Step 3}, then elaborates $\einst \e$ into $\exinst \e \tvcs
+Following \emph{Step 3}, we elaborate $\einst \e$ into $\exinst \e \tvcs
 \ts$
 %
 Conversely, boxing with $\epoly \e$ is an \emph{introduction form}. In
@@ -2485,7 +2490,7 @@ $\cunif \tv \t \centails \csem {\e : \tv}$.
 
 \begin{restatable}[Principal types]{theorem}{principalTypes}
 \label{thm:principal-types}
-For any well-typed closed term $\e$, there exists a type $\t$\relax
+For any well-typed closed term $\e$, there exists a type $\t$
 %% , which we call principal,
 such that:
 \begin{enumerate*}[(\roman*)]
@@ -2540,32 +2545,6 @@ preserve typability in its operational semantics.
 
 \section{Solving constraints}
 \label{sec:solving}
-
-
-\parcomment{Intro}
-We now present a machine for solving constraints in our language. The solver
-operates as a rewriting system on constraints $\c \csolve \cp$. Once no further
-transitions are applicable, \ie $\c \cnsolve$, the constraint $\c$ is either in
-solved form---from which we can read off a most general solution---or the
-solver becomes stuck, indicating that $\c$ is unsatisfiable.
-
-\subsection{Unification}
-
-Our constraints ultimately reduce to equations between types, which we solve
-using first-order unification. Like our solver, we specify unification as a
-non-deterministic rewriting relation between \emph{unification problems} $\upa
-\unif \upb$, that eventually reduces to a solved form $\hat\up$ or to $\cfalse$.
-
-\parcomment{Unification problems and multi-equations}
-
-Unification problems $\up$
-(\cref{fig:unification-syntax-and-semantics}) are a restricted subset
-of constraints, extended with \emph{multi-equations}
-\citep*{Pottier-Remy/emlti}---a multi-set of types considered
-equal. These generalize binary equalities: $\semenv$ satisfies
-a multi-equation $\ueq$ if all of its members are mapped to a single
-ground type $\gt$ (\Rule{Multi-Unif}). Multi-equations are
-considered equal modulo permutation of their members.
 
 
 % DEMONS BE HIDDEN HERE: This figure must begin at the top. The collection of
@@ -2791,24 +2770,52 @@ considered equal modulo permutation of their members.
 } % /afterpage
 
 
-Our algorithm is largely standard, with it main novelty being the use
-of \emph{canonical principal shapes} in place of type constructors. This
-uniform treatment of monotypes and polytypes simplifies unification and improves
-on the previous treatment of polytype unification \citep{Garrigue-Remy/poly-ml}.
-For a detailed discussion of the unification rules, see
-\cref{app:unification} (appendix).
 
+\parcomment{Intro}
+We now present a machine for solving constraints in our language. The solver
+operates as a rewriting system on constraints $\c \csolve \cp$. Once no further
+transitions are applicable, \ie $\c \cnsolve$, the constraint $\c$ is either in
+solved form---from which we can read off a most general solution---or the
+solver becomes stuck, indicating that $\c$ is unsatisfiable.
+
+\subsection{Unification}
+
+Our constraints ultimately reduce to equations between types, which we solve
+using first-order unification. Like our solver, we specify unification as a
+non-deterministic rewriting relation between \emph{unification problems} $\upa
+\unif \upb$, that eventually reduces to a solved form $\hat\up$ or to $\cfalse$.
+
+\parcomment{Unification problems and multi-equations}
+
+Unification problems $\up$
+(\cref{fig:unification-syntax-and-semantics}) are a restricted subset
+of constraints, extended with \emph{multi-equations}
+\citep*{Pottier-Remy/emlti}---a multi-set of types considered
+equal. These generalize binary equalities: $\semenv$ satisfies
+a multi-equation $\ueq$ if all of its members are mapped to a single
+ground type $\gt$ (\Rule{Multi-Unif}). Multi-equations are
+considered equal modulo permutation of their members.
+
+Our algorithm is largely standard, with it main novelty being the use of
+\emph{canonical principal shapes} in place of type constructors. This uniform
+treatment of monotypes and polytypes simplifies unification and improves on the
+previous treatment of polytype unification \citep{Garrigue-Remy/poly-ml}. For a
+detailed discussion of the unification rules, see Appendix
+\cref{app:unification}. 
+
+% Something fishy appears to be happening here. 
+% Adding the below fixes this, but still adding some vertical space 🤷
+
+\par\noindent\ignorespaces
 \begin{definition}[Solved form $\hat\up$]
-  \label{def:solved-form}
-  A solved form is a constraint $\hat\up$ of the form $\cexists \tvs \cAnd
-\iton \ueqi$, where:
+\label{def:solved-form}
+A solved form is a constraint $\hat\up$ of the form $\cexists \tvs {\cAnd \iton \ueqi}$, where:
 \begin{enumerate*}
   \item each $\ueqi$ contains at most one non-variable type;
   \item head variables do not occur in multiple equations;
   \item the constraint is acyclic.
 \end{enumerate*}
 \end{definition}
-
 
 \subsection{Solving rules}
 
@@ -2896,6 +2903,18 @@ Application constraints can be solved by copying constraints:
 \eqno
 {\DefTirName{S-Let-App-Beta}}
 \end{mathpar}
+
+\Xalistair{Inline part of this related work here:
+\citet* {Pottier-Remy/emlti} already allow let-constraints to be
+copied before being fully solved. However, they copy the whole constraint
+including unsolved parts, which duplicates the work of the constraint
+resolution.  That is, they still lack a mechanism to incrementally and
+efficiently instantiate partial type schemes.  Besides, this is only allowed
+in their rewriting rules.  The resolution strategy imposed on top of their
+rewriting rules requires that let-constraints be fully solved before being
+inlined---and similarly in their accompanying prototype. }
+
+
 This resembles $\beta$-reduction, except that the original abstraction is
 retained. While correct for \emph{simple} constraints, it may duplicate
 solving work across applications of the same abstraction.
@@ -3316,99 +3335,73 @@ we re-generalize the stale descendants of the region in the region tree.
 \section{Related work}
 \label{sec:related-work}
 
-\paragraph{The essence of \ML}
+\paragraph{Overloading}
 
-\XDR{Should perhaps be inlined in \cref {sec:solving} or
-\cref {sec:semantics}.}
-
-\citet* {Pottier-Remy/emlti} already allow let-constraints to be
-copied before being fully solved. However, they copy the whole constraint
-including unsolved parts, which duplicates the work of the constraint
-resolution.  That is, they still lack a mechanism to incrementally and
-efficiently instantiate partial type schemes.  Besides, this is only allowed
-in their rewriting rules.  The resolution strategy imposed on top of their
-rewriting rules requires that let-constraints be fully solved before being
-inlined---and similarly in their accompanying prototype.
-
-%% Unsurprisingly, both implementations based on their framework, described in
-%% \url{https://pauillac.inria.fr/~remy/attapl/},
-%% follow a \Geninst-directional strategy.
-
-
-
-\paragraph{Principality tracking in \OCaml}
-
-\citet*{Garrigue-Remy/poly-ml} introduced an approach to principality tracking
-for polytypes (which we called \geninst-directional inference) in which
-generalization and instantiation govern the flow of known type information.
-Their approach has since been extended to other features of the \OCaml language:
-whenever the typechecker need to know if a type is known in a robust way, it
-checks whether the type is generalizable.
-%% We compared their approach to ours in
-It is compared to ours in
-%% \cref{sec/introduction} and
-\unskip~\cref{sec/constraints/polytypes}.
-
-\paragraph{Bidirectional type inference}
-
-At the level of simply-typed
-terms or \ML, we believe that omnidirectional inference works better
-than bidirectional type inference: it can type more programs than
-a given fixed bidirectional system, and has a more declarative
-specification---we would say that it is ``more principal''.  In fact,
-a direct inspiration for the present work was a user complaint in
-\citet*{rossberg-wasm} on the type-based disambiguation of \OCaml: its
-bidirectional logic propagates type information from patterns to
-definitions in \code{let}-bindings, when the WebAssembly reference
-implementation would sometimes prefer the other direction.
+Qualified types~\citep*{jones-qualified-types}, best known for their use in
+Haskell's type-classes, are related to our suspended match constraints: both
+represent constraints on types or type variables that are delayed. At
+generalization time, constraints on generalizable variables are retained in the
+type scheme, yielding a \emph{constrained type scheme} $\tfor \tvs {\c
+\Rightarrow \t}$. This is much simpler to implement than our partial type
+schemes, but it provides a different behavior: each instance may resolve $\c$
+differently (as the constraint is copied on instantiation).
 %
-% De-anonymizing URL: https://github.com/ocaml/ocaml/issues/7389
+Qualified types are excellent choice when this is the desired behavior,
+typically for \emph{dynamic overloading} \citep{??}. But they are insufficient
+when we require a unique resolution of the constraint across all instances---as
+in \emph{static overloading}. 
+
+\citet{Leijen-Ye/prefix@pldi2025} recently propsed a bidrectional account of
+generalized static overloading within \ML. However, their approach is limited by
+its reliance on fixed directionality (\cref{sec/overview/directional}).
 %
-On the other hand, bidirectional typing is known to scale to powerful
-systems such as fully-implicit predicative
-polymorphism~\citep*{dunfield-krishnaswami-bidirectional-poly} and we
-have not considered scaling our approach to those systems yet.
+Variational typechecking \citep{Chen-Erwig-Walkingshaw/variational@toplas2014}
+was originally developed for reasoning about well-typed CPP \code{#ifdef}-style
+macros, introducing \emph{choices}  $a \angles {\ea, \eb}$, where $a$ is a
+\emph{dimension} with \emph{alternatives} $\ea$, $\eb$. Once dimensions are
+fixed, we are able to project a well-typed non-variational program.
+\citet{benevs2025simple} apply this machinery to recast static overloading as
+variational typing, with a resolution algorithm that uniquely selects the
+dimensions. 
+%
+However, their system removes \emph{local let-generalization} and requires an
+exponential-time resolution procedure---an unavoidable consequence of the
+NP-hardness of general static overloading, as shown by an encoding of 3-SAT
+problem by~\citet* {Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}.
 
-Contextual typing \cite {Xue-Oliveira/contextual-typing@icfp2024} is a
-recent improvement of bidirectional typing that captures more complex flows
-of \emph{known} type information, but still suffers from directionality. It
-has not been combined with ML-style type inference yet, but this would be
-interesting to explore.
+Partial type schemes provide an alternative that preserves \ML's local
+let-generalization while suspended constraints offer a tractable account of
+static overloading. By enforcing resolution using \emph{known} type information
+(captured by our novel unicity condition) rather than \emph{guessed}
+information, our approach remains tractable. Our experience suggests that this
+is a ``goldilocks'' solution: expressive enough for most applications, yet
+tractable, and (crucially) compatible with \ML's \emph{local
+let-generalization}.
 
 
+\paragraph{Suspended constraints}
 
+Suspending constraints that cannot be solved yet is not a novel idea: it is a
+standard approach to implement unification dependently-typed systems. This goes
+back to Huet's algorithm for higher-order unification~\citep*{huet-unif} and
+pattern unification~\citep*{Miller/pattern-unif@iclp91} where flexible-flexible
+pairs are delayed until at least one side becomes rigid. 
+%
+Our contribution lies in combining constraint suspension with \ML-style
+implicit polymorphism--- largely absent from dependently typed systems---and in
+formulating a declarative constraint semantics. 
 
-\paragraph{Qualified types}
+Conditional constraints \citep*{journals/njc/Pottier00} also delay resolution,
+waiting until the top-level constructor of a type is known. They provide an
+\code{if-then-else}-like primitive, but differ crucially from our suspended
+constraints: in Pottier's system, an unresolved conditional constraint is
+considered satisfiable, whereas in ours, an unsuspended constraint is not. This
+difference forces our semantics to track with is \emph{known} in a context.
+Consequently, unresolved conditional constraints may enter a generalized type
+scheme as a form of qualified types, while our suspended constraints cannot.
+These semantic differences lead the two approaches to address very different
+user-facing type system features. 
 
-Qualified types~\citep*{jones-qualified-types}, most well-known via their usage
-in Haskell type-classes, are related to our suspended match constraints as they
-represent constraints on types or type variables. At generalization time, the
-constraints on generalizable variables are kept as part of the generalized type
-scheme, and they get copied during instantiation. This is much simpler to
-implement than our partial type schemes, but it provides a different behavior
-where each instance can choose independently how to resolve the constraint.
-Qualified types are an excellent choice when this is the desired behavior,
-typically for dynamic overloading. To handle cases that require a unique
-resolution of the constraint across all instances---such as static
-overloading---we require the more complex mechanism of partial generalization.
-
-\paragraph{Suspended constraints in dependent-type systems}
-
-Suspending the constraints that cannot be solved yet is not a novel idea: it
-is a standard approach to implement unification dependently-typed
-systems. This goes back to Huet's algorithm for higher-order
-unification~\citep*{huet-unif} and pattern
-unification~\citep*{Miller/pattern-unif@iclp91} where flexible-flexible
-pairs are delayed until at least one side becomes rigid. The novelty of our
-work lies in combining constraint suspension with \ML-style implicit
-polymorphism---absent from most dependently-typed systems---and in the design
-of a declarative constraint semantics used to establish principality.
-
-%% \paragraph{Leijen et al. (TODO change paragraph naming)}
-%% Should we cite \citet*{Leijen-Ye/prefix@pldi2025}?
-%% \Xdidier{I'm volunteering to write this, but we are not sure we have to}.
-
-\paragraph{\OutsideIn}
 
 \OutsideIn~\citep*{conf/icfp/SchrijversJSV09} is a type system for GADTs that
 introduces \emph{delayed implications} of the form $\where{\tvs}(\all \tvbs \ca
@@ -3420,23 +3413,49 @@ known about the scrutinee and expected return type from the context.
 To ensure principality, \OutsideIn enforces an algorithmic restriction: the
 variables $\tvs$ must already be instantiated to concrete type constructors
 before they may be unified by the implication's conclusion $\cb$. This ensures
-information only flows from the outside into the implication's
-conclusion. Notably, they do give a declarative specification for this
-restriction, using an elegant but mysterious quantification on all possible
-ways to type the context outside the GADT clauses. Using our new perspective
-on \emph{known} type information, we can say that their semantics enforces
-that only \emph{known} information from outside GADT clauses can be used
-inside.
-
+information only flows from the outside into the implication's conclusion.
+Notably, they do give a declarative specification for this restriction, using
+an elegant but mysterious quantification on all possible ways to type the
+context outside the GADT clauses. Using our new perspective on \emph{known}
+type information, we can say that their semantics enforces that only
+\emph{known} information from outside GADT clauses can be used inside.
+%
 Later work on \OutsideIn argues
-\citep*{Vytiniotis-Peyton-Jones-Schrijvers-Sulzmann/outsidein@jfp2011}
-that delayed implication constraints make local let-generalization all
-but unmanageable, both in theory and implementation. Their proposed
-fix is to abandon local let-generalization altogether. We believe that
-we have solved the troubling interactions between let-generalization
-and suspended constraints in this work, and would be interested in
-studying applications to GADT typing\XDR[, which was also one of our
-original motivations]{Does not bring much to the reader}.
+\citep*{Vytiniotis-Peyton-Jones-Schrijvers-Sulzmann/outsidein@jfp2011} that
+delayed implication constraints make local let-generalization all but
+unmanageable, both in theory and implementation. Their proposed fix is to
+abandon local let-generalization altogether. By contrast, our work shows that
+the diffcult interactions between let-generalization and suspended constraints
+can be resolved. Furthermore, \OutsideIn forgoes a declarative specification
+complete with respect to its inference algorithm, on the grounds that such a
+specification would be ``as compilicated and hard to understand as the
+[inference] algorithm''. We believe that our \emph{omnidirectional recipe}
+could provide a declarative specification: one capable of being principal and
+complete for GADTs, and we would be interested in studying this application.
+
+\paragraph{Higher-rank Polymorphism}
+
+Polytypes are not \emph{higher-rank} in the usual sense; our interest in them
+stems from their role in \OCaml's inference of polymorphic methods. Many
+systems for higher-rank polymorphism exist; here we highlight a few in the
+context of \ML. \MLF is an extension of \ML that supports first-class
+polymorphism that goes beyond the power of System $\mathsf{F}$, while retaining
+type inference. It is a generalization of \citet{Garrigue-Remy/poly-ml}'s
+polytypes, relying on \geninst-directionality, but it remains unclear how to 
+scale \MLF to the rest of \OCaml's features. 
+%
+\FreezeML is an impredicative type inference system in which polymorphic 
+variables can be \emph{frozen}, written $\lceil x \rceil$, and only allowing 
+instantiation on ordinary (unfrozen) variables $x$. Unlike polytypes, 
+\FreezeML permits higher-rank types directly in the syntax of types, though these 
+can be encoded back into polytypes. The essential difference is that generalization 
+of higher-rank types is implicit, inferring the most-general type (if one exists).
+%
+\QuickLook, Haskell's latest approach at impredicative higher-rank polymorphism,
+uses bidirectional propagation to take a ``quick look'' at the spine of an
+application to guide instantiation of higher-rank functions. However, this
+approach inherits the limitations of fixed directionality discussed in
+\cref{sec/overview/directional}.
 
 \section{Conclusions}
 \label{sec:discussion}
@@ -3496,13 +3515,11 @@ framework to suspend on deeper shapes would also allow to solve general
 \end{version}
 
 We aim to extend our framework to support more advanced features. One direction
-is generalized \emph{static overloading} \citep*{Leijen-Ye/prefix@pldi2025};
-another is \emph{higher-rank polymorphism} in the style of
-\citet*{dunfield-krishnaswami-bidirectional-poly}. We also plan to investigate
-\emph{default rules}---a mechanism where ambiguity is resolved by falling back
-on a default, non-principal choice \eg \OCaml selects the most recent matching
-record type in scope for ambiguous field names.
->>>>>>> c3e8126 (Section 8)
+is generalized \emph{static overloading}; another is \emph{higher-rank
+polymorphism}. We also plan to investigate \emph{default rules}---a mechanism
+where ambiguity is resolved by falling back on a default, non-principal choice
+\eg \OCaml selects the most recent matching record type in scope for ambiguous
+field names.
 
 \begin{version}{}
 
