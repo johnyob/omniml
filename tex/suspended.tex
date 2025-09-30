@@ -40,12 +40,12 @@ ability to resolve \ML-style typing constraints in disorder. In contrast,
 all known existing implementations typically infer the types of
 let-bound expressions before typechecking their use sites.
 %
-This relies on two technical devices: \emph{suspended match constraints},
-which suspend the resolution of some constraints until the context has more
-information about a type variable; and \emph{partial type schemes}, which
-allow taking instances of a partially solved type scheme containing
-suspended constraints, with a mechanism to incrementally update instances as
-the scheme is refined.
+Omnidirectional type inference relies on two technical devices:
+\emph{suspended match constraints}, which suspend the resolution of some
+constraints until the context has more information about a type variable;
+and \emph{incremental instantiation}, which allow taking instances of a
+partially solved type scheme containing suspended constraints, with a
+mechanism to incrementally update instances as the scheme is refined.
 
 The benefits of omnidirectional type inference are most apparant for advanced
 \ML extensions that rely on optional type annotations, where
@@ -92,12 +92,16 @@ straightforwardly. Others, such as GADTs
 \citep*{conf/icfp/SchrijversJSV09, conf/aplas/GarrigueR13}, higher-rank
 polymorphism \citep*{conf/popl/OderskyL96, journals/pacmpl/SerranoHJV20}, and
 static overloading \citep*{Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}, are
-\emph{fragile}: they break principality under their na\"ive typing
-rules\XDR{needs reformulation} \Xalistair{What do you propose? My understanding 
-of our characterization of fragile is that the implicit terms na\"ively have 
-non-principal typing rules}.
-Principality can be recovered through explicit type annotations. The return
-type of overloaded datatype constructors may be annotated; polymorphic
+\emph{fragile}, as their typing depends on the shape of the
+types surrounding the expression---either the types of subexpressions or
+the type expected by the context hole.  Taking the shape of the types that are
+currently beeing inferred would break principality, as the order in which
+types are inferred is unspecified.
+\Xalistair{What do you propose? My understanding
+of our characterization of fragile is that the implicit terms na\"ively have
+non-principal typing rules}\XDR{Done, Check}.
+Principality can be recovered through explicit type annotations.
+The return type of overloaded datatype constructors may be annotated; polymorphic
 expressions can be annotated with a type scheme; and for GADTs, both the type
 of the \texttt{match} scrutinee and return type can be annotated with a rigid
 type, which is refined by type equalities introduced in each branch.
@@ -107,26 +111,27 @@ polymorphism via \emph{polymorphic object methods}~\citep{Garrigue-Remy/poly-ml}
 \begin{program}[input]
 let self x = x#f x in self (object method f z = z end)
 \end{program}
+In \OCaml, objects are defined as a collection of methods within
+\code{object ... end}, and accessed using $e \esend m$. Unlike Java or C++,
+\OCaml uses \emph{structural typing} for objects: object types are a list of
+method types between two chevrons \eg \ocaml[angles]{<f : 'a. 'a -> 'a>},
+where the method \code{f} has the polymorphic identity function type
+$\all \tv {\tv \to \tv}$ (the $\forall$ being omitted).
+%% \ocaml{'a. 'a -> 'a}, which means
 
-In \OCaml, objects are defined as a collection of methods within \code{object ... end},
-and accessed using \ocaml{$e$#m}. Unlike Java or C++, \OCaml uses
-\emph{structural typing} for objects: object types are a list of method types
-between two chevrons \eg \ocaml[angles]{<f : 'a. 'a -> 'a>}, where the method
-\code{f} has the polymorphic identity function type \ocaml{'a. 'a -> 'a}.
-
-When typing \code{self}, one could \emph{guess} the higher-rank type of
-\code{x} to be either \ocaml[angles]{<f : 'a. 'a -> 'a>} or 
-\ocaml[angles]{<f : 'a. 'a -> 'a -> 'a>}---neither of which is strictly 
-more general than the other, violating principality.
+When typing \code{self} in the example anove, one could \emph{guess} the
+higher-rank type of \code{x} to be either $\epolymeth f \tv
+{\tv \to \tv}$ or $\epolymeth f \tv {\tv \to \tv \to \tv}$
+or---neither of which is strictly more general than the other, violating
+principality.
 
 \parcomment {Current approaches are kinda bad}
 
-To fix this, inference algorithms require\footnote {Otherwise, they treat
-\code{f} monomorphically and fail on this example.}
-a minimal amount of \emph{known} type
-information to restore principality; in this example the binding of \code{x}
-should be annotated with the higher-rank type
-\ocaml[angles]{<f : 'a. 'a -> 'a>}.
+To restore principality, inference algorithms require\footnote {Otherwise,
+they treat \code{f} monomorphically and fail on this example.}  a minimal
+amount of \emph{known} type information; in this example the binding of
+\code{x} should be annotated with the higher-rank type
+$\epolymeth f \tv {\tv \to \tv}$.
 Yet, specifying annotatability declaratively is difficult. As a result, the
 specifications are often twisted with some direct or indirect algorithmic
 flavor in order to preserve principality and completeness.
@@ -138,19 +143,22 @@ following expression, depending on the position of the annotation
 \smashcolorbox{illtyped}{\strut red} indicates failure):
 
 \begin{program}[input,angles]
-let self' (x : <f : 'a. 'a -> 'a>) = if true then x#f x else x °\Ocamlcomment{\ocamlFlag {\OCaml}0}°
-let self' x = if true then x#f x else (x : <f : 'a. 'a -> 'a>) °\Ocamlcomment{\ocamlFlag {\OCaml}1}°
+let self' (x : <f : 'a. 'a -> 'a>) = if true then x#f x else x °
+\Ocamlcomment{\ocamlFlag {\OCaml}0}°
+let self' x = if true then x#f x else (x : <f : 'a. 'a -> 'a>) °
+\Ocamlcomment{\ocamlFlag {\OCaml}1}°
 \end{program}
 
 \parcomment {Annotations fixes all the issues (but they're problematic)}
 
 Each fragile construct admits a \emph{robust} counterpart where the type
-annotation is mandatory---for instance, \ocaml{($e$#m : $\ts$)} is the robust
-form of \ocaml{($e$#m)} for polymorphic method instantiation. While robust
-constructs do not break principality, they are significantly more cumbersome to
-use, as they always require explicit type annotations. Fragile forms relieve
-this burden, but can only be elaborated into their robust counterpart if
-sufficient type information is already available from the context.
+annotation is mandatory---for instance, $\eobj{\eannot {e \esend m}{}\ts}$
+is the robust form of $\eobj{e \esend m}$ for polymorphic method
+instantiation.  While robust constructs do not break principality, they are
+significantly more cumbersome to use, as they always require explicit type
+annotations. Fragile forms relieve this burden, but can only be elaborated
+into their robust counterpart if sufficient type information is already
+available from the context.
 
 \parcomment {The hard part of the problem -- known type information}
 
@@ -173,7 +181,7 @@ to be rejected.
 
 \parcomment {Our solution}
 
-We propose \emph{omnidirectional} inference, which relies on a
+We propose \emph{omnidirectional} type inference, which relies on a
 \emph{dynamic} order of inference. The solving of inference constraints
 may proceed in any order, suspending whenever progress requires \emph{known}
 type information. Other constraints may continue to be solved; once the
@@ -196,8 +204,8 @@ Section \cref{sec/overview} introduces our setting: \OCaml's static overloading
 of datatype constructors and record labels, and polymorphic methods. We review
 directional inference, its limitations, and motivate omnidirectional inference.
 To this end, we introduce our two novel devices---\emph{suspended match
-constraints} and \emph{partial type schemes}---and show how they are applied to
-these fragile features.
+constraints} and \emph{incremental instantiation}---and show how they are
+applied to these fragile features.
 %
 The subsequent sections present technical contributions: \begin{enumerate}
   \item[(\cref{sec:constraints})]
@@ -245,12 +253,19 @@ are useful in practice: static overloading is widely relied upon in large
 programs, and polymorphic methods make higher-rank polymorphism available
 within \OCaml.
 
-\XDR{Cite Polymorphic parameters as a recent extension of \OCaml that is
-based on the same mecanism, making higher-rank polymorphism easier to use in
-many cases.}
-\Xalistair{This citation comes later. I've avoided drawing attention to polyparams 
-since we cannot type them without default rules. Plus is raises the question: if polyparams 
-are better, why bother explaining polymorphic methods?}
+\XDR
+{Cite Polymorphic parameters as a recent extension of \OCaml that is based
+on the same mechanism, making higher-rank polymorphism easier to use in many
+cases.}
+\Xalistair
+{This citation comes later. I've avoided drawing attention to polyparams
+since we cannot type them without default rules. Plus it raises the
+question: if polyparams are better, why bother explaining polymorphic
+methods?}
+\XDR
+{Polymorphic methods also require default rules, since method calls worlk
+for both polymorphic and monomorphic methods. The latter is by defaulting
+in the absence of known polymorphism.}
 
 \subsection{Static overloading of constructors and record labels}
 \label{sec/overview/overloading}
@@ -269,7 +284,7 @@ a \emph{zero-cost} abstraction.
 
 \OCaml supports a limited yet useful form of static overloading for record
 labels and datatype constructors. Ambiguity is resolved using \emph{known
-type information} under its directional inference algorithm (discussed in 
+type information} under its directional inference algorithm (discussed in
 \cref{sec/overview/directional}).
 %
 To illustrate static overloading in \OCaml, consider two record types with
@@ -279,10 +294,13 @@ type 'a one = {x : 'a; y : int}
 type two = {x : int}
 \end{program}
 With both definitions in scope, \OCaml must
-statically disambiguate each field usage:
+statically disambiguate each field usage\footnote {We
+indicate the success or failure of typechecking each example in both
+\OCaml and \OML on the right-hand side.}:
 \XDR{This is the first occurrence of \OML. We should explain in a footnote}
-\Xalistair{We define what \OML is in contributions, or are you saying this is 
-the first code snippet?}
+\Xalistair{We define what \OML is in contributions, or are you saying this is
+the first code snippet?}\XDR{The first occurrence of OmniML on the
+right-hand side of the code below. I added a footnote.}
 \begin{program}[input,check]
 let one = { x = 1; y = 1337 }                            °\ocamlflags 00°
 let ex_1 r = r.x                                         °\ocamlflags 21°
@@ -300,12 +318,12 @@ fails.\footnote
 %
 {
   In fact, \OCaml does not fail on ambiguous types, but instead applies a
-    default resolution strategy: it emits a warning and selects the last
-    matching type definition in scope. Here, this will amount to choosing the
-    type \code{two} for \code{r}. To check all our examples, use the options
-    \texttt{-principal -w +41+18 -warn-error +41+18}, which enables principal
-    type inference and escalates the associated warnings to errors.
-    \label{fn/principal}
+  default resolution strategy: it emits a warning and selects the last
+  matching type definition in scope. Here, this will amount to choosing the
+  type \texttt{two} for \texttt{r}. To check all our examples, use the options
+  \texttt{-principal -w +41+18 -warn-error +41+18}, which enables principal
+  type inference and escalates the associated warnings to errors.
+  \label{fn/principal}
 }
 %
 In \code{ex_2}, the annotation fixes the type of \code{r}, thus
@@ -324,7 +342,7 @@ compatible type. For example, \OCaml accepts the following expression, when
 \smashcolorbox{warning}{\strut warnings} are not turned into
 \smashcolorbox{illtyped}{\strut errors} (\cref{fn/principal}):
 
-% This prevents the color boxes of `warnings` and `errors` from touching 
+% This prevents the color boxes of `warnings` and `errors` from touching
 % the code block
 \vskip 2.5pt
 
@@ -348,7 +366,7 @@ let ex_4 r = let x = r.x in x + r.y                    °\ocamlflags 10°
 %
 Here, \OCaml defaults to \code{two} for \code{r} when typing \code{r.x}, but then
 fails to type \code{r.y}, as this default choice is fixed---even though
-\code{one} would have satisfied both projections.
+\code{one} would have satisfied both projections. \OML succeeds.
 
 
 Since overloaded datatype constructors are analogous to record fields, we focus
@@ -360,15 +378,34 @@ only on record fields in this work. Our prototype implementation
 
 \parcomment{Why polymorphic methods?}
 
-Polymorphic methods \citep*{Garrigue-Remy/poly-ml} bring some System~$\F$-like
+Polymorphic methods \citep*{Garrigue-Remy/poly-ml} bring some System-$\F$-like
 expressivity to \OCaml by allowing impredicative, higher-rank polymorphism
 while preserving principal type inference.
 
-\begin{mathparfig}[htpb!]%
-  {fig:polyml}%
-  {Syntax and typing rules for polytypes from \citet*{Garrigue-Remy/poly-ml}.}
-  \begin{bnfgrammar}
-    \entry[Annotation variables]{\av}{}\\
+%% \begin{mathparfig}[htpb!]%
+%%   {fig:polyml}%
+%%   {Syntax and typing rules for polytypes from
+%%   \citet*{Garrigue-Remy/poly-ml}.}
+
+%% \par
+%% \end{mathparfig}
+
+\paragraph{From polymorphic methods to polytypes}
+
+\parcomment{Idea and syntax}
+
+Polymorphic methods can be translated into ordinary methods that carry a
+\emph{polytype}: a boxed type scheme $\tapoly \ts \av$
+%% (\cref{fig:polyml})
+that can be explicitly unboxed at use sites.
+%
+The purpose of the annotation variable $\av$ will be explained shortly. Boxed
+polytypes are considered to be (mono)types, enabling impredicativity. We write
+$\epoly[\ts] \e$ to box a term $\e$ with the scheme $\ts$, and $\einst \e$ to
+unbox a polytype, instantiating it.
+Polytypes extends terms and types as follows:
+\begin{mathpar}
+\begin{bnfgrammar}
      \entry[Terms]{\e}{
        \epoly[\ts] \e
        \and \einst \e
@@ -381,38 +418,10 @@ while preserving principal type inference.
      }\\
      \entry[Type schemes]{\ts}{
        \t \and \tfor \tv \ts \and \tfor \av \ts
-     }
-  \end{bnfgrammar}
-  \par
-
-  \infer[PolyML-Poly]
-    { \G \th \e : \tsa \\ (\tsa : \ts : \tsb) }
-    {\G \th \epoly[\ts] \e : \tapoly {\tsb} \av}
-
-  \infer[PolyML-Inst]
-    {\G \th \e : \tfor \av {\tapoly \ts \av}}
-    {\G \th \einst \e : \ts}
-
-  \infer[PolyML-Annot]
-    {\G \th \e : \ta \\ (\ta : \t : \tb)}
-    {\G \th \eannot \e {} \t : \tb}
-
-\end{mathparfig}
-
-
-
-\paragraph{From polymorphic methods to polytypes}
-
-\parcomment{Idea and syntax}
-
-Polymorphic methods can be translated into ordinary methods that carry a
-\emph{polytype}: a boxed type scheme $\tapoly \ts \av$ (\cref{fig:polyml}) that
-can be explicitly unboxed at use sites.
-%
-The purpose of the annotation variable $\av$ will be explained shortly. Boxed
-polytypes are considered to be (mono)types, enabling impredicativity. We write
-$\epoly[\ts] \e$ to box a term $\e$ with the scheme $\ts$, and $\einst \e$ to
-unbox a polytype, instantiating it.
+     }\\
+    \entry[Annotation variables]{\av}{}
+\end{bnfgrammar}
+\end{mathpar}
 
 \parcomment{Example}
 
@@ -434,18 +443,32 @@ This reduction is useful for two reasons:
 
 
   \item Polytypes underpin other features in \OCaml, notably the recent addition
-    of higher-rank polymorphic function parameters \citep*{??} in \OCaml 5.4.
+    of \XDR{Was \emph{higher-rank}, which is incorrect: functions are of
+    higher-rank, but the parameters are of rank-1} polymorphic function
+    parameters \citep*{??} in \OCaml 5.4.
 \end{enumerate*}
 
 \paragraph{Semi-explicit first-class polymorphism}
 \label{sec/overview/polytypes}
 
-For the remainder of this work, we will focus on polytypes---also called
-\emph{semi-explicit first-class polymorphism}
+For the remainder of this work, we will focus on polytypes\penalty 50---also
+called \emph{semi-explicit first-class polymorphism}
 \citep*{Garrigue-Remy/poly-ml}---since they expose the tricky interaction with
-principality of interest. We now review the typing rules for polytypes,
-collected in \cref{fig:polyml}.
+principality of interest. We now review the typing rules for polytypes:
+%% collected in \cref{fig:polyml}.
+\begin{mathpar}
+\infer[PolyML-Poly]
+    { \G \th \e : \tsa \\ (\tsa : \ts : \tsb) }
+    {\G \th \epoly[\ts] \e : \tapoly {\tsb} \av}
 
+  \infer[PolyML-Inst]
+    {\G \th \e : \tfor \av {\tapoly \ts \av}}
+    {\G \th \einst \e : \ts}
+
+  \infer[PolyML-Annot]
+    {\G \th \e : \ta \\ (\ta : \t : \tb)}
+    {\G \th \eannot \e {} \t : \tb}
+\end{mathpar}
 
 \parcomment {Annotation variables. Why?}
 
@@ -495,9 +518,9 @@ prior to unboxing, rendering the term ill-typed.
 
 \Rule{PolyML-Annot} can be used to freshen annotation variables. The auxiliary
 relation $(\tsa : \ts : \tsb)$ (also used in \Rule{PolyML-Poly}) holds if there
-exists renamings $\rho_1, \rho_2$ on annotation variables (leaving ordinary
-type variables unchanged) such that $\tsa = \rho_1(\ts)$ and $\tsb =
-\rho_2(\ts)$. Intuitively, $(\tsa : \ts : \tsb)$ produces two \emph{fresh
+exists renamings $\eta_1, \eta_2$ on annotation variables (leaving ordinary
+type variables unchanged) such that $\tsa = \eta_1(\ts)$ and $\tsb =
+\eta_2(\ts)$. Intuitively, $(\tsa : \ts : \tsb)$ produces two \emph{fresh
 copies} of $\ts$, preventing unwanted sharing
 of annotation variables that could otherwise block generalization.
 We usually omit annotation variables in annotations, since we can implicitly
@@ -515,13 +538,13 @@ yielding $\tfor \ava {\tapoly \ts \ava}$.
 We now discuss the two main directional inference approaches:
 \geninst-directional and bidirectional, illustrated using polytypes as a
 running example. We then discuss limitations of both approaches, providing us
-with the motivation for omnidirectional inference.
+with the motivation for omnidirectional type inference.
 
 \paragraph{\geninst-directional type inference}
 
 \parcomment{What is \geninst good for?}
 
-Most \ML inference algorithms enforce a fixed order when typechecking
+Most \ML type inference algorithms enforce a fixed order when typechecking
 let-bindings $\elet \x \ea \eb$: first typecheck the definition $\ea$, then the
 body $\eb$. \Geninst-directionality leverages this ordering to resolve
 overloaded or ambiguous constructs in a \emph{principal} way: the (parts of)
@@ -539,7 +562,7 @@ the implicit inference order already present in most \ML-like typecheckers,
 making it straightforward to retrofit into existing implementations. In the
 case of \OCaml, the mechanism for annotation variables even comes \emph{for
 free}, as a byproduct of the extensive optimizations in its inference
-algorithm. 
+algorithm.
 
 \parcomment{Who uses this?}
 
@@ -632,24 +655,26 @@ but the opposite, mode-correct choice (\Rule{Chk-App}) is also possible:
 
 Within the bidirectional framework, a type $\t$ is \emph{known} when it is either:
 \begin{enumerate*}
-  \item part of an annotation, 
-  \item supplied as input to a checking judgement in the conclusion ($\Leftarrow \t$), or
+  \item part of an annotation,
+  \item supplied as input to a checking judgement in the conclusion
+  ($\Leftarrow \t$), or
   \item produced by a synthesizing premise ($\Rightarrow \t$)
-\end{enumerate*}
+\end{enumerate*}.
 %
 Using this discipline, we can recast polytypes and eliminate two artifacts
 needed in our \geninst-directional presentation: explicit annotations on
 boxing and annotation variables. Since $\eannot \e {} \t$ already
-propagates known information, $\epoly \e$ requires no attached annotation; 
-and because ``knowness'' now follows from inference modes rather than polymorphism, 
-annotation variables are unnecessary.
-
+propagates known information, $\epoly \e$ requires no attached annotation;
+and because ``knowness'' now follows from inference modes rather than
+polymorphism, annotation variables are unnecessary.
+\XDR{The figure could be turned into mathpar}
 \begin{mathparfig}[htpb!]
   {fig:polybidir}
   {Bidirectionalized polytypes. Annotation variables have been removed.}
-  \begin{minipage}[l]{0.3\textwidth}
-  \scalebox{0.9}{
+  \begin{minipage}[l]{15em}
+  %% \scalebox{0.9}{
   \begin{bnfgrammar}
+    \noalign{\vskip -1em}
     \entry[Terms]{\e}{
        \epoly \e
        \and \einst \e
@@ -660,11 +685,12 @@ annotation variables are unnecessary.
         \tpoly \ts
         \and \dots
      }\\
-     \entry[Type schemes]{\ts}{
+     \entry[\hskip -10em Type schemes]{\ts}{
        \t \and \tfor \tv \ts
      }
+     \\
   \end{bnfgrammar}
-    }
+  %% }
   \end{minipage}
   \hfill
   \infer[Chk-Poly]
@@ -688,8 +714,13 @@ modes, some programs will typecheck successfully, while others will fail
 unnecessarily. Yet, the typing rules must irrevocably commit to a fixed set of
 modes, after which, principal types often exist, but only with respect to a
 specification that made non-principal choices to begin with. For instance,
-\code{ex_6} would be ill-typed using the typing rules from \cref{fig:polybidir} with 
-\Rule{Syn-App}.
+\code{ex_6} would be ill-typed using the typing rules from
+\cref{fig:polybidir} with \Rule{Syn-App}.
+\XDR{I think this is a good place to mention contextual type inference in a
+footnote, as not choosing between Syn-App and Chk-App, but still typing
+multiple arguments from left to right. Even if we explained it in more
+detailed in the related work section, as the reader who knows might be upset
+if we don't mention it here.}
 
 \paragraph{Limitations of directional type inference}
 
@@ -700,7 +731,7 @@ annotations. Its main downside lies in the need to fix an often arbitrary flow
 of type information---as in the case of function applications discussed above.
 
 On the other hand, \emph{\Geninst-directional} type inference appears better
-suited for \ML, relying on polymorphism---the essence of \ML. But it remains
+suited for \ML, relying on polymorphism\penalty 50---the essence of \ML. But it remains
 surprisingly weak in some cases: it does not even allow the propagation of
 user-provided type annotations from a function to its argument!
 This weakness is sometimes counter-intuitive to the user.
@@ -716,8 +747,9 @@ propagation, the term \code{r.x} would be ambiguous, as no polymorphic (and
 thus \emph{known}) type can be ascribed to \code{r}. \OCaml resolves this by
 supplementing  \geninst-directional inference with a form of bidirectional
 propagation: the expected type of \code{g}'s argument (\code{int one -> int}) is
-bidirectionally propagated to the $\lambda$-function, assigning \code{r} to have the
-\emph{known} type \code{'a one} and thereby disambiguating \code{r.x}.
+bidirectionally propagated to the let-bound function \code{g}, assigning
+\code{r} to have the \emph{known} type \code{'a one} and thereby
+disambiguating \code{r.x}.
 
 \subsection{Omnidirectional type inference}
 \label{sec/overview/omni}
@@ -742,7 +774,7 @@ A match constraint $(\cmatch \t {{\overline{\cbranch \cpat
 of shape-pattern branches $\overline{\cbranch \cpat \c}$. These constraints
 remain
 \emph{suspended} until the \textit{shape} of $\t$ (\ie its top-level
-constructor) is known. Then they are \emph{discharged}: a unique branch is
+constructor) is known. Then, they are \emph{discharged}: a unique branch is
 selected and its associated constraint has to be solved. A match constraint
 that is never discharged is considered unsatisfiable.
 
@@ -758,9 +790,12 @@ We now illustrate the role of suspended constraints on our running
 semi-explicit first-class polymorphism.
 %
 Each feature translates the typability of the term into constraints, formalized
-using a constraint generation function of the form $\cinfer \e \tv$, which,
-given a term $\e$ and expected type $\tv$, produces a constraint $\c$ which is
-satisfiable if and only if $\e$ has the type $\tv$.
+using a constraint generation function of the form
+\let \TV\t$\cinfer \e
+\TV$\XDR{$\tv$ should be a $\t$ here and below! I wrote \string\TV\space to
+mark them}, which,
+given a term $\e$ and expected type $\TV$, produces a constraint $\c$ which is
+satisfiable if and only if $\e$ has the type $\TV$.
 
 \parcomment{Why our solution makes things easier?}
 
@@ -771,7 +806,7 @@ vanishes---suspended constraints do most of the heavy lifting.
 \parcomment{Records}
 
 \begin{version}{}
-% Removed since we no-longer have $\Omega$ in the constraint notation 
+% Removed since we no-longer have $\Omega$ in the constraint notation
 
 For records, we assume a global typing environment $\labenv$ mapping labels to
 type schemes, written $\elab : \tlab [\tvs]{{\Tapp \tvs}}{\t} \in \labenv$
@@ -782,7 +817,7 @@ write $\labenv(\labfrom \elab \T)$ for the type scheme of $\elab$ in $\T$ when
 it exists.
 \end{version}
 
-For records, in the case of an ambiguous record projection $\efield \e \elab$, 
+For records, in the case of an ambiguous record projection $\efield \e \elab$,
 we generate the typing constraint:
 \begin{mathpar}
 \cinfer {\efield \e \elab} \tva \wide\eqdef
@@ -794,20 +829,32 @@ we generate the typing constraint:
       }
 \end{mathpar}
 %
-This constraint suspends resolution of the return type $\alpha$ until the
-record type $\tvb$ of $\e$ is \emph{known}. Its branch matches against the
-nominal type pattern $\cpatrcd \ct$, binding the type constructor name
-to~$\ct$. Using this, the globally unique projection type (scheme) $\tfor \tvs
-{\Tapp[\ct] \tvs \to \t}$ for the qualified label $\labfrom \elab \ct$ is
-instantiated, and the resulting constraints are imposed on the domain and
-codomain of the instantiated projection type.
+This constraint suspends resolution of the return type $\tva$ until the
+record type $\tvb$ of $\e$ is \emph{known}, say some type $\tz$. Its branch
+matches $\tz$ against the nominal type pattern $\cpatrcd \ct$,
+\XDR{It is unclear that $t$ is a meta\textbf{variable}. It looks too much
+like a \texttt t. We must fix thus}
+binding the type constructor name of $\tz$ to~$\ct$\XDR{ or fails otherwise}.
+Using this, the
+globally unique projection type (scheme) $\tfor \tvs {\Tapp[\ct] \tvs \to
+\t}$\XDR{Here $\ct$ should be a meta variable for concrete record names,
+that happens to be equal to $\ct$, but it should not be $\ct$ itself}
+for the qualified label
+$\labfrom \elab \ct$ is instantiated,
+\XDR{We should describe the
+instantiation}\eg to $\Tapp[\ct] {\bar\ta} \to
+\t\where {\tvs \is \bar \ta}$ with $\Tapp[\ct] {\bar\ta}$ equal to $\tz$,
+\relax
+and the resulting constraints are
+imposed on the domain and codomain of the instantiated projection type.
+
 
 
 \parcomment{Polytypes}
 
-When typechecking the polytype unboxing operator $\einst e$, if $\e$ is already known to have the type
-$[\ts]$, then we can simply
-instantiate it.  However, if the type of $\e$ is not yet known---\ie  it is a
+When typechecking the polytype unboxing operator $\einst e$, if $\e$ is
+already known to have the type $[\ts]$, then we can simply
+instantiate $\ts$.  However, if the type of $\e$ is not yet known---\ie  it is a
 (possibly constrained) type variable $\tv$---then we must defer until more
 information is available. We capture this behavior with a suspended match
 constraint:
@@ -818,7 +865,12 @@ constraint:
     \cmatch  \tvb {\parens {\cbranch {\tpoly s} s \leq \tva}}
 \end{mathpar}
 The match constraint is suspended until $\tvb$ is resolved to a polytype
-$\tpoly \ts$ matching the pattern $\tpoly s$, which binds the type scheme
+$\tpoly \ts$ matching the pattern $\tpoly s$,
+\XDR
+{It is suspended until $\ts$ matches $\tpoly s$, or rather until
+$\tvb$ is not longer a variable? which then either matches $\tpoly s$ and we
+continue or fails if $\tvb$ does not matches $\tpoly s$.}
+which binds the type scheme
 $\ts$ to the scheme variable $s$. The selected branch then performs the
 instantiation $\cleq s \tva$, that is $\cleq \ts \tva$.
 
@@ -847,10 +899,11 @@ follow this strategy, to the best of our knowledge.\relax \footnote {See
 
 To efficiently achieve omnidirectional type inference for fragile \ML
 extensions we work with \emph{partial types schemes}, \ie with the ability to
-instantiate type schemes that are not yet fully determined and consequently
-revisit their instances when they are being refined, incrementally. This allows
-inferring parts of a \texttt{let}-body to disambiguate its definition, without
-duplicating constraint-solving work.
+\emph{incrementally instantiate} type schemes. That is, to instantiate
+type schemes that are not yet fully determined and consequently revisit
+their instances when they are being refined, incrementally. This allows
+inferring parts of a \texttt{let}-body to disambiguate its definition,
+without duplicating constraint-solving work.
 
 \paragraph{Plan}
 These technical devices are introduced once and for all---in a general
@@ -983,9 +1036,9 @@ NP-hard, even in the absence of let-polymorphism, as shown by an encoding of
 }\\[1ex]
 \entry[Branches]{\cbr}{\cbranch \cpat \c} \\
 \entry[Patterns]{\cpat}{
-  \cpatwild 
-  \and \cpatrcd \ct 
-  \and \cpatpoly \cscm 
+  \cpatwild
+  \and \cpatrcd \ct
+  \and \cpatpoly \cscm
 }{} \\
   \entry[Shapes] {\Sh} {\any \tvcs \t}
 \\
@@ -1002,11 +1055,11 @@ NP-hard, even in the absence of let-polymorphism, as shown by an encoding of
   \and \clet \x \tv \c \C
 } \\[1ex]
 \entry[Semantic environments]{\semenv}{
-  \emptyset 
-  \and \semenv\where{\tv \is \gt} 
+  \emptyset
+  \and \semenv\where{\tv \is \gt}
   \and \semenv\where{\x \is \gabs}
 } \\
-\entryset[Ground types]{\gt}{\Ground} \\ 
+\entryset[Ground types]{\gt}{\Ground} \\
 \entrysubseteq[Sets of ground types]{\gabs}{\Ground}{}
 \end{bnfgrammar}
 
@@ -1060,7 +1113,7 @@ NP-hard, even in the absence of let-polymorphism, as shown by an encoding of
     {\semenv \th \C\where{\cmatch \t \cbrs}}
 \par
 \begin{tabular}{.L.}
-  \Cshape \C \t \sh \eqdef \\[.6ex] 
+  \Cshape \C \t \sh \eqdef \\[.6ex]
   \quad \forall \semenv, \gt. \uad \semenv \thsimple \cerase {\C\where{\cunif \t \gt}} \implies \shape \gt = \sh
 \end{tabular}
 
@@ -1085,14 +1138,14 @@ NP-hard, even in the absence of let-polymorphism, as shown by an encoding of
 
 To reason about constraint-based inference, we need more than a procedure for
 generating and solving constraints: we require a \emph{formal logic} of
-constraints, with a syntax and a declarative semantics that characterizes 
-satisfiability. This semantics is essential: it validates the design of our 
+constraints, with a syntax and a declarative semantics that characterizes
+satisfiability. This semantics is essential: it validates the design of our
 constraint language and provides the foundation for soundness, completeness,
 and principality proofs of inference. Without it, the meta-theory of our
-approach cannot be stated precisely. 
+approach cannot be stated precisely.
 
 
-\paragraph{Notation for collections} 
+\paragraph{Notation for collections}
 
 We write $\overline X$ for a (possible empty) set of elements $\set {X_1, ...,
 X_n}$ and a (possibly empty) sequence $X_1, ..., X_n$. The interpretation of
@@ -1122,7 +1175,7 @@ semantics is given by a satisfiability judgement $\semenv \th \c$
 (\cref{fig:constraints}). The semantic environment $\semenv$ assigns to each
 free type variable $\tv$ a ground type $\gt \in \Ground$ (a type with no free
 variables) and to each term variable $\x$ a set of ground types $\gabs
-\subseteq \Ground$ (the instances of a type scheme bound to $\x$). 
+\subseteq \Ground$ (the instances of a type scheme bound to $\x$).
 %
 We write $\semenv\where{\tv \is \gt}$ and $\semenv\where{\x \is \gabs}$ for the
 extension of $\semenv$ with a new binding. For a type $\t$, we write
@@ -1131,13 +1184,13 @@ $\semenv(\t)$ for the ground type obtained by substitution.
 
 \parcomment{Semantics detailed}
 
-Constraints include basic logical forms: tautological ($\ctrue$), unsatisfiable ($\cfalse$), 
+Constraints include basic logical forms: tautological ($\ctrue$), unsatisfiable ($\cfalse$),
 and conjuctive $\ca \cand \cb$ constraints. The unification constraint $\cunif
 \ta \tb$ is satisfied when $\ta$ and $\tb$ are equal.
 %
-An existential constraint $\cexists \tv \c$ holds if there exists a 
-witness $\gt$ for $\tv$ satisfying $\c$, while a universal constraint $\cfor \tv \c$ 
-holds if $\c$ is satisfied for every binding of $\tv$. 
+An existential constraint $\cexists \tv \c$ holds if there exists a
+witness $\gt$ for $\tv$ satisfying $\c$, while a universal constraint $\cfor \tv \c$
+holds if $\c$ is satisfied for every binding of $\tv$.
 %
 When $\ts$ is a polymorphic type scheme $\tfor \tvs \tp$, we use the
 notation $\cleq \ts \t$ as syntactic sugar for the instantiation
@@ -1149,17 +1202,17 @@ are defined using this instantiation form.
 
 Two constructs deal with the introduction and elimination of constraint
 abstractions. Intuitively, a constraint abstraction $\cabs \tv \c$ is a
-function which when applied to some type $\t$ returns $\c \where {\tv \is \t}$. 
+function which when applied to some type $\t$ returns $\c \where {\tv \is \t}$.
 %
 Abstractions are introduced by a let construct $(\clet \x \tv \ca \cb)$, which
 binds the constraint abstraction $\cabs \tv \ca$ to the term variable $\x$ in
 $\cb$; semantically, the abstraction is interpreted as a set of ground types
 that satisfies $\c$, and we require that this set be non-empty \ie
-there is at least one instantiation of $\tv$ that satisfies $\c$. 
+there is at least one instantiation of $\tv$ that satisfies $\c$.
 %
 Applications $\capp \x \t$ eliminate abstractions, applying the type
 $\t$ to the abstraction bound to $\x$. This holds precisely when $\semenv(\t)
-\in \semenv(\x)$ \ie $\t$ is one of the satisfiable instances of $\x$. Concretely, 
+\in \semenv(\x)$ \ie $\t$ is one of the satisfiable instances of $\x$. Concretely,
 if $\semenv(\x) = \semenvp(\cabs \tv \c)$, where
 $\semenvp$ is the environment at the binding site of $\x$, then $\semenv(\t)
 \in \semenv(\x)$ holds iff $\semenvp\where{\tv \is \semenv(\t)} \th \c$, which
@@ -1191,7 +1244,7 @@ More precisely:
 \item
   $\cbrs$ is a list of branches of the form $\cbranch \cpat \c$,
   where $\cpat$ is a shape pattern. For example, the pattern
-  $\cpatrcd \ct$ matches record types, binding its name to $\ct$. 
+  $\cpatrcd \ct$ matches record types, binding its name to $\ct$.
   The constraint $\c$ is then solved in the extended context.
   %
   To ensure determinism, the set of patterns $\bar \cpat$ must be
@@ -1199,7 +1252,7 @@ More precisely:
   than one pattern in the list.
 
 \end{enumerate*}
-The formal semantics of suspended match constraints are somewhat involved, 
+The formal semantics of suspended match constraints are somewhat involved,
 so we defer a full explaination until we define \emph{shapes}.
 
 \begin{wraphbox}{0.2}{0.6}
@@ -1352,8 +1405,8 @@ compilates reasoning and proofs. On the upside, our semantics directly suggest
 declarative typing rules for the surface language (\cref{sec/oml}).
 
 
-To define the semantics for suspended constraints, we first introduce \emph{discharged 
-match constraints}. 
+To define the semantics for suspended constraints, we first introduce \emph{discharged
+match constraints}.
 
 \begin{definition}[Discharged match constraint]
   Given a suspended constraint $(\cmatch \t \cbrs)$ and a canonical shape
@@ -1435,9 +1488,9 @@ constraints and raises several problems:
     be complete with respect to this semantics;
 
   \item this breaks the existence of principal solutions.
-    Consider the function \ocaml{fun r -> r.x}, which projects the field \ocaml{x} 
-    from the record \ocaml{r}. The natural semantics lets us guess any record 
-    type containing the field \code{x} for $r$ (\eg \code{one}, \code{two}). 
+    Consider the function \ocaml{fun r -> r.x}, which projects the field \ocaml{x}
+    from the record \ocaml{r}. The natural semantics lets us guess any record
+    type containing the field \code{x} for $r$ (\eg \code{one}, \code{two}).
     As a result, \ocaml{r} has no most general type.
 \end{enumerate*}
 
@@ -1448,7 +1501,7 @@ match constraint is satisfiable only if the shape of the type is determined
 by the surrounding context. The corresponding rule for suspended
 constraints, \Rule {Match-Ctx} (\cref{fig:constraints}), is the only non-syntax-directed rule in our semantics.
 %
-\begin{mathpar}  
+\begin{mathpar}
   \infer[Match-Ctx]
     {\Cshape \C \t \sh \\
       \semenv \th \C \where {\cmatched \t \sh \cbrs}
@@ -1515,7 +1568,7 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
   \cexists \tv \cmatch \tv {\cbranch \cpatwild {\cunif \tv \tint}}
 \end{mathpar}
   Under the contextual semantics, the suspended constraint appears in a context
-  with no contextual information: $\C \is \cexists \tv \square$.  
+  with no contextual information: $\C \is \cexists \tv \square$.
   %
   So for any ground type $\gt$, $\C\where{\cunif \tv \gt}$ is satisfiable,
   allowing $\gt$ to have an arbitrary shape (\eg $\tint$, $\tbool$, \etc). As a
@@ -1566,7 +1619,7 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
   By contrast, if we first discharge the match on $\tva$, we consider the the
   context $\C \is \square \cand \cmatch \tvb {\cbranch \cpatwild \ctrue} \cand
   \cunif \tva \tint$. Its erasure $\cerase \C = \square \cand \ctrue \cand
-  \cunif \tva \tint$ does constraint $\tva$, giving $\Cshape \C \tva \tint$. 
+  \cunif \tva \tint$ does constraint $\tva$, giving $\Cshape \C \tva \tint$.
   %
   We may therefore discharge the match on $\tva$, rewriting it as
   $(\cmatched \tva \tint {\cbranch \cpatwild {\cunif \tvb \tbool}})$ \ie
@@ -1603,12 +1656,12 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
       {\def \and{)\wide\wedge(}\parens{\EX}}
   }
 \end{mathpar}
-  Under the natural semantics this constraint is satisfiable, since one may 
-  \emph{guess} the assignment $\tva \is \tint, \tvb \is \tbool$, 
-  making both match constraints succeed. However, our solver and contextual semantics 
-  reject it. 
+  Under the natural semantics this constraint is satisfiable, since one may
+  \emph{guess} the assignment $\tva \is \tint, \tvb \is \tbool$,
+  making both match constraints succeed. However, our solver and contextual semantics
+  reject it.
 
-  
+
   Without loss of generality, suppose we attempt to apply \Rule{Match-Ctx} on
   $\tva$ first. We must establishy $\Cshape \C \tva \tint$ for the context $\C
   \is \square \cand \cmatch \tvb {\cbranch \cpatwild {\cunif \tva \tint}}$. But
@@ -1646,7 +1699,7 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
      \G, x : \ts
   } \\
     \entry[Label contexts]{\labenv}{
-    \eset \and 
+    \eset \and
     \labenv, \elab : \all \tvs \Tapp \tvs \to \t
     }
   \end{bnfgrammar}
@@ -1726,7 +1779,7 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
 To prove correctness of constraint generation, we must first define a surface
 language and its type system. Surprisingly, identifying an appropriate
 declarative type system to use as a specification is itself an interesting
-problem! In particular, na\"ive specifications for fragile features often fail 
+problem! In particular, na\"ive specifications for fragile features often fail
 to preserve principality.
 
 \parcomment {Why do naive approaches not guarantee principal types.}
@@ -1749,15 +1802,15 @@ faced in the natural semantics of suspended constraints: $\ts$ must be
 \emph{known}, not \emph{guessed}. Our solution is the same in both cases, impose a unicity
 condition and introduce a contextual rule (\Rule{Use-I}) that transforms the
 fragile, implicit construct into the robust, explicit counterpart $\exinst \e
-\tvs \ts$. 
+\tvs \ts$.
 
 \subsection{Syntax}
 
 
-\OML (\cref{fig/oml/syntax-xtyping}) extends \ML with two fragile constructs: polytypes and nominal records. 
+\OML (\cref{fig/oml/syntax-xtyping}) extends \ML with two fragile constructs: polytypes and nominal records.
 Its terms are: variables~$\x$, the unit literal $\eunit$,
 lambda-abstractions $\efun \x \e$, applications $\eapp \ea \eb$,
-annotations $\eannot \e \tvs \t$ and let-bindings $\elet x \ea \eb$, 
+annotations $\eannot \e \tvs \t$ and let-bindings $\elet x \ea \eb$,
 and the following extensions:
 \begin{enumerate*}
 \item
@@ -1776,13 +1829,13 @@ and the following extensions:
 
 \end{enumerate*}
 
-We write $\e^i$ for fragile/implicit forms and $\e^x$ for their explicit 
-counterparts. Typing rules for explicit terms are mostly standard; nominal records 
+We write $\e^i$ for fragile/implicit forms and $\e^x$ for their explicit
+counterparts. Typing rules for explicit terms are mostly standard; nominal records
 are requre a more intricate (yet largely folklore) treatment of \emph{closed
-world} reasoning. 
+world} reasoning.
 %
 The crux of our work is the novel typing of the fragile constructs,
-presented in~\cref {sec/oml/typing/I}. 
+presented in~\cref {sec/oml/typing/I}.
 
 \subsection{Typing rules for robust, explicit constructs}
 \label{sec/oml/typing/X}
@@ -1821,7 +1874,7 @@ $\tvs$, which are existentially quantified to close the annotation, as in
 
 We assume a global label context $\labenv$ mapping labels to their projection type, \ie type
 schemes of the form $\all \tvs \Tapp \tvs \to \t$. A label $\elab$ may
-belong to multiple record types, but is unique within each type $\T$. For a given $\T$, 
+belong to multiple record types, but is unique within each type $\T$. For a given $\T$,
 we write $\Labenv$ for the restriction of $\labenv$ to its labels:
 ${\Labenv} \eqdef \set {\elab : \all \tvs \T \tvs \to \t
 \in \labenv}$ . Thus, $\dom (\Labenv)$ is
@@ -1837,7 +1890,7 @@ the projection scheme $\labenv (\labfrom \elab \T)$.
 %
 Explicit records (\Rule {Rcd-X}) are typed similarly, checking that each field
 has the appropriate type. In addition, the premise asserts $\dom {(\Labenv)} =
-\elabs$ so that the declared fields exactly match the labels of $\T$. 
+\elabs$ so that the declared fields exactly match the labels of $\T$.
 
 \parcomment {Closed world reasoning}
 
@@ -1855,8 +1908,8 @@ in $\labenv$, then the projection $\efield \e \elab$ has the type of $\exfield
 \e \T \elab$ (by \Rule{Rcd-Proj-Closed}).
 
 These two forms of label uniqueness differ. A \emph{closed set} of labels
-may uniquely identify a record type even if no individual label is unique. 
-Conversely, a unique label implies uniquess of every closed set containing it. 
+may uniquely identify a record type even if no individual label is unique.
+Conversely, a unique label implies uniquess of every closed set containing it.
 For instance:
 \begin{program}[input]
   type point  = { x : int; y : int }
@@ -1864,7 +1917,7 @@ For instance:
   let ex_8 = { x = 42; y = 1337 }           °\ocamlflags 00°
 \end{program}
 Here, the closed set $\set {x, y}$ in \code{ex_8} uniquely identifies
-\code{point}, even though the individual labels $x$ and $y$ also appear in 
+\code{point}, even though the individual labels $x$ and $y$ also appear in
 \code{cpoint}.
 %
 We formalize this \emph{closed world uniqueness} using the predicates $\labuni \elab \T$ (a label
@@ -1876,11 +1929,11 @@ identifies $\T$):
     \labsuni \elabs \T &\eqdef& \dom {(\Labenv)} = \elabs &\wedge& \forall \Tp, \;\parens {\dom {(\Labenv[\Tp])} = \elabs \implies {\T} = \Tp}
   \end{tabular}
 \end{mathpar}
-These predicates depend only on the global label environment $\labenv$: 
-they ignore field types and require no contextual type information. 
-The associated typing rules (\Rule{Rcd-Closed}, \Rule{Rcd-Proj-Closed}) are 
-therefore \emph{robust}, since disambiguation relies solely on globally known 
-label information rather than type-directed disambiguation. 
+These predicates depend only on the global label environment $\labenv$:
+they ignore field types and require no contextual type information.
+The associated typing rules (\Rule{Rcd-Closed}, \Rule{Rcd-Proj-Closed}) are
+therefore \emph{robust}, since disambiguation relies solely on globally known
+label information rather than type-directed disambiguation.
 
 \subsection {Typing rules for fragile, implicit constructs}
 \label{sec/oml/typing/I}
@@ -1891,12 +1944,12 @@ label information rather than type-directed disambiguation.
   {Typing rules for fragile, implicitly typed extensions.}
   \begin{bnfgrammar}
     \entry[Terms]{\e}{
-      \dots 
+      \dots
       \and \emagic \es
-    }\\ 
+    }\\
     \entry[Term contexts]{\E}{
-      \eapp \E \e 
-      \and \eapp \e \E 
+      \eapp \E \e
+      \and \eapp \e \E
       \and \dots
     }
   \end{bnfgrammar}
@@ -1939,14 +1992,14 @@ non-compositional.
 All rules instantiate a common framework---the \emph{omnidirectional
 recipe}---which ensures that certain omitted type annotations are uniquely
 determined from the context. Each construct, however, requires a specific
-instantiation of the framework. 
+instantiation of the framework.
 %
 We first describe the framework, then present each feature separately.
 
 \begin{enumerate}
   \item[\emph{Step 1}:] \emph{Contextualize.}
     %
-    Each implicit fragile term $\e^i$ is typed relative to a surrounding one-hole term context $\E$: 
+    Each implicit fragile term $\e^i$ is typed relative to a surrounding one-hole term context $\E$:
     its rule asserts the typability of $\G \th \E \where{\e^i} : \t$ as the conclusion.
 
   \item[\emph{Step 2}:] \emph{Select a unicity condition.}
@@ -1954,22 +2007,22 @@ We first describe the framework, then present each feature separately.
     This is the secret ingredient! The unicity condition ensures that the shape
     $\sh$ is fully determined by the surrounding context $\E$ and
     subexpressions $\es$ (\eg the subexpressions $\es$ in $\erecord
-    {\overline{\elab = \e}}$). 
+    {\overline{\elab = \e}}$).
     %
     These predicates are analogous to the unicity condition $\Cshape \C \t \sh$ for
-    constraints, though the analogy is not exact. Our framework employs 
+    constraints, though the analogy is not exact. Our framework employs
     two variants depending on whether they infer a unique shape for a
     particular subexpression $\eshape[\es] \E \e \sh$ or for the expected type
     of the context's hole $\Eshape \E \es \sh$. \\
 
-    If the $\e^i$ is an introduction form, we infer the shape from the context's 
-    hole $\Eshape \E \es \sh$. If $\e^i$ is an elimination form, 
-    infer the shape from the \emph{principal term} $\e$ (the term whose type contains 
-    the connective we're eliminating) $\eshape[\es] \E \e \sh$. 
+    If the $\e^i$ is an introduction form, we infer the shape from the context's
+    hole $\Eshape \E \es \sh$. If $\e^i$ is an elimination form,
+    infer the shape from the \emph{principal term} $\e$ (the term whose type contains
+    the connective we're eliminating) $\eshape[\es] \E \e \sh$.
 
   \item[\emph{Step 3}:] \emph{Elaborate.}
-    The uniquely inferred shape $\sh$ is used to elaborate $\e^i$ into its explicit 
-    counterpart $\e^x$, and the rule asserts $\G \th \E\where{\e^x} : \t$ as a premise. 
+    The uniquely inferred shape $\sh$ is used to elaborate $\e^i$ into its explicit
+    counterpart $\e^x$, and the rule asserts $\G \th \E\where{\e^x} : \t$ as a premise.
 \end{enumerate}
 
 
@@ -1978,7 +2031,7 @@ We first describe the framework, then present each feature separately.
 In order to define the unicity conditions, we use \emph{typed holes}
 $\emagic \es$. The terms $\es$ are required to be well-typed in the current
 environment (\Rule{Magic}), but their types are independent of the type of the
-hole: the hole itself may be assigned an arbitrary type. 
+hole: the hole itself may be assigned an arbitrary type.
 
 We introduce an erasure function $\eerase \e$, the term counterpart of
 constraint erasure $\cerase \c$, which erases all not-yet-elaborated implicit
@@ -1986,12 +2039,12 @@ constructs $\e^i$ in $\e$ with a typed hole around their subterms. This ensures
 the subterms---such as type annotations---remain present, so that any
 constraints they introduce can still contribute to unicity. For example,
 $\eerase {\efield \e \elab}$ is $\emagic {\cerase \e}$. The full definition is
-given in Appendix \cref{app:full-reference}. 
+given in Appendix \cref{app:full-reference}.
 
-Finally, we define a restricted typing judgement $\G \throbust \e : \ts$, which 
-derives $\G \th \e : \ts$ without using any fragile, implicit typing rules (\Rule{*-I}). 
-This plays the same role for typing as $(\thsimple)$ does for constraint satisfiability, 
-ensuring unicity is well-founded. 
+Finally, we define a restricted typing judgement $\G \throbust \e : \ts$, which
+derives $\G \th \e : \ts$ without using any fragile, implicit typing rules (\Rule{*-I}).
+This plays the same role for typing as $(\thsimple)$ does for constraint satisfiability,
+ensuring unicity is well-founded.
 %
 We can now formalize the two unicity conditions as:
 \begin{mathpar}
@@ -2027,7 +2080,7 @@ $\expoly \e \tvcs \ts$ (\emph{Step 3}).
 
 \paragraph{Implicit nominal records}
 
-Overloaded record labels are handled analogously. 
+Overloaded record labels are handled analogously.
 %
 Typing record projections in \Rule{Rcd-Proj-I} is an \emph{elimination form}
 for the nominal type $\T$: the projection $\efield \e \elab$ is typed as
@@ -2039,7 +2092,7 @@ For record construction, $\erecord {\overline{\elab = \e}}$ is an
 \emph{introduction form}. In \Rule{Rcd-I}, we type an overloaded record
 $\erecord {\overline{\elab = \e}}$ as $\exrecord \T {\overline{\elab = \e}}$
 (\emph{Step 3}), provided the context $\E$ with subterms $\es$ expects a
-nominal record type of shape $\any \tvcs \Tapp \tvcs$ (\emph{Step 2}). 
+nominal record type of shape $\any \tvcs \Tapp \tvcs$ (\emph{Step 2}).
 
 \begin{version}{}
 \begin{example}
@@ -2221,7 +2274,7 @@ $n$. Since the codomain of $f$ must be a tuple of size~$2$ (for $\eapp f (1,
 %       \and \ts \leq \t
 %       \andcr \x \leq \cscm
 %       \and \x \leq \ts
-%       \andcr \dom \ct = \elabs 
+%       \andcr \dom \ct = \elabs
 %       \and \dom {\T} = \elabs
 %     }
 %  \end{bnfgrammar}
@@ -2230,15 +2283,15 @@ $n$. Since the codomain of $f$ must be a tuple of size~$2$ (for $\eapp f (1,
 %   \inferrule[Lab-Inst]
 %     {\semenv \th \labenv(\labfrom \elab {\semenv(\ct)}) \leq \ta \to \tb}
 %     {\semenv \th \labenv(\labfrom \elab \ct) \leq \ta \to \tb}
-% 
+%
 %   \inferrule[Lab-Dom]
 %     {\semenv \th \dom {(\phi(\ct))} = \elabs}
 %     {\semenv \th \dom \ct = \elabs}
-% 
+%
 %   \inferrule[Scm-Inst]
 %     {\semenv \th \semenv(\cscm) \leq \t}
 %     {\semenv \th \cscm \leq \t}
-% 
+%
 %   \inferrule[Abs-Inst]
 %     {\semenv \th \x \leq \semenv(\cscm)}
 %     {\semenv \th \x \leq \cscm}
@@ -2273,7 +2326,7 @@ $n$. Since the codomain of $f$ must be a tuple of size~$2$ (for $\eapp f (1,
 %       {\x \leq (\tfor \tvs \t)}
 %       {\cfor \tvs \capp \x \t}
 %   \end{tabular}
-% 
+%
 % }
 
 
@@ -2304,7 +2357,7 @@ interpretation is the set of all types that $\e$ admits.
 % New constraint gen cases
 % Annotations, tuples
 Annotations bind their flexible variables and enforce the equality of
-the annotated type $\t$ and the expected type $\tv$. 
+the annotated type $\t$ and the expected type $\tv$.
 % Polytypes
 For polytypes, boxing asserts that $\e$ has the polymorphic type $\ts$ (using
 universal quantification) and that the expected type is the polytype $\tpoly
@@ -2345,7 +2398,7 @@ The typing constraint generated for \code{ex_9} contains the following, where $\
       {(\cmatch \tva \dots)}
       {\cinst x \tint \cand \cunif \tv {\Tapp[\mathsf{one}] \tvc}}
 \end{mathpar}
-The suspended constraint can be discharged under our contextual semantics. 
+The suspended constraint can be discharged under our contextual semantics.
 We apply the \Rule{Match-Ctx} rule with context
 $\C$ equal to
 \begin{mathpar}[inline]
@@ -2516,9 +2569,9 @@ considered equal modulo permutation of their members.
 
 
 % DEMONS BE HIDDEN HERE: This figure must begin at the top. The collection of
-% subfigures is carefully crafted to span ~1 1/2 pages. There is some hacking 
-% to avoid LaTeX's float queue getting stuck (and postponing the figures till 
-% the very end). We rely on \clearpage to flush the float queue. To avoid this 
+% subfigures is carefully crafted to span ~1 1/2 pages. There is some hacking
+% to avoid LaTeX's float queue getting stuck (and postponing the figures till
+% the very end). We rely on \clearpage to flush the float queue. To avoid this
 % being fragile, we use \afterpage (which executes it contents after a pagebreak)
 
 \afterpage{
@@ -2602,9 +2655,9 @@ considered equal modulo permutation of their members.
     \begin{bnfgrammar}
       \entry[Instantiation variables]{\inst}{}\\
       \entry[Constraints]{\c}{
-         \dots 
+         \dots
          \and \cletr \x \tv \tvs \ca \cb
-         \andcr \cexistsi \inst \x \c 
+         \andcr \cexistsi \inst \x \c
          \and \cpinst \inst \tv \t
       }\\[1ex]
       \entry[Ground regions]{\GroundRegion \ni \gr}{
@@ -2618,7 +2671,7 @@ considered equal modulo permutation of their members.
     \end{bnfgrammar}
     \\
     \semenv(\cabsr \tv \tvs \c) \uad\eqdef\uad
-      \set {\greg \tv {\semenv\where{\tv \is \gt, \tvs \is \gts}} \in \GroundRegion 
+      \set {\greg \tv {\semenv\where{\tv \is \gt, \tvs \is \gts}} \in \GroundRegion
            : \semenv\where{\tv \is \gt, \tvs \is \gts} \th \c
            }
     \\
@@ -2642,7 +2695,7 @@ considered equal modulo permutation of their members.
       {\semenv \th \cpinst \inst \tv \t}
   \end{mathparsubfig}
 
-  % This is the start of the next subfigure, but it is placed here 
+  % This is the start of the next subfigure, but it is placed here
   % to avoid wasting space
   \begin{mathpar}
     \rewrite[S-Exists-Lower]
@@ -2935,7 +2988,7 @@ corresponding variable $\x$ does not itself appear in $\cb$.
 
 \parcomment{Solving partial instantiations}
 
-Partial instantiation constraints are reduced using the following rules, summarized in 
+Partial instantiation constraints are reduced using the following rules, summarized in
 \cref{fig:solver-schemes}:
 \begin{enumerate}
 
@@ -3396,9 +3449,9 @@ rather than \emph{guessed}. Our constraint solver is omnidirectional:
 constraints may be solved in \emph{any way}, enabled by partial type schemes.
 Through two instantiations of our \emph{omnidirectional recipe}, we obtained a
 sound, complete, and \emph{principal} type inference algorithm---in short,
-principality held \emph{anyway}, precisely because of omnidirectionality. 
+principality held \emph{anyway}, precisely because of omnidirectionality.
 
-\paragraph{Future work} 
+\paragraph{Future work}
 
 \XDR{We are missing a discussion of limitations. See source or
 draft version}
