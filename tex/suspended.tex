@@ -92,14 +92,13 @@ straightforwardly. Others, such as GADTs
 \citep*{conf/icfp/SchrijversJSV09, conf/aplas/GarrigueR13}, higher-rank
 polymorphism \citep*{conf/popl/OderskyL96, journals/pacmpl/SerranoHJV20}, and
 static overloading \citep*{Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}, are
-\emph{fragile}, as their typing depends on the shape of the
-types surrounding the expression---either the types of subexpressions or
-the type expected by the context hole.  Taking the shape of the types that are
-currently beeing inferred would break principality, as the order in which
-types are inferred is unspecified.
+\emph{fragile}: they break principality under their na\"ive typing
+rules.
 \Xalistair{What do you propose? My understanding
 of our characterization of fragile is that the implicit terms na\"ively have
 non-principal typing rules}\XDR{Done, Check}.
+\Xalistair{Undone, the proposed rewrite was both too specific and too vague for the 
+introduction.}
 Principality can be recovered through explicit type annotations.
 The return type of overloaded datatype constructors may be annotated; polymorphic
 expressions can be annotated with a type scheme; and for GADTs, both the type
@@ -112,14 +111,13 @@ polymorphism via \emph{polymorphic object methods}~\citep{Garrigue-Remy/poly-ml}
 let self x = x#f x in self (object method f z = z end)
 \end{program}
 In \OCaml, objects are defined as a collection of methods within
-\code{object ... end}, and accessed using $e \esend m$. Unlike Java or C++,
+\code{object ... end}, and accessed using \ocaml{$e$#$m$}. Unlike Java or C++,
 \OCaml uses \emph{structural typing} for objects: object types are a list of
 method types between two chevrons \eg \ocaml[angles]{<f : 'a. 'a -> 'a>},
 where the method \code{f} has the polymorphic identity function type
 $\all \tv {\tv \to \tv}$ (the $\forall$ being omitted).
-%% \ocaml{'a. 'a -> 'a}, which means
-
-When typing \code{self} in the example anove, one could \emph{guess} the
+%
+When typing \code{self} in the example above, one could \emph{guess} the
 higher-rank type of \code{x} to be either $\epolymeth f \tv
 {\tv \to \tv}$ or $\epolymeth f \tv {\tv \to \tv \to \tv}$
 or---neither of which is strictly more general than the other, violating
@@ -152,13 +150,14 @@ let self' x = if true then x#f x else (x : <f : 'a. 'a -> 'a>) °
 \parcomment {Annotations fixes all the issues (but they're problematic)}
 
 Each fragile construct admits a \emph{robust} counterpart where the type
-annotation is mandatory---for instance, $\eobj{\eannot {e \esend m}{}\ts}$
-is the robust form of $\eobj{e \esend m}$ for polymorphic method
-instantiation.  While robust constructs do not break principality, they are
-significantly more cumbersome to use, as they always require explicit type
-annotations. Fragile forms relieve this burden, but can only be elaborated
-into their robust counterpart if sufficient type information is already
-available from the context.
+annotation is mandatory---for instance, \ocaml{($e$#$m : \ts$)} is the robust
+form of \ocaml{$e$#$m$} \Xalistair{Reverted back, angles for polytype
+instantiation not introduced yet.} for polymorphic method instantiation.  While
+robust constructs do not break principality, they are significantly more
+cumbersome to use, as they always require explicit type annotations. Fragile
+forms relieve this burden, but can only be elaborated into their robust
+counterpart if sufficient type information is already available from the
+context.
 
 \parcomment {The hard part of the problem -- known type information}
 
@@ -266,6 +265,11 @@ methods?}
 {Polymorphic methods also require default rules, since method calls worlk
 for both polymorphic and monomorphic methods. The latter is by defaulting
 in the absence of known polymorphism.}
+\Xalistair
+{The same argument could be applied to static overloading of record types. 
+The difference between polyparams and polymethods is that polyparams with 
+omnidirectionality results in simple programs (e.g. $\efun {f, x} {\eapp f x}$)
+being ill-typed without default rules.}
 
 \subsection{Static overloading of constructors and record labels}
 \label{sec/overview/overloading}
@@ -297,10 +301,8 @@ With both definitions in scope, \OCaml must
 statically disambiguate each field usage\footnote {We
 indicate the success or failure of typechecking each example in both
 \OCaml and \OML on the right-hand side.}:
-\XDR{This is the first occurrence of \OML. We should explain in a footnote}
-\Xalistair{We define what \OML is in contributions, or are you saying this is
-the first code snippet?}\XDR{The first occurrence of OmniML on the
-right-hand side of the code below. I added a footnote.}
+\Xalistair{I think the footnote doesn't add much... the reader should know 
+both the names of \OCaml and \OML, and our red-green lights in codeblocks.}
 \begin{program}[input,check]
 let one = { x = 1; y = 1337 }                            °\ocamlflags 00°
 let ex_1 r = r.x                                         °\ocamlflags 21°
@@ -395,16 +397,19 @@ while preserving principal type inference.
 \parcomment{Idea and syntax}
 
 Polymorphic methods can be translated into ordinary methods that carry a
-\emph{polytype}: a boxed type scheme $\tapoly \ts \av$
-%% (\cref{fig:polyml})
-that can be explicitly unboxed at use sites.
+\emph{polytype}: a boxed type scheme $\tapoly \ts \av$ (\cref{fig:polyml}) that
+can be explicitly unboxed at use sites.
 %
 The purpose of the annotation variable $\av$ will be explained shortly. Boxed
 polytypes are considered to be (mono)types, enabling impredicativity. We write
 $\epoly[\ts] \e$ to box a term $\e$ with the scheme $\ts$, and $\einst \e$ to
 unbox a polytype, instantiating it.
-Polytypes extends terms and types as follows:
-\begin{mathpar}
+
+\Xalistair{Preferred a figure for polytypes. Reverted your change @Didier}
+\begin{mathparfig}[htpb!]
+  {fig:polyml}
+  {Syntax and typing rules for polytypes from \citet*{Garrigue-Remy/poly-ml}.}
+
 \begin{bnfgrammar}
      \entry[Terms]{\e}{
        \epoly[\ts] \e
@@ -421,7 +426,20 @@ Polytypes extends terms and types as follows:
      }\\
     \entry[Annotation variables]{\av}{}
 \end{bnfgrammar}
-\end{mathpar}
+
+  \infer[PolyML-Poly]
+    { \G \th \e : \tsa \\ (\tsa : \ts : \tsb) }
+    {\G \th \epoly[\ts] \e : \tapoly {\tsb} \av}
+
+  \infer[PolyML-Inst]
+    {\G \th \e : \tfor \av {\tapoly \ts \av}}
+    {\G \th \einst \e : \ts}
+
+  \infer[PolyML-Annot]
+    {\G \th \e : \ta \\ (\ta : \t : \tb)}
+    {\G \th \eannot \e {} \t : \tb}
+
+\end{mathparfig}
 
 \parcomment{Example}
 
@@ -443,8 +461,7 @@ This reduction is useful for two reasons:
 
 
   \item Polytypes underpin other features in \OCaml, notably the recent addition
-    of \XDR{Was \emph{higher-rank}, which is incorrect: functions are of
-    higher-rank, but the parameters are of rank-1} polymorphic function
+    of polymorphic function
     parameters \citep*{??} in \OCaml 5.4.
 \end{enumerate*}
 
@@ -454,21 +471,8 @@ This reduction is useful for two reasons:
 For the remainder of this work, we will focus on polytypes\penalty 50---also
 called \emph{semi-explicit first-class polymorphism}
 \citep*{Garrigue-Remy/poly-ml}---since they expose the tricky interaction with
-principality of interest. We now review the typing rules for polytypes:
-%% collected in \cref{fig:polyml}.
-\begin{mathpar}
-\infer[PolyML-Poly]
-    { \G \th \e : \tsa \\ (\tsa : \ts : \tsb) }
-    {\G \th \epoly[\ts] \e : \tapoly {\tsb} \av}
-
-  \infer[PolyML-Inst]
-    {\G \th \e : \tfor \av {\tapoly \ts \av}}
-    {\G \th \einst \e : \ts}
-
-  \infer[PolyML-Annot]
-    {\G \th \e : \ta \\ (\ta : \t : \tb)}
-    {\G \th \eannot \e {} \t : \tb}
-\end{mathpar}
+principality of interest. We now review the typing rules for polytypes
+collected in \cref{fig:polyml}.
 
 \parcomment {Annotation variables. Why?}
 
@@ -667,7 +671,11 @@ boxing and annotation variables. Since $\eannot \e {} \t$ already
 propagates known information, $\epoly \e$ requires no attached annotation;
 and because ``knowness'' now follows from inference modes rather than
 polymorphism, annotation variables are unnecessary.
+
 \XDR{The figure could be turned into mathpar}
+\Xalistair{Prefer the figure, the caption adds some commentary without
+discussing it inline.}
+
 \begin{mathparfig}[htpb!]
   {fig:polybidir}
   {Bidirectionalized polytypes. Annotation variables have been removed.}
@@ -721,6 +729,8 @@ footnote, as not choosing between Syn-App and Chk-App, but still typing
 multiple arguments from left to right. Even if we explained it in more
 detailed in the related work section, as the reader who knows might be upset
 if we don't mention it here.}
+\Xalistair{Agreed, we no-longer review directionality in related work (since 
+we cover it here). So if we are to mention contextual typing, it should be here.}
 
 \paragraph{Limitations of directional type inference}
 
@@ -791,11 +801,13 @@ semi-explicit first-class polymorphism.
 %
 Each feature translates the typability of the term into constraints, formalized
 using a constraint generation function of the form
-\let \TV\t$\cinfer \e
-\TV$\XDR{$\tv$ should be a $\t$ here and below! I wrote \string\TV\space to
-mark them}, which,
-given a term $\e$ and expected type $\TV$, produces a constraint $\c$ which is
-satisfiable if and only if $\e$ has the type $\TV$.
+$\cinfer \e \tv$
+\XDR{$\tv$ should be a $\t$ here and below! I wrote \string\TV\space to
+mark them}
+\Xalistair{It shouldn't. The function is formally defined using $\tv$ not $\t$.}
+, which,
+given a term $\e$ and expected type $\tv$, produces a constraint $\c$ which is
+satisfiable if and only if $\e$ has the type $\tv$.
 
 \parcomment{Why our solution makes things easier?}
 
@@ -828,26 +840,21 @@ we generate the typing constraint:
   {{\labfrom \elab \ct \leq \tlab \tvb \tva}}}
       }
 \end{mathpar}
-%
-This constraint suspends resolution of the return type $\tva$ until the
-record type $\tvb$ of $\e$ is \emph{known}, say some type $\tz$. Its branch
-matches $\tz$ against the nominal type pattern $\cpatrcd \ct$,
-\XDR{It is unclear that $t$ is a meta\textbf{variable}. It looks too much
-like a \texttt t. We must fix thus}
-binding the type constructor name of $\tz$ to~$\ct$\XDR{ or fails otherwise}.
-Using this, the
-globally unique projection type (scheme) $\tfor \tvs {\Tapp[\ct] \tvs \to
-\t}$\XDR{Here $\ct$ should be a meta variable for concrete record names,
-that happens to be equal to $\ct$, but it should not be $\ct$ itself}
-for the qualified label
-$\labfrom \elab \ct$ is instantiated,
-\XDR{We should describe the
-instantiation}\eg to $\Tapp[\ct] {\bar\ta} \to
-\t\where {\tvs \is \bar \ta}$ with $\Tapp[\ct] {\bar\ta}$ equal to $\tz$,
-\relax
-and the resulting constraints are
-imposed on the domain and codomain of the instantiated projection type.
 
+%
+This constraint suspends resolution of the return type $\tva$ until the record
+type $\tvb$ of $\e$ is \emph{known}, say some type $\tz$. Its branch matches
+$\tz$ against the nominal type pattern $\cpatrcd \ct$, 
+%
+\XDR{It is unclear that $t$ is a meta\textbf{variable}. It looks too much like a \texttt t. We must fix
+thus} \Xalistair{Agreed, what would you suggest?} 
+%
+binding the type constructor
+$\T$ to $\ct$ if $\tz$ is $\Tapp \tys$, or fails otherwise. Using this, the
+globally unique projection type (scheme) $\tfor \tvs {\Tapp \tvs \to \t}$ for
+the qualified label $\labfrom \elab \T$ is instantiated, \eg to $\Tapp \tys
+\to \t\where {\tvs \is \tys}$, \relax and the resulting constraints are imposed
+on the domain and codomain of the instantiated projection type.
 
 
 \parcomment{Polytypes}
@@ -864,15 +871,11 @@ constraint:
 \cand
     \cmatch  \tvb {\parens {\cbranch {\tpoly s} s \leq \tva}}
 \end{mathpar}
+%
 The match constraint is suspended until $\tvb$ is resolved to a polytype
-$\tpoly \ts$ matching the pattern $\tpoly s$,
-\XDR
-{It is suspended until $\ts$ matches $\tpoly s$, or rather until
-$\tvb$ is not longer a variable? which then either matches $\tpoly s$ and we
-continue or fails if $\tvb$ does not matches $\tpoly s$.}
-which binds the type scheme
-$\ts$ to the scheme variable $s$. The selected branch then performs the
-instantiation $\cleq s \tva$, that is $\cleq \ts \tva$.
+$\tpoly \ts$ matching the pattern $\tpoly \cscm$; otherwise it fails. 
+Upon success, the type scheme $\ts$ is bound to the scheme variable $s$. The selected branch
+then performs the instantiation $\cleq s \tva$, that is $\cleq \ts \tva$.
 
 \paragraph{Scaling to \ML}
 
