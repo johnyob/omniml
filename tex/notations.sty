@@ -92,7 +92,8 @@
 \newcommand{\cctxequiv}{\equiv_{\square}}
 \newcommand{\centails}{\vDash}
 \newcommand{\ncentails}{\nvDash}
-\newcommand{\cmatches}[5][=]{#2 \Matches #3\;#4 #1 #5}
+\newcommand{\Cmatches}[3]{#1 \Matches #2\;#3}
+\newcommand{\cmatches}[5][=]{\Cmatches {#2}{#3}{#4} #1 #5}
 
 % Solving
 

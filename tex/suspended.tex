@@ -49,7 +49,8 @@ mechanism to incrementally update instances as the scheme is refined.
 
 The benefits of omnidirectional type inference are most apparant for advanced
 \ML extensions that rely on optional type annotations, where
-principality is \emph{fragile}.  We illustrate these advantages with \OCaml's static
+principality is \emph{fragile}.  We illustrate these advantages with
+\OCaml's static
 overloading of record labels and datatype constructors and semi-explicit
 first-class polymorphism.
 %
@@ -681,7 +682,12 @@ polymorphism, annotation variables are unnecessary.
 
 \XDR{The figure could be turned into mathpar}
 \Xalistair{Prefer the figure, the caption adds some commentary without
-discussing it inline.}
+discussing it inline.}\XDR{I disagree. For me, either this illustrate the
+flow of the discussion and is not something to remember and should not be a
+figure, or it is essential for later reference and deserve to be on top of a
+page figure. In this case, the bidirectional rules are some local detail
+that need not be remembered.}
+
 
 \begin{mathparfig}[htpb!]
   {fig:polybidir}
@@ -852,8 +858,6 @@ we generate the typing constraint:
   {{\labfrom \elab \ct \leq \tlab \tvb \tva}}}
       }
 \end{mathpar}
-
-%
 This constraint suspends resolution of the return type $\tva$ until the record
 type $\tvb$ of $\e$ is \emph{known}, say some type $\tz$. Its branch matches
 $\tz$ against the nominal type pattern $\cpatrcd \ct$,
@@ -865,8 +869,11 @@ binding the type constructor
 $\T$ to $\ct$ if $\tz$ is $\Tapp \tys$, or fails otherwise. Using this, the
 globally unique projection type (scheme) $\tfor \tvs {\Tapp \tvs \to \t}$ for
 the qualified label $\labfrom \elab \T$ is instantiated, \eg to $\Tapp \tys
-\to \t\where {\tvs \is \tys}$, \relax and the resulting constraints are imposed
-on the domain and codomain of the instantiated projection type.
+\to \t\where {\tvs \is \tys}$\XDR{We still need to explain the
+instantiation, which otherwise is mysterious: \em where $\tys$ are
+determined so that $\Tapp \tys$ is equal to $\tz$,} and the resulting
+constraints are imposed on the domain and codomain of the instantiated
+projection type.
 
 
 \parcomment{Polytypes}
@@ -886,8 +893,14 @@ constraint:
 %
 The match constraint is suspended until $\tvb$ is resolved to a polytype
 $\tpoly \ts$ matching the pattern $\tpoly \cscm$; otherwise it fails.
-Upon success, the type scheme $\ts$ is bound to the scheme variable $s$. The selected branch
-then performs the instantiation $\cleq s \tva$, that is $\cleq \ts \tva$.
+\XDR
+{This is an incorrect description of the semantcs: it is suspended until
+$\ts$ is no longer a variable, in which case it does not necessarily
+matches $\tpoly s$. Then, either it  matches $\tpoly s$ and we
+continue or the constraint is unsolvable and we fail.}
+Upon success, the type scheme $\ts$ is bound to the scheme variable $s$.
+The selected branch then performs the instantiation $\cleq s \tva$, that is
+$\cleq \ts \tva$.
 
 \paragraph{Scaling to \ML}
 
@@ -935,9 +948,9 @@ a cost, which is that everything is hard:
 
 \item[(\cref{sec:solving})]
 
-  Implementing partial type schemes efficiently is equally hard, as it
-    requires triggering re-instantiations upon refinements to the scheme, while
-    avoiding redundant constraint solving across instantiations.
+  Implementing incremental instantiation efficiently is equally hard, as it
+  requires triggering re-instantiations upon refinements to the scheme, while
+  avoiding redundant constraint solving across instantiations.
 
 \end{enumerate}
 In return, the techniques we developed for the semantics
@@ -1015,8 +1028,8 @@ NP-hard, even in the absence of let-polymorphism, as shown by an encoding of
 \section{Constraints}
 \label{sec:constraints}
 
-%% BEWARE: The following two figures only be located as the top of a page---otherwise  it would be
-%% misplaced
+%% BEWARE: The following two figures only be located as the top of a
+%% page---otherwise  it would be  misplaced
 
 \begin{mathparfig}[t]%
   {fig:constraints}%
@@ -1137,18 +1150,17 @@ NP-hard, even in the absence of let-polymorphism, as shown by an encoding of
 \end{tabular}}
 
 \infer[Match-Ctx]
-    {\Cshape \C \t \sh \and
+    {\Cshape \C \t \sh \\
       \semenv \th \C\where{\cmatched \t \sh \cbrs}
     }
     {\semenv \th \C\where{\cmatch \t \cbrs}}
-\par
+\hfill
 \begin{tabular}{.L.}
   \Cshape \C \t \sh \eqdef \\[.6ex]
   \quad \forall \semenv, \gt. \uad \semenv \thsimple \cerase {\C\where{\cunif \t \gt}} \implies \shape \gt = \sh
 \end{tabular}
-
-
 \end{mathparfig}
+
 
 \parcomment{Why bother with a formal constraint language?}
 
@@ -1173,7 +1185,9 @@ interpretation) of $\overline X$ and $\overline X'$. We often write $X$
 for the singleton set (or sequence).
 
 
-\paragraph{Types} Monotypes (or just types) include, as
+\paragraph{Types}
+
+Monotypes (or just types) include, as
 usual, type variables $\tv$, the unit type $\tunit$, arrow types, but
 also nominal
 types\footnote {Type constructors are prefixed, except in \OCaml code, where
@@ -1193,7 +1207,8 @@ semantics is given by a satisfiability judgement $\semenv \th \c$
 (\cref{fig:constraints}). The semantic environment $\semenv$ assigns to each
 free type variable $\tv$ a ground type $\gt \in \Ground$ (a type with no free
 variables) and to each term variable $\x$ a set of ground types $\gabs
-\subseteq \Ground$ (the instances of a type scheme bound to $\x$).
+\subseteq \Ground$ (the instances of a type scheme bound to
+$\x$).\XDR{The $\gabs$ glyph is unreadable/unparsable}
 %
 We write $\semenv\where{\tv \is \gt}$ and $\semenv\where{\x \is \gabs}$ for the
 extension of $\semenv$ with a new binding. For a type $\t$, we write
@@ -1226,15 +1241,20 @@ function which when applied to some type $\t$ returns $\c \where {\tv \is \t}$.
 %
 Abstractions are introduced by a let construct $(\clet \x \tv \ca \cb)$, which
 binds the constraint abstraction $\cabs \tv \ca$ to the term variable $\x$ in
-$\cb$; semantically, the abstraction is interpreted as a set of ground types
+$\cb$; semantically, the abstraction $\cabs \tv \c$ is interpreted as a set
+of ground types
 that satisfies $\c$, and we require that this set be non-empty \ie
 there is at least one instantiation of $\tv$ that satisfies $\c$.
 %
 Applications $\capp \x \t$ eliminate abstractions, applying the type
 $\t$ to the abstraction bound to $\x$. This holds precisely when $\semenv(\t)
-\in \semenv(\x)$ \ie $\t$ is one of the satisfiable instances of $\x$. Concretely,
+\in \semenv(\x)$, \ie $\t$ is one of the satisfiable instances of $\x$.
+Concretely,
 if $\semenv(\x) = \semenvp(\cabs \tv \c)$, where
-$\semenvp$ is the environment at the binding site of $\x$, then $\semenv(\t)
+$\semenvp$ is the environment at the binding site of~$\x$\XDR{It is unclear
+what this means. Actually I find this explaination quite confusing, while
+$\semenv(\x) \in \semenv (\cabs \tv \c)$ was clear enough},
+then $\semenv(\t)
 \in \semenv(\x)$ holds iff $\semenvp\where{\tv \is \semenv(\t)} \th \c$, which
 corresponds to the intuition that the application $\capp {(\cabs \tv \c)} \t$
 should be equivalent to $\c \where {\tv \is \t}$.
@@ -1249,9 +1269,11 @@ Finally, we introduce \textit{suspended match constraints} $(\cmatch \t \cbrs)$.
 %% }
 These constraints are \emph{suspended} until
 the \textit{shape} of $\t$, such as its top-level constructor,
-is known. Then they are \emph{discharged}: a unique branch is selected
+is known. Then, they are \emph{discharged}: a unique branch is selected
 and its associated constraint has to be solved. A match constraint
-that is never discharged is considered unsatisfiable.
+that is never discharged is considered unsatisfiable.\XDR{Verbatim
+repetition of lines 777--779. That's annoying: we should cut one of them or
+rephrase.}
 
 More precisely:
 \begin{enumerate*}
@@ -1416,7 +1438,7 @@ be represented as the shape application $\shapp (\tint \tlist)$.
 
 \parcomment{Defining semantics for suspended constraints is hard}
 
-A central difficulty of our work on suspended constraints was defining a
+A central difficulty in our work on suspended constraints was defining a
 satisfying semantics. The challenge lies in formalizing what it means for type
 information to be \emph{known} without presupposing a \emph{static} solving
 order. Our semantics is declarative but, unlike the rules of
@@ -1424,9 +1446,8 @@ order. Our semantics is declarative but, unlike the rules of
 complicates reasoning and proofs. On the upside, our semantics directly suggest
 declarative typing rules for the surface language (\cref{sec/oml}).
 
-
-To define the semantics for suspended constraints, we first introduce \emph{discharged
-match constraints}.
+To define the semantics for suspended constraints, we first introduce
+\emph{discharged match constraints}.
 
 \begin{definition}[Discharged match constraint]
   Given a suspended constraint $(\cmatch \t \cbrs)$ and a canonical shape
@@ -1436,11 +1457,11 @@ match constraints}.
 \begin{mathpar}
   \cmatched \t \sh {\overline {\cbranch \cpat \c}} \uad\eqdef\uad
   \begin{cases}
-    \cexists \tvs \cunif \t \shapp \tvs \cand \theta(\ci) & \text{if } \cmatches \cpati \sh \tvs \theta\\
+    \cexists \tvs \cunif \t \shapp \tvs \cand \theta(\ci)
+    & \text{if } \Cmatches \cpati \sh \tvs = \theta\\
     \cfalse & \text{otherwise}
   \end{cases}
 \end{mathpar}
-
 The first conjunct ($\tau = \shapp \tvs$) ensures that $\sh$ is indeed the
 canonical shape of $\t$, and the second conjunct is the selected branch
 constraint $\ci$ under the appropriate substitution. Since the syntax of
@@ -1450,13 +1471,19 @@ determined; but it may not exist as branches need not be exhaustive, in
 which case the discharged constraint is $\cfalse$.
 \end{definition}
 
-The function ($\cmatches \cpat \sh \tvcs \theta$) is defined in
-\cref{fig:constraints}. It matches a pattern $\cpat$ against a canonical
+The partial function $(\Cmatches \cpat \sh \tvcs)$
+\XDR{Either it is a (partial) function that returns a substitution
+or a relation. As written it is a relation. But it should be defined as a
+function that returns a substitution}
+is defined in
+\cref{fig:constraints}: it matches a pattern $\cpat$ against a canonical
 principal shape $\sh$ opened with fresh shape variables $\tvcs$ (of the same
-arity as $\sh$), producing a substitution $\theta$ from pattern variables (\eg
-nominal type variables $\ct$) to shape components (\eg nominal type names
-$\T$), which may themselves mention $\tvcs$. For example, the wildcard pattern
-$\cpatwild$ matches any shape, yielding the empty substitution.
+arity as $\sh$), which either fails or returns a substitution $\theta$ from
+pattern variables (\eg nominal type variables $\ct$) to shape components
+(\eg nominal type names $\T$)\XDR{This distinction should have been
+explained earlier}, which may themselves mention $\tvcs$. For example, the
+wildcard pattern $\cpatwild$ matches any shape, yielding the empty
+substitution.
 
 \paragraph {A natural attempt}
 
@@ -1468,7 +1495,6 @@ is to propose the following rule---henceforth referred to as the
   {\sh = \shape {\semenv(\t)} \\ \semenv \th \cmatched \t \sh \cbrs}
   {\semenv \th \cmatch \t \cbrs}
 \end{mathpar}
-
 %
 This rule states that a suspended constraint holds whenever the corresponding
 discharged constraint holds for the canonical shape $\sh$ of $\semenv(\t)$ in
@@ -1497,12 +1523,14 @@ permissive. For example, $\cexists \tv \cmatch \tv {\cbranch \cpatwild {\cunif
   {\semenv \th \cexists \tv \cmatchex}
 }
 \end{mathpar}
-
-The semantics can \emph{guess} a type of $\tv$ (\eg $\tint$) in order to
+The natural semantics can \emph{guess} a type of $\tv$ (\eg $\tint$) in order to
 discharge the match constraint, rather than requiring $\tv$'s type to be
 \emph{known} from the surrounding context. This \emph{ex nihilo} (``out of thin
-air'') behavior does not match the intended meaning of suspended match
-constraints and raises several problems:
+air'')\XDR{This is not so much \emph{out of thin air}, as it is not an
+arbitrary, but a correct guess. So I think the expression \emph{ex nihilo}
+is misleading here and we should stick with the idea of \emph{an oracle
+guessing} the/a correct solution} behavior does not match the intended
+meaning of suspended match constraints and raises several problems:
 \begin{enumerate*}
   \item a reasonable solver---one that avoids guessing or backtracking---cannot
     be complete with respect to this semantics;
@@ -1571,7 +1599,8 @@ corresponding to the order in which a solver may discharge them: a match
 constraint may only be discharged once all of its dependencies have been
 discharged.
 
-The erasure of $\cerase{\C\where{\cunif \t \gt}}$ is simple, so the use of
+The erasure of $\cerase{\C\where{\cunif \t \gt}}$ is a simple constraint, so
+the use of
 $\thsimple$ avoids well-foundedness issues that would arise from
 a negative occurrence of $(\th)$ in a premise of \Rule{Match-Ctx}.
 %
@@ -1583,7 +1612,8 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
 \parcomment {Examples}
 
 \begin{example}
-  Recall the problematic example that was satisfiable under the natural semantics:
+  Recall the problematic example that was satisfiable under the natural
+  semantics:
 \begin{mathpar}
   \cexists \tv \cmatch \tv {\cbranch \cpatwild {\cunif \tv \tint}}
 \end{mathpar}
@@ -1594,7 +1624,6 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
   allowing $\gt$ to have an arbitrary shape (\eg $\tint$, $\tbool$, \etc). As a
   result, the uniqueness condition $\Cshape \C \tv \sh$ never holds making
   \Rule{Match-Ctx} inapplicable. The constraint is unsatisfiable as intended.
-
 \end{example}
 
 \begin{example}
@@ -1604,11 +1633,10 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
   \cand
   \cmatch \tv {\cbranch \cpatwild \ctrue}
 \end{mathpar}
-  Here, we apply the contextual rule with the context \relax $\C \is \cexists \tv
+  Here, we apply the contextual rule with the context $\C$ equal to $\cexists \tv
   \cunif \tv \tint \cand \square$. Any solution $\semenv$ of this context
   necessarily satisfies \relax $\cunif \tv \tint$, so we have \relax $\Cshape
   \C \tv \tint$ and the suspended constraint can be discharged.
-
 \end{example}
 \begin{example}
   Consider the more intricate example:
@@ -1626,19 +1654,20 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
       {\def \and{)\wide\wedge(}\parens{\EX}}
   }
 \end{mathpar}
-
   Suppose we attempt to apply \Rule{Match-Ctx} to the match on $\tvb$ first. We
-  want to show $\Cshape \C \tvb \tbool$ for the context $\C \is \cmatch \tv
-  {(\cbranch \cpatwild {\cunif \tvb \tbool})} \cand \square \cand \cunif \tva
+  want to show $\Cshape \C \tvb \tbool$ for the context $\C$ equal to
+  $(\cmatch \tv
+  {\cbranch \cpatwild {\cunif \tvb \tbool}}) \cand \square \cand \cunif \tva
   \tint$. Its erasure $\cerase \C$ is $\ctrue \cand \square \cand \cunif \tva
   \tint$, which imposes no constraints on $\tvb$. Thus both \relax $\cerase
   {{\C\where{\cunif \tvb \tint}}}$ and \relax $\cerase {\C\where{\cunif \tvb
   \tbool}}$ are satisfiable: unicity does not hold and \Rule{Match-Ctx} cannot
   be applied.
 
-  By contrast, if we first discharge the match on $\tva$, we consider the the
-  context $\C \is \square \cand \cmatch \tvb {\cbranch \cpatwild \ctrue} \cand
-  \cunif \tva \tint$. Its erasure $\cerase \C = \square \cand \ctrue \cand
+  By contrast, if we first discharge the match on $\tva$, we consider the
+  context $\C$ equal to $\square \cand (\cmatch \tvb {\cbranch \cpatwild
+  \ctrue}) \cand
+  \cunif \tva \tint$. Its erasure $\cerase \C$ equal to $\square \cand \ctrue \cand
   \cunif \tva \tint$ does constraint $\tva$, giving $\Cshape \C \tva \tint$.
   %
   We may therefore discharge the match on $\tva$, rewriting it as
@@ -1647,7 +1676,7 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
   are left to satisfy the constraint $\C \where {\tva = \tint \cand \cunif \tvb \tbool}$ \ie
 \begin{mathpar}[inline]
   \cunif \tva \tint \cand \cunif \tvb \tbool \cand
-  \cmatch \tvb {\cbranch \cpatwild \ctrue} \cand
+  (\cmatch \tvb {\cbranch \cpatwild \ctrue}) \cand
   \cunif \tva \tint
 \end{mathpar}.
   %

@@ -37,9 +37,9 @@
   \ifXXX@warning \PackageWarning {XXX}{#4[#3]#2}{}\fi
   \ifXXX@ignore \else
      \ifhmode \@XXXtrue \fi
-        {\color{#5}\ifmmode \mathbf{#4} \else \bfseries {#4} \fi
-     [\space \ifthenelse {\equal{}{#2}} {} {{\em #2:} }#3\space 
-       \ifvmode \if@XXX \aftergroup \XXX@par\fi\fi]} 
+        {\penalty 50\color{#5}\ifmmode \mathbf{#4} \else \bfseries {#4} \fi
+     [\space \ifthenelse {\equal{}{#2}} {} {{\em #2:} }#3\space
+       \ifvmode \if@XXX \aftergroup \XXX@par\fi\fi]}
   \fi
   \XXX@end
 }
