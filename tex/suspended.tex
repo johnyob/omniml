@@ -97,8 +97,10 @@ rules.
 \Xalistair{What do you propose? My understanding
 of our characterization of fragile is that the implicit terms na\"ively have
 non-principal typing rules}\XDR{Done, Check}.
-\Xalistair{Undone, the proposed rewrite was both too specific and too vague for the 
+\Xalistair{Undone, the proposed rewrite was both too specific and too vague for the
 introduction.}
+\XDR{Maybe it was too detailed, but I then don't understand what are ``"your
+naive typing rules'' If such rules do not exist, it then does not make sense!}
 Principality can be recovered through explicit type annotations.
 The return type of overloaded datatype constructors may be annotated; polymorphic
 expressions can be annotated with a type scheme; and for GADTs, both the type
@@ -152,7 +154,8 @@ let self' x = if true then x#f x else (x : <f : 'a. 'a -> 'a>) °
 Each fragile construct admits a \emph{robust} counterpart where the type
 annotation is mandatory---for instance, \ocaml{($e$#$m : \ts$)} is the robust
 form of \ocaml{$e$#$m$} \Xalistair{Reverted back, angles for polytype
-instantiation not introduced yet.} for polymorphic method instantiation.  While
+instantiation not introduced yet.}\XDR{I don't undestand:: my macro $\esend$
+was doing the same thin but with better spacing. No angles where introduced...}for polymorphic method instantiation.  While
 robust constructs do not break principality, they are significantly more
 cumbersome to use, as they always require explicit type annotations. Fragile
 forms relieve this burden, but can only be elaborated into their robust
@@ -262,12 +265,12 @@ since we cannot type them without default rules. Plus it raises the
 question: if polyparams are better, why bother explaining polymorphic
 methods?}
 \XDR
-{Polymorphic methods also require default rules, since method calls worlk
+{Polymorphic methods also require default rules, since method calls work
 for both polymorphic and monomorphic methods. The latter is by defaulting
 in the absence of known polymorphism.}
 \Xalistair
-{The same argument could be applied to static overloading of record types. 
-The difference between polyparams and polymethods is that polyparams with 
+{The same argument could be applied to static overloading of record types.
+The difference between polyparams and polymethods is that polyparams with
 omnidirectionality results in simple programs (e.g. $\efun {f, x} {\eapp f x}$)
 being ill-typed without default rules.}
 
@@ -301,8 +304,10 @@ With both definitions in scope, \OCaml must
 statically disambiguate each field usage\footnote {We
 indicate the success or failure of typechecking each example in both
 \OCaml and \OML on the right-hand side.}:
-\Xalistair{I think the footnote doesn't add much... the reader should know 
+\Xalistair{I think the footnote doesn't add much... the reader should know
 both the names of \OCaml and \OML, and our red-green lights in codeblocks.}
+\XDR{Maybe the footnote is the best way to introduce the \OML column, but
+we must mention it. Moreover, the name \OML hasn't been introduced yet!}
 \begin{program}[input,check]
 let one = { x = 1; y = 1337 }                            °\ocamlflags 00°
 let ex_1 r = r.x                                         °\ocamlflags 21°
@@ -406,6 +411,8 @@ $\epoly[\ts] \e$ to box a term $\e$ with the scheme $\ts$, and $\einst \e$ to
 unbox a polytype, instantiating it.
 
 \Xalistair{Preferred a figure for polytypes. Reverted your change @Didier}
+\XDR{That's minor, but I disagree... Otherwise, if it is important to make
+it a Figue it should be moved to the top of the page}
 \begin{mathparfig}[htpb!]
   {fig:polyml}
   {Syntax and typing rules for polytypes from \citet*{Garrigue-Remy/poly-ml}.}
@@ -729,7 +736,7 @@ footnote, as not choosing between Syn-App and Chk-App, but still typing
 multiple arguments from left to right. Even if we explained it in more
 detailed in the related work section, as the reader who knows might be upset
 if we don't mention it here.}
-\Xalistair{Agreed, we no-longer review directionality in related work (since 
+\Xalistair{Agreed, we no-longer review directionality in related work (since
 we cover it here). So if we are to mention contextual typing, it should be here.}
 
 \paragraph{Limitations of directional type inference}
@@ -804,7 +811,12 @@ using a constraint generation function of the form
 $\cinfer \e \tv$
 \XDR{$\tv$ should be a $\t$ here and below! I wrote \string\TV\space to
 mark them}
-\Xalistair{It shouldn't. The function is formally defined using $\tv$ not $\t$.}
+\Xalistair{It shouldn't. The function is formally defined using $\tv$ not
+$\t$.}
+\XDR{But here you are not defining the function, just introducing the
+notation $\cinfer \e \t$ which should be defined for both variables and
+functions. $\cinfer \e \tint$ should be allowed and well-defined and
+equivalent to $\cexists \tv \cinfer \e \tv \wedge \tv = \tint$}
 , which,
 given a term $\e$ and expected type $\tv$, produces a constraint $\c$ which is
 satisfiable if and only if $\e$ has the type $\tv$.
@@ -844,10 +856,10 @@ we generate the typing constraint:
 %
 This constraint suspends resolution of the return type $\tva$ until the record
 type $\tvb$ of $\e$ is \emph{known}, say some type $\tz$. Its branch matches
-$\tz$ against the nominal type pattern $\cpatrcd \ct$, 
+$\tz$ against the nominal type pattern $\cpatrcd \ct$,
 %
 \XDR{It is unclear that $t$ is a meta\textbf{variable}. It looks too much like a \texttt t. We must fix
-thus} \Xalistair{Agreed, what would you suggest?} 
+thus} \Xalistair{Agreed, what would you suggest?}
 %
 binding the type constructor
 $\T$ to $\ct$ if $\tz$ is $\Tapp \tys$, or fails otherwise. Using this, the
@@ -873,7 +885,7 @@ constraint:
 \end{mathpar}
 %
 The match constraint is suspended until $\tvb$ is resolved to a polytype
-$\tpoly \ts$ matching the pattern $\tpoly \cscm$; otherwise it fails. 
+$\tpoly \ts$ matching the pattern $\tpoly \cscm$; otherwise it fails.
 Upon success, the type scheme $\ts$ is bound to the scheme variable $s$. The selected branch
 then performs the instantiation $\cleq s \tva$, that is $\cleq \ts \tva$.
 
@@ -1131,7 +1143,7 @@ NP-hard, even in the absence of let-polymorphism, as shown by an encoding of
     {\semenv \th \C\where{\cmatch \t \cbrs}}
 \par
 \begin{tabular}{.L.}
-  \Cshape \C \t \sh \eqdef \\[.6ex] 
+  \Cshape \C \t \sh \eqdef \\[.6ex]
   \quad \forall \semenv, \gt. \uad \semenv \thsimple \cerase {\C\where{\cunif \t \gt}} \implies \shape \gt = \sh
 \end{tabular}
 
@@ -1168,8 +1180,8 @@ types\footnote {Type constructors are prefixed, except in \OCaml code, where
 they are postfixed.}  $\T \tys$, and polytypes $\tpoly \ts$.  Type schemes
 $\ts$ are of the form $\all \tvs \t$, they are equal up to the reordering of
 binders and removal of useless variables. We write $\TyVars$ for the set of type variables.
-We write $\tvs \disjoint \t$ as a short-hand for $\tvs \disjoint \fvs \t$, where $\fvs -$ 
-computes the set of free variables of a given type. 
+We write $\tvs \disjoint \t$ as a short-hand for $\tvs \disjoint \fvs \t$, where $\fvs -$
+computes the set of free variables of a given type.
 
 
 \parcomment{Figure / Judgement shape}
@@ -1198,7 +1210,7 @@ $\ta$ and $\tb$ are equal (\Rule{Unif}).
 An existential constraint $\cexists \tv \c$ holds if there exists a witness
 $\gt$ for $\tv$ satisfying $\c$ (\Rule{Exists}), while a universal constraint
 $\cfor \tv \c$ holds if $\c$ is satisfied for every binding of $\tv$
-(\Rule{Forall}). 
+(\Rule{Forall}).
 %
 When $\ts$ is a polymorphic type scheme $\tfor \tvs \tp$, we use the notation
 $\cleq \ts \t$ as syntactic sugar for the instantiation constraint $\cexists
@@ -2804,9 +2816,9 @@ Our algorithm is largely standard, with it main novelty being the use of
 treatment of monotypes and polytypes simplifies unification and improves on the
 previous treatment of polytype unification \citep{Garrigue-Remy/poly-ml}. For a
 detailed discussion of the unification rules, see Appendix
-\cref{app:unification}. 
+\cref{app:unification}.
 
-% Something fishy appears to be happening here. 
+% Something fishy appears to be happening here.
 % Adding the below fixes this, but still adding some vertical space 🤷
 
 \par\noindent\ignorespaces
@@ -3352,7 +3364,7 @@ differently (as the constraint is copied on instantiation).
 Qualified types are excellent choice when this is the desired behavior,
 typically for \emph{dynamic overloading} \citep{??}. But they are insufficient
 when we require a unique resolution of the constraint across all instances---as
-in \emph{static overloading}. 
+in \emph{static overloading}.
 
 \citet{Leijen-Ye/prefix@pldi2025} recently propsed a bidrectional account of
 generalized static overloading within \ML. However, their approach is limited by
@@ -3365,7 +3377,7 @@ macros, introducing \emph{choices}  $a \angles {\ea, \eb}$, where $a$ is a
 fixed, we are able to project a well-typed non-variational program.
 \citet{benevs2025simple} apply this machinery to recast static overloading as
 variational typing, with a resolution algorithm that uniquely selects the
-dimensions. 
+dimensions.
 %
 However, their system removes \emph{local let-generalization} and requires an
 exponential-time resolution procedure---an unavoidable consequence of the
@@ -3388,11 +3400,11 @@ Suspending constraints that cannot be solved yet is not a novel idea: it is a
 standard approach to implement unification dependently-typed systems. This goes
 back to Huet's algorithm for higher-order unification~\citep*{huet-unif} and
 pattern unification~\citep*{Miller/pattern-unif@iclp91} where flexible-flexible
-pairs are delayed until at least one side becomes rigid. 
+pairs are delayed until at least one side becomes rigid.
 %
 Our contribution lies in combining constraint suspension with \ML-style
 implicit polymorphism--- largely absent from dependently typed systems---and in
-formulating a declarative constraint semantics. 
+formulating a declarative constraint semantics.
 
 Conditional constraints \citep*{journals/njc/Pottier00} also delay resolution,
 waiting until the top-level constructor of a type is known. They provide an
@@ -3403,7 +3415,7 @@ difference forces our semantics to track with is \emph{known} in a context.
 Consequently, unresolved conditional constraints may enter a generalized type
 scheme as a form of qualified types, while our suspended constraints cannot.
 These semantic differences lead the two approaches to address very different
-user-facing type system features. 
+user-facing type system features.
 
 
 \OutsideIn~\citep*{conf/icfp/SchrijversJSV09} is a type system for GADTs that
@@ -3444,14 +3456,14 @@ systems for higher-rank polymorphism exist; here we highlight a few in the
 context of \ML. \MLF is an extension of \ML that supports first-class
 polymorphism that goes beyond the power of System $\mathsf{F}$, while retaining
 type inference. It is a generalization of \citet{Garrigue-Remy/poly-ml}'s
-polytypes, relying on \geninst-directionality, but it remains unclear how to 
-scale \MLF to the rest of \OCaml's features. 
+polytypes, relying on \geninst-directionality, but it remains unclear how to
+scale \MLF to the rest of \OCaml's features.
 %
-\FreezeML is an impredicative type inference system in which polymorphic 
-variables can be \emph{frozen}, written $\lceil x \rceil$, and only allowing 
-instantiation on ordinary (unfrozen) variables $x$. Unlike polytypes, 
-\FreezeML permits higher-rank types directly in the syntax of types, though these 
-can be encoded back into polytypes. The essential difference is that generalization 
+\FreezeML is an impredicative type inference system in which polymorphic
+variables can be \emph{frozen}, written $\lceil x \rceil$, and only allowing
+instantiation on ordinary (unfrozen) variables $x$. Unlike polytypes,
+\FreezeML permits higher-rank types directly in the syntax of types, though these
+can be encoded back into polytypes. The essential difference is that generalization
 of higher-rank types is implicit, inferring the most-general type (if one exists).
 %
 \QuickLook, Haskell's latest approach at impredicative higher-rank polymorphism,
