@@ -102,6 +102,9 @@ non-principal typing rules}\XDR{Done, Check}.
 introduction.}
 \XDR{Maybe it was too detailed, but I then don't understand what are ``"your
 naive typing rules'' If such rules do not exist, it then does not make sense!}
+\Xgabriel{Maybe this could be formulated as: ``they have a simple typing rule
+  when the use-case is annotated, but common fallback rules in absence of
+  type annotations break principality.''}
 Principality can be recovered through explicit type annotations.
 The return type of overloaded datatype constructors may be annotated; polymorphic
 expressions can be annotated with a type scheme; and for GADTs, both the type
@@ -133,9 +136,10 @@ they treat \code{f} monomorphically and fail on this example.}  a minimal
 amount of \emph{known} type information; in this example the binding of
 \code{x} should be annotated with the higher-rank type
 $\epolymeth f \tv {\tv \to \tv}$.
-Yet, specifying annotatability declaratively is difficult. As a result, the
-specifications are often twisted with some direct or indirect algorithmic
-flavor in order to preserve principality and completeness.
+Yet, specifying \Xgabriel[annotatability]{meh} declaratively is
+difficult. As a result, the specifications are often twisted with some
+direct or indirect algorithmic flavor in order to preserve principality
+and completeness.
 
 Moreover, these (more or less) ad-hoc restrictions commonly reject examples
 whose type could easily be guessed. For instance, \OCaml accepts or rejects the
