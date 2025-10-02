@@ -197,13 +197,14 @@ suspended typing constraints are resumed.
 
 \parcomment {Grounding our work with the requirement of let-generalization}
 
-Suspended constraints have been studied before (see \cref{sec:related-work}),
-but always in restricted settings. A key contribution of our work is to scale
-this idea to full \ML type inference in the presence of \emph{local
-let-generalization}, which is indispensable in \OCaml\footnote{In contrast,
-Haskell only supports top-level let-generalization.}. This is a hard
-requirement of our setting, as the fragile features we target---static
-overloading, polymorphic methods, and others---are those present in \OCaml.
+We intend to eventually apply our work to \OCaml, so the fragile features
+we target---static overloading, polymorphic methods, and others---are
+those present in \OCaml. In particular, while the idea of suspending
+constraints is not new (see \cref{sec:related-work}), we show how to
+combine suspended constraints and Hindley-Damas-Milner \emph{local
+  let-generalization}; it is indispensable in \OCaml\footnote{In contrast,
+  Haskell only supports top-level let-generalization.} but makes suspended
+constraints uniquely difficult to implement and specify declaratively.
 
 \subsection* {Contributions}
 
