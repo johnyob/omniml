@@ -306,14 +306,8 @@ overlapping field names:
 type 'a one = {x : 'a; y : int}
 type two = {x : int}
 \end{program}
-With both definitions in scope, \OCaml must
-statically disambiguate each field usage\footnote {We
-indicate the success or failure of typechecking each example in both
-\OCaml and \OML on the right-hand side.}:
-\Xalistair{I think the footnote doesn't add much... the reader should know
-both the names of \OCaml and \OML, and our red-green lights in code-blocks.}
-\XDR{Maybe the footnote is the best way to introduce the \OML column, but
-we must mention it. Moreover, the name \OML hasn't been introduced yet!}
+With both definitions in scope, \OCaml must statically disambiguate each
+field usage:
 \begin{program}[input,check]
 let one = { x = 1; y = 1337 }                            °\ocamlflags 00°
 let ex_1 r = r.x                                         °\ocamlflags 21°
