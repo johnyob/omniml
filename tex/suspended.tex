@@ -47,7 +47,7 @@ and \emph{incremental instantiation}, which allow taking instances of a
 partially solved type scheme containing suspended constraints, with a
 mechanism to incrementally update instances as the scheme is refined.
 
-The benefits of omnidirectional type inference are most apparant for advanced
+The benefits of omnidirectional type inference are most apparent for advanced
 \ML extensions that rely on optional type annotations, where
 principality is \emph{fragile}.  We illustrate these advantages with
 \OCaml's static
@@ -93,10 +93,10 @@ straightforwardly. Others, such as GADTs
 \citep*{conf/icfp/SchrijversJSV09, conf/aplas/GarrigueR13}, higher-rank
 polymorphism \citep*{conf/popl/OderskyL96, journals/pacmpl/SerranoHJV20}, and
 static overloading \citep*{Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}, are
-\emph{fragile}: they break principality under their na\"ive typing
+\emph{fragile}: they break principality under their naive typing
 rules.
 \Xalistair{What do you propose? My understanding
-of our characterization of fragile is that the implicit terms na\"ively have
+of our characterization of fragile is that the implicit terms naively have
 non-principal typing rules}\XDR{Done, Check}.
 \Xalistair{Undone, the proposed rewrite was both too specific and too vague for the
 introduction.}
@@ -155,7 +155,7 @@ let self' x = if true then x#f x else (x : <f : 'a. 'a -> 'a>) °
 Each fragile construct admits a \emph{robust} counterpart where the type
 annotation is mandatory---for instance, \ocaml{($e$#$m : \ts$)} is the robust
 form of \ocaml{$e$#$m$} \Xalistair{Reverted back, angles for polytype
-instantiation not introduced yet.}\XDR{I don't undestand:: my macro $\esend$
+instantiation not introduced yet.}\XDR{I don't understand:: my macro $\esend$
 was doing the same thin but with better spacing. No angles where introduced...}for polymorphic method instantiation.  While
 robust constructs do not break principality, they are significantly more
 cumbersome to use, as they always require explicit type annotations. Fragile
@@ -196,7 +196,7 @@ suspended typing constraints are resumed.
 Suspended constraints have been studied before (see \cref{sec:related-work}),
 but always in restricted settings. A key contribution of our work is to scale
 this idea to full \ML type inference in the presence of \emph{local
-let-generalization}, which is indispensible in \OCaml\footnote{In contrast,
+let-generalization}, which is indispensable in \OCaml\footnote{In contrast,
 Haskell only supports top-level let-generalization.}. This is a hard
 requirement of our setting, as the fragile features we target---static
 overloading, polymorphic methods, and others---are those present in \OCaml.
@@ -243,7 +243,7 @@ The subsequent sections present technical contributions: \begin{enumerate}
 \end{enumerate}
 Finally, \cref{sec:related-work} compares related work. Section
 \cref{sec:future-work} concludes with future work. Appendix
-\cref{app:full-reference} contains a complete techinical reference, collecting
+\cref{app:full-reference} contains a complete technical reference, collecting
 key definitions and figures for convenient lookup. All proofs are deferred to
 the appendices.
 
@@ -271,7 +271,7 @@ for both polymorphic and monomorphic methods. The latter is by defaulting
 in the absence of known polymorphism.}
 \Xalistair
 {The same argument could be applied to static overloading of record types.
-The difference between polyparams and polymethods is that polyparams with
+The difference between polyparams and polymorphic methods is that polyparams with
 omnidirectionality results in simple programs (e.g. $\efun {f, x} {\eapp f x}$)
 being ill-typed without default rules.}
 
@@ -288,7 +288,7 @@ such as dictionary-passing or dynamic dispatch. Many mainstream languages, such
 as C++, Rust, and Java, use static overloading; its appeal is that it provides
 a \emph{zero-cost} abstraction.
 
-\parcomment{OCaml}
+\parcomment{\OCaml}
 
 \OCaml supports a limited yet useful form of static overloading for record
 labels and datatype constructors. Ambiguity is resolved using \emph{known
@@ -306,7 +306,7 @@ statically disambiguate each field usage\footnote {We
 indicate the success or failure of typechecking each example in both
 \OCaml and \OML on the right-hand side.}:
 \Xalistair{I think the footnote doesn't add much... the reader should know
-both the names of \OCaml and \OML, and our red-green lights in codeblocks.}
+both the names of \OCaml and \OML, and our red-green lights in code-blocks.}
 \XDR{Maybe the footnote is the best way to introduce the \OML column, but
 we must mention it. Moreover, the name \OML hasn't been introduced yet!}
 \begin{program}[input,check]
@@ -318,7 +318,7 @@ let ex_3 = { x = 42 }                                      °\ocamlflags 00°
 %
 The type of expression \ocaml!one! can only be \code{int one}.  Similarly,
 \code{r.y} necessarily infers \code{one} for the type of \code{r}. By
-constrast, \code{r.x} is ambiguous unless the type of \code{r} is
+contrast, \code{r.x} is ambiguous unless the type of \code{r} is
 \emph{known}.
 %
 In \ocaml{ex_1}, the type of \code{r} is unconstrained, so disambiguation
@@ -387,7 +387,7 @@ only on record fields in this work. Our prototype implementation
 \parcomment{Why polymorphic methods?}
 
 Polymorphic methods \citep*{Garrigue-Remy/poly-ml} bring some System-$\F$-like
-expressivity to \OCaml by allowing impredicative, higher-rank polymorphism
+expressiveness to \OCaml by allowing impredicative, higher-rank polymorphism
 while preserving principal type inference.
 
 %% \begin{mathparfig}[htpb!]%
@@ -413,7 +413,7 @@ unbox a polytype, instantiating it.
 
 \Xalistair{Preferred a figure for polytypes. Reverted your change @Didier}
 \XDR{That's minor, but I disagree... Otherwise, if it is important to make
-it a Figue it should be moved to the top of the page}
+it a Figure it should be moved to the top of the page}
 \begin{mathparfig}[htpb!]
   {fig:polyml}
   {Syntax and typing rules for polytypes from \citet*{Garrigue-Remy/poly-ml}.}
@@ -668,7 +668,7 @@ but the opposite, mode-correct choice (\Rule{Chk-App}) is also possible:
 Within the bidirectional framework, a type $\t$ is \emph{known} when it is either:
 \begin{enumerate*}
   \item part of an annotation,
-  \item supplied as input to a checking judgement in the conclusion
+  \item supplied as input to a checking judgment in the conclusion
   ($\Leftarrow \t$), or
   \item produced by a synthesizing premise ($\Rightarrow \t$)
 \end{enumerate*}.
@@ -677,10 +677,10 @@ Using this discipline, we can recast polytypes and eliminate two artifacts
 needed in our \geninst-directional presentation: explicit annotations on
 boxing and annotation variables. Since $\eannot \e {} \t$ already
 propagates known information, $\epoly \e$ requires no attached annotation;
-and because ``knowness'' now follows from inference modes rather than
+and because ``knownness'' now follows from inference modes rather than
 polymorphism, annotation variables are unnecessary.
 
-\XDR{The figure could be turned into mathpar}
+\XDR{The figure could be turned into {mathpar}}
 \Xalistair{Prefer the figure, the caption adds some commentary without
 discussing it inline.}\XDR{I disagree. For me, either this illustrate the
 flow of the discussion and is not something to remember and should not be a
@@ -748,7 +748,7 @@ we cover it here). So if we are to mention contextual typing, it should be here.
 \paragraph{Limitations of directional type inference}
 
 Bidirectional type inference is lightweight, practical, and well-suited for
-complex language features such as higher-rank polymorphism, depedent types, or
+complex language features such as higher-rank polymorphism, dependent types, or
 subtyping. It supports the propagation of type information with minimal
 annotations. Its main downside lies in the need to fix an often arbitrary flow
 of type information---as in the case of function applications discussed above.
@@ -801,7 +801,7 @@ constructor) is known. Then, they are \emph{discharged}: a unique branch is
 selected and its associated constraint has to be solved. A match constraint
 that is never discharged is considered unsatisfiable.
 
-For now, it sufficies to think of shapes as top-level constructors (\eg a
+For now, it suffices to think of shapes as top-level constructors (\eg a
 nominal record type $\Tapp \tys$) and shape patterns $\cpat$ as type `destructors'
 that may bind type information (\eg the name of a nominal record type $\T$) to
 meta-variables used in $\cs$. This will be made precise in \cref{sec/constraints/shapes}.
@@ -894,7 +894,7 @@ constraint:
 The match constraint is suspended until $\tvb$ is resolved to a polytype
 $\tpoly \ts$ matching the pattern $\tpoly \cscm$; otherwise it fails.
 \XDR
-{This is an incorrect description of the semantcs: it is suspended until
+{This is an incorrect description of the semantics: it is suspended until
 $\ts$ is no longer a variable, in which case it does not necessarily
 matches $\tpoly s$. Then, either it  matches $\tpoly s$ and we
 continue or the constraint is unsolvable and we fail.}
@@ -1198,12 +1198,12 @@ We write $\tvs \disjoint \t$ as a short-hand for $\tvs \disjoint \fvs \t$, where
 computes the set of free variables of a given type.
 
 
-\parcomment{Figure / Judgement shape}
+\parcomment{Figure / Judgment shape}
 
 \paragraph{Constraints} Building atop the constraint-based type inference framework of
 \citet*{Pottier-Remy/emlti}, we adopt a constraint language
 (\cref{fig:constraints}) that includes both term and type variables. Its
-semantics is given by a satisfiability judgement $\semenv \th \c$
+semantics is given by a satisfiability judgment $\semenv \th \c$
 (\cref{fig:constraints}). The semantic environment $\semenv$ assigns to each
 free type variable $\tv$ a ground type $\gt \in \Ground$ (a type with no free
 variables) and to each term variable $\x$ a set of ground types $\gabs
@@ -1218,7 +1218,7 @@ $\semenv(\t)$ for the ground type obtained by substitution.
 \parcomment{Semantics detailed}
 
 Constraints include basic logical forms: tautological $\ctrue$ (\Rule{True}),
-unsatisfiable $\cfalse$, and conjuctive $\ca \cand \cb$ (\Rule{Conj})
+unsatisfiable $\cfalse$, and conjunctive $\ca \cand \cb$ (\Rule{Conj})
 constraints. The unification constraint $\cunif \ta \tb$ is satisfied when
 $\ta$ and $\tb$ are equal (\Rule{Unif}).
 %
@@ -1252,7 +1252,7 @@ $\t$ to the abstraction bound to $\x$. This holds precisely when $\semenv(\t)
 Concretely,
 if $\semenv(\x) = \semenvp(\cabs \tv \c)$, where
 $\semenvp$ is the environment at the binding site of~$\x$\XDR{It is unclear
-what this means. Actually I find this explaination quite confusing, while
+what this means. Actually I find this explanation quite confusing, while
 $\semenv(\x) \in \semenv (\cabs \tv \c)$ was clear enough},
 then $\semenv(\t)
 \in \semenv(\x)$ holds iff $\semenvp\where{\tv \is \semenv(\t)} \th \c$, which
@@ -1295,7 +1295,7 @@ More precisely:
 
 \end{enumerate*}
 The formal semantics of suspended match constraints are somewhat involved,
-so we defer a full explaination until we define \emph{shapes}.
+so we defer a full explanation until we define \emph{shapes}.
 
 \begin{wraphbox}{0.2}{0.6}
 \begin{mathpar}[inline]
@@ -1712,7 +1712,7 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
 
 
   Without loss of generality, suppose we attempt to apply \Rule{Match-Ctx} on
-  $\tva$ first. We must establishy $\Cshape \C \tva \tint$ for the context $\C
+  $\tva$ first. We must establish $\Cshape \C \tva \tint$ for the context $\C
   \is \square \cand \cmatch \tvb {\cbranch \cpatwild {\cunif \tva \tint}}$. But
   the erasure $\cerase \C$ is $\square \cand \ctrue$, which imposes no constraint on
   $\tva$. Hence unicity fails and \Rule{Match-Ctx} is inapplicable.
@@ -1779,7 +1779,7 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
     {\G \th e : \ts \where{\tv \is \t}}
 
   \inferrule[Let]
-    {\G \th \ea : \sigma \\\\
+    {\G \th \ea : \sigma \\
      \G, x : \sigma \th \eb : \t}
     {\G \th \elet x \ea \eb : \t}
 
@@ -1796,7 +1796,7 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
     {\G \th \exinst e \tvs \ts : \ts \where {\tvs \is \tys}}
 
   \inferrule[Rcd-X]
-    {\parens{\G \th \ei : \ti}\iton \\\\
+    {\parens{\G \th \ei : \ti}\iton \\
      \parens{{\labfrom \elabi \T} \leq \t \to \ti}\iton \\
      \dom {(\Labenv[\T])} = \elabs}
     {\G \th \exrecord \T {\elaba = \ea; \ldots; \elab_n = \en} : \t}
@@ -1828,8 +1828,9 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
 To prove correctness of constraint generation, we must define a surface
 language and its type system. Surprisingly, identifying an appropriate
 declarative type system to use as a specification is itself an interesting
-problem! In particular, na\"ive specifications for fragile features often fail
-to preserve principality.
+problem! In particular, naive specifications for fragile features often fail
+to preserve principality.\XDR{What naive specification(s) do you have in mind?
+The one I have in mine preserves principality---but is inefficient}
 
 \parcomment {Why do naive approaches not guarantee principal types.}
 
@@ -1841,7 +1842,7 @@ to preserve principality.
 \end{mathpar}
 \end{wraphbox}
 
-Consider polytypes. We can ask the user to provide type scheme $\ts$ when
+Consider polytypes. We can ask the user to provide a type scheme $\ts$ when
 unboxing, via an annotated syntax $\exinst \e \tvs \ts$, which has a simple
 typing rule (\Rule{Use-X}). On the other hand, the natural typing rule for the
 fragile unboxing construct $\einst \e$ breaks principality (\Rule{Use-I-Nat}).
@@ -1878,9 +1879,9 @@ and the following extensions:
 
 \end{enumerate*}
 
-We write $\e^i$ for fragile/implicit forms and $\e^x$ for their explicit
+We write $\e^i$ for fragile, implicit forms and $\e^x$ for their explicit
 counterparts. Typing rules for explicit terms are mostly standard; nominal records
-are requre a more intricate (yet largely folklore) treatment of \emph{closed
+are require a more intricate (yet largely folklore) treatment of \emph{closed
 world} reasoning.
 %
 The crux of our work is the novel typing of the fragile constructs,
@@ -1897,19 +1898,23 @@ has type scheme~$\ts$.
 %
 Rules \Rule{Var} through \Rule{Let} are standard. Annotations $\eannot \e \tvs
 \t$ (\Rule{Annot}) ensures that the type of $\e$ is (an instance of) the type
-$\t$. The type variables $\tvs$ are \emph{flexibly} (or existentially) bound in
-$\t$, meaning they may be unified with some types $\tys$ to produce a
-well-typed term. For instance, the term $(\efun \x \x + 1 : \exi \tv \tv \to
+$\t$. The type variables $\tvs$ are \emph{flexibly} (or existentially) bound
+in $\t$, meaning they may be \XDR[unified with]{No this is a spec, it does
+not perform unification}
+instantiated by some types $\tys$ so that $\ts \where{\tv  \is\tys}$ is a correct
+type for $\e$.  For instance, the term $(\efun \x \x + 1 : \exi \tv \tv \to
 \tv)$ is well-typed under \Rule{Annot} with the substitution $\where {\tv \is
 \tint}$.
 
 
 \paragraph {Explicit polytypes}
 
-\Rule{Poly-X} serves as the introduction rule: given the (closed) type scheme
+Rule \Rule{Poly-X} serves as the introduction rule: given the (closed) type
+scheme
 $\ts$, it forms a first-class polytype $\tpoly \ts$, requiring the expression
 $\e$ to be at least as polymorphic as $\ts$. \Rule {Use-X} is the corresponding
-elimination rule, unpacking a polytype $\tpoly \ts$ into its scheme $\ts$,
+elimination rule, unpacking an expression of polytype $\tpoly \ts$ into
+one of polymorphic type $\ts$,
 which may be freely instantiated (via \Rule{Inst}). Both rules also allow
 polytype annotations to be partial, \ie $\ts$ may have free type variables
 $\tvs$, which are existentially quantified to close the annotation, as in
@@ -1921,15 +1926,18 @@ $\tvs$, which are existentially quantified to close the annotation, as in
 
 \parcomment{Nominal records}
 
-We assume a global label context $\labenv$ mapping labels to their projection type, \ie type
+We assume a global label context $\labenv$ mapping labels to their
+projection type, \ie type
 schemes of the form $\all \tvs \Tapp \tvs \to \t$. A label $\elab$ may
-belong to multiple record types, but is unique within each type $\T$. For a given $\T$,
+belong to multiple record types, but is unique within each type $\T$. For a
+given $\T$,
 we write $\Labenv$ for the restriction of $\labenv$ to its labels:
 ${\Labenv} \eqdef \set {\elab : \all \tvs \T \tvs \to \t
 \in \labenv}$ . Thus, $\dom (\Labenv)$ is
 the set of labels belonging to $\T$,  and $\labtyp \elab$,
 abbreviated as $\labenv (\labfrom \elab \T)$, is the unique
-scheme $\tfor \tvs {\Tapp \tvs} \to \t$ associated with $\elab$ in $\T$ (if defined).
+scheme $\tfor \tvs {\Tapp \tvs} \to \t$ associated with $\elab$ in $\T$ (if
+defined).
 
 Label instantiations are typed by an auxiliary judgment ${\labfrom \elab \T}
 \leq \tya \to \tyb$ (\Rule{Lab-Inst}). Explicit field projections
@@ -1948,7 +1956,7 @@ the absence of ambiguity in the label context $\labenv$ to infer record annotati
 %
 In particular, in a record expression $\erecord {\elaba = \ea; \ldots; \elab_n
 = \en}$, if the set of labels ${ \elaba, \ldots, \elab_n }$ uniquely identifies
-a record type $\T$ in the context $\labenv$, then the record has the
+a record type $\T$ in the context~$\labenv$, then the record has the
 type of $\exrecord \T {\elaba = \ea; \ldots; \elab_n = \en}$ (via
 \Rule{Rcd-Closed}).
 %
@@ -1958,7 +1966,7 @@ in $\labenv$, then the projection $\efield \e \elab$ has the type of $\exfield
 
 These two forms of label uniqueness differ. A \emph{closed set} of labels
 may uniquely identify a record type even if no individual label is unique.
-Conversely, a unique label implies uniquess of every closed set containing it.
+Conversely, a unique label implies uniqueness of every closed set containing it.
 For instance:
 \begin{program}[input]
   type point  = { x : int; y : int }
@@ -2065,13 +2073,14 @@ We first describe the framework, then present each feature separately.
     of the context's hole $\Eshape \E \es \sh$. \\
 
     If the $\e^i$ is an introduction form, we infer the shape from the context's
-    hole $\Eshape \E \es \sh$. If $\e^i$ is an elimination form,
-    infer the shape from the \emph{principal term} $\e$ (the term whose type contains
-    the connective we're eliminating) $\eshape[\es] \E \e \sh$.
+    hole $\Eshape \E \es \sh$. If $\e^i$ is an elimination form, we infer
+    the shape from the \emph{principal term} $\e$ (the term whose type
+    contains the connective we're eliminating): $\eshape[\es] \E \e \sh$.
 
   \item[\emph{Step 3}:] \emph{Elaborate.}
-    The uniquely inferred shape $\sh$ is used to elaborate $\e^i$ into its explicit
-    counterpart $\e^x$, and the rule asserts $\G \th \E\where{\e^x} : \t$ as a premise.
+    The uniquely inferred shape $\sh$ is used to elaborate $\e^i$ into its
+    explicit counterpart~$\e^x$, and the rule asserts $\G \th \E\where{\e^x}
+    : \t$ as a premise.
 \end{enumerate}
 
 
@@ -2079,8 +2088,8 @@ We first describe the framework, then present each feature separately.
 
 In order to define the unicity conditions, we use \emph{typed holes}
 $\emagic \es$. The terms $\es$ are required to be well-typed in the current
-environment (\Rule{Magic}), but their types are independent of the type of the
-hole: the hole itself may be assigned an arbitrary type.
+environment (\Rule{Magic}), but their types are independent of the type of
+the hole: the hole itself may be assigned an arbitrary type.
 
 We introduce an erasure function $\eerase \e$, the term counterpart of
 constraint erasure $\cerase \c$, which erases all not-yet-elaborated implicit
@@ -2089,8 +2098,10 @@ the subterms---such as type annotations---remain present, so that any
 constraints they introduce can still contribute to unicity. For example,
 $\eerase {\efield \e \elab}$ is $\emagic {\cerase \e}$. The full definition is
 given in Appendix \cref{app:full-reference}.
+\XDR{I think we should import all but monomorphic cases. Otherwise, the use
+of erasure is too mysterious.}
 
-Finally, we define a restricted typing judgement $\G \throbust \e : \ts$, which
+Finally, we define a restricted typing judgment $\G \throbust \e : \ts$, which
 derives $\G \th \e : \ts$ without using any fragile, implicit typing rules (\Rule{*-I}).
 This plays the same role for typing as $(\thsimple)$ does for constraint satisfiability,
 ensuring unicity is well-founded.
@@ -2218,23 +2229,23 @@ $n$. Since the codomain of $f$ must be a tuple of size~$2$ (for $\eapp f (1,
 \Crule
   {\cinfer {\eannot \e \tvs \t} \tv}
   {\cexists \tvs \cunif \tv \t \cand \cinfer \e \tv}
-\\
-\Crule
-  {\cinfer {\etuple {\ea, \ldots, \en}} \tv}
-  {\cexists \tvs \cunif \tv {\tProd \tvs}
-    \cand \cAnd \iton \cinfer \ei {\tv_i}}
-\\
-\Crule
-  {\cinfer {\exproj \e j n} \tv}
-  {\cexists {\tvb, \tvbs}
-    \cinfer \e \tvb
-    \cand \cunif \tvb {\tProd \tvbs}
-    \cand \cunif \tv {\tvb_j}}
-\\
-\Crule
-  {\cinfer {\eproj \e j} \tv}
-  {\cexists \tvb \cinfer \e \tvb
-    \cand \cmatch \tvb {\cbranch {\cpatprod \tvc j} {\cunif \tv \tvc}}}
+%% \\
+%% \Crule
+%%   {\cinfer {\etuple {\ea, \ldots, \en}} \tv}
+%%   {\cexists \tvs \cunif \tv {\tProd \tvs}
+%%     \cand \cAnd \iton \cinfer \ei {\tv_i}}
+%% \\
+%% \Crule
+%%   {\cinfer {\exproj \e j n} \tv}
+%%   {\cexists {\tvb, \tvbs}
+%%     \cinfer \e \tvb
+%%     \cand \cunif \tvb {\tProd \tvbs}
+%%     \cand \cunif \tv {\tvb_j}}
+%% \\
+%% \Crule
+%%   {\cinfer {\eproj \e j} \tv}
+%%   {\cexists \tvb \cinfer \e \tvb
+%%     \cand \cmatch \tvb {\cbranch {\cpatprod \tvc j} {\cunif \tv \tvc}}}
 \\
 \Crule
   {\cinfer {\expoly \e \tvs \ts} \tv}
@@ -2284,8 +2295,8 @@ $n$. Since the codomain of $f$ must be a tuple of size~$2$ (for $\eapp f (1,
     & \text{if } \labsuni \elabs \T \\
     \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi & \text{otherwise} \\
     \uad\cand \cmatch \tv {\cbranch {\cpatrcd \ct}
-      {\dom {\ct} = \elabs \cand \cAnd\iton \labfrom \elabi \ct \leq \tv \to \tvbi}} &
-  \end{cases} }
+      {\dom \ct = \elabs \cand \cAnd\iton \labfrom \elabi \ct \leq \tv \to \tvbi}} &
+   \end{cases}}
 \\
 \Crule
   {\cinfer {\exrecord \T {\overline{\elab = \e}}} \tv}
@@ -2378,13 +2389,17 @@ $n$. Since the codomain of $f$ must be a tuple of size~$2$ (for $\eapp f (1,
 %
 % }
 
-
-
 % Intro
 We now present the formal translation from terms $\e$ to constraints $\c$,
 such that the resulting constraint is satisfiable if and only if the term is
 well typed. The translation is defined as a function $\cinfer \e \tv$, where $\e$
 is the term to be translated and $\tv$ is the expected type of $\e$.
+
+\XDR{I do not see any reason to defined $\cinfer \e \tv$ instead of
+$\cinfer \e \t$. In principle, $\cinfer \e \t$ could itself be treated as a
+constraint that is equivalent to its expansion. Then, we should be able to
+substitute free variables by simple types in the constraint. If this is not
+the case, then something is suspicious.}
 
 The function $\cinfer - {\mathop{=}}$ is defined in \cref{fig/constraint-gen}.
 All generated type variables are fresh with respect to the expected type $\tv$,
@@ -2399,7 +2414,7 @@ fully constrained by type variables defined outside the abstraction's scope
 and therefore cannot be generalized. Applications introduce two fresh flexible,
 one for the argument type and one for the type of the function, typing each
 subterm with these, ensuring $\tv$ is the expected return type.
- Let-bindings generates a polymorphic let constraint; $\cabs \tv
+ Let-bindings generate a polymorphic let constraint; $\cabs \tv
 {\cinfer \e \tv}$ is a principal constraint abstraction for $\e$: its intended
 interpretation is the set of all types that $\e$ admits.
 
@@ -2408,32 +2423,49 @@ interpretation is the set of all types that $\e$ admits.
 Annotations bind their flexible variables and enforce the equality of
 the annotated type $\t$ and the expected type $\tv$.
 % Polytypes
+\XDR{I removed tuples from the Figure}\relax
 For polytypes, boxing asserts that $\e$ has the polymorphic type $\ts$ (using
 universal quantification) and that the expected type is the polytype $\tpoly
-\ts$. Unboxing suspends until the inferred type of $\e$ is known to be a
-polytype, captured by the pattern $\cpatpoly \cscm$, at which point we require
-$\tv$ to be an instance of $\cscm$. Explicit unboxing is analogous, but uses an
-explicit scheme $\ts$ and therefore does not require a suspended match
-constraint. Implicit boxing infers the principal type for $\e$ using a $\Let$
+\ts$.
+Conversely, explicit unboxing requires that $\tv$ be an instance of $\ts$.
+By contrast, implicit unboxing suspends until the inferred type of $\e$ is
+known to be a polytype, captured by the pattern $\cpatpoly \cscm$, at which
+point we require $\tv$ to be an instance of $\cscm$.
+%% Explicit unboxing is analogous, but uses an
+%% explicit scheme $\ts$ and therefore does not require a suspended match
+%% constraint.
+Implicit boxing infers the principal type for $\e$ using a $\Let$
 constraint and suspends until the expected type of the entire term is known to
 be a polytype, bound to $\cscm$. We then assert that the principal type of $\e$
 is at least as general as $\cscm$, via the constraint $\x \leq \cscm$.
 
 % Records
 Record projections generate a fresh variable for the nominal record type and
-constrain $\e$ to this type, suspending until the type of $\e$ ($\tvb$) is
-known to be a nominal record type $\ct$. Once resolved, the type of the
-projected label is retrieved from $\labenv$ and instantiated.
+constrain $\e$ to this type, suspending until the type $\tvb$ of $\e$ is
+known to be a nominal record type $\ct$.  Once resolved, the type of the
+projected label is retrieved from the global label context $\labenv$ and
+instantiated.
 %
-For record expressions, we generate a fresh variable $\tvbi$ for each field
-assignment constraining each assignment $\ei$ to $\tvbi$. The rest of the
+For record expressions, we generate a fresh variable $\tvbi$
+for each field assignment to capture the type of each $\ei$ as $\tvbi$.
+The rest of the
 constraint is deferred until the context determines the type of the whole
-record type to be $\ct$. Once known, the labels are instantiated to match the
-assignments $\tv \to \tvbi$, and we addition check that the domain of $\ct$ is
-exactly $\elabs$, ensuring that every label is defined.
+record type to be $\ct$. Once known, the labels are instantiated to match
+the projection types $\tv \to \tvbi$, and we additionally check that the domain
+of $\ct$ is exactly $\elabs$, ensuring that every label is defined.
+\XDR{Now, we need $\dom \ct = \elabs$ to be part of the language of
+constraints!----as it not longer be a side condition at the constraint
+generation. We also need the constraint ${\labfrom \elab \ct \leq \tvb \to
+\tv}$. This slightly pollutes the language of constraints, which may the
+framework even more dependent on each feature. Typical side conditions,
+which could be dealt with at the metalevel, have to be turned into new constrains.}
 %
 Explicit records and projections, along with closed-world disambiguated terms,
 bypass suspension and directly instantiate the appropriate labels.
+
+\XDR{We should also read the constraint for type schemes and environments}
+\XDR{In fact, we do define constraints for types $\cinfer \e \t$... here.
+This definition should not be a definition but an equivalence.}
 
 \begin{example}
 Considering the example:
@@ -2456,8 +2488,9 @@ $\C$ equal to
 \end{mathpar}.
 Although the context includes a \code{let}-binding---which in practice
 involves \code{let}-generalization---we can still deduce $\Cshape \C \tv
-{\any \tvcp \Tapp[\mathsf{one}] \tvcp}$, since the erased context $\cerase \C$ contains the
-unification $\cunif \tv {\Tapp[\mathsf{one}] \tvc}$.
+{\any \tvcp \Tapp[\mathsf{one}] \tvcp}$, since the erased context $\cerase
+\C$ contains the unification constraint $\cunif \tv {\Tapp[\mathsf{one}]
+\tvc}$.
 
 This example illustrates that our formulation of suspended constraints
 interacts nicely with \code{let}-polymorphism. Although the two features are
@@ -2473,7 +2506,9 @@ let ex_1_0 = let getx r = r.x in getx {x = 1; y = 1}  °\ocamlflags 10°
 \end{program}
 As in the previous example, the type of \code{r} cannot be disambiguated in the
 \code{let}-definition alone. In the previous example, this type was unified
-to a known shape in the \code{let}-body. Here, this is more subtle: an
+to a known shape in the \code{let}-body. Here, this is more subtle:
+\XDR{I don't understand the next two sentences}
+an
 \emph{instance} of the type scheme is taken, which is only well-typed if
 \code{r} has a variable type or a type of the form
 \ocaml{'a one}. The projection \code{r.x} would be
@@ -2496,13 +2531,15 @@ The constraint generated when typing
 \end{mathpar}
 With the context $\C$ equal to $\clet {getx}
 \tvd {\cexists {\tvb, \tvc} \cunif \tvd {\tvb \to \tvc} \cand \square}
-{\capp {getx} {(\tint \ \mathsf{one} \to \tv)}}$, we can show the unicity predicate $\Cshape \C \tvb \sh$ for the shape $\sh = (\any \tvc {\tvc~\mathsf{one}})$.
+{\capp {getx} {(\tint \ \mathsf{one} \to \tv)}}$, we can show the unicity
+predicate $\Cshape \C \tvb \sh$ for the shape $\sh$ equal to $(\any \tvc
+{\tvc~\mathsf{one}})$.
 %% That is:
 %% \begin{mathpar}
 %%   \all {\semenv, \gt} \uad
 %%     \semenv \th \cerase {\C\where{\cunif \tvb \gt}} \implies \shape \gt = \sh
 %% \end{mathpar}
-For any $\semenv, \gt$, the erasure $\cerase {\C \where {\cunif \tvb \gt}}$
+For any \XDR{$\semenv$, }$\gt$, the erasure $\cerase {\C \where {\cunif \tvb \gt}}$
 is
 \begin{mathpar}[inline]
 \clet {getx}
@@ -2524,6 +2561,9 @@ hence the generated constraint for \code{ex_1_0} is satisfiable.
 Constraint generation is sound and complete with respect to the typing judgment.
 That is to say, the term $\e$ is typable with $\t$ if and only if
 $\cinfer \e \tv$ is satisfiable when $\tv$ is $\t$.
+\XDR[This should juts be]{$\cinfer \e \t$ is satisfiable.}
+\XDR{Idem below}
+
 %
 \begin{theorem}[Constraint generation is sound and complete]
   \label{thm:constraint-gen-is-sound-and-complete}
@@ -2996,7 +3036,7 @@ solving the $\Let$ constraint that binds \code{x}.
 \parcomment {Partial type schemes}
 
 Nonetheless, to continue solving the let-body, we must assign a scheme to
-\code{x}. We na\"ively pick $\tfor \tvb \tvb$. This appears unsound, since
+\code{x}. We naively pick $\tfor \tvb \tvb$. This appears unsound, since
 $\tvb$ will later unify with $\tint$ once the match constraint is discharged.
 But it would be incomplete to lower $\tvb$ as a monomorphic variable.
 %
@@ -3395,7 +3435,7 @@ typically for \emph{dynamic overloading} \citep{??}. But they are insufficient
 when we require a unique resolution of the constraint across all instances---as
 in \emph{static overloading}.
 
-\citet{Leijen-Ye/prefix@pldi2025} recently propsed a bidrectional account of
+\citet{Leijen-Ye/prefix@pldi2025} recently proposed a bidirectional account of
 generalized static overloading within \ML. However, their approach is limited by
 its reliance on fixed directionality (\cref{sec/overview/directional}).
 %
@@ -3469,10 +3509,10 @@ Later work on \OutsideIn argues
 delayed implication constraints make local let-generalization all but
 unmanageable, both in theory and implementation. Their proposed fix is to
 abandon local let-generalization altogether. By contrast, our work shows that
-the diffcult interactions between let-generalization and suspended constraints
+the difficult interactions between let-generalization and suspended constraints
 can be resolved. Furthermore, \OutsideIn forgoes a declarative specification
 complete with respect to its inference algorithm, on the grounds that such a
-specification would be ``as compilicated and hard to understand as the
+specification would be ``as complicated and hard to understand as the
 [inference] algorithm''. We believe that our \emph{omnidirectional recipe}
 could provide a declarative specification: one capable of being principal and
 complete for GADTs, and we would be interested in studying this application.
@@ -4143,7 +4183,7 @@ $\epoly [\exi \tvcs \ts] \e$ provided the context $\E$ with
 expressions $\e$ expects a polytype of shape $\any \tvcs \tpoly \ts$.
 %
 This rule differs from the previous two as the shape is determined by the
-ztype of the context hole as opposed to the type of $\e$.
+type of the context hole as opposed to the type of $\e$.
 
 
 \paragraph{Overloaded record labels}
@@ -8922,5 +8962,9 @@ TODO: extend the magic rule and the disambiguation rule, and also provide the un
 % LocalWords:  rcl env Pcd illtyped inHole Ui unfoldings welltyped mprset
 % LocalWords:  lessskip Xbla Ybla explicitating Composability composability
 % LocalWords:  determinacy subcases unifications annotatability approxi Rcx
-% LocalWords:  mation macroified cpoint concretize Dom destructor Zp
-% LocalWords:  destructors
+% LocalWords:  mation macroified cpoint concretize Dom omnidirectionality
+% LocalWords:  hindley popl garrigue monomorphically polyparams polyml Chk
+% LocalWords:  impredicativity PolyML knownness mathpar polybidir nihilo
+% LocalWords:  Bidirectionalized destructors unparsable metalevel Erwig CPP
+% LocalWords:  Variational Walkingshaw ifdef variational benevs goldilocks
+% LocalWords:  Pottier's unsuspended sep Det Esc
