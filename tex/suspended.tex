@@ -2853,11 +2853,11 @@ preserve typability in its operational semantics.
 
 \infer[Uni-Var]
   {\color{gray}\tv \disjoint \bvs \Cb}
-  {\th \Cshape {\Ca\where{\cunif \tv {\cunif \t \ueq} \cand \Cb\where{-}}} \tv {~\shape \t}}
+  {\th \Cshape {\Ca\where{\cunif \tv {\cunif \t \ueq} \cand \Cb\where{-}}} \tv {\shape \t}}
 
 \infer[Uni-Type]
   {{\color{gray}\t \notin \TyVars}}
-  {\th \Cshape \C \t {~\shape \t}}
+  {\th \Cshape \C \t {\shape \t}}
 
 \infer[Uni-BackProp]
   {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand -}}} \tvc \sh \\
@@ -2870,9 +2870,8 @@ preserve typability in its operational semantics.
 }
 % ends \afterpage
 
-
-
 \parcomment{Intro}
+
 We now present a machine for solving constraints in our language. The solver
 operates as a rewriting system on constraints $\c \csolve \cp$. Once no further
 transitions are applicable, \ie $\c \cnsolve$, the constraint $\c$ is either in
@@ -2913,7 +2912,8 @@ later/rather point to an extended version of the paper}
 \par\noindent\ignorespaces
 \begin{definition}[Solved form $\hat\up$]
 \label{def:solved-form}
-A solved form is a constraint $\hat\up$ of the form $\cexists \tvs {\cAnd \iton \ueqi}$, where:
+A solved form is a constraint $\hat\up$ of the form $\cexists \tvs {\cAnd
+\iton \ueqi}$, where:
 \begin{enumerate*}
   \item each $\ueqi$ contains at most one non-variable type;
   \item each variable may occur as a term in at most one $\ei$
@@ -3273,7 +3273,9 @@ case the shape is simply $\shape \t$. \Rule{Uni-Var} applies when the scrutinee
 is a variable $\tv$ and the context establishes that $\tv$ is equal to some
 non-variable type $\t$ by exhibiting an equality $\cunif \tv {\cunif \t \ueq}$
 and $\t$ is a non-variable type. In this case, the shape of $\tv$ is $\shape
-\t$.
+\t$.\XDR{We should at least explain that $-$ stands for the hole. But I then
+do not understand what why $\tv ! \shape \tv$ is not inlined in the hole?}
+\XDR{Same question for \Rule {Uni-BackProp}}
 %
 Finally, \Rule{Uni-BackProp} expresses \emph{backpropagation}, previously
 illustrated in \cref{ex:backprop}. In particular, the shape of a regional
@@ -3283,9 +3285,10 @@ partial instantiation $\cpapp \x \tvp \tvc \inst$ together with a proof that the
 $\tvc$ has the unique shape $\sh$. Then $\tvp$ must also have shape $\sh$,
 as any other shape would render the instantiation unsatisfiable.
 %
-This final case (\Rule{Uni-BackProp}) may raise concerns about the well-foundedness of $\th \Cshape \C \t \sh$.
-However, well-foundedness follows directly from the fact that in \Rule{Uni-BackProp} the regional depth
-of the hole strictly decreases.
+This final case (\Rule{Uni-BackProp}) may raise concerns about the
+well-foundedness of $\th \Cshape \C \t \sh$.
+However, well-foundedness follows directly from the fact that in
+\Rule{Uni-BackProp} the regional depth of the hole strictly decreases.
 %
 For a solved context $\hat\C$, this relation is moreover sound and complete with respect
 to the semantic definition of unicity (\cref{def:unicity}).
@@ -3294,6 +3297,11 @@ to the semantic definition of unicity (\cref{def:unicity}).
 % May look like space hacks, but restatable introduces its own space
 \Xalistair{@Didier, can you take a look at the new correctness corollary to check if
 this is what you wanted in terms of scoping?}
+\XDR{I still don't like the way  Progress is stated. For me there should be a notion of
+well-formed constraints whose simplification would never introduce unbound
+variable subcases. Well-formed constraints should be well-scopes. All
+rewritting rules should preserve scoping. Progress would then have 3 cases.
+Solved or ill-scoped or stuck.}
 
 \begin{version}{}
 \XDR {Shouldn't we defined a notion of well-scoped constraints and
@@ -3342,11 +3350,6 @@ but the body of the abstraction being stuck.}
   \end{enumerate}
 \end{restatable}
 
-%% \vspace{-1ex}
-%
-%% This is unconditional skiping is fragile, You may insteat will only
-%% backskip avalaible extra skip (when there is some)
-%
 \vskip -\lastskip
 \begin{restatable}[Termination]{theorem}{termination}
   \label{thm:termination}
