@@ -342,7 +342,7 @@ instance, in \code{ex_3}, the field \code{x} could belong to either \code{one}
 or \code{two}, yet the typechecker is able to unambiguously infer the type of
 \ocaml{ex_3} as \code{two}, since it is the only record type whose domain is
 \ocaml!$\{$ x $\}$!.
-%
+
 If local type information and closed-world reasoning are insufficient, \OCaml
 falls back to a syntactic default: it selects the most recently defined
 compatible type. For example, \OCaml accepts the following expression, when
@@ -371,9 +371,10 @@ errors downstream. Consider:
 let ex_4 r = let x = r.x in x + r.y                    °\ocamlflags 10°
 \end{program}
 %
-Here, \OCaml defaults to \code{two} for \code{r} when typing \code{r.x}, but then
-fails to type \code{r.y}, as this default choice is fixed---even though
-\code{one} would have satisfied both projections. \OML succeeds.
+Here, \OCaml defaults to \code{two} for \code{r} when typing \code{r.x},
+and then fails to type \code{r.y}. \OML succeeds by delaying the
+resolution of \code{r.x} and applying closed-world reasoning on
+\code{r.y}.
 
 
 Since overloaded datatype constructors are analogous to record fields, we focus
@@ -402,18 +403,27 @@ while preserving principal type inference.
 \parcomment{Idea and syntax}
 
 Polymorphic methods can be translated into ordinary methods that carry a
-\emph{polytype}: a boxed type scheme $\tapoly \ts \av$ (\cref{fig:polyml}) that
+\emph{polytype}: a boxed type scheme $\tapoly \ts \av$ that
 can be explicitly unboxed at use sites.
 %
-The purpose of the annotation variable $\av$ will be explained shortly. Boxed
-polytypes are considered to be (mono)types, enabling impredicativity. We write
-$\epoly[\ts] \e$ to box a term $\e$ with the scheme $\ts$, and $\einst \e$ to
-unbox a polytype, instantiating it.
+The purpose of the annotation variable $\av$ will be explained
+shortly. Boxed polytypes are considered to be (mono)types, enabling
+impredicativity. We write $\epoly[\ts] \e$ to box a term $\e$ with the
+scheme $\ts$, and $\einst \e$ to unbox a polytype, instantiating
+it.
 
 \Xalistair{Preferred a figure for polytypes. Reverted your change @Didier}
+%
 \XDR{That's minor, but I disagree... Otherwise, if it is important to make
-it a Figure it should be moved to the top of the page}
-\begin{mathparfig}[htpb!]
+  it a Figure it should be moved to the top of the page}
+%
+\Xgabriel{I moved it to the top of the page. I removed the mention of the
+  figure in the paragraph above, because at this point it is unclear what
+  $(\ts_1 : \ts : \ts_2)$ means and where it is defined. The mention of
+  the figure below is in the context where that is explained, so I kept
+  it.}
+
+\begin{mathparfig}[tb]
   {fig:polyml}
   {Syntax and typing rules for polytypes from \citet*{Garrigue-Remy/poly-ml}.}
 
@@ -538,8 +548,8 @@ We usually omit annotation variables in annotations, since we can implicitly
 introduce fresh ones in their place.
 
 For example, $\efun {\x : \tapoly \ts {}}
-{\einst \x}$---which is syntactic sugar for $\efun \x {\elet \x {(\x : \tapoly
-\ts {})} {\einst \x}}$---is well-typed because the explicit annotation
+{\einst \x}$, which is syntactic sugar for $\efun \x {\elet \x {(\x : \tapoly
+\ts {})} {\einst \x}}$, is well-typed because the explicit annotation
 introduces a fresh variable annotation $\ava$, which can then be generalized,
 yielding $\tfor \ava {\tapoly \ts \ava}$.
 
@@ -570,10 +580,10 @@ We call this \geninst-directional (read as ``\textbf{pi}-directional'') type
 inference, to mean that \textbf{p}olymorphic expressions must be typed before
 their \textbf{i}nstances. \Geninst-directionality is subtle, but it aligns with
 the implicit inference order already present in most \ML-like typecheckers,
-making it straightforward to retrofit into existing implementations. In the
-case of \OCaml, the mechanism for annotation variables even comes \emph{for
-free}, as a byproduct of the extensive optimizations in its inference
-algorithm.
+making it straightforward to retrofit into existing implementations. For
+\OCaml, the mechanism for annotation variables even comes \emph{for free}, as
+a byproduct of the extensive optimizations in its inference algorithm using
+levels.
 
 \parcomment{Who uses this?}
 
@@ -588,7 +598,7 @@ disambiguates on type information.
 
 \parcomment{Good example}
 
-To illustrate \geninst-directionality, consider:
+To illustrate \geninst-directionality, consider:\Xgabriel{I find the use of polytype-syntax that is not valid OCaml a bit confusing in this example. Could we use the name 'PolyML' in the left column for these examples?}
 \begin{program}[input,check,angles]
 let pid = [ fun x -> x : 'a. 'a -> 'a ] °\ocamlflags 00°
 let ex_5 = let p = pid in <p> °\ocamlflags 00°
@@ -780,7 +790,7 @@ disambiguating \code{r.x}.
 
 Omnidirectional inference infers typing constraints in any order. Constraints
 advance \emph{dynamically}; those that require \emph{known} type information
-suspend and resume when other constraints supply it. This stands in contrast to
+suspend, and resume when other constraints supply it. This stands in contrast to
 the fixed \emph{static} order of bidirectional and \geninst-directional
 inference. As a result, we are able to propagate more type information and type
 more programs due to the limitations of (fixed) directionality discussed in
