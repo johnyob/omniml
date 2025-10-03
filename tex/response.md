@@ -117,7 +117,8 @@ In summary, we would say that this idea of mixing qualified types with
 global choice variables is a reasonable implementation device for some
 of the features we consider[^1] (not all of them), and we though about it, 
 but that it is unclear how to specify its behavior via declarative
-constraint semantics or declarative typing rules.
+constraint semantics or declarative typing rules (without using our 
+unicity conditions).
 
 This illustrates a tension that we have in presenting our work. We
 don't think that starting with polytypes (or GADTs!) to expose the
