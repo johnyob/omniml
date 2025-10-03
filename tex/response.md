@@ -60,14 +60,12 @@ justifies its complexity cost.
 
 We thank the reviewer for their time and careful consideration. We are
 almost done implementing our revision plan for the paper, and will
-submit it somewhere else. (We are thinking TOPLAS, due to difficulties
-attending other SIGPLAN conferences next year.)
+submit it somewhere else. 
 
 In particular we are grateful for the post-rebuttal comments in review
 B. We will improve our presentation to discuss this, but we thought
-that you may be interested in a direct reply as well (you may be
-curious about this point, but unwilling to go back to a final version
-of our work in a distant future).
+that you may be interested in a direct reply as well (as you may be
+curious about this point). 
 
 Why do we want suspended constraint rather than this trick of
 constraining qualified types with a global weak type variable?
@@ -117,9 +115,9 @@ constraining qualified types with a global weak type variable?
 
 In summary, we would say that this idea of mixing qualified types with
 global choice variables is a reasonable implementation device for some
-of the features we consider (not all of them), but that it is unclear
-how to specify its behavior via declarative constraint semantics or
-declarative typing rules.
+of the features we consider (not all of them), and we though about it, 
+but that it is unclear how to specify its behavior via declarative
+constraint semantics or declarative typing rules.
 
 This illustrates a tension that we have in presenting our work. We
 don't think that starting with polytypes (or GADTs!) to expose the
