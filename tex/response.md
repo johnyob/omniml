@@ -115,7 +115,7 @@ constraining qualified types with a global weak type variable?
 
 In summary, we would say that this idea of mixing qualified types with
 global choice variables is a reasonable implementation device for some
-of the features we consider (not all of them), and we though about it, 
+of the features we consider[^1] (not all of them), and we though about it, 
 but that it is unclear how to specify its behavior via declarative
 constraint semantics or declarative typing rules.
 
@@ -127,3 +127,6 @@ and row variables provide an acceptable solution. For now we are
 planning to stick to monomorphic records as our driving vehicle, but
 better highlight that we are really looking for a general solution,
 rather than support for this particular language feature.
+
+[^1] Infact, we use weak 'choice' variables (filled with shapes) as a mechanism
+to implement suspended constraints (in particular, backpropagation).
