@@ -59,23 +59,29 @@ justifies its complexity cost.
 ## Gabriel 
 
 We thank the reviewer for their time and careful consideration. We are
-almost done implementing our revision plan for the paper, and will
-submit it somewhere else. 
+almost done implementing our revision plan for the paper.
 
 In particular we are grateful for the post-rebuttal comments in review
 B. We will improve our presentation to discuss this, but we thought
 that you may be interested in a direct reply as well (as you may be
 curious about this point). 
 
-Why do we want suspended constraint rather than this trick of
+Why do we want suspended constraints instead of using this trick of
 constraining qualified types with a global weak type variable?
 
-1. Suspended constraints are strictly more expressive, because
-   arbitrary constraint fragments can be delayed. In the proposed
-   approach of "global qualified types", things work well for record
-   fields because the typing rule for those record fields is fairly
-   simple (it's basically one unification) and uniform (all record
-   rules are handled the same).
+1. Weak choice variables are a reasonable implementation device and
+   they suffice for some language features (but not for others). In
+   fact, they come up in our work as well, as we use weak shape
+   variables as an implementation mechanism, in particular to enable
+   backpropagation.
+
+2. Suspended constraints are strictly more expressive than qualified
+   types with weak choice variables, because arbitrary constraint
+   fragments can be delayed. In the proposed approach of "global
+   qualified types", things work well for record fields because the
+   typing rule for those record fields is fairly simple
+   (it's basically one unification) and uniform (all record rules are
+   handled the same).
    
    But in fact we want static overloading to resolve constructs where
    the typing rule may carry arbitrary constraints, and more
@@ -89,13 +95,13 @@ constraining qualified types with a global weak type variable?
      course cannot tell whether a constructor introduces existential
      GADT variables before disambiguating it.
    
-   - Dually, monomorphic and polymorphic record fields have different
-     typing rules, as polymorphic record fields involve polytype-like
-     rules. Another way to view it is that all record fields are
-     monomorphic, but some carry polytype-boxed types, and those have
-     non-uniform typing rules after disambiguation.
+   - Symmetrically, monomorphic and polymorphic record fields have
+     different typing rules, as polymorphic record fields involve
+     polytype-like rules. Another way to view it is that all record
+     fields are monomorphic, but some carry polytype-boxed types, and
+     those have non-uniform typing rules after disambiguation.
 
-2. The proposal does not solve the problem of providing a declarative
+3. The proposal does not solve the problem of providing a declarative
    semantics, which is one of the key contribution of our
    work. Suppose type-checking succeeds without forcing a choice for
    the `_choice` variable; what should the type-checker do? Of course
@@ -103,8 +109,8 @@ constraining qualified types with a global weak type variable?
    generator. A simple idea is to introduce it via an existential
    quantification at the toplevel, but this is not the semantics that
    we want and that you have in mind: to be complete with respect to
-   this semantics, the solver should start exhaustively listing
-   possible record types and picking one that works.
+   this semantics, the solver or type-checker should start
+   exhaustively listing possible record types and pick one that works.
 
    Review B instead suggests (and we agree) that under-determined
    choice variables should result in the constraint failing. But how
@@ -115,19 +121,16 @@ constraining qualified types with a global weak type variable?
 
 In summary, we would say that this idea of mixing qualified types with
 global choice variables is a reasonable implementation device for some
-of the features we consider[^1] (not all of them), and we though about it, 
-but that it is unclear how to specify its behavior via declarative
-constraint semantics or declarative typing rules (without using our 
-unicity conditions).
+of the features we consider, but it does not suffice for all of
+them. It is also unclear how to specify its desired behavior via
+declarative constraint semantics or declarative typing rules, without
+using our unicity conditions.
 
 This illustrates a tension that we have in presenting our work. We
-don't think that starting with polytypes (or GADTs!) to expose the
-idea is reasonable, as they are fairly complex. We tried to show the
+don't think that starting with polytypes (or GADTs) to expose the idea
+is reasonable, as they are fairly complex. We tried to show the
 simplest possible case of tuples first, but that is then too simple
-and row variables provide an acceptable solution. For now we are
-planning to stick to monomorphic records as our driving vehicle, but
-better highlight that we are really looking for a general solution,
-rather than support for this particular language feature.
-
-[^1] Infact, we use weak 'choice' variables (filled with shapes) as a mechanism
-to implement suspended constraints (in particular, backpropagation).
+and monomorphic row variables provide an acceptable solution. For now
+we are planning to stick to monomorphic records as our driving
+vehicle, but better highlight that we are really looking for a general
+solution, rather than support for this particular language feature.
