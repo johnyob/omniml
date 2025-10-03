@@ -598,7 +598,7 @@ disambiguates on type information.
 
 \parcomment{Good example}
 
-To illustrate \geninst-directionality, consider:\Xgabriel{I find the use of polytype-syntax that is not valid OCaml a bit confusing in this example. Could we use the name 'PolyML' in the left column for these examples?}
+To illustrate \geninst-directionality, consider:\Xgabriel{I find the use of polytype-syntax that is not valid \OCaml a bit confusing in this example. Could we use the name 'PolyML' in the left column for these examples?}
 \begin{program}[input,check,angles]
 let pid = [ fun x -> x : 'a. 'a -> 'a ] °\ocamlflags 00°
 let ex_5 = let p = pid in <p> °\ocamlflags 00°
@@ -3036,9 +3036,9 @@ served in writing the following paragraph and should now be erased}
 
 \XDR{The following paragraph does not clearly state that
 \citet*{Pottier-Remy/emlti} have a rule equivalent to \Rule {S-Let-App-Beta}
-and thefore can propagate constraints but at the cost of dpplicating work.
-On the oppoosite, it let one think that let-bodies must always be simplified
-bfore typing the in part. }
+and therefore can propagate constraints but at the cost of duplicating work.
+On the opposite, it let one think that let-bodies must always be simplified
+before typing the in part. }
 
 This resembles $\beta$-reduction, except that the original abstraction is
 retained. While correct for \emph{simple} constraints, it may duplicate
@@ -3051,7 +3051,7 @@ constraint $\ueq$. This mirrors \ML generalization and instantiation, a
 connection formalized by \citet*{Pottier-Remy/emlti}, where $\cabsr \tv \tvs
 \ueqs$ corresponds to the type scheme $\tfor \tvs {\sub(\tv)}$ and $\sub$ is
 the \mgu of $\ueqs$. This optimization underlies efficient implementations of
-\HM inference, such as \OCaml's.\XDR{The optimization that underslies
+\HM inference, such as \OCaml's.\XDR{The optimization that underlies
 efficient implementation are the levels/regions, not the typing of let
 bindings before they body. So this is misleading both on the status of
 \citet*{Pottier-Remy/emlti} and on the requirements to be efficient.}
@@ -3123,7 +3123,7 @@ The semantics of the existential constraint $\cexistsi \inst \x \c$
 (\Rule{Exists-Inst}), given in \cref{fig:constraint-let-regions}, introduces
 the fresh instantiation~$\inst$ by ``guessing'' a region $\semenvp$ that
 satisfies the regional constraint abstraction bound to $\x$.
-\XDR{I am not sure that guesseing carry the correct idea. This just behave
+\XDR{I am not sure that guessing carry the correct idea. This just behave
 as an existential. Also, I think the explanation is too short for
 instantiation constraints: the math looks complicated while the intuition is
 quite simple. It is just like instantiation except that we keep track of the
@@ -3190,7 +3190,7 @@ regional variable $\tvb$ is an an alias for $\tvc$. We replace every free
 occurrence of $\tvb$ with $\tvc$---\emph{including} the domains of any partial
 instantiation constraints, written as the substitution $\where{\x.\tvb \is
 \tvc}$. We view this as an analogous copy rule for variables.
-\XDR{We need not substitute in $\Ca$. Multiequations already take care of
+\XDR{We need not substitute in $\Ca$. Multi-equations already take care of
 that. This would make it a simple rule.}
 
 \XDR{Rule {S-Let-AppR} is never read, while a key rule.}
@@ -3300,7 +3300,7 @@ this is what you wanted in terms of scoping?}
 \XDR{I still don't like the way  Progress is stated. For me there should be a notion of
 well-formed constraints whose simplification would never introduce unbound
 variable subcases. Well-formed constraints should be well-scopes. All
-rewritting rules should preserve scoping. Progress would then have 3 cases.
+rewriting rules should preserve scoping. Progress would then have 3 cases.
 Solved or ill-scoped or stuck.}
 
 \begin{version}{}
@@ -3542,7 +3542,7 @@ waiting until the top-level constructor of a type is known. They provide an
 \code{if-then-else}-like primitive, but differ crucially from our suspended
 constraints: in Pottier's system, an unresolved conditional constraint is
 considered satisfiable, whereas in ours, an unsuspended constraint is not. This
-difference forces our semantics to track with is \emph{known} in a context.
+difference forces our semantics to track what is \emph{known} in a context.
 Consequently, unresolved conditional constraints may enter a generalized type
 scheme as a form of qualified types, while our suspended constraints cannot.
 These semantic differences lead the two approaches to address very different
@@ -3588,7 +3588,7 @@ context of \ML. \MLF is an extension of \ML that supports first-class
 polymorphism that goes beyond the power of System $\mathsf{F}$, while retaining
 type inference. It is a generalization of \citet{Garrigue-Remy/poly-ml}'s
 polytypes, relying on \geninst-directionality, but it remains unclear how to
-scale \MLF to the rest of \OCaml's features.
+effectively scale \MLF to the rest of \OCaml's features.
 %
 \FreezeML is an impredicative type inference system in which polymorphic
 variables can be \emph{frozen}, written $\lceil x \rceil$, and only allowing
@@ -9024,4 +9024,4 @@ TODO: extend the magic rule and the disambiguation rule, and also provide the un
 % LocalWords:  impredicativity PolyML knownness mathpar polybidir nihilo
 % LocalWords:  Bidirectionalized destructors unparsable metalevel Erwig CPP
 % LocalWords:  Variational Walkingshaw ifdef variational benevs goldilocks
-% LocalWords:  Pottier's unsuspended sep Det Esc
+% LocalWords:  Pottier's unsuspended sep Det Esc macroify ConRight
