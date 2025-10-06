@@ -685,24 +685,14 @@ Within the bidirectional framework, a type $\t$ is \emph{known} when it is eithe
 \end{enumerate*}.
 %
 Using this discipline, we can recast polytypes and eliminate two artifacts
-needed in our \geninst-directional presentation: explicit annotations on
-boxing and annotation variables. Since $\eannot \e {} \t$ already
-propagates known information, $\epoly \e$ requires no attached annotation;
-and because ``knownness'' now follows from inference modes rather than
-polymorphism, annotation variables are unnecessary.
+needed in our \geninst-directional presentation: explicit annotations on boxing
+and annotation variables. Since $\eannot \e {} \t$ already propagates known
+information, $\epoly \e$ requires no attached annotation; and because
+``knownness'' now follows from inference modes rather than polymorphism,
+annotation variables are unnecessary. The resulting syntax and typing rules are
+as follows:
 
-\XDR{The figure could be turned into {mathpar}}
-\Xalistair{Prefer the figure, the caption adds some commentary without
-discussing it inline.}\XDR{I disagree. For me, either this illustrate the
-flow of the discussion and is not something to remember and should not be a
-figure, or it is essential for later reference and deserve to be on top of a
-page figure. In this case, the bidirectional rules are some local detail
-that need not be remembered.}
-
-
-\begin{mathparfig}[htpb!]
-  {fig:polybidir}
-  {Bidirectionalized polytypes. Annotation variables have been removed.}
+\begin{mathpar}
   \begin{minipage}[l]{15em}
   %% \scalebox{0.9}{
   \begin{bnfgrammar}
@@ -736,7 +726,7 @@ that need not be remembered.}
   \infer[Syn-Annot]
     {\G \th \e \Leftarrow \t}
     {\G \th \eannot \e {} \t \Rightarrow \t}
-\end{mathparfig}
+\end{mathpar}
 
 
 \parcomment{Limitations}
@@ -746,15 +736,18 @@ modes, some programs will typecheck successfully, while others will fail
 unnecessarily. Yet, the typing rules must irrevocably commit to a fixed set of
 modes, after which, principal types often exist, but only with respect to a
 specification that made non-principal choices to begin with. For instance,
-\code{ex_6} would be ill-typed using the typing rules from
-\cref{fig:polybidir} with \Rule{Syn-App}.
-\XDR{I think this is a good place to mention contextual type inference in a
-footnote, as not choosing between Syn-App and Chk-App, but still typing
-multiple arguments from left to right. Even if we explained it in more
-detailed in the related work section, as the reader who knows might be upset
-if we don't mention it here.}
-\Xalistair{Agreed, we no-longer review directionality in related work (since
-we cover it here). So if we are to mention contextual typing, it should be here.}
+\code{ex_6} would be ill-typed using the above rules for polytypes (with
+\Rule{Syn-App}).
+
+\parcomment{Contextual typing}
+
+Recent work on \emph{contextual typing} \citep{journals/pacmpl/XueO24}
+addresses this difficulty by deferring the commitment between \Rule{Syn-App}
+and \Rule{Chk-App}. Typing multiple arguments from right to left
+(\Rule{Chk-App}) when sufficient contextual information is available, and thus
+successfully typechecks \code{ex_6}. Nevertheless, it still enforces a fixed
+order of propagation, so some well-typed programs are rejected as ill-typed
+(\eg \code{ex_6_2, ex_6_3}).
 
 \paragraph{Limitations of directional type inference}
 
@@ -869,22 +862,19 @@ we generate the typing constraint:
   {{\labfrom \elab \ct \leq \tlab \tvb \tva}}}
       }
 \end{mathpar}
+
+\TODO{Come up with better syntax for $\ct$.}
+
 This constraint suspends resolution of the return type $\tva$ until the record
-type $\tvb$ of $\e$ is \emph{known}, say some type $\tz$. Its branch matches
-$\tz$ against the nominal type pattern $\cpatrcd \ct$,
-%
-\XDR{It is unclear that $t$ is a meta\textbf{variable}. It looks too much like a \texttt t. We must fix
-thus} \Xalistair{Agreed, what would you suggest?}
-%
-binding the type constructor
-$\T$ to $\ct$ if $\tz$ is $\Tapp \tys$, or fails otherwise. Using this, the
-globally unique projection type (scheme) $\tfor \tvs {\Tapp \tvs \to \t}$ for
-the qualified label $\labfrom \elab \T$ is instantiated, \eg to $\Tapp \tys
-\to \t\where {\tvs \is \tys}$\XDR{We still need to explain the
-instantiation, which otherwise is mysterious: \em where $\tys$ are
-determined so that $\Tapp \tys$ is equal to $\tz$,} and the resulting
-constraints are imposed on the domain and codomain of the instantiated
-projection type.
+type $\tvb$ of $\e$ is \emph{known}, say some type $\tz$. The branch then
+matches $\tz$ against the nominal type pattern $\cpatrcd \ct$, binding the type
+constructor $\T$ to the pattern variable $\ct$ when $\tz = \Tapp \tys$, and failing
+otherwise. Using this, the globally unique projection type (scheme) $\tfor \tvs
+{\Tapp \tvs \to \t}$ for the qualified label $\labfrom \elab \T$ is
+instantiated, \eg to $\Tapp \typs \to \t\where {\tvs \is \typs}$ for some
+$\typs$. Finally, the resulting constraints are imposed on the domain (\ie $\tz
+= \Tapp \typs$) and codomain of the instantiated projection type (\ie $\tva =
+\ty\where{\tvs \is \typs}$).
 
 
 \parcomment{Polytypes}
@@ -899,19 +889,14 @@ constraint:
 \cinfer {\einst \e} \tva \Wide\eqdef
     \cexists \tvb \cinfer \e \tvb
 \cand
-    \cmatch  \tvb {\parens {\cbranch {\tpoly s} s \leq \tva}}
+    \cmatch  \tvb {\parens {\cbranch {\tpoly \cscm} \cscm \leq \tva}}
 \end{mathpar}
 %
-The match constraint is suspended until $\tvb$ is resolved to a polytype
-$\tpoly \ts$ matching the pattern $\tpoly \cscm$; otherwise it fails.
-\XDR
-{This is an incorrect description of the semantics: it is suspended until
-$\ts$ is no longer a variable, in which case it does not necessarily
-matches $\tpoly s$. Then, either it  matches $\tpoly s$ and we
-continue or the constraint is unsolvable and we fail.}
-Upon success, the type scheme $\ts$ is bound to the scheme variable $s$.
-The selected branch then performs the instantiation $\cleq s \tva$, that is
-$\cleq \ts \tva$.
+The match remains suspended until $\tvb$ resolves to some type $\tz$. If, upon
+resolution, $\tz$ is $\tpoly \ts$, the pattern $\tpoly \cscm$ matches
+successfully, binding $\ts$ to the pattern variable $\cscm$ and performs the
+instantiation $\cleq \cscm \tva$, that is $\cleq \ts \tva$. Otherwise, the
+pattern does not match and the constraint fails.
 
 \paragraph{Scaling to \ML}
 
@@ -1251,6 +1236,8 @@ constraints carry the right intuition...  The reader may very confused.  We
 should probably explain that these implement generalization and
 instantiation respectively.  We could event call $\x \@ \tv$ an
 instantiation constraint?}
+\Xalistair{Abstractions / applications capture intuition that is useful 
+for solving (e.g. copying constraints).}
 
 
 Two constructs deal with the introduction and elimination of constraint
@@ -1269,9 +1256,15 @@ $\t$ to the abstraction bound to $\x$. This holds precisely when $\semenv(\t)
 \in \semenv(\x)$, \ie $\t$ is one of the satisfiable instances of $\x$.
 Concretely,
 if $\semenv(\x) = \semenvp(\cabs \tv \c)$, where
-$\semenvp$ is the environment at the binding site of~$\x$\XDR{It is unclear
+$\semenvp$ is the environment at the binding site of~$\x$,
+%
+\XDR{It is unclear
 what this means. Actually I find this explanation quite confusing, while
-$\semenv(\x) \in \semenv (\cabs \tv \c)$ was clear enough},
+$\semenv(\x) \in \semenv (\cabs \tv \c)$ was clear enough}
+%
+\Xalistair{The point of this sentenance is to explain why membership is sufficient for application 
+\eg it corresponds solving the body of the abstraction with the applied type.}
+%
 then $\semenv(\t)
 \in \semenv(\x)$ holds iff $\semenvp\where{\tv \is \semenv(\t)} \th \c$, which
 corresponds to the intuition that the application $\capp {(\cabs \tv \c)} \t$
@@ -1280,36 +1273,25 @@ should be equivalent to $\c \where {\tv \is \t}$.
 
 \parcomment {Suspended match constraints}
 
-Finally, we introduce \textit{suspended match constraints} $(\cmatch \t \cbrs)$.
-%% \footnote
-%% {Previously dubbed `frozen constraints'.
-%% %in \citep{TODO} % this would be a de-anonymizing citation, silence it for now
-%% }
-These constraints are \emph{suspended} until
-the \textit{shape} of $\t$, such as its top-level constructor,
-is known. Then, they are \emph{discharged}: a unique branch is selected
-and its associated constraint has to be solved. A match constraint
-that is never discharged is considered unsatisfiable.\XDR{Verbatim
-repetition of lines 777--779. That's annoying: we should cut one of them or
-rephrase.}
-
-More precisely:
+Finally, we introduce \textit{suspended match constraints} $(\cmatch \t \cbrs)$, 
+which consist of:
 \begin{enumerate*}
 
 \item
-  The matchee $\t$ is a type. The constraint remains suspended
+  A matchee $\t$. The constraint remains suspended
   while $\t$ is a type variable, that is,
-  until the shape of $\t$ is determined.
+  until the \emph{shape} of $\t$ is determined.
 
 \item
-  $\cbrs$ is a list of branches of the form $\cbranch \cpat \c$,
-  where $\cpat$ is a shape pattern. For example, the pattern
-  $\cpatrcd \ct$ matches record types, binding its name to $\ct$.
-  The constraint $\c$ is then solved in the extended context.
+
+  A list of branches $\cbrs$ of the form $\cbranch \cpat \c$, where $\cpat$
+  is a shape pattern. For example, the pattern $\cpatrcd \ct$ matches record
+  types, binding its name (\eg the type constructor $\T$) to pattern variable
+  $\ct$. The constraint $\c$ is then solved in the extended context.
   %
   To ensure determinism, the set of patterns $\bar \cpat$ must be
-  \emph{disjoint}---that is, no shape may be matched by more
-  than one pattern in the list.
+  \emph{disjoint}---that is, no shape may be matched by more than one pattern
+  in the list.
 
 \end{enumerate*}
 The formal semantics of suspended match constraints are somewhat involved,
@@ -1489,18 +1471,13 @@ determined; but it may not exist as branches need not be exhaustive, in
 which case the discharged constraint is $\cfalse$.
 \end{definition}
 
-The partial function $(\Cmatches \cpat \sh \tvcs)$
-\XDR{Either it is a (partial) function that returns a substitution
-or a relation. As written it is a relation. But it should be defined as a
-function that returns a substitution}
-is defined in
+The partial function $(\Cmatches \cpat \sh \tvcs)$ is defined in
 \cref{fig:constraints}: it matches a pattern $\cpat$ against a canonical
 principal shape $\sh$ opened with fresh shape variables $\tvcs$ (of the same
 arity as $\sh$), which either fails or returns a substitution $\theta$ from
-pattern variables (\eg nominal type variables $\ct$) to shape components
-(\eg nominal type names $\T$)\XDR{This distinction should have been
-explained earlier}, which may themselves mention $\tvcs$. For example, the
-wildcard pattern $\cpatwild$ matches any shape, yielding the empty
+pattern variables (\eg nominal type variables $\ct$) to shape components (\eg
+nominal type names $\T$), which may themselves mention $\tvcs$. For example,
+the wildcard pattern $\cpatwild$ matches any shape, yielding the empty
 substitution.
 
 \paragraph {A natural attempt}
@@ -1544,10 +1521,19 @@ permissive. For example, $\cexists \tv \cmatch \tv {\cbranch \cpatwild {\cunif
 The natural semantics can \emph{guess} a type of $\tv$ (\eg $\tint$) in order to
 discharge the match constraint, rather than requiring $\tv$'s type to be
 \emph{known} from the surrounding context. This \emph{ex nihilo} (``out of thin
-air'')\XDR{This is not so much \emph{out of thin air}, as it is not an
+air'')
+%
+\XDR{This is not so much \emph{out of thin air}, as it is not an
 arbitrary, but a correct guess. So I think the expression \emph{ex nihilo}
 is misleading here and we should stick with the idea of \emph{an oracle
-guessing} the/a correct solution} behavior does not match the intended
+guessing} the/a correct solution} 
+\Xalistair{I prefer \emph{ex nihilo} to emphasize that is is an arbitrary guess. 
+I think you and I view the semantics of existentials slightly differently. 
+But my thinking is that the witness provided in \Rule{Exists} is arbitrary (nothing 
+local to the rule determines it) and that it happens to be correct (due to constraints 
+from other rules).}
+%
+behavior does not match the intended
 meaning of suspended match constraints and raises several problems:
 \begin{enumerate*}
   \item a reasonable solver---one that avoids guessing or backtracking---cannot
@@ -1849,6 +1835,7 @@ declarative type system to use as a specification is itself an interesting
 problem! In particular, naive specifications for fragile features often fail
 to preserve principality.\XDR{What naive specification(s) do you have in mind?
 The one I have in mine preserves principality---but is inefficient}
+\Xalistair{See discussion in introduction about the meaning of 'naive'.}
 
 \parcomment {Why do naive approaches not guarantee principal types.}
 
@@ -1916,13 +1903,11 @@ has type scheme~$\ts$.
 %
 Rules \Rule{Var} through \Rule{Let} are standard. Annotations $\eannot \e \tvs
 \t$ (\Rule{Annot}) ensures that the type of $\e$ is (an instance of) the type
-$\t$. The type variables $\tvs$ are \emph{flexibly} (or existentially) bound
-in $\t$, meaning they may be \XDR[unified with]{No this is a spec, it does
-not perform unification}
-instantiated by some types $\tys$ so that $\ts \where{\tv  \is\tys}$ is a correct
-type for $\e$.  For instance, the term $(\efun \x \x + 1 : \exi \tv \tv \to
-\tv)$ is well-typed under \Rule{Annot} with the substitution $\where {\tv \is
-\tint}$.
+$\t$. The type variables $\tvs$ are \emph{flexibly} (or existentially) bound in
+$\t$, meaning they may be instantiated to some types $\tys$ so that the
+resulting annotation matches the type of $\e$. For instance, the term $(\efun
+\x \x + 1 : \exi \tv \tv \to \tv)$ is well-typed under \Rule{Annot} with the
+substitution $\where {\tv \is \tint}$.
 
 
 \paragraph {Explicit polytypes}
@@ -2118,6 +2103,7 @@ $\eerase {\efield \e \elab}$ is $\emagic {\cerase \e}$. The full definition is
 given in Appendix \cref{app:full-reference}.
 \XDR{I think we should import all but monomorphic cases. Otherwise, the use
 of erasure is too mysterious.}
+\Xalistair{I don't understand what you mean?}
 
 Finally, we define a restricted typing judgment $\G \throbust \e : \ts$, which
 derives $\G \th \e : \ts$ without using any fragile, implicit typing rules (\Rule{*-I}).
@@ -2668,7 +2654,7 @@ preserve typability in its operational semantics.
 
 %% We can fit more on the first page: switch flags to undo.
 
-\let \More \True %\False
+\let \More \False
 
 \afterpage{
 \clearpage
@@ -2687,6 +2673,11 @@ preserve typability in its operational semantics.
       } \\
       \entry[Constraints]{\c}{
         \dots \and \ueq
+      } \\
+      \entry[Unification context]{\Up}{
+        \Up \cand \upb 
+        \and \upa \cand \Up
+        \and \cexists \tv \Up 
       }
     \end{bnfgrammar}
     \hfill
@@ -2699,7 +2690,61 @@ preserve typability in its operational semantics.
   }}
 \end{mathparsubfig}
 
-\medskip
+\medskip 
+
+\begin{mathparsubfig}
+  {fig:unification-algorithm}
+  {Unification algorithm as a series of rewriting rules
+   $\upa \unif \upb$. All shapes are principal.}
+   \rewrite[U-Exists]
+      {(\cexists \alpha \upa) \cand \upb }{ \tv \disjoint \upb}
+      {\cexists \tv {\upa \cand \upb}}
+
+    \rewrite[U-Cycle]
+      {\up }{ \cyclic \up}
+      {\cfalse}
+
+    \rewrite[U-True]
+      {\up \cand \ctrue}
+      {}
+      {\up}
+
+    \rewrite[U-False]
+      {\Up\where\cfalse }{ \Up \neq \square}
+      {\cfalse}
+
+    \rewrite[U-Merge]
+      {\cunif \tv \ueqa \cand \cunif \tv \ueqb}
+      {}
+      {\cunif \tv {\cunif \ueqa \ueqb}}
+
+    \rewrite[U-Stutter]
+      {\cunif \tv {\cunif \tv \ueq}}
+      {}
+      {\cunif \tv \ueq}
+
+    \rewrite[U-Name]
+      {\cunif {\pshapp \parens{\tys, \ti, \typs}} \ueq }
+      { \tv \disjoint \tys, \typs, \ueq \\ \ti \notin \TyVars}
+      {\cexists \tv {\cunif \tv \ti \cand \cunif {\pshapp \parens{\tys, \tv, \typs}} \ueq}}
+
+    \rewrite[U-Decomp]
+      {\cunif {\pshapp \tvs} {\cunif {\pshapp \tvbs} \ueq}}
+      {}
+      {\cunif {\pshapp \tvs} \ueq \cand \cunif \tvs \tvbs}
+
+    \rewrite[U-Clash]
+      {\cunif {\pshapp \tvs} {\cunif {\pshapp[\shp]\tvbs } \ueq }}{
+       \sh \neq \shp}
+      {\cfalse}
+
+    \rewrite[U-Trivial]
+      {\ueq }
+      {|\ueq| \leq 1}
+      {\ctrue}
+\end{mathparsubfig}
+
+\medskip 
 
 \begin{mathparsubfig}
   {fig:solver-basic}
@@ -2745,10 +2790,12 @@ preserve typability in its operational semantics.
     {\cb \cand \cletr \x \tv \tvs \ca \cc}
 \end{mathparsubfig}
 
+\medskip
+
 \begin{mathparsubfig}
   {fig:constraint-let-regions}
   {Syntax and semantics of region-based $\Let$ and
-   partial instantiation constraints.}
+   incremental instantiation constraints.}
   \begin{bnfgrammar}
     \entry[Instantiation variables]{\inst}{}\\
     \entry[Constraints]{\c}{
@@ -2787,20 +2834,21 @@ preserve typability in its operational semantics.
      \semenv\where{\inst \is \semenvp} \th \c}
     {\semenv \th \cexistsi \inst \x \c}
 
-  \infer[Partial-Inst]
+  \infer[Incr-Inst]
     {\semenv(\inst)(\tv) = \semenv(\t) }
     {\semenv \th \cpinst \inst \tv \t}
 \end{mathparsubfig}
+\end{figure}
 
-% This is the start of the next subfigure, but it is placed here
-% to avoid wasting space
+% This is the start of the next subfigure, but it is placed 
+% in a separate figure to span multiple pages
 
-% DR
-\More
-{\begin{mathparsubfig}
- {fig:solver-schemes}
- {Solving rules for let-bindings and applications.}}
-{\begin{mathpar}}
+\clearpage
+\begin{figure}[!t]\ContinuedFloat
+\begin{mathparsubfig}
+  {fig:solver-schemes}
+  {Solving rules for let-bindings and applications.}
+
 \rewrite[S-Inst-Copy]
   {\cletr \x \tv \tvs {\c} \C\where{\cpapp \x \tvb \tvc \inst}}
    {\acyclic {\c} \\\\
@@ -2817,15 +2865,7 @@ preserve typability in its operational semantics.
   {\cexists {\tv, \tvs} \ueqs \cequiv \ctrue \\
    \x \disjoint \c}
   {\c}
-\More{\par}{
-\end{mathpar}
-\end{figure}
-\clearpage
-\begin{figure}[!t]\ContinuedFloat
-\begin{mathparsubfig}
-{fig:solver-schemes}
-{Solving rules for let-bindings and applications.}
-}
+
 \rewrite[S-Inst-Unify]
   {\cpinst \inst \tvb \tvca \cand \cpinst \inst \tvb \tvcb}
   {}
@@ -2850,14 +2890,12 @@ preserve typability in its operational semantics.
        {\C\where{\cexistsi {\tvc, \inst} \x
                 {\cpinst \inst \tv \tvc \cand \cunif \tvc \t}}}}
 \end{mathparsubfig}
-\More{
-\end{figure}
-\clearpage
-\begin{figure}[!t]\ContinuedFloat
-}{}
+
+\medskip 
+
 \begin{mathparsubfig}
-{fig:solver-susp}
-{Rewriting rules for suspended match constraints.}
+  {fig:solver-susp}
+  {Rewriting rules for suspended match constraints.}
 \rewrite[S-Match-Ctx]
   {\C\where{\cmatch \t \cbrs}}
   {\th \Cshape \C \t \sh}
@@ -2908,15 +2946,39 @@ a multi-equation $\ueq$ if all of its members are mapped to a single
 ground type $\gt$ (\Rule{Multi-Unif}). Multi-equations are
 considered equal modulo permutation of their members.
 
-Our algorithm is largely standard, with its main novelty being the use of
-\emph{canonical principal shapes} in place of type constructors. This uniform
-treatment of monotypes and polytypes simplifies unification and improves on the
-previous treatment of polytype unification \citep{Garrigue-Remy/poly-ml}. For a
-detailed discussion of the unification rules, see Appendix
-\cref{app:unification}.
+The unification rules are listed in \cref{fig:unification-algorithm}. Rewriting
+proceeds under an arbitrary context $\Up$, modulo $\alpha$-equivalence and
+associativity/commutativity of conjunctions.
+%
+Our algorithm is largely standard~\citep*{Pottier-Remy/emlti}, with its main
+novelty being the use of \emph{canonical principal shapes} in place of type
+constructors. This uniform treatment of monotypes and polytypes simplifies
+unification and improves on the previous treatment of polytype unification
+\citep{Garrigue-Remy/poly-ml}. 
 
-\XDR{We should macroify pointers to the appendix, since they should
-later/rather point to an extended version of the paper}
+\parcomment{Explanation of the rules}
+
+We briefly summarize the role of each rule. \Rule{U-Exists} lifts existential
+quantifiers, enabling applications of \Rule{U-Merge} and \Rule{U-Cycle} since
+all multi-equations eventually become part of a single conjunction.
+\Rule{U-Merge} combines mutli-equations sharing a common variable and
+\Rule{U-Stutter} removes duplicate variables. \Rule{U-Decomp} decomposes equal
+types with matching shapes into equalities between their subcomponents, while
+\Rule{U-Clash} detects shape mismatches that result in failure. \Rule{U-Name}
+introduces fresh variable for subcomponents, ensuring unification operates on
+\emph{shallow terms}, making sharing of type variables explicit and avoiding
+copying types in rules such as \Rule{U-Decomp}. \Rule{U-True} and
+\Rule{U-Trivial} eliminate trivial constraints, and \Rule{U-False} propagates
+failure.
+%
+Finally, \Rule{U-Cycle} implements the \emph{occurs check}, ensuring that a
+type variable does not occur in the type it is being unified with. This is a
+necessary condition for unification, as it would otherwise lead to infinite
+types\footnote{We discuss relaxing this constraint in \cref{sec/rec-types}.}.
+This is formalized by the relation $\tv \prec_\up \tvb$ indicating that $\tv$
+occurs in a type assigned to $\tvb$ in $\up$. A unification problem is cyclic,
+written $\cyclic \up$, if $\tv \prec_\up^* \tv$ for some $\tv$.
+
 
 % Something fishy appears to be happening here.
 % Adding the below fixes this, but still adding some vertical space 🤷
@@ -3013,51 +3075,32 @@ the (sub)constraint language appearing \emph{only} in match branches ...}
 
 \parcomment{Background on efficient solving of applications (aka generalization)}
 
-Application constraints can be solved by copying constraints:
+Application constraints could be solved by copying constraints:
 \begin{mathpar}
 \hfil
 \rewrite
     {\cletr \x \tv \tvs \ca {\C\where{\capp \x \t}}}
     {\tv, \tvs \disjoint \t \\ x \disjoint \bvs \C}
-    {\clet \x \tv \ca {\C\where{\cexists {\tv, \tvs} \cunif \tv \t \cand \ca}}}
+    {\cletr \x \tv \tvs \ca {\C\where{\cexists {\tv, \tvs} \cunif \tv \t \cand \ca}}}
 \eqno
 {\DefTirName{S-Let-App-Beta}}
 \end{mathpar}
-\XDR{$\tvs$ have been lost and may appear free in $\Ca$ in the conclusion}
 
-\Xalistair{Inline part of this related work here:
-\citet* {Pottier-Remy/emlti} already allow let-constraints to be
-copied before being fully solved. However, they copy the whole constraint
-including unsolved parts, which duplicates the work of the constraint
-resolution.  That is, they still lack a mechanism to incrementally and
-efficiently instantiate partial type schemes.  Besides, this is only allowed
-in their rewriting rules.  The resolution strategy imposed on top of their
-rewriting rules requires that let-constraints be fully solved before being
-inlined---and similarly in their accompanying prototype. }
-
-\XDR{What is the status of the previous comment? Was it just material that
-served in writing the following paragraph and should now be erased}
-
-\XDR{The following paragraph does not clearly state that
-\citet*{Pottier-Remy/emlti} have a rule equivalent to \Rule {S-Let-App-Beta}
-and therefore can propagate constraints but at the cost of duplicating work.
-On the opposite, it let one think that let-bodies must always be simplified
-before typing the in part. }
-
-\Xalistair{This comment was me lazily copying part of the related work 
-when I was rewriting related work. The comment itself still needs to be addressed.}
-
-This resembles $\beta$-reduction, except that the original abstraction is
-retained. While correct for \emph{simple} constraints, it may duplicate
-solving work across applications of the same abstraction.
+This is rule, due to \citet*{Pottier-Remy/emlti}, resembles $\beta$-reduction,
+except that the original abstraction is retained. While correct for
+\emph{simple} constraints, it may duplicate solving work across applications of
+the same abstraction.
 %
 A more efficient approach first solves the abstraction once---\eg reducing it
 to $\cabsr \tv \tvs \ueqs$, where $\tvs$ are generalizable variables---and then
 reuses the result at each application site by only copying the solved
-constraint $\ueq$. This mirrors \ML generalization and instantiation, a
-connection formalized by \citet*{Pottier-Remy/emlti}, where $\cabsr \tv \tvs
-\ueqs$ corresponds to the type scheme $\tfor \tvs {\sub(\tv)}$ and $\sub$ is
-the \mgu of $\ueqs$. 
+constraint $\ueq$. This mirrors the \ML generalization and instantiation:
+$\cabsr \tv \tvs \ueqs$ corresponds to the type scheme $\tfor \tvs
+{\sub(\tv)}$, where $\sub$ is the most general unifier of $\ueqs$. 
+%
+\citet*{Pottier-Remy/emlti} formalize this connection, and the optimized
+treatment is naturally expressed as a strategy on top of their
+\Rule{S-Let-App-Beta} rule. 
 
 \parcomment{Generalization with suspended constraints is hard}
 
@@ -3095,11 +3138,10 @@ refined in future as suspended constraints are discharged.
 
 \parcomment {Intro partial applications}
 
-\XDR{I thought we agree on calling this incremental instantiation rather
-then partial instantiation}
-To support this, we extend the constraint language with \emph{partial
-instantiation constraints} (\cref{fig:constraint-let-regions}). Instead of duplicating an abstraction at each
-application site, we introduce:
+To support this, we extend the constraint language with \emph{incremental
+instantiation constraints} (\cref{fig:constraint-let-regions}). Instead of
+duplicating an abstraction at each application site, we introduce:
+%
 \begin{enumerate*}
   \item
     $\cexistsi \inst \x \c$, which binds a fresh instantiation $\inst$ of $\x$'s
@@ -3109,18 +3151,18 @@ application site, we introduce:
     equals~$\t$.
 \end{enumerate*}
 %
-The instantiation variable $\inst$ is required to ensure all partial
+The instantiation variable $\inst$ is required to ensure all incremental 
 instantiations $\cpinst \inst \tv \t$ are solved uniformly. Within the
-solver, we view partial instantiations as markers indicating which parts of
+solver, we view incremental instantiations as markers indicating which parts of
 the abstraction still need to be copied.
 
-Partial instantiations enables efficient incremental instantiation of
+Incremental instantiations enables efficient incremental instantiation of
 constraint abstractions: solved parts are reused immediately, while
 suspended constraints can be solved later, further refining the
 abstraction and propagating additional equations to the application
 sites.
 
-\parcomment{Semantics of partial applications}
+\parcomment{Semantics of incremental applications}
 
 The semantics of the existential constraint $\cexistsi \inst \x \c$
 (\Rule{Exists-Inst}), given in \cref{fig:constraint-let-regions}, introduces
@@ -3132,22 +3174,24 @@ instantiation constraints: the math looks complicated while the intuition is
 quite simple. It is just like instantiation except that we keep track of the
 origins of the instances. A graphical view, as in solving unifications
 constraints is enlightening.}
+\Xalistair{I'm not too sure what kind of graphic you're thinking of? Could 
+you sketch one?}
 %
-Partial instantiations (\Rule{Partial-Inst}) equate the copy of $\tv$ in
+Incremental instantiations (\Rule{Incr-Inst}) equate the copy of $\tv$ in
 $\inst$ with $\t$.
 %
-The domain of partial instantiation constraints must lie within the closure of
+The domain of incremental instantiation constraints must lie within the closure of
 the abstraction or among the regional variables of $\x$. Consequently, the
 variables $\tv, \tvs$ bound by the $\Let$-constraint $\cletr \x \tv \tvs \ca
 \cb$ are bound not only in the body of the abstraction $\ca$, but also in the
-constraint $\cb$, where they may appear in partial instantiations of $\x$
+constraint $\cb$, where they may appear in incremental instantiations of $\x$
 \XDR[was]{via} in the domain of renamings---and only there. Hence, they
 cannot appear in $\cb$ when the corresponding variable $\x$ does not itself
 appear in $\cb$.
 
-\parcomment{Solving partial instantiations}
+\parcomment{Solving incremental instantiations}
 
-Partial instantiation constraints are reduced using the following rules, summarized in
+Incremental instantiation constraints are reduced using the following rules, summarized in
 \cref{fig:solver-schemes}:
 \begin{enumerate}
 
@@ -3201,7 +3245,7 @@ it is written like this is to ensure the rule is destructive, by removing the
 variable (and the multi-equation), we cannot re-apply the rule. 
 %
 We could add some side-conditions to prevent its reapplication (\ie there must
-be a partial instantiation to eliminate in $\cb$), but the rule also serves a
+be a incremental instantiation to eliminate in $\cb$), but the rule also serves a
 dual purpose: path compression (hence the name \Rule{S-Compress}) }
 
 \XDR{Rule {S-Let-AppR} is never read, while a key rule.}
@@ -3273,6 +3317,15 @@ duplication of work that would otherwise occur via \Rule{S-Inst-Copy}. By
 reducing the number of variables that need to be copied, lowering directly
 reduces instantiation overhead.
 
+\parcomment{S-Let-AppR}
+
+\Rule{S-Let-AppR} rewrites an application constraint $\capp \x \t$ into an
+incremental instantiation constraint $\cpinst \inst \tv \tvc$. Here, $\inst$ is
+a fresh instantiation of $\x$, $\tv$ is the \emph{root} of $\x$'s region, and
+$\tvc$ is a fresh alias for $\t$. We introduce $\tvc$ explicitly, since our
+rewriting rules for incremental instantiations generally assume that the copied
+type is a variable rather than an arbitrary type. 
+
 \paragraph{Suspended match constraints}
 
 \parcomment{S-Match-Ctx}
@@ -3296,7 +3349,7 @@ Finally, \Rule{Uni-BackProp} expresses \emph{backpropagation}, previously
 illustrated in \cref{ex:backprop}. In particular, the shape of a regional
 variable can sometimes be determined from its instantiations. If an abstraction
 contains a regional variable $\tvp$, and the constraint context includes a
-partial instantiation $\cpapp \x \tvp \tvc \inst$ together with a proof that the copy of
+incremental instantiation $\cpapp \x \tvp \tvc \inst$ together with a proof that the copy of
 $\tvc$ has the unique shape $\sh$. Then $\tvp$ must also have shape $\sh$,
 as any other shape would render the instantiation unsatisfiable.
 %
@@ -3477,7 +3530,7 @@ When an instance is taken from a partial generic, we retain a forward reference
 from the partial generic (\textbf{PG}) to the instance. This enables the
 generic to notify the instance that it has been updated, propagating the
 updated type structure to all instances. This mirrors, in reverse, the way our
-formalized solver uses partial instantiation constraints to track copies. In
+formalized solver uses incremental instantiation constraints to track copies. In
 addition, the instance remains guarded by the partial generic until the latter
 is either lowered or fully generalized.
 
@@ -4795,94 +4848,6 @@ bypass suspension and directly instantiate the appropriate labels.
 \section{Unification}
 \label{app:unification}
 
-The unification rules are listed in \cref{fig:unification-algorithm}.
-Rewriting proceeds under an arbitrary context $\Up$, modulo $\alpha$-equivalence
-and associativity/commutativity of conjunctions.
-
-Our algorithm is largely standard~\citep*{Pottier-Remy/emlti} but replaces type
-constructors with \emph{canonical principal shapes}, enabling a uniform
-treatment of monotypes and polytypes within unification compared to
-prior formulations~\citep*{Garrigue-Remy/poly-ml}.
-
-%
-
-
-\begin{mathparfig}[htpb!]
-  {fig:unification-algorithm}
-  {Unification algorithm as a series of rewriting rules
-   $\upa \unif \upb$. All shapes are principal.}
-   \rewrite[U-Exists]
-      {(\cexists \alpha \upa) \cand \upb }{ \tv \disjoint \upb}
-      {\cexists \tv {\upa \cand \upb}}
-
-    \rewrite[U-Cycle]
-      {\up }{ \cyclic \up}
-      {\cfalse}
-
-    \rewrite[U-True]
-      {\up \cand \ctrue}
-      {}
-      {\up}
-
-    \rewrite[U-False]
-      {\Up\where\cfalse }{ \Up \neq \square}
-      {\cfalse}
-
-    \rewrite[U-Merge]
-      {\cunif \tv \ueqa \cand \cunif \tv \ueqb}
-      {}
-      {\cunif \tv {\cunif \ueqa \ueqb}}
-
-    \rewrite[U-Stutter]
-      {\cunif \tv {\cunif \tv \ueq}}
-      {}
-      {\cunif \tv \ueq}
-
-    \rewrite[U-Name]
-      {\cunif {\pshapp \parens{\tys, \ti, \typs}} \ueq }
-      { \tv \disjoint \tys, \typs, \ueq \\ \ti \notin \TyVars}
-      {\cexists \tv {\cunif \tv \ti \cand \cunif {\pshapp \parens{\tys, \tv, \typs}} \ueq}}
-
-    \rewrite[U-Decomp]
-      {\cunif {\pshapp \tvs} {\cunif {\pshapp \tvbs} \ueq}}
-      {}
-      {\cunif {\pshapp \tvs} \ueq \cand \cunif \tvs \tvbs}
-
-    \rewrite[U-Clash]
-      {\cunif {\pshapp \tvs} {\cunif {\pshapp[\shp]\tvbs } \ueq }}{
-       \sh \neq \shp}
-      {\cfalse}
-
-    \rewrite[U-Trivial]
-      {\ueq }
-      {|\ueq| \leq 1}
-      {\ctrue}
-\end{mathparfig}
-
-
-\parcomment{Explanation of the rules}
-
-We briefly summarize the role of each rule. \Rule{U-Exists} lifts existential
-quantifiers, enabling applications of \Rule{U-Merge} and \Rule{U-Cycle} since
-all multi-equations eventually become part of a single conjunction.
-\Rule{U-Merge} combines mutli-equations sharing a common variable and
-\Rule{U-Stutter} removes duplicate variables. \Rule{U-Decomp} decomposes equal
-types with matching shapes into equalities between their subcomponents, while
-\Rule{U-Clash} detects shape mismatches that result in failure. \Rule{U-Name}
-introduces fresh variable for subcomponents, ensuring unification operates on
-\emph{shallow terms}, making sharing of type variables explicit and avoiding
-copying types in rules such as \Rule{U-Decomp}. \Rule{U-True} and
-\Rule{U-Trivial} eliminate trivial constraints, and \Rule{U-False} propagates
-failure.
-%
-Finally, \Rule{U-Cycle} implements the \emph{occurs check}, ensuring that a
-type variable does not occur in the type it is being unified with. This is a
-necessary condition for unification, as it would otherwise lead to infinite
-types\footnote{We discuss relaxing this constraint in \cref{sec/rec-types}.}.
-This is formalized by the relation $\tv \prec_\up \tvb$ indicating that $\tv$
-occurs in a type assigned to $\tvb$ in $\up$. A unification problem is cyclic,
-written $\cyclic \up$, if $\tv \prec_\up^* \tv$ for some $\tv$.
-
 \section{Full technical reference}
 \label{appendix:figures}
 \label{app:full-reference}
@@ -5091,7 +5056,7 @@ definition in full, or when studying the meta-theory of the system.
      \semenv\where{\inst \is \semenvp} \th \c}
     {\semenv \th \cexistsi \inst \x \c}
 
-  \infer[Partial-Inst]
+  \infer[Incr-Inst]
     {\semenv(\inst)(\tv) = \semenv(\t) }
     {\semenv \th \cpinst \inst \tv \t}
 
@@ -5247,7 +5212,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\c \simple}
     {\cexistsi \inst \x \c \simple}
 
-  \inferrule[Simple-Partial-Inst]
+  \inferrule[Simple-Incr-Inst]
     { }
     {\cpinst \inst \tv \t \simple}
 \end{judgboxmathpar}
@@ -6584,7 +6549,7 @@ composability property.
       \end{llproof}
 
     \proofcasederivation
-      {Partial-Inst}
+      {Incr-Inst}
       {\semenv(\inst)(\tv) = \semenv(\t)}
       {\semenv \th \cpinst \inst \tv \t}
 
@@ -7114,7 +7079,7 @@ generally in our system.
             assumption that $\C$ is normalized.
 
             By elimination on the structure of $\NC$, the only constraints that
-            could determine the shape of $\tv$ are partial instantiation
+            could determine the shape of $\tv$ are incremental instantiation
             constraints that copy $\tv$. So there exists a partial
             instantiation constraint $\cpapp \x \tv \tvc \inst$ such that $\Cp
             \where{\cpapp \x \tv \tvc \inst} = \C\where{\ctrue}$ and $\Cshape
@@ -7257,7 +7222,7 @@ generally in our system.
 	      \vdashPf{\semenvp}{\capp \x \t}{Premise}
 	      \inPf{\greg \tv {\semenva}}{\semenv(\x)}{Simple inversion}
 	      \eqPf{\semenva(\tv)}{\semenvp(\t)}{\ditto}
-	      \vdashPf{\semenvp\where{\tvc \is \semenvp(\t), \inst \is \semenva}}{\cpinst \inst \tv \tvc}{By \Rule{Partial-Inst}}
+	      \vdashPf{\semenvp\where{\tvc \is \semenvp(\t), \inst \is \semenva}}{\cpinst \inst \tv \tvc}{By \Rule{Incr-Inst}}
 	      \vdashPf{\semenvp\where{\tvc \is \semenvp(\t), \inst \is \semenva}}{\cunif \tvc \t}{By \Rule{Unif}}
 \Hand	      \vdashPf{\semenvp}{\cexistsi {\tvc, \inst} \x {\cunif \tvc \t \cand \cpinst \inst \tv \tvc}}{By \Rule{Exists}, \Rule{Exists-Inst} and \Rule{Conj}}
 	    \end{llproof}
@@ -7303,7 +7268,7 @@ generally in our system.
 	      \eqPf{\semenva(\tvp)}{\shapp {\semenva(\tvbs)}}{\ditto}
 	      \eqPf{\semenvp(\tvc)}{\shapp {\semenva(\tvbs)}}{Above}
 	      \vdashPf{\semenvp\where{\tvbs' \is \semenva(\tvbs)}}{\cunif \tvc {\shapp {\tvbs'}}}{By \Rule{Unif}}
-	      \vdashPf{\semenvp\where{\tvbs' \is \semenva(\tvbs)}}{\cpapp \x \tvbs {\tvbs'} \inst}{By \Rule{Partial-Inst}}
+	      \vdashPf{\semenvp\where{\tvbs' \is \semenva(\tvbs)}}{\cpapp \x \tvbs {\tvbs'} \inst}{By \Rule{Incr-Inst}}
 \Hand 	      \vdashPf{\semenvp}{\cexists {\tvbs'} \cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst}{By \Rule{Exists} and \Rule{Conj}}
 	    \end{llproof}
 
@@ -7391,7 +7356,7 @@ generally in our system.
 
 		\begin{llproof}
 		  \eqPf{\semenva(\tvp)}{\semenvp(\tvc)}{Premise}
-\Hand		  \vdashPf{\semenvp}{\cpapp \x \tvp \tvc \inst}{By \Rule{Partial-Inst}}
+\Hand		  \vdashPf{\semenvp}{\cpapp \x \tvp \tvc \inst}{By \Rule{Incr-Inst}}
 		\end{llproof}
 
 
@@ -7848,8 +7813,8 @@ rules that are not inherently destructive.
   occur in-between two discharge rules) are always finite.
 
   \paragraph{Starting instantiations} By a similar argument, the number
-  of non-partial instantiations $\capp \x \t$ decreases strictly on
-  \Rule{S-Let-AppR} when a partial instantiation starts, and is
+  of non-incremental instantiations $\capp \x \t$ decreases strictly on
+  \Rule{S-Let-AppR} when a incremental instantiation starts, and is
   preserved by other non-discharge rules. The rule \Rule{S-Let-AppR}
   can thus only occur finitely many times in non-discharging sequences,
   and it suffices to prove that all rewriting sequences that are
@@ -7873,7 +7838,7 @@ rules that are not inherently destructive.
   $(\cletr \x \tv \tvs \ca \cb)$ does not contain infinite
   non-discharging non-instance-starting rewrite rules, we can assume
   that the result holds for the strictly smaller constraint $\ca$, and
-  then prove termination of the partial instantiations of $\x$ in
+  then prove termination of the incremental instantiations of $\x$ in
   $\cb$. (The notion of structural size used here is preserved by
   non-discharging rewrite rules, as they do not affect the
   $\Let$-structure of the constraint.)
@@ -8542,7 +8507,7 @@ stuck, but excluding cases (\ref{item/progress/scope/x}) and
 constraints.  The solved part of $\cerase {\c}$ defines a partial
 (structural domination) ordering $\cprec$ on variables.
 
-$\cerase {\c}$ may also contains partial instantiations
+$\cerase {\c}$ may also contains incremental instantiations
 \emath{\cpapp \x \tv \tvc  \inst}, which implies that
 knowing shape of $\tv$ will also determine the shape of $\tvc$.  We thus
 extend the $\cprec$ ordering with $\tv \cprec \tvc$ for each partial
