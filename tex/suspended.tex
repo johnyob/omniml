@@ -105,6 +105,9 @@ naive typing rules'' If such rules do not exist, it then does not make sense!}
 \Xgabriel{Maybe this could be formulated as: ``they have a simple typing rule
   when the use-case is annotated, but common fallback rules in absence of
   type annotations break principality.''}
+\Xalistair{Naive typing rules (or 'natural') are the obvious rules that we come 
+  up with for overloaded tuples, records, generalized overloading, polytypes, etc. 
+  \ie the rule that you modify in the first step of the omnidirectional recipe.}
 Principality can be recovered through explicit type annotations.
 The return type of overloaded datatype constructors may be annotated; polymorphic
 expressions can be annotated with a type scheme; and for GADTs, both the type
@@ -131,15 +134,13 @@ principality.
 
 \parcomment {Current approaches are kinda bad}
 
-To restore principality, inference algorithms require\footnote {Otherwise,
-they treat \code{f} monomorphically and fail on this example.}  a minimal
-amount of \emph{known} type information; in this example the binding of
-\code{x} should be annotated with the higher-rank type
-$\epolymeth f \tv {\tv \to \tv}$.
-Yet, specifying \Xgabriel[annotatability]{meh} declaratively is
-difficult. As a result, the specifications are often twisted with some
-direct or indirect algorithmic flavor in order to preserve principality
-and completeness.
+To restore principality, inference algorithms require\footnote {Otherwise, they
+treat \code{f} monomorphically and fail on this example.}  a minimal amount of
+\emph{known} type information; in this example the binding of \code{x} should
+be annotated with the higher-rank type $\epolymeth f \tv {\tv \to \tv}$. Yet,
+specifying \emph{known type information} declaratively is difficult. As a
+result, specifications are often twisted with some direct or indirect
+algorithmic flavor in order to preserve principality and completeness.
 
 Moreover, these (more or less) ad-hoc restrictions commonly reject examples
 whose type could easily be guessed. For instance, \OCaml accepts or rejects the
@@ -158,9 +159,14 @@ let self' x = if true then x#f x else (x : <f : 'a. 'a -> 'a>) °
 
 Each fragile construct admits a \emph{robust} counterpart where the type
 annotation is mandatory---for instance, \ocaml{($e$#$m : \ts$)} is the robust
-form of \ocaml{$e$#$m$} \Xalistair{Reverted back, angles for polytype
+form of \ocaml{($e$#$m$)} \Xalistair{Reverted back, angles for polytype
 instantiation not introduced yet.}\XDR{I don't understand:: my macro $\esend$
-was doing the same thin but with better spacing. No angles where introduced...}for polymorphic method instantiation.  While
+was doing the same thin but with better spacing. No angles where introduced...}
+\Xalistair{You had written $\eobj {\e \esend m}$. Check 373a35c. What you (and I) 
+meant was $\e \esend m$. This is the same but with spacing. I prefer no spacing 
+since we don't introduce this construct mathematically, but as a syntactic construct 
+in \OCaml.}
+for polymorphic method instantiation.  While
 robust constructs do not break principality, they are significantly more
 cumbersome to use, as they always require explicit type annotations. Fragile
 forms relieve this burden, but can only be elaborated into their robust
@@ -412,17 +418,6 @@ impredicativity. We write $\epoly[\ts] \e$ to box a term $\e$ with the
 scheme $\ts$, and $\einst \e$ to unbox a polytype, instantiating
 it.
 
-\Xalistair{Preferred a figure for polytypes. Reverted your change @Didier}
-%
-\XDR{That's minor, but I disagree... Otherwise, if it is important to make
-  it a Figure it should be moved to the top of the page}
-%
-\Xgabriel{I moved it to the top of the page. I removed the mention of the
-  figure in the paragraph above, because at this point it is unclear what
-  $(\ts_1 : \ts : \ts_2)$ means and where it is defined. The mention of
-  the figure below is in the context where that is explained, so I kept
-  it.}
-
 \begin{mathparfig}[tb]
   {fig:polyml}
   {Syntax and typing rules for polytypes from \citet*{Garrigue-Remy/poly-ml}.}
@@ -598,7 +593,14 @@ disambiguates on type information.
 
 \parcomment{Good example}
 
-To illustrate \geninst-directionality, consider:\Xgabriel{I find the use of polytype-syntax that is not valid \OCaml a bit confusing in this example. Could we use the name 'PolyML' in the left column for these examples?}
+To illustrate \geninst-directionality, consider:\Xgabriel{I find the use of
+polytype-syntax that is not valid \OCaml a bit confusing in this example. Could
+we use the name 'PolyML' in the left column for these examples?} \Xalistair{I
+agree, though it'd be nice if all of our examples were valid OCaml :/ Perhaps
+we could introduce a PPX that rewrites this? It'd be quite simple (and make a
+footnote that all our examples are ran with this PPX, which implements the
+translation described in the previous section).}
+
 \begin{program}[input,check,angles]
 let pid = [ fun x -> x : 'a. 'a -> 'a ] °\ocamlflags 00°
 let ex_5 = let p = pid in <p> °\ocamlflags 00°
@@ -2411,11 +2413,15 @@ such that the resulting constraint is satisfiable if and only if the term is
 well typed. The translation is defined as a function $\cinfer \e \tv$, where $\e$
 is the term to be translated and $\tv$ is the expected type of $\e$.
 
-\XDR{I do not see any reason to defined $\cinfer \e \tv$ instead of
-$\cinfer \e \t$. In principle, $\cinfer \e \t$ could itself be treated as a
-constraint that is equivalent to its expansion. Then, we should be able to
-substitute free variables by simple types in the constraint. If this is not
-the case, then something is suspicious.}
+\XDR{I do not see any reason to defined $\cinfer \e \tv$ instead of $\cinfer \e
+\t$. In principle, $\cinfer \e \t$ could itself be treated as a constraint that
+is equivalent to its expansion. Then, we should be able to substitute free
+variables by simple types in the constraint. If this is not the case, then
+something is suspicious.} \Xalistair{Generally speaking, the proofs were easier
+with this form. Also with a variable, the definitions are more uniform,
+guaranteed to be linear in the size of the term, improve sharing (\ie they
+cannot implicitly duplicate source types)}
+
 
 The function $\cinfer - {\mathop{=}}$ is defined in \cref{fig/constraint-gen}.
 All generated type variables are fresh with respect to the expected type $\tv$,
@@ -2439,7 +2445,6 @@ interpretation is the set of all types that $\e$ admits.
 Annotations bind their flexible variables and enforce the equality of
 the annotated type $\t$ and the expected type $\tv$.
 % Polytypes
-\XDR{I removed tuples from the Figure}\relax
 For polytypes, boxing asserts that $\e$ has the polymorphic type $\ts$ (using
 universal quantification) and that the expected type is the polytype $\tpoly
 \ts$.
@@ -2475,6 +2480,9 @@ generation. We also need the constraint ${\labfrom \elab \ct \leq \tvb \to
 \tv}$. This slightly pollutes the language of constraints, which may the
 framework even more dependent on each feature. Typical side conditions,
 which could be dealt with at the metalevel, have to be turned into new constrains.}
+\Xalistair{I don't see a problem here? This was a known limitation of removing 
+meta-functions. We've previously tried many presentations where such details are 
+abstracted, all of them were too opaque.}
 %
 Explicit records and projections, along with closed-world disambiguated terms,
 bypass suspension and directly instantiate the appropriate labels.
@@ -2524,11 +2532,15 @@ As in the previous example, the type of \code{r} cannot be disambiguated in the
 \code{let}-definition alone. In the previous example, this type was unified
 to a known shape in the \code{let}-body. Here, this is more subtle:
 \XDR{I don't understand the next two sentences}
+\Xalistair{It is trying to justify that there is a unique shape for \code{r} 
+  without using unicity formally. I've improved it a bit. If you still feel 
+  confused, I'll rewrite to use unicity formally.}
 an
-\emph{instance} of the type scheme is taken, which is only well-typed if
-\code{r} has a variable type or a type of the form
-\ocaml{'a one}. The projection \code{r.x} would be
-forbidden if \code{r} had a variable type, so
+\emph{instance} of \code{getx}'s type scheme is taken, 
+  which only satisfies the application (\ocaml!getx {x = 1; y = 1}!)
+  if \code{r} has a variable type or a type of the form
+\ocaml{'a one}. However, the projection \code{r.x} would be
+  ill-typed if \code{r} had a variable type (unicity would fail), so
 \code{'a one} is the unique solution. We call this flow of
 information from instances back to definitions \emph{backpropagation}.
 
@@ -2555,7 +2567,7 @@ predicate $\Cshape \C \tvb \sh$ for the shape $\sh$ equal to $(\any \tvc
 %%   \all {\semenv, \gt} \uad
 %%     \semenv \th \cerase {\C\where{\cunif \tvb \gt}} \implies \shape \gt = \sh
 %% \end{mathpar}
-For any \XDR{$\semenv$, }$\gt$, the erasure $\cerase {\C \where {\cunif \tvb \gt}}$
+  For any \XDR{$\semenv$, }\Xalistair{We don't use $\semenv$ here}$\gt$, the erasure $\cerase {\C \where {\cunif \tvb \gt}}$
 is
 \begin{mathpar}[inline]
 \clet {getx}
@@ -2720,7 +2732,7 @@ preserve typability in its operational semantics.
   \rewrite[S-Let-ExistsRight]
     {\cletr \x \tv \tvs \ca {\cexists \tvb \cb}}
     {\tvb \disjoint \tv, \tvs, \ca}
-    {\cexists \tvb {\clet \x \tvs \ca \cb}}
+    {\cexists \tvb {\cletr \x \tv \tvs \ca \cb}}
 
   \rewrite[S-Let-ConjLeft]
     {\cletr \x \tv \tvs {\ca \cand \cb} \cc}
@@ -2730,7 +2742,7 @@ preserve typability in its operational semantics.
   \rewrite[S-Let-ConjRight]
     {\cletr \x \tv \tvs \ca (\cb \cand \cc)}
     {\x \disjoint \cb}
-    {\cb \cand \Clet \x \tv \ca \cc}
+    {\cb \cand \cletr \x \tv \tvs \ca \cc}
 \end{mathparsubfig}
 
 \begin{mathparsubfig}
@@ -2853,18 +2865,18 @@ preserve typability in its operational semantics.
 
 \infer[Uni-Var]
   {\color{gray}\tv \disjoint \bvs \Cb}
-  {\th \Cshape {\Ca\where{\cunif \tv {\cunif \t \ueq} \cand \Cb\where{-}}} \tv {\shape \t}}
+  {\th \Cshape {\Ca\where{\cunif \tv {\cunif \t \ueq} \cand \Cb\where{\square}}} \tv {\shape \t}}
 
 \infer[Uni-Type]
   {{\color{gray}\t \notin \TyVars}}
   {\th \Cshape \C \t {\shape \t}}
 
 \infer[Uni-BackProp]
-  {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand -}}} \tvc \sh \\
+  {\th \Cshape{\parens{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand \square}}}} \tvc \sh \\
    \color{gray}\tvp \in \tv, \tvs \\
    \color{gray}\x \disjoint \bvs \Cb \\
    \color{gray}\tvp \disjoint \bvs \Ca}
-  {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{-}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}} \tvp \sh}
+  {\th \Cshape{\parens{\cletr \x \tv \tvs {\Ca\where{\square}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}}} \tvp \sh}
 \end{mathparsubfig}
 \end{figure}
 }
@@ -2974,14 +2986,6 @@ generalize ordinary constraint abstractions, as captured by the equivalence:
 %
 In \cref{fig:solver-basic}, \Rule{S-Let} rewrites let constraints into regional
 form.
-\XDR{Something is wrong with the following rules:
-\begin{enumerate*}
-\item
-  \Rule{Let-ExistsRight} destroys the region.
-\item
-  \Rule{Let-ConRight} looses existential variables $\tvs$ in the
-  conclusion
-\end{enumerate*}}
 %
 \Rule{S-Exists-Conj} lifts existentials across conjunctions;
 \Rule{S-Let-ExistsLeft} and \Rule{S-Let-ExistsRight} lift existentials across
@@ -3040,6 +3044,9 @@ and therefore can propagate constraints but at the cost of duplicating work.
 On the opposite, it let one think that let-bodies must always be simplified
 before typing the in part. }
 
+\Xalistair{This comment was me lazily copying part of the related work 
+when I was rewriting related work. The comment itself still needs to be addressed.}
+
 This resembles $\beta$-reduction, except that the original abstraction is
 retained. While correct for \emph{simple} constraints, it may duplicate
 solving work across applications of the same abstraction.
@@ -3050,11 +3057,7 @@ reuses the result at each application site by only copying the solved
 constraint $\ueq$. This mirrors \ML generalization and instantiation, a
 connection formalized by \citet*{Pottier-Remy/emlti}, where $\cabsr \tv \tvs
 \ueqs$ corresponds to the type scheme $\tfor \tvs {\sub(\tv)}$ and $\sub$ is
-the \mgu of $\ueqs$. This optimization underlies efficient implementations of
-\HM inference, such as \OCaml's.\XDR{The optimization that underlies
-efficient implementation are the levels/regions, not the typing of let
-bindings before they body. So this is misleading both on the status of
-\citet*{Pottier-Remy/emlti} and on the requirements to be efficient.}
+the \mgu of $\ueqs$. 
 
 \parcomment{Generalization with suspended constraints is hard}
 
@@ -3157,8 +3160,8 @@ Partial instantiation constraints are reduced using the following rules, summari
     when $\inst$ is bound with $\exists \inst^\x$ in the context. To ensure
     termination, the abstraction must contain acyclic types.
 
-  \item \Rule{S-Inst-Unify} unifies two instantiations if they refer to the
-    same source variable $\tvb$\XDR{ and the same instantiation site $\inst$}.
+  \item \Rule{S-Inst-Unify} unifies two instantiations if they both refer to the
+    source variable $\tvb$ at same instantiation site $\inst$.
 \end{enumerate}
 There are three cases in which an instantiation constraint is eliminated:
 \begin{enumerate}
@@ -3192,6 +3195,14 @@ instantiation constraints, written as the substitution $\where{\x.\tvb \is
 \tvc}$. We view this as an analogous copy rule for variables.
 \XDR{We need not substitute in $\Ca$. Multi-equations already take care of
 that. This would make it a simple rule.}
+
+\Xalistair{True, \Rule{S-Gc} would eventually take care of it. The reason that
+it is written like this is to ensure the rule is destructive, by removing the
+variable (and the multi-equation), we cannot re-apply the rule. 
+%
+We could add some side-conditions to prevent its reapplication (\ie there must
+be a partial instantiation to eliminate in $\cb$), but the rule also serves a
+dual purpose: path compression (hence the name \Rule{S-Compress}) }
 
 \XDR{Rule {S-Let-AppR} is never read, while a key rule.}
 \parcomment{Lowering}
@@ -3242,6 +3253,8 @@ we search for a multi-equation $\ueq$ in $\cp$ of the form:
     \XDR{This case i subtle as it seems that $\tvc$ is unused. The point is
     that there should be a variable in $\ueq'$ that is not in $\tvbs$ nor in
     $\tvas$}
+    \Xalistair{No? $\tvc$ is used, its role is cruicial. Namely $\tvc$ is the 
+    monomorphic variable that dominates $\tvs$.}
     $\cunif \tvc \ueq'$ where $\tvc \disjoint \tvs, \tvbs$ and
     $\tvs \subseteq \fvs {\ueq'}$, or
   \item
@@ -3250,8 +3263,8 @@ we search for a multi-equation $\ueq$ in $\cp$ of the form:
 \end{enumerate*}
 %
 This syntactic relation coincides with the semantic definition of
-determinacy whenever $\c$ is in solved form.\XDR{Otherwise, it may
-only be a strict subset of the semantic definition.}
+determinacy whenever $\c$ is in solved form. Otherwise, it is a 
+sound approximation of the semantic definition.
 
 \parcomment{Why we lower?}
 
@@ -3276,6 +3289,8 @@ and $\t$ is a non-variable type. In this case, the shape of $\tv$ is $\shape
 \t$.\XDR{We should at least explain that $-$ stands for the hole. But I then
 do not understand what why $\tv ! \shape \tv$ is not inlined in the hole?}
 \XDR{Same question for \Rule {Uni-BackProp}}
+\Xalistair{I've replaced $-$ with $\square$. The reason that we do not inline 
+is to make it clear that this relation is a triple.}
 %
 Finally, \Rule{Uni-BackProp} expresses \emph{backpropagation}, previously
 illustrated in \cref{ex:backprop}. In particular, the shape of a regional
@@ -3303,22 +3318,23 @@ variable subcases. Well-formed constraints should be well-scopes. All
 rewriting rules should preserve scoping. Progress would then have 3 cases.
 Solved or ill-scoped or stuck.}
 
-\begin{version}{}
-\XDR {Shouldn't we defined a notion of well-scoped constraints and
-show that well-scoping is preserved by rewriting rules?}
+\Xalistair{I don't see how progress suggests we introduce ill-scoped
+constraints? In combination with preservation, it is clear that this is not the
+case. For me, stuck either means unsatisfiable or ill-scoped, a side-effect of
+working in a solver without an explicit scoping stack. But if you prefer a
+different formulation (that doesn't the ill-scoped cases), what about: }
 
-\XDR {Then, a stuck constraint would either be $\cfalse$ or contain
-a suspended constraint.}
-
-\XDR {A stuck constraint may also contain well-scoped
-instantiation clauses \emath{\cpapp \x \tv \tvc \inst}
-since Rule \Rule {S-Inst-Poly} may not fire because of
-$\tvp$ occurring in $\C$}
-\Xalistair{Yes, but this is a special case of (d), since
-this occurs if $\tv \in \fvs \c$ and $\c$ is stuck. Thus the
-`root' cause of the constraint being stuck isn't the instantiation
-but the body of the abstraction being stuck.}
-\end{version}
+\begin{corollary}[Closed Progress]
+  A constraint $\c$ is term-variable-closed if all term variables $\x$ are bound \ie $\fvs \c \subseteq \TyVars$. 
+  If a term-variable-closed constraint $\c$ cannot take a step $\c \csolve \cp$, 
+  then either: 
+  \begin{enumerate}
+    \item $\c$ is solved. 
+    \item $\c$ is $\cfalse$. 
+    \item for every match constraint $\hat\C\where{\cmatch \tv \cbrs}$ in
+        $\c$, $\Cshape {\hat\C} \tv \sh$ does not hold for any $\sh$.
+  \end{enumerate}
+\end{corollary}
 
 \begin{restatable}[Progress]{theorem}{progress}
   \label{thm:progress}
@@ -3341,9 +3357,6 @@ but the body of the abstraction being stuck.}
         \label {item/progress/suspended}
         for every match constraint $\hat\C\where{\cmatch \tv \cbrs}$ in
         $\c$, $\Cshape {\hat\C} \tv \sh$ does not hold for any $\sh$.
-
-        \Xalistair{Name: stuck suspended constraints?}
-
       \end{enumerate*}
      Here, $\hat\C$ is a normal context, \ie such that no other
      rewrites can be applied.
@@ -3362,7 +3375,7 @@ but the body of the abstraction being stuck.}
 \end{restatable}
 
 \begin{corollary}[Correctness]
-  For the closed-term-variable constraint $\c$, $\c$ is satisfiable if and only if
+  For the term-variable-closed constraint $\c$, $\c$ is satisfiable if and only if
   $\c \csolve^* \hat\c$ and $\hat\c$ is a solved form equivalent to $\c$.
 \end{corollary}
 
