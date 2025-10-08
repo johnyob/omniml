@@ -1,0 +1,181 @@
+\documentclass[sigplan,screen,nonacm,review]{acmart}
+\input{suspended.cfg}
+
+\usepackage{suspended}
+\usepackage{balance} % For balanced columns
+\usepackage{marginnote}
+
+\citestyle{acmnumeric}
+
+\author{Alistair O'Brien}
+\email{ajo41@cam.ac.uk}
+\orcid{0009-0009-0055-7793}
+\affiliation{
+  \institution{University of Cambridge}
+  \city{Cambridge}
+  \country{United Kingdom}
+}
+
+\author{Didier R\'emy}
+\email{didier.remy@inria.fr}
+\affiliation{
+  \institution{Inria}
+  \country{France}
+}
+
+\author{Gabriel Scherer}
+\email{gabriel.scherer@inria.fr}
+\affiliation{
+  \institution{Inria \& Irif, Universit\'e Paris Cit\'e}
+  \country{France}
+}
+
+
+\title{Omnidirectional type inference for \ML}
+
+\begin{document}
+
+\maketitle
+
+At the heart of the Damas-Hindley-Milner (\HM) type system lies the ability to
+\emph{guess} types. For instance, in $\efun \x \e$, the parameter type for $\x$
+is \emph{guessed} and subsequently constrained by the body $\e$. The elegance
+of the \ML discipline is that such guesses are never arbitrary: there always
+exists a ``most general guess''---a \emph{principal type}. Every well-typed
+expression $\e$ admits a principal type $\ts$ from which all other valid types
+for $\e$ are instances of $\ts$. This guarantees both predictability and
+efficiency of inference: local typing decisions are always optimal without
+resorting to backtracking.
+
+\parcomment {Extensions often break pincipality}
+
+Principality, however, is \emph{fragile}. Many extensions of \ML---GADTs
+\citep*{conf/icfp/SchrijversJSV09, conf/aplas/GarrigueR13}, higher-rank
+polymorphism \citep*{conf/popl/OderskyL96, journals/pacmpl/SerranoHJV20}, and
+static overloading
+\citep*{Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}---break it. 
+%
+Consider the following example in \OCaml\footnote{
+%
+  All \OCaml examples should be checked with the options 
+  \code{-principal -w +41+18 -warn-error +41+18}, which enables 
+  principal type inference and escaltes the associated warnings to errors.
+} using overloaded record field names:
+\begin{program}[input]
+type point = { x : int; y : int }
+type cpoint = { x : y; y : int; color : int }
+
+let getx r = r.x
+\end{program}
+\programjoin
+\begin{program}
+             ^^^
+Error (warning 41 [ambiguous-name]): 
+x belongs to several types: cpoint point.  
+\end{program}
+When typing \code{getx}, one could \emph{guess} the type of \code{r} to 
+be either \code{point} or \code{cpoint}---neither of which is strictly more 
+general than the other, violating principality!
+
+\parcomment{Known information fixes principality / Robust forms}
+
+Principality can always be recovered through explicit type annotations---for
+instance, annotating the projection \code{r.x} as \code{(r : point).x}. Each
+\emph{fragile} construct (\eg an overloaded field projection $\efield \e
+\elab$) therefore admits a \emph{robust} counterpart (\eg a qualified
+projection $\exfield \e \T \elab$), whose \emph{natural} typing rules preserve
+principality. 
+%
+However, robust forms are cumbersome to use, as they always require explicit
+annotations. Inference algorithms thus rely on a minimal amount of \emph{known}
+type information to disambiguate fragile terms and elaborate them into their
+robust counterparts \citep*{Pottier-Regis-Gianas/stratified@popl06}. 
+
+\parcomment{The problem}
+
+In practice, specifying what counts as \emph{known type information}
+declaratively is difficult. 
+%
+Existing approaches typically rely on one of two frameworks:
+\emph{bidirectional} type inference \citep*{conf/popl/PierceT98} and
+\emph{\geninst-directional} inference~\citep*{Garrigue-Remy/poly-ml}. Both
+impose some \emph{static} ordering of inference, using it to propagate inferred
+types and user-provided annotations as known information. 
+%
+For instance, in a bidirectional system, a type $\t$ is \emph{known}
+when it is either: 
+%
+\begin{enumerate*} 
+  \item part of an annotation, 
+  \item supplied as input to a checking conclusion ($\Leftarrow \t$), or 
+  \item an output of a synthesizing premise ($\Rightarrow \t$).
+\end{enumerate*}
+%
+While effective in many settings, the rigidity of a static ordering causes even
+simple examples---whose types could easily be guessed---to be rejected; for instance, 
+\code{fun r -> (r.x, r.color)} is ill-typed in \OCaml.
+
+
+\parcomment {Our solution}
+
+We propose \emph{omnidirectional} type inference, which relies on a
+\emph{dynamic} order of inference: constraints may be solved in any order,
+suspending whenever progress requires \emph{known} type information. Other
+constraints may continue to be solved; once the missing information becomes
+available (typically via unification), the suspended typing constraints are
+resumed.
+
+This approach comes naturally for simply typed systems (when inference is
+purely unification-based), but becomes challenging in the presence of \ML-style
+\emph{let-generalization}. In existing \ML inference algorithms, typing a
+let-binding $\elet \x \ea \eb$ follows a fixed order: first type $\ea$, then
+generalize its type, and finally type the body $\eb$ under the extended
+environment. 
+%
+We solve this by introducing two novel devices:
+\begin{enumerate*} 
+
+  \item \emph{suspended match constraints}, which defer disambiguation until
+    sufficient contextual information is known, and 
+
+  \item \emph{partial type schemes} \ie with the ability to instantiate type
+    schemes that are not yet fully determined and consequently revisit their
+    instances when they are being refined, \emph{incrementally}. 
+
+\end{enumerate*}
+
+Thus far, we have developed:
+\begin{enumerate}
+
+  \item A novel constraint language for omnidirectional inference, equipped
+    with a declarative semantics for suspended constraints and a new
+    characterization of \emph{known} type information.
+
+  \item The \OML calculus, an extension of \ML featuring advanced extensions of
+    \OCaml such as static overloading of record labels, and an
+    \emph{omnidirectional recipe} to derive its typing rules. 
+
+  \item A sound, complete, and \emph{principal} constraint-based inference
+    algorithm for \OML.
+
+  \item
+    A formalized constraint solver as a series of non-deterministic rewriting rules 
+    and an efficient implementation (available at ??) using \emph{partial 
+    type schemes}.
+
+\end{enumerate}
+
+Suspending unsolved constraints is not new---it appears in dependently typed
+systems [??] and in \OutsideIn \citep*{conf/icfp/SchrijversJSV09} in the form
+of \emph{delayed implication} constraints---but combining this technique with
+\ML-style \emph{local let-generalization}, and giving it a declarative
+semantics, is novel. 
+%
+Our ultimate aim is to apply this to \OCaml, where \emph{local
+let-generalization} is indepensible\footnote{Unlike Haskell, which only
+generalizes at the top level.}, yet this makes omnidirectional inference
+especially challenging to specify and implement. 
+
+\bibliography{suspended}
+
+\end{document}
