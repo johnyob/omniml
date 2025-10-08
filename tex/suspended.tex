@@ -379,6 +379,7 @@ while preserving principal type inference.
 %% \end{mathparfig}
 
 \paragraph{From polymorphic methods to polytypes}
+\label{sec/overview/polymethods-reduction}
 
 \parcomment{Idea and syntax}
 
@@ -394,7 +395,7 @@ it.
 
 \begin{mathparfig}[tb]
   {fig:polyml}
-  {Syntax and typing rules for polytypes from \citet*{Garrigue-Remy/poly-ml}.}
+  {Syntax and typing rules for polytypes from \PolyML \citep*{Garrigue-Remy/poly-ml}.}
 
 \begin{bnfgrammar}
      \entry[Terms]{\e}{
@@ -456,9 +457,10 @@ This reduction is useful for two reasons:
 
 For the remainder of this work, we will focus on polytypes\penalty 50---also
 called \emph{semi-explicit first-class polymorphism}
-\citep*{Garrigue-Remy/poly-ml}---since they expose the tricky interaction with
-principality of interest. We now review the typing rules for polytypes
-collected in \cref{fig:polyml}.
+\citep*{Garrigue-Remy/poly-ml}---as originally formulated in the \PolyML
+calculus. Polytypes expose the tricky interaction with principality of
+interest. We now review the typing rules of \PolyML collected in
+\cref{fig:polyml}.
 
 \parcomment {Annotation variables. Why?}
 
@@ -565,23 +567,24 @@ methods and the overloading of record fields and variant constructors. More
 generally, \OCaml uses \geninst-directionality whenever the typechecker
 disambiguates on type information.
 
+\Xalistair{Using \PolyML instead of \OCaml means we slightly loose the later
+points of \code{ex_6_2}, \code{ex_6_3} which highlights the lack of
+directionality (until generalization) in \emph{\OCaml}'s algorithm. We could
+talk about \OCaml in prose and \PolyML in program blocks, but this would
+otherwise confuse the reader. Another solution is to use a footnote that 
+these examples should be translated using the reduction from 
+\cref{sec/overview/polymethods-reduction}.}
+
 \parcomment{Good example}
 
-To illustrate \geninst-directionality, consider:\Xgabriel{I find the use of
-polytype-syntax that is not valid \OCaml a bit confusing in this example. Could
-we use the name 'PolyML' in the left column for these examples?} \Xalistair{I
-agree, though it'd be nice if all of our examples were valid OCaml :/ Perhaps
-we could introduce a PPX that rewrites this? It'd be quite simple (and make a
-footnote that all our examples are ran with this PPX, which implements the
-translation described in the previous section).}
-
-\begin{program}[input,check,angles]
-let pid = [ fun x -> x : 'a. 'a -> 'a ] °\ocamlflags 00°
-let ex_5 = let p = pid in <p> °\ocamlflags 00°
-let ex_6 = (fun p -> <p>) pid °\ocamlflags 10°
+To illustrate \geninst-directionality, consider:
+\begin{program}[input,check,polyml]
+let pid = [ fun x -> x : 'a. 'a -> 'a ] °\polymlflags 00°
+let ex_5 = let p = pid in <p> °\polymlflags 00°
+let ex_6 = (fun p -> <p>) pid °\polymlflags 10°
 \end{program}
 At first glance, \code{ex_5} and \code{ex_6} appear equivalent: both simply
-instantiate the polytype bound to \code{p}. Yet, \OCaml accepts \code{ex_5} and
+instantiate the polytype bound to \code{p}. Yet, \PolyML accepts \code{ex_5} and
 rejects \code{ex_6}. This is because the \code{let}-binding in \code{ex_5}
 allows \code{p} to type scheme $\tfor \av {\tapoly {\tfor \tv \tv \to \tv}
 \av}$, and thus its type is considered \emph{known}--enabling unboxing (\Rule{PolyML-Inst}).
@@ -590,20 +593,20 @@ instantiation as it is $\lambda$-bound, and unboxing is therefore
 forbidden.
 
 To emphasize that this behavior is specification-driven and not an artifact of
-\OCaml's inference algorithm, consider two equivalent versions of
+\PolyML's inference algorithm, consider two equivalent versions of
 \ocaml{ex_6}:\footnote {\ocaml{app} and \ocaml{rev_app} are the application
 function \code{fun f x -> f x} and the reverse application function \code{fun x
 f -> f x}, respectively.}
-\begin{program}[input,check,angles]
-let ex_6_2 = app (fun p -> <p>) pid                        °\ocamlflags 10°
-let ex_6_3 = rev_app pid (fun p -> <p>)                    °\ocamlflags 20°
+\begin{program}[input,check,polyml]
+let ex_6_2 = app (fun p -> <p>) pid                        °\polymlflags 10°
+let ex_6_3 = rev_app pid (fun p -> <p>)                    °\polymlflags 20°
 \end{program}
 While these terms are semantically equivalent, they highlight a potential
 hazard: their typability may vary under a directionally biased inference
 algorithm, depending on whether the function or argument is typed first.  To
-limit such implementation-dependent behavior, \OCaml infers all
+limit such implementation-dependent behavior, \PolyML infers all
 subexpressions \emph{simultaneously}, until they are \code{let}-bound.
-Consequently, \OCaml does not make any difference between
+Consequently, \PolyML does not make any difference between
 \ocaml[indices]{ex_6}, \ocaml[indices]{ex_6_2}, and \ocaml[indices]{ex_6_3}.
 
 \parcomment{Short comings of pi-directionality}

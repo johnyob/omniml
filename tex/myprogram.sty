@@ -159,6 +159,10 @@
      {>}{\ensuremath{\rangle}}1
   }}}
 
+\define@key{lst}{polyml}[true]{%
+  \lstset{angles}
+}
+
 \def\lst@moreLiteratekey#1\@nil@{\let\lst@ifxliterate\lst@if
     \expandafter\def\expandafter\lst@literate\expandafter{\lst@literate#1}}
 
@@ -211,6 +215,11 @@
   {\Ocamlcomment
       {\ocamlFlag{\textsf{\footnotesize \OCaml}}{#1}\space
        \ocamlFlag{\textsf{\footnotesize \OML}}{#2}}}
+\newcommand \polymlflags[2]
+  {\Ocamlcomment
+      {\ocamlFlag{\textsf{\footnotesize \PolyML}}{#1}\space
+       \ocamlFlag{\textsf{\footnotesize \OML}}{#2}}}
+
 %% \newcommand \ocamlflags[2]
 %%   {\Ocamlcomment
 %%       {\ocamlFlag{\ensuremath{\mathcal M}}{#1}\space
