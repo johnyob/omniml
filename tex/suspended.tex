@@ -435,8 +435,8 @@ Concretely, the polymorphic method of
 \ocaml{object method id : 'a. 'a -> 'a = fun x -> x end}
 %
 is translated to \ocaml{object method id = [ fun x -> x : 'a. 'a -> 'a ] end}.
-Method invocation implicitly unboxes the polytype \eg \code{x#id} becomes
-\ocaml[angles]{<x#id>}.
+Method invocation implicitly unboxes the polytype \eg $\ttlab \x \esend \ttlab {id}$ becomes
+$\einst {\ttlab \x \esend \ttlab {id}}$.
 
 \parcomment{Why bother?}
 
