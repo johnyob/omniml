@@ -260,25 +260,6 @@ are useful in practice: static overloading is widely relied upon in large
 programs, and polymorphic methods make higher-rank polymorphism available
 within \OCaml.
 
-\XDR
-{Cite Polymorphic parameters as a recent extension of \OCaml that is based
-on the same mechanism, making higher-rank polymorphism easier to use in many
-cases.}
-\Xalistair
-{This citation comes later. I've avoided drawing attention to polyparams
-since we cannot type them without default rules. Plus it raises the
-question: if polyparams are better, why bother explaining polymorphic
-methods?}
-\XDR
-{Polymorphic methods also require default rules, since method calls work
-for both polymorphic and monomorphic methods. The latter is by defaulting
-in the absence of known polymorphism.}
-\Xalistair
-{The same argument could be applied to static overloading of record types.
-The difference between polyparams and polymorphic methods is that polyparams with
-omnidirectionality results in simple programs (e.g. $\efun {f, x} {\eapp f x}$)
-being ill-typed without default rules.}
-
 \subsection{Static overloading of constructors and record labels}
 \label{sec/overview/overloading}
 
@@ -465,9 +446,9 @@ This reduction is useful for two reasons:
     orthogonal to our concerns. In contrast, polytypes are \emph{fragile}.
 
 
-  \item Polytypes underpin other features in \OCaml, notably the recent addition
-    of polymorphic function
-    parameters \citep*{polyparams} in \OCaml 5.4.
+  \item Polytypes underpin other features in \OCaml, notably the recent
+    addition of polymorphic function parameters \citep*{polyparams}.
+
 \end{enumerate*}
 
 \paragraph{Semi-explicit first-class polymorphism}
