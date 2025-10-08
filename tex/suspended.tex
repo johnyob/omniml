@@ -120,7 +120,7 @@ polymorphism via \emph{polymorphic object methods}~\citep{Garrigue-Remy/poly-ml}
 let self x = x#f x in self (object method f z = z end)
 \end{program}
 In \OCaml, objects are defined as a collection of methods within
-\code{object ... end}, and accessed using \ocaml{$e$#$m$}. Unlike Java or C++,
+\code{object ... end}, and accessed using $\e \esend m$. Unlike Java or C++,
 \OCaml uses \emph{structural typing} for objects: object types are a list of
 method types between two chevrons \eg \ocaml[angles]{<f : 'a. 'a -> 'a>},
 where the method \code{f} has the polymorphic identity function type
@@ -158,15 +158,8 @@ let self' x = if true then x#f x else (x : <f : 'a. 'a -> 'a>) °
 \parcomment {Annotations fixes all the issues (but they're problematic)}
 
 Each fragile construct admits a \emph{robust} counterpart where the type
-annotation is mandatory---for instance, \ocaml{($e$#$m : \ts$)} is the robust
-form of \ocaml{($e$#$m$)} \Xalistair{Reverted back, angles for polytype
-instantiation not introduced yet.}\XDR{I don't understand:: my macro $\esend$
-was doing the same thin but with better spacing. No angles where introduced...}
-\Xalistair{You had written $\eobj {\e \esend m}$. Check 373a35c. What you (and I) 
-meant was $\e \esend m$. This is the same but with spacing. I prefer no spacing 
-since we don't introduce this construct mathematically, but as a syntactic construct 
-in \OCaml.}
-for polymorphic method instantiation.  While
+annotation is mandatory---for instance, $\eannot {\e \esend m} {} \ts$ is the
+robust form of $\e \esend  m$ for polymorphic method instantiation.  While
 robust constructs do not break principality, they are significantly more
 cumbersome to use, as they always require explicit type annotations. Fragile
 forms relieve this burden, but can only be elaborated into their robust
