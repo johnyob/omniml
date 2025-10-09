@@ -288,11 +288,11 @@ type gray_point = { x : int; y : int; color : int }
 \end{program}
 With both definitions in scope, \OCaml must statically disambiguate each
 field usage:
-\begin{program}[input,check]
-let one = { x = 42; y = 1337 }                            °\ocamlflags 00°
+\begin{program}[input,checkocaml]
+let one = { x = 42; y = 1337 }                           °\ocamlflags 00°
 let ex_1 r = r.x                                         °\ocamlflags 21°
 let ex_2 (r : point) = r.x + r.y                         °\ocamlflags 00°
-let ex_3 = (r.x, (r : point).y)                               °\ocamlflags 20°
+let ex_3 r = (r.x, (r : point).y)                        °\ocamlflags 10°
 \end{program}
 %
 The type of expression \ocaml!one! has the unambiguous type \code{point}, 
@@ -337,7 +337,7 @@ compatible type. For example, \OCaml accepts the following expression, when
 % the code block
 \vskip 2.5pt
 
-\begin{program}[input,check=true]
+\begin{program}[input,checkocaml=true]
 let getx r = r.x                                      °\ocamlflags 21°
 \end{program}
 %
@@ -351,7 +351,7 @@ This fallback mechanism highlights the directionality of \OCaml inference. Once
 the compiler selects a type, it commits to it---even if that choice causes
 errors downstream. Consider:
 %
-\begin{program}[input,check=true]
+\begin{program}[input,checkocaml=true]
 let ex_4 r = let x = r.x in x + (r : point).y          °\ocamlflags 10°
 \end{program}
 %
@@ -581,7 +581,7 @@ these examples should be translated using the reduction from
 \parcomment{Good example}
 
 To illustrate \geninst-directionality, consider:
-\begin{program}[input,check,polyml]
+\begin{program}[input,angles,checkpolyml]
 let pid = [ fun x -> x : 'a. 'a -> 'a ] °\polymlflags 00°
 let ex_5 = let p = pid in <p> °\polymlflags 00°
 let ex_6 = (fun p -> <p>) pid °\polymlflags 10°
@@ -600,7 +600,7 @@ To emphasize that this behavior is specification-driven and not an artifact of
 \ocaml{ex_6}:\footnote {\ocaml{app} and \ocaml{rev_app} are the application
 function \code{fun f x -> f x} and the reverse application function \code{fun x
 f -> f x}, respectively.}
-\begin{program}[input,check,polyml]
+\begin{program}[input,angles,checkpolyml]
 let ex_6_2 = app (fun p -> <p>) pid                        °\polymlflags 10°
 let ex_6_3 = rev_app pid (fun p -> <p>)                    °\polymlflags 20°
 \end{program}
@@ -745,9 +745,8 @@ This weakness is sometimes counter-intuitive to the user.
 For example,
 the following would be rejected as ambiguous using \geninst-directional
 type inference alone:
-\begin{program}[input,check]
-let ex_7 = let g (f : point -> int) = f one in g (fun r -> r.x)$
-$ °\ocamlflags 00°
+\begin{program}[input,checkocaml]
+let ex_7 = let g (f : point -> int) = f one in g (fun r -> r.x) °\ocamlflags 00°
 \end{program}
 Here, \code{r} is $\lambda$-bound and therefore monomorphic. Without further
 propagation, the term \code{r.x} would be ambiguous, as no polymorphic (and
@@ -2073,6 +2072,13 @@ We now illustrate the typing of implicit constructs with a few examples.
 
   Consider the term $\ttex {9} \eqdef \efun r {\erecord { \ttx = \efield r
   \ttx; \tty = \efield r \ttcolor }}$. 
+  % NOTE: The definition of ex9 should be kept inline with the program 
+  % block below. The block is hidden but used for the automated example checker
+\begin{comment}
+\begin{program}[input, checkocaml]
+let ex_9 r = { x = r.x; y = r.color }   °\ocamlflags 20°
+\end{program}
+\end{comment}
   %
   In \ocaml{ex_9}, $r$ can only be of type \ocaml{gray_color}. Indeed,
   considering the second projection first, we should learn that $r$ is of type
@@ -2129,10 +2135,10 @@ type of $r$.
 Our final example illustrates a limitation of our approach: some expressions
 must be rejected even though their elaboration would be unambiguous. 
 Consider: 
-\begin{program}[input]
+\begin{program}[input,checkocaml]
 type cie_color = { x : int; y : int; z : int }
 type cie_point = { x : int; y : int; color : cie_color }
-let ex_1_0 r = r.color.x
+let ex_1_0 r = r.color.x °\ocamlflags 11°
 \end{program}
 
 Here, neither field projections can individually be disambiguated. However, if
@@ -2618,7 +2624,7 @@ as we will further show in our next example.
 \begin{example}\label{ex:backprop}
 A subtle yet crucial feature of our semantics is its support for
 \emph{backpropagation}:
-\begin{program}[input]
+\begin{program}[input,checkocaml]
 let ex_1_1 = let getx r = r.x in getx one  °\ocamlflags 10°
 \end{program}
 As in the previous example, the type of \code{r} cannot be disambiguated in the

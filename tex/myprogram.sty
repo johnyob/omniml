@@ -136,7 +136,8 @@
 
 %% \define@key{lst}{check}[]{}
 %% \define@cmdkey{lst}{check}{}
-\lst@Key{check}{false}[f]{\lstKV@SetIf{#1}\ifocamlwarnings}
+\lst@Key{checkocaml}{false}[f]{\lstKV@SetIf{#1}\ifocamlwarnings}
+\lst@Key{checkpolyml}{false}[f]{\lstKV@SetIf{#1}\ifocamlwarnings}
 \colorlet{welltyped}{green!20}
 \colorlet{warning}{orange!20}
 \colorlet{illtyped}{red!20}
@@ -158,10 +159,6 @@
      {|>}{\large \ensuremath{\triangleright}}1
      {>}{\ensuremath{\rangle}}1
   }}}
-
-\define@key{lst}{polyml}[true]{%
-  \lstset{angles}
-}
 
 \def\lst@moreLiteratekey#1\@nil@{\let\lst@ifxliterate\lst@if
     \expandafter\def\expandafter\lst@literate\expandafter{\lst@literate#1}}
