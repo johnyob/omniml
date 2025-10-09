@@ -27,6 +27,20 @@
 }
 \email{ajo41@cam.ac.uk}
 
+\author{Didier R\'emy}
+\email{didier.remy@inria.fr}
+\affiliation{
+  \institution{Inria}
+  \country{France}
+}
+
+\author{Gabriel Scherer}
+\email{gabriel.scherer@inria.fr}
+\affiliation{
+  \institution{Inria \& Irif, Universit\'e Paris Cit\'e}
+  \country{France}
+}
+
 \usepackage{marginnote}
 
 \title{Omnidirectional type inference for \ML: principality any way}
@@ -3475,24 +3489,25 @@ However, well-foundedness follows directly from the fact that in
 For a solved context $\hat\C$, this relation is moreover sound and complete with respect
 to the semantic definition of unicity (\cref{def:unicity}).
 
+
+\subsection{Metatheory}
+
+We establish the correctness of our solver. Correctness follows from three 
+standard metatheoretic properties: \emph{progress}, \emph{preservation}, and \emph{termination}. 
+Together, they ensure that every satisfiable constraint eventually reduces to an equivalent solved form. 
+
 % Properties
 % May look like space hacks, but restatable introduces its own space
-\Xalistair{@Didier, can you take a look at the new correctness corollary to check if
-this is what you wanted in terms of scoping?}
-\XDR{I still don't like the way  Progress is stated. For me there should be a notion of
-well-formed constraints whose simplification would never introduce unbound
-variable subcases. Well-formed constraints should be well-scopes. All
-rewriting rules should preserve scoping. Progress would then have 3 cases.
-Solved or ill-scoped or stuck.}
 
-\Xalistair{I don't see how progress suggests we introduce ill-scoped
-constraints? In combination with preservation, it is clear that this is not the
-case. For me, stuck either means unsatisfiable or ill-scoped, a side-effect of
-working in a solver without an explicit scoping stack. But if you prefer a
-different formulation (that doesn't the ill-scoped cases), what about: }
+\begin{definition}
+A constraint $\c$ is term-variable-closed if all its term variables $\x$ are bound \ie $\fvs \c \subseteq \TyVars$. 
+\end{definition}
 
-\begin{corollary}[Closed Progress]
-  A constraint $\c$ is term-variable-closed if all term variables $\x$ are bound \ie $\fvs \c \subseteq \TyVars$. 
+\begin{lemma}[Scope preservation]
+If $\ca \csolve \cb$, then $\fvs \ca \supseteq \fvs \cb$.
+\end{lemma}
+
+\begin{theorem}[Closed Progress]
   If a term-variable-closed constraint $\c$ cannot take a step $\c \csolve \cp$, 
   then either: 
   \begin{enumerate}
@@ -3501,34 +3516,7 @@ different formulation (that doesn't the ill-scoped cases), what about: }
     \item for every match constraint $\hat\C\where{\cmatch \tv \cbrs}$ in
         $\c$, $\Cshape {\hat\C} \tv \sh$ does not hold for any $\sh$.
   \end{enumerate}
-\end{corollary}
-
-\begin{restatable}[Progress]{theorem}{progress}
-  \label{thm:progress}
-  If constraint $\c$ cannot take a step $\c \csolve \cp$, then either:
-  \begin{enumerate}%[(\roman*)]
-    \item $\c$ is solved.
-    \item $\c$ is stuck, it is either:
-      \begin{enumerate*}
-      \item
-        \label {item/progress/false}
-        $\cfalse$;
-      \item
-        \label {item/progress/scope/x}
-        $\hat\C\where{\capp \x \t}$ where $\x \disjoint \hat\C$;
-      \item
-        \label {item/progress/scope/i}
-        $\hat\C\where{\cpapp \x \tv \tvc \inst}$ where
-        $\x \disjoint \hat\C$ and $\inst.\tv \disjoint \insts {\hat\C}$;
-      \item
-        \label {item/progress/suspended}
-        for every match constraint $\hat\C\where{\cmatch \tv \cbrs}$ in
-        $\c$, $\Cshape {\hat\C} \tv \sh$ does not hold for any $\sh$.
-      \end{enumerate*}
-     Here, $\hat\C$ is a normal context, \ie such that no other
-     rewrites can be applied.
-  \end{enumerate}
-\end{restatable}
+\end{theorem}
 
 \vskip -\lastskip
 \begin{restatable}[Termination]{theorem}{termination}
@@ -6678,7 +6666,32 @@ generally in our system.
 \end{lemma}
 
 
-\progress
+\begin{theorem}[Progress]
+  \label{thm:progress}
+  If constraint $\c$ cannot take a step $\c \csolve \cp$, then either:
+  \begin{enumerate}%[(\roman*)]
+    \item $\c$ is solved.
+    \item $\c$ is stuck, it is either:
+      \begin{enumerate*}
+      \item
+        \label {item/progress/false}
+        $\cfalse$;
+      \item
+        \label {item/progress/scope/x}
+        $\hat\C\where{\capp \x \t}$ where $\x \disjoint \hat\C$;
+      \item
+        \label {item/progress/scope/i}
+        $\hat\C\where{\cpapp \x \tv \tvc \inst}$ where
+        $\x \disjoint \hat\C$ and $\inst.\tv \disjoint \insts {\hat\C}$;
+      \item
+        \label {item/progress/suspended}
+        for every match constraint $\hat\C\where{\cmatch \tv \cbrs}$ in
+        $\c$, $\Cshape {\hat\C} \tv \sh$ does not hold for any $\sh$.
+      \end{enumerate*}
+     Here, $\hat\C$ is a normal context, \ie such that no other
+     rewrites can be applied.
+  \end{enumerate}
+\end{theorem}
 \begin{proof}
   We proceed by induction on the structure of $\c$. We
   focus on suspended match constraints, conjunctions, and $\Let$ rules.
@@ -7070,7 +7083,7 @@ rules that are not inherently destructive.
   \end{proof}
 \end{lemma}
 
-\begin{lemma}
+\begin{lemma}[Scope preservation]
   \label{lem:scoping-preservation}
   For all $\ca, \cb$, if $\ca \csolve \cb$, then $\fvs \ca \supseteq \fvs \cb$.
   \begin{proof}
