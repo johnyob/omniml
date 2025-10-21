@@ -12,6 +12,8 @@ final: suspended.final.pdf
 
 wits: wits.pdf
 
+wits-final: wits.final.pdf
+
 all: $(addsuffix .pdf,${PRJ})
 
 

@@ -28,8 +28,7 @@
 }
 
 \author{Gabriel Scherer}
-\email{gabriel.scherer@inria.fr}
-\affiliation{
+\email{gabriel.scherer@inria.fr} \affiliation{
   \institution{Inria \& Irif, Universit\'e Paris Cit\'e}
   \country{France}
 }
@@ -59,7 +58,8 @@ polymorphism \citep*{conf/popl/OderskyL96, journals/pacmpl/SerranoHJV20}, and
 static overloading
 \citep*{Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}---break it.
 %
-Consider the following example in \OCaml\XDR{Useless footnote}
+Consider the following example in \OCaml
+%% Useless footnote
 %% \footnote{
 %% %
 %%   All \OCaml examples should be checked with the options
@@ -68,19 +68,19 @@ Consider the following example in \OCaml\XDR{Useless footnote}
 %% }
 using overloaded record field names:
 \begin{program}[input,escapechar=@]
-type point  = { x : int }
-type cpoint = { x : int; color : int }
-@\halfline@
+type point  = {x : int; y : int}
+type gs_point = {x : int; y : int; color : int}
+
 let getx r = r.x
-\end{program}
-\programjoin
+\end{program} 
+\programjoin[-1ex]
 \begin{program}[error]
              ^^^
-Error (warning 41 [ambiguous-name]):
-x belongs to several types: cpoint point.
+Error (warning 41 [ambiguous-name]): 
+x belongs to several types: gs_point point.  
 \end{program}
-When typing \code{getx}, one could \emph{guess} the type of \code{r} to
-be either \code{point} or \code{cpoint}---neither of which is strictly more
+When typing \code{getx}, one could \emph{guess} the type of \code{r} to be
+either \code{point} or \code{gs_point}---neither of which is strictly more
 general than the other, violating principality!
 
 \parcomment{Known information fixes principality / Robust forms}
@@ -115,8 +115,8 @@ when it is:
   \item part of an annotation;
   \item supplied as input to a checking conclusion ($\Leftarrow \t$); or
   \item an output of a synthesizing premise ($\Rightarrow \t$).
-\end{enumerate*}\XDR{Points 2 and 3 are unclear: as this asumes that one
-already know what bidirectional type inference is.}
+\end{enumerate*}
+\XDR{Points 2 and 3 are unclear: as this asumes that one already know what bidirectional type inference is.}
 %
 While effective in many settings, the rigidity of a static ordering causes even
 simple examples---whose types could easily be guessed---to be rejected; for
@@ -156,7 +156,7 @@ We solve this by introducing two novel devices:
 \end{local}
 
 Thus far, we have developed:
-\begin{enumerate*}
+\begin{enumerate}
 
   \item A novel constraint language for omnidirectional inference, equipped
     with a declarative semantics for suspended constraints and a new
@@ -170,23 +170,24 @@ Thus far, we have developed:
     algorithm for \OML.
 
   \item
-    A formalized constraint solver as a series of non-deterministic
-    rewriting rules and an efficient implementation (available at ??) using
-    \emph{incremental instantiation}.
+    A formalized constraint solver as a series of non-deterministic rewriting
+    rules and an efficient implementation 
+    % De-anonymizing URL (available at https://github.com/johnyob/mlsus)
+    using \emph{incremental instantiation}.
 
-\end{enumerate*}
+\end{enumerate}
 
 Suspending unsolved constraints is not new---it appears in dependently typed
-systems [??] and in \OutsideIn \citep*{conf/icfp/SchrijversJSV09} in the
-form of \emph{delayed implication} constraints---but combining this
-technique with
-\ML-style \emph{local let-generalization}, and giving it a declarative
-semantics, is novel.
+systems \citep*{huet-unif, Miller/pattern-unif@iclp91, allais2022typos} and in
+\OutsideIn \citep*{conf/icfp/SchrijversJSV09} in the form of \emph{delayed
+implication} constraints---but combining this technique with \ML-style
+\emph{local let-generalization}, and giving it a declarative semantics, is
+novel. 
 %
 Our ultimate aim is to apply this to \OCaml, where \emph{local
-let-generalization} is indepensible (unlike in \Haskell, which only
-generalizes at the top level), yet this makes omnidirectional inference
-especially challenging to specify and implement.
+let-generalization} is indepensible (unlike in \Haskell, which only generalizes
+at the top level), yet this makes omnidirectional inference especially
+challenging to specify and implement. 
 
 \clearpage
 
