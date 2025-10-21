@@ -1616,3 +1616,172 @@ let%expect_test "" =
   type_check_and_print str;
   [%expect {| Well typed :) |}]
 ;;
+
+let%expect_test "" =
+  (* All examples from https://dl.acm.org/doi/pdf/10.1145/3408971 *)
+  (* The following compares results from QuickLook. We 
+     primarily use the manual encoding of OCaml's polyparams into polytypes: 
+       [[ fun x -> e ]] = fun x -> let x = @[ x ] in [[ e ]]
+       [[ e1 e2 ]] = [[ e1 ]] [ [[ e2 ]] ] *)
+  (* Some special attention is given to higher-rank poly that doesn't 
+     fit into polyparams -- e.g. E1b *)
+  let str =
+    include_list
+    ^ {|
+      external head : 'a. 'a list -> 'a;;
+      external tail : 'a. 'a list -> 'a list;;
+      external single : 'a. 'a -> 'a list;;
+      external concat : 'a. 'a list -> 'a list -> 'a list;;
+      external length : 'a. 'a list -> int;;
+      external id : 'a. 'a -> 'a;;
+      external ids : [ 'a. 'a -> 'a ] list;;
+      external map : 'a 'b. ('a -> 'b) -> 'a list -> 'b list;;
+      external app : 'a 'b. ('a -> 'b) -> 'a -> 'b;;
+      external revapp : 'a 'b. 'a -> ('a -> 'b) -> 'b;;
+      external poly : [ 'a. 'a -> 'a ] -> int * bool;;
+      external inc : int -> int;;
+      external incs : (int -> int) list;;
+      external choose : 'a. 'a -> 'a -> 'a;;
+      external auto : [ 'a. 'a -> 'a ] -> [ 'a. 'a -> 'a ];;
+      external auto2 : 'b. [ 'a. 'a -> 'a ] -> 'b -> 'b;;
+      external compose : 'a 'b 'c. ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c;;
+
+      let const2 = fun x y -> x;;
+
+      let a1 = const2;;
+      let a2 = choose id;; 
+      let a3 = choose Nil ids;;
+      let a4 = fun x -> 
+        let x = @[(x : [ 'a. 'a -> 'a ])] in 
+        x x 
+      ;;
+      let a5 = id auto;; 
+      let a6 = id auto2;; 
+      let a7 = choose id auto;; 
+
+      (* The following is ill-typed *)
+      (* let a8 = choose id auto2;; *)
+      (* with error:
+         error[E011]: mismatched type
+            ┌─ expect_test.ml:32:26
+         32 │        let a8 = choose id auto2;;
+            │                           ^^^^^ `(ν. 'a. 'a -> 'a) -> 'a -> 'a`
+            │                                   is not equal to
+            │                                 `'b -> 'b`
+      *)
+
+      (* The following is ill-typed *)
+      (* external f : 'a. ('a -> 'a) -> 'a list -> 'a;; *)
+      (* let a9 = f (choose id) ids ;; *)
+      (* with error: 
+         error[E011]: mismatched type
+             ┌─ expect_test.ml:43:30
+          43 │        let a9 = f (choose id) ids ;;
+             │                               ^^^ `((ν. 'a. 'a -> 'a)) list`
+             │                                     is not equal to
+             │                                   `('a -> 'a) list`
+      *)
+     
+      let a10 = 
+        (poly [id], poly [fun x -> x], id poly [fun x -> x]);;
+
+      external k : 'a. 'a -> 'a list -> int;; 
+      external xs : ([ 'a. 'a -> 'a ] -> int * bool ) list;; 
+      let a11 = k (fun f -> let f = @[f] in (f 1, f true)) xs;;
+
+      let a12 = 
+        (poly [id], app poly [id], revapp [id] poly);;
+
+      (* single id will have the monotype [('a -> 'a) list] *)
+      let b1 = 
+        (length ids, tail ids, head ids, single id)
+      ;;
+
+      let b2 = 
+        Cons ([ id ], ids)
+      ;;
+
+      let b3 = 
+        Cons ([ fun x -> x ], ids)
+      ;;
+
+      let b4 = 
+        concat (single inc) (single id) 
+      ;;
+
+      let b5 = 
+        map poly (single [ id ])
+      ;;
+
+      let b7 = 
+        (map head (single ids), @[head ids] true)
+      ;;
+      
+      (* Some more examples from the GI paper *)
+      let b1 = 
+        fun f -> 
+          let f = @[( f : [ 'a. 'a -> 'a ])] in 
+          (f 1, f true)
+      ;;
+
+      (* This is quite interesting, no other system typechecks this *)
+      let b2 = 
+        fun xs -> 
+          poly (head xs)
+      ;;
+
+      let c1b = 
+        fun (f : [ 'a. 'a -> 'a ]) -> 
+          let f = @[f] in 
+          (f 1, f true) 
+      ;;
+
+      type char;;
+      external g : ([ 'a. 'a -> 'a ] -> int * bool) -> char;;
+      let c1c = 
+        g (fun f ->
+          let f = @[f] in 
+          (f 1, f true))
+      ;;
+
+      (* This is ill-typed ( we don't have an encoding for arbitrary-rank polymorphism ) *)
+      (* external r : [ 'a. 'a -> [ 'b. 'b -> 'b ] ] -> int;; *)
+      (* let c2 = r [ fun x -> fun y -> y ] ;; *)
+      (* with error:
+         error[E011]: mismatched type
+             ┌─ expect_test.ml:83:11
+          83 │          r [ fun x -> fun y -> y ]
+             │            ^^^^^^^^^^^^^^^^^^^^^^^ `'a -> 'b -> 'b`
+             │                                      is not equal to
+             │                                    `'c -> (ν. 'a. 'a -> 'a)`
+      *)
+
+      external k : 'a. 'a -> 'a list -> 'a;;
+      external h : int -> [ 'a. 'a -> 'a ];;
+      external lst : [ 'a. int -> 'a -> 'a ] list;;
+
+      (* This is ill-typed *)
+      (* let e1a = k h lst;; *)
+
+      let e1b = k [ (fun x -> @[ h x ]) ] lst;;
+
+      let e2a = fun x -> poly x;;
+
+      let e2b = (fun x -> poly x : [ 'a. 'a -> 'a ] -> int * bool);;
+
+      let e3a = app poly [ id ];;
+
+      let e3b = app (fun x -> poly x) [ id ];;
+
+      let e4a = map poly ids;;
+
+      let e4b = map (fun x -> poly x) ids;;
+
+      let e5a = compose poly head;;
+
+      let e5b = fun xs -> poly (head xs);;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
