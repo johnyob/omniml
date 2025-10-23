@@ -135,7 +135,7 @@
 %% Aliases for \tva
 \defmetavar[s,ps,j]{\tv}{\alpha}
 \defmetavar[s]{\av} {\varepsilon}
-\defmetavar[s,j] {\ty} {\tau}
+\defmetavar[s,j,as,bs] {\ty} {\tau}
 \newcommand{\typs}{{\bar\ty'}}
 
 % Ground types
@@ -211,7 +211,7 @@
 \defmetavar[n,s]{\e}{e}
 \newcommand{\econstr}[2]{#1 \@ #2}
 \newcommand{\einst}[2][]{\angles {#2\ifempty{#1}{}{:#1}}}
-\newcommand{\exinst}[3]{\angles {#1 : \exi {#2} {#3}}}
+\newcommand{\exinst}[3]{\angles {#1 : \ifempty{#2}{{#3}}{\exi {#2} {#3}}}}
 \newcommand{\epoly}[2][]{\tpoly{#2\ifempty{#1}{}{:#1}}}
 \newcommand{\expoly}[3]{\epoly {#1 : \exi {#2} {#3}}}
 \newcommand{\eunit}{()}
