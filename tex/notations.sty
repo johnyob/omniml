@@ -231,7 +231,7 @@
 \newcommand{\exproj}[3]{\eproj[#3] {#1} {#2}}
 \newcommand{\eproj}[3][]{#2.#3\ifempty{#1}{}{/#1}}
 \newcommand{\erecord}[1]{\braces{#1}}
-\newcommand{\exrecord}[2]{{#1}.\braces{#2}}
+\newcommand{\exrecord}[2]{\labfrom {\erecord{#2}}{#1}}
 \defmetavar[s]{\el}{l}
 \newcommand{\elmagic}[1]{\braces {#1}}
 \newcommand{\elannot}[3]{\parens {{#1} : \ifempty{#2}{#3}{\exi {#2} {#3}}}}
@@ -254,7 +254,7 @@
 \newcommand \labto [2]{#2 \to #1}
 \newcommand \labin {\mathinfix {in}}
 \newcommand \labsof {\mathprefix {Labs}}
-\newcommand \labfrom [2]{{#2}.#1}
+\newcommand \labfrom [2]{{#2}{\cdot}#1}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Other
