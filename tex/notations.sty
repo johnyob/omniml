@@ -238,8 +238,8 @@
 \defmetavar[s]{\elab}{\ell}
 \newcommand{\eannot}[3]{\parens {#1 : \ifempty{#2}{#3}{\exi {#2} #3}}}
 \newcommand{\etuple}[1]{\parens{#1}}
-\newcommand \emagic[1]{\set{#1}}
-\newcommand{\Emagic}[1]{\lbag {#1}\rbag}
+%% \newcommand \emagic[1]{\set{#1}}
+\newcommand{\emagic}[1]{\lbag {#1}\rbag}
 \newcommand{\eerase}[1]{\floor {#1}}
 \newcommand{\lab}[1]{|#1|}
 \newcommand{\exover}[2]{#1.#2}
@@ -393,3 +393,9 @@
 \newcommand{\ttlab}[1]{\texttt{#1}}
 \newcommand{\ttex}[1]{\texttt{ex}_{\texttt{#1}}}
 \newcommand{\epolymeth}[3]{\eobj{\ttlab {#1}:\mall{#2}{#3}}}
+
+\def \ttx {\ttlab x}
+\def \tty {\ttlab y}
+\def \ttcolor {\ttlab {color}}
+\def \ttpoint {\ttlab {point}}
+\def \ttgraypoint {\ttlab {gray\_point}}

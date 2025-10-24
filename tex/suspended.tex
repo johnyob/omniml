@@ -224,7 +224,7 @@ To this end, we introduce our two novel devices---\emph{suspended match
 constraints} and \emph{incremental instantiation}---and show how they are
 applied to these fragile features.
 %
-The subsequent sections present technical contributions: 
+The subsequent sections present technical contributions:
 \begin{enumerate}
 
   \item[(\cref{sec/oml})]
@@ -1447,10 +1447,6 @@ be represented as the shape application $\shapp (\tint \tlist)$.
 \subsection {Typing rules for fragile, implicit constructs}
 \label{sec/oml/typing/I}
 
-\XDR{We could replace $\emagic \es$ by $Emagic \es$ to avoid confusion with
-records and also make it more obvious that this is internal syntax not in
-the source}\let \emagic \Emagic
-
 \begin{mathparfig}[htpb!]
   {fig/oml/typing/I}
   {Typing rules for fragile, implicitly typed extensions.}
@@ -1460,7 +1456,7 @@ the source}\let \emagic \Emagic
       \and \emagic \es
     }\\
     \entry[Term contexts]{\E}{
-      \square 
+      \square
       \and \eapp \E \e
       \and \eapp \e \E
       \and \dots
@@ -1658,12 +1654,8 @@ nominal record type of shape $\any \tvcs \Tapp \tvcs$ (\emph{Step 2}).
 
 \parcomment {Illustrative examples}
 We now illustrate the typing of implicit constructs with a few examples.
-\def \ttx {\ttlab x}
-\def \tty {\ttlab y}
-\def \ttcolor {\ttlab {color}}
-\def \ttpoint {\ttlab {point}}
-\def \ttgraypoint {\ttlab {gray\_point}}
 
+% Moved global macros in notations.sty
 % Order of solving
 \begin{example}
   \locallabelreset
@@ -1823,7 +1815,7 @@ r} {} {\gt}}} : \tp$ holds for any $\gt$.
 \entry[Branches]{\cbr}{\cbranch \cpat \c} \\
 \entry[Patterns]{\cpat}{
   \cpatwild
-  \and \ldots 
+  \and \ldots
 }{} \\
 \entry[Constraint contexts]{\C}{
   \square
@@ -1895,10 +1887,12 @@ r} {} {\gt}}} : \tp$ holds for any $\gt$.
 \end{cases}
 \end{tabular}
 \qquad\qquad
-{\let \Eqdef\eqdef \def \eqdef {&\Eqdef&}
+{\let \Eqdef\eqdef \def \eqdef {&\Eqdef&}\def \EQ{&=&}
 \begin{tabular}[c]{.R.C;.L.}
-  \multicolumn{3}{c}{
-    \fbox{$\cmatches \cpat \sh \tvcs \theta$}} \\[1ex]
+  \hline \vrule\;
+  \cmatches[\EQ] \cpat \sh \tvcs \theta
+  \;\vrule \\ \hline
+  \noalign{\vskip .6ex}
   \cmatches[\eqdef] \cpatwild \sh \tvcs \eset \\
   &\vdots&
 \end{tabular}}
@@ -1914,8 +1908,6 @@ r} {} {\gt}}} : \tp$ holds for any $\gt$.
   \quad \forall \semenv, \gt. \uad \semenv \thsimple \cerase {\C\where{\cunif \t \gt}} \implies \shape \gt = \sh
 \end{tabular}
 \end{mathparfig}
-
-\Xalistair{Didier: can you fix the alignment in the $\cmatches \cpat \sh \tvs \theta$ fbox, it is beyond me ://}
 
 \parcomment{Why bother with a formal constraint language?}
 
@@ -2021,8 +2013,8 @@ which consist of:
   a shape pattern. The constraint $\c$ is solved in the extended context
   produced by the matching shape pattern.
 
-  For example, the pattern $\cpatwild$ matches any shape, 
-  and binds nothing. 
+  For example, the pattern $\cpatwild$ matches any shape,
+  and binds nothing.
   %
   To ensure determinism, the set of patterns $\bar \cpat$ must be
   \emph{disjoint}---that is, no shape may be matched by more than one pattern
@@ -2073,7 +2065,7 @@ satisfying semantics. The challenge lies in formalizing what it means for type
 information to be \emph{known} without presupposing a \emph{static} solving
 order. This is the same issue encountered in our typing rules
 (\cref{sec/oml/??}), and we address it in the same way: by introducing a
-contextual rule together with a unicity condition. 
+contextual rule together with a unicity condition.
 
 To define the semantics for suspended constraints, we first introduce
 \emph{discharged match constraints}.
@@ -2111,7 +2103,7 @@ These components may themselves mention the freshly introduced variables
 $\tvcs$. For example, the wildcard pattern $\cpatwild$ matches any shape,
 yielding the empty substitution. In later sections, we will extend both the
 syntax of patterns and the mathing function itself to handle the patterns that
-arise in \OML (see ??). 
+arise in \OML (see ??).
 
 
 \paragraph {A natural attempt}
@@ -2131,7 +2123,7 @@ the semantic environment $\semenv$.
 \parcomment {The problem}
 
 Although simple and declarative, this semantics is too
-permissive. It allows \emph{guessing} the shape of $\t$ rather than requiring 
+permissive. It allows \emph{guessing} the shape of $\t$ rather than requiring
 it to be \emph{known}. For example, $\cexists \tv \cmatch \tv {\cbranch \cpatwild {\cunif
 \tv \tint}}$ is satisfiable under the natural semantics:
 \begin{mathpar}
@@ -2158,9 +2150,9 @@ meaning of suspended match constraints and raises several problems:
   \item a reasonable solver---one that avoids backtracking---cannot
     be complete with respect to this semantics; and
 
-  \item it breaks the existence of principal solutions, just 
+  \item it breaks the existence of principal solutions, just
     as the \emph{natural} typing rules do (\eg \Rule{Rcd-Proj-I-Nat}).
-    
+
 \end{enumerate*}
 
 \paragraph {Contextual semantics}
@@ -2218,7 +2210,7 @@ for constraints $\Cshape \C \t \sh$ relies on \emph{erasure} $\cerase
 {\C\where{\cunif \t \gt}}$ to restrict attention to previously discharged match
 constraints, inducing a causal order between match constraints. The auxiliary
 judgement $\thsimple$ plays a role analogous to $\throbust$ (from ??): it is
-introduced soley to avoid well-foundedness issues. 
+introduced soley to avoid well-foundedness issues.
 
 \parcomment{The interesting cases of unicity}
 
@@ -2537,11 +2529,11 @@ Patterns include:
 \end{enumerate*}
 
 Each new kind of pattern introduces corresponding constraint formers:
-$\labfrom \elab \ct \leq \ta \to \tb$ asserts that $\ta \to \tb$ is a instance of 
+$\labfrom \elab \ct \leq \ta \to \tb$ asserts that $\ta \to \tb$ is a instance of
 projection type associated with the qualified label $\labfrom \elab \ct$;
-$\dom \ct = \elabs$ ensures that the domain of nominal type $\ct$ is the set of labels $\elabs$; 
-and $\cscm \leq \t$ checks that $\t$ is an instance of $\cscm$, while $\x \leq \cscm$ 
-asserts that every instance of $\x$ is an instance of $\cscm$. 
+$\dom \ct = \elabs$ ensures that the domain of nominal type $\ct$ is the set of labels $\elabs$;
+and $\cscm \leq \t$ checks that $\t$ is an instance of $\cscm$, while $\x \leq \cscm$
+asserts that every instance of $\x$ is an instance of $\cscm$.
 
 By definition, each of these constraint forms is unsatisfiable, since we do not
 extend the satisfiability relation to include them. Their role is purely
@@ -2554,7 +2546,7 @@ the semantics of these constraint formers only for their substituted forms (\eg
 $\labfrom \elab \T \leq \ta \to \tb$, $\dom {\T} = \elabs$, \etc), as shown in
 \cref{fig:patterns-oml}. We define the semantics of these substituted forms by
 translation into existing constraints---that is, as syntactic sugar over the
-existing core constraint language. 
+existing core constraint language.
 
 \paragraph{Constraint generation}
 
