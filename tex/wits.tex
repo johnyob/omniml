@@ -68,11 +68,10 @@ Consider the following example in \OCaml
 %% }
 using overloaded record field names:
 \begin{program}[input,escapechar=@,belowskip=0em]
-type point  = {x : int; y : int}
+type point    = {x : int; y : int}
 type gs_point = {x : int; y : int; color : int}
-\end{program}
-\begin{program}[input,escapechar=@,belowskip=0em]
-let getx r = r.x
+
+let getx p  = r.x
 \end{program}
 \begin{program}[error,aboveskip=0em]
              ^^^
