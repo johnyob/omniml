@@ -1,15 +1,7 @@
-There is an equivalent direct description of principal shapes
-$\sh$. They are precisely the shapes $\any \tvcs \t$ satisfying two conditions:
-\begin{enumerate*}
-  \item
-    $\tvcs$ must be linear in $\t$ \ie each variable $\tvc$ in $\tvcs$
-    occurs exactly once in $\t$.
-
-  \item
-    The type $\t$ must be shallow, meaning that its structure is limited in
-    the following way.  When $\t$ is not a polytype, all of its subterms must
-    be variables. Shapes of this form are $\tunit$, $\tvca \to \tvcb$, and
-    $\tProd \tvci$, or $\T \tvcs$.
-    When $\t$ is a polytype $\tpoly {\all \tvs \tsp}$, the only subterms
-    of $\tsp$ that do not contain one of the polymorphic variables $\tvs$ must be variables in $\tvcs$.
-\end{enumerate*}
+Computing the syntactic dependencies $\cprec$ is in $O(n \log n)$ where $n$
+is the size of the constraint (not just of suspended constraints).  However,
+it is not stable by defaulting. Indeed, this may remove (and add) some
+syntactic dependencies, which requires the re-computation of $\prec$.
+Incremental computation of dependencies with both edge removal and insertion
+may be needed. In any case, experimentation will be needed to
+understand whether this is a critical issue.
