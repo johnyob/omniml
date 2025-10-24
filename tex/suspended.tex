@@ -56,8 +56,8 @@
   algorithms, which propagate \emph{known} type information in a fixed order
   (as in bidirectional typing). Type information propagated in this way is
   treated as \emph{known} and used to disambiguate otherwise non-principal
-  constructs. However, the rigidity of a \emph{static} inference order often causes
-  well-typed programs to be rejected. 
+  constructs. However, the rigidity of a \emph{static} inference order often
+  causes well-typed programs to be rejected.
 
   % Innovation
   We propose \emph{omnidirectional} type inference, where type information
@@ -77,7 +77,7 @@
   fundamentally different features of \OCaml: static overloading of record
   labels and datatype constructors and semi-explicit first-class polymorphism.
   In both cases, we obtain a \emph{principal} type inference algorithm that is
-  more expressive than \OCaml's current typechecker. 
+  more expressive than \OCaml's current typechecker.
 
 \end{abstract}
 \maketitle
@@ -308,12 +308,12 @@ let ex_2 (r : point) = r.x + r.y                         °\ocamlflags 10°
 let ex_3 r = (r.x, (r : point).y)                        °\ocamlflags 10°
 \end{program}
 %
-The type of expression \ocaml!one! has the unambiguous type \code{point}, 
+The type of expression \ocaml!one! has the unambiguous type \code{point},
 even though both \code{point} and \code{gray_point} define the fields \code{x} and \code{y}
 This is because \OCaml performs \emph{closed-world reasoning}: the typechecker is able to unambiguously
 infer the type of \ocaml{one} as \code{point}, since it is the only record type
 whose domain is \ocaml!$\{$ x, y $\}$!. Similarly,
-\code{r.color} necessarily infers \code{gray_point} for the type of \code{r}. 
+\code{r.color} necessarily infers \code{gray_point} for the type of \code{r}.
 
 
 By contrast, \code{r.x} is ambiguous unless the type of \code{r} is
@@ -370,8 +370,8 @@ let ex_4 r = let x = r.x in x + (r : point).y          °\ocamlflags 10°
 %
 Here, \OCaml defaults to \code{gray_point} for \code{r} when typing \code{r.x},
 and subsequently fails on \code{(r : point).y}. \OML succeeds by suspending the
-resolution of \code{r.x} until it learns from \code{(r : point).y} that \code{r} 
-has type \code{point}. 
+resolution of \code{r.x} until it learns from \code{(r : point).y} that \code{r}
+has type \code{point}.
 
 Since overloaded datatype constructors are analogous to record fields, we focus
 only on record fields in this work. Our prototype implementation
@@ -590,9 +590,9 @@ To illustrate \geninst-directionality, consider:%
 \footnote{
 % Some space hacking since it appears spaces aren't respected in lstinline w/
 % mathescape
-In \OCaml, these examples can be typechecked by translating 
+In \OCaml, these examples can be typechecked by translating
 $\epoly[\ts] \e$ to \ocaml[mathescape]!object method f : $\ \ts$ = $\ \e$ end!
-and $\einst \e$ to $\e \esend \texttt{f}$. This translation is the inverse of 
+and $\einst \e$ to $\e \esend \texttt{f}$. This translation is the inverse of
 that discussed in \cref{sec/overview/polymethods-reduction}.
 }
 \begin{program}[input,angles,checkpolyml]
@@ -777,17 +777,17 @@ disambiguating \code{r.x}.
 \label{sec/overview/omni}
 
 % There are really 3 core ideas of our paper that we try to get across in this
-% section: 
+% section:
 %
 %  1. A characterization of 'known' type information that relies on a _dynamic_
-%  order 
+%  order
 %
 %  2. Suspended match constraints -- suspension is the primitive used to wait
-%  for known type information when we cannot progres 
+%  for known type information when we cannot progres
 %
 %  3. ML generalization previously had a fixed order of solving, this doesn't
 %  work for omnidirectionality. The fix: incremental instantiation / partial
-%  generalization. 
+%  generalization.
 
 
 \parcomment{Idea: inference has a dynamic order}
@@ -796,7 +796,7 @@ Omnidirectional inference infers typing constraints in any order. Constraints
 advance \emph{dynamically}; those that require \emph{known} type information
 suspend, and resume when other constraints supply it. This stands in contrast
 to the fixed \emph{static} order of bidirectional and \geninst-directional
-inference. 
+inference.
 
 \parcomment{Example: dynamic order types more programs}
 %
@@ -811,7 +811,7 @@ approach (using \Rule{Syn-App}), only \code{ex_6_2} is rejected. Yet both terms
 have a principal type---it is merely a question of propagating type information
 in the right order. Omnidirectional type inference typechecks both: since it
 allows the typing of either side to proceed first, suspending the other until
-the relevant type information is \emph{known}. 
+the relevant type information is \emph{known}.
 
 \paragraph{To be, or not be known}
 \label{sec/overview/omni/unicity}
@@ -822,7 +822,7 @@ That is the question, indeed. To specify omnidirectionality declaratively, we
 must say when part of a type (\ie its \emph{shape}) is considered
 \emph{known} without relying on any fixed directional order. Our key idea is
 that a type's shape is \emph{known} when it is the \emph{unique} shape that can
-be inferred within some surrounding term context $\E$. 
+be inferred within some surrounding term context $\E$.
 
 \parcomment{Example: ex_62}
 
@@ -849,7 +849,7 @@ can consider \code{p}'s type \emph{known}.
 \end{wraphbox}
 Once the type is known, the fragile implicit term can be elaborated to a
 robust explicit counterpart. For example, the unboxing \ocaml[angles]{<p>} can
-be elaborated into the explicitly annotated form \ocaml[angles]{<p : 'a. 'a -> 'a>}. 
+be elaborated into the explicitly annotated form \ocaml[angles]{<p : 'a. 'a -> 'a>}.
 %
 Consequently, to typecheck $\einst \e$ under the context $\E$, it suffices to
 assert that $\e$ has the known polytype shape $\tpoly \ts$ and elaborate
@@ -857,14 +857,14 @@ $\einst \e$ into an annotated unboxing $\exinst \e {} \ts$, as captured by
 \Rule{Use-I}.
 %
 The predicate $\eshape \E \e {\tpoly \ts}$---our \emph{unicity
-condition}---formalizes precisely what it means for a type to be \emph{known}. 
+condition}---formalizes precisely what it means for a type to be \emph{known}.
 We defer its technical definition, which is rather subtle, to \cref{?}.
 
 \paragraph{Suspension in action}
 
 \parcomment{Suspended constraints}
 
-Suspension is the mechanism that allows inference to proceed in any order, 
+Suspension is the mechanism that allows inference to proceed in any order,
 in spite of constructs that require \emph{known} type information.
 In our framework, we realise this through our novel primitive: \emph{suspended
 match constraints}.
@@ -991,7 +991,7 @@ The remainder of the paper develops these three ideas in turn:
 \begin{enumerate}
 
   \item[(\cref{sec/oml})] Formalizes our declarative characterization of
-    \emph{known} type information and presents \penalty 50 \OML's typing rules. 
+    \emph{known} type information and presents \penalty 50 \OML's typing rules.
 
   \item[(\cref{sec:constraints})] Defines the semantics of suspended match
     constraints and introduces constraint generation function $\cinfer \e \t$
@@ -1026,7 +1026,7 @@ The remainder of the paper develops these three ideas in turn:
       \all \tv \ts
   }
   \\
-  \entryset[Ground types]{\gt}{\Ground} 
+  \entryset[Ground types]{\gt}{\Ground}
   \\[1ex]
   \entry[Terms]{\e}{
     x \and
@@ -1048,7 +1048,7 @@ The remainder of the paper develops these three ideas in turn:
   \entry[Contexts]{\G}{
      \eset \and
      \G, x : \ts
-  } 
+  }
   \\
   \entry[Label contexts]{\labenv}{
     \eset \and
@@ -1154,7 +1154,7 @@ which has a simple typing rule (\Rule{Rcd-Proj-X}). On the other hand, the
 natural typing rule for the overloaded projections $\efield \e \elab$ breaks
 principality (\Rule{Rcd-Proj-I-Nat}). For example, term $\efun r \efield r
 {\ttlab x}$ admits two distinct typings, \code{point -> int} and
-\code{gray_point -> int}, as explained in \cref{sec/introduction}.  
+\code{gray_point -> int}, as explained in \cref{sec/introduction}.
 
 \parcomment{How we restore principal types}
 
@@ -1192,7 +1192,7 @@ polytypes $\tpoly \ts$.  Type schemes $\ts$ are of the form $\all \tvs \t$,
 they are equal up to the reordering of binders and removal of useless
 variables. We write $\TyVars$ for the set of type variables. We write $\tvs
 \disjoint \t$ as a short-hand for $\tvs \disjoint \fvs \t$, where $\fvs -$
-computes the set of free variables of a given type. Finally, $\gt \in \Ground$ denotes 
+computes the set of free variables of a given type. Finally, $\gt \in \Ground$ denotes
 a \emph{ground type}---a type with no free variables.
 
 
@@ -1291,6 +1291,9 @@ has the appropriate type. In addition, the premise asserts $\dom {(\Labenv)} =
 
 \TODO{There is some syntactic ambiguity with qualified record projections
 $\efield {\efield r \x} \x$ vs $\exfield r \T \x$}
+\XDR{We may use ! instead of point for \string\exfield and change !
+for some othen symbol (such as ?) in uniquely determined shapes, which a
+matching symbol could be more intuitive}
 
 \parcomment {Closed world reasoning}
 
@@ -1442,6 +1445,9 @@ be represented as the shape application $\shapp (\tint \tlist)$.
 \subsection {Typing rules for fragile, implicit constructs}
 \label{sec/oml/typing/I}
 
+\XDR{We could replace $\emagic \es$ by $Emagic \es$ to avoid confusion with
+records and also make it more obvious that this is internal syntax not in
+the source}\let \emagic \Emagic
 
 \begin{mathparfig}[htpb!]
   {fig/oml/typing/I}
@@ -1508,12 +1514,12 @@ a term's type is \emph{uniquely determined} by its surrounding context $\E$. We
 capture this with our \emph{unicity conditions} $\eshape[\es] \E \e \sh$ and
 $\Eshape \E \es \sh$, which state that all valid typings of the (erased)
 context $\E$ assign the same canonical shape $\sh$ to the subterm $\e$ and the
-context's hole $\square$, respectively. 
+context's hole $\square$, respectively.
 
 In other words, $\eshape[\es] \E \e \sh$ holds when the type of the subterm
 $\e$ has a unique shape $\sh$ fixed by its context $\E$ and sibling terms
 $\es$, while $\Eshape \E \es \sh$ holds when the expected type of the hole in
-$\E$ (with subterms $\es$) has the unique shape $\sh$. 
+$\E$ (with subterms $\es$) has the unique shape $\sh$.
 
 \parcomment{The formal definition / auxiliary notions}
 \begin{mathpar}
@@ -1534,20 +1540,20 @@ $\E$ (with subterms $\es$) has the unique shape $\sh$.
 To make sense of these definitions, we rely on three auxiliary notions:
 %
 \begin{enumerate}
-  \item 
-    We write $\emagic \es$ for a \emph{typed hole} carrying subterms $\es$. 
+  \item
+    We write $\emagic \es$ for a \emph{typed hole} carrying subterms $\es$.
     The terms $\es$ are required to be well-typed in the current
     environment (\Rule{Magic}), but their types are independent of the type of
     the hole: the hole itself may be assigned an arbitrary type.
 
-  \item 
+  \item
     We introduce an \emph{erasure} function $\eerase \e$ which erases all
     not-yet-elaborated implicit constructs $\e^i$ in $\e$ with a typed hole
     around their subterms. For example, $\eerase {\efield \e \elab}$ is
     $\emagic {\cerase \e}$. The full definition is given in
     \cref{fig/oml/erasure}.
 
-  \item 
+  \item
 
     Finally, we define a restricted typing judgment $\G \throbust \e : \ts$,
     which derives $\G \th \e : \ts$ without using any fragile, implicit typing
@@ -1573,7 +1579,7 @@ elaborated thus far. This induces a causal, or partial, order among implicit
 constructs: an implicit term can only be elaborated once all of its
 dependencies---those providing the relevant \emph{known} type
 information---have themselves been elaborated. This ordering prevents
-self-justifying cycles in unicity and rules out ``out-of-thin-air'' guesses. 
+self-justifying cycles in unicity and rules out ``out-of-thin-air'' guesses.
 
 \parcomment{Well-foundedness via robust turnstile}
 
@@ -1661,8 +1667,8 @@ We now illustrate the typing of implicit constructs with a few examples.
   \locallabelreset
 
   Consider the term $\ttex {9} \eqdef \efun r {\erecord { \ttx = \efield r
-  \ttx; \tty = \efield r \ttcolor }}$. 
-  % NOTE: The definition of ex9 should be kept inline with the program 
+  \ttx; \tty = \efield r \ttcolor }}$.
+  % NOTE: The definition of ex9 should be kept inline with the program
   % block below. The block is hidden but used for the automated example checker
 \begin{comment}
 \begin{program}[input, checkocaml]
@@ -1678,7 +1684,7 @@ let ex_9 r = { x = r.x; y = r.color }   °\ocamlflags 20°
   Formally, we derive:
   \begin{mathpar}
     \infer* [Right=Rcd-Proj-I]
-      {\eshape \E r {\ttgraypoint} \\ 
+      {\eshape \E r {\ttgraypoint} \\
        \eset \th \E\where{\exfield r \ttgraypoint \ttx} : \ttgraypoint \to \ttpoint}
       %--------------------------------------------------------------------------------------
       {\eset \th \E\where{\efield r \ttx} : \ttgraypoint \to \ttpoint }
@@ -1698,12 +1704,12 @@ let ex_9 r = { x = r.x; y = r.color }   °\ocamlflags 20°
 % Unicity is good
 \begin{example}
 To illustrate a simple case of non-typability, we reconsider the example $\ttex
-1 \eqdef \efun r {\efield r \ttx}$ from \cref{sec/overview/overloading}. 
+1 \eqdef \efun r {\efield r \ttx}$ from \cref{sec/overview/overloading}.
 %
 If there is a derivation of $\ttex 1$, then there must be one of the form:
 \begin{mathpar}
   \infer* [Right=Rcd-Proj-I]
-    { \eshape \E r {\any \tvcs \Tapp \tvcs} \\ 
+    { \eshape \E r {\any \tvcs \Tapp \tvcs} \\
       \eset \th \E\where{\exfield r \T \ttx} : \t}
     %----------------------------------------------
     { \eset \th \E\where{\efield r \ttx} : \t}
@@ -1713,29 +1719,32 @@ context.
 %
 Unfortunately, $\eshape \E r {\any \tvcs \Tapp \tvcs}$ does not hold for any
 $\T$. Indeed, we have $\eset \th \E \where {\emagic {\eannot r {} {\gt}}} :
-\t$ for any $\gt$ assuming $\t$ is of the form $\gt \to \tp$. Hence, $\ttpoint$ and 
+\t$ for any $\gt$ assuming $\t$ is of the form $\gt \to \tp$. Hence, $\ttpoint$ and
 $\ttgraypoint$ are both possible shapes for the
 type of $r$.
 \end{example}
 
 \begin{example}
-\def \ttciecolor {\ttlab {cie\_color}}
-\def \ttciepoint {\ttlab {cie\_point}}
+\def \ttciecolor {\ttlab {rgb\_color}}
+\def \ttciepoint {\ttlab {rgb\_point}}
+
+\XDR{I change {cie} by {rgb} as it took me a while to understand the meaning
+of cie. I think {rgb} is much more common}
 
 Our final example illustrates a limitation of our approach: some expressions
-must be rejected even though their elaboration would be unambiguous. 
-Consider: 
+must be rejected even though their elaboration would be unambiguous.
+Consider:
 \begin{program}[input,checkocaml]
-type cie_color = { x : int; y : int; z : int }
-type cie_point = { x : int; y : int; color : cie_color }
+type rgb_color = { x : int; y : int; z : int }
+type rgb_point = { x : int; y : int; color : rgb_color }
 let ex_1_0 r = r.color.x °\ocamlflags 11°
 \end{program}
 
 Here, neither field projections can individually be disambiguated. However, if
 one were allowed to combine the constraints, they would jointly determine
-that $r$ must have type \code{cie_point}: in \code{gray_point}, the field \code{color}
+that $r$ must have type \code{rgb_point}: in \code{gray_point}, the field \code{color}
 has type \code{int}, and hence cannot itself be projected, leaving a unique
-consistent elaboration: $\efun r {\exfield {\exfield r \ttciepoint \tty} \ttciecolor \ttx}$. 
+consistent elaboration: $\efun r {\exfield {\exfield r \ttciepoint \tty} \ttciecolor \ttx}$.
 
 Our framework nonetheless rejects \code{ex_1_0}. This is intentional: implicit
 terms must be elaborated \emph{sequentially}, each in isolation, rather than
@@ -1745,8 +1754,8 @@ general overloading which is NP-hard, even without let-polymorphism, as shown
 by a reduction from 3-SAT~\citep*
 {Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}.
 
-Formally, to type $\ttex {10}$ one must eliminate the final implicit 
-projection in a context of the form $\E\where{\efield \e \elab}$. 
+Formally, to type $\ttex {10}$ one must eliminate the final implicit
+projection in a context of the form $\E\where{\efield \e \elab}$.
 Two cases arise:
 \begin{proofcases}
 \proofcase{$\E$ is $\efun r {\square}$}
@@ -1771,7 +1780,7 @@ uniquely determined and this case cannot occur
 The derivation must end with:
 \begin{mathpar}
   \infer*[Right=Rcd-Proj-I]
-    {\eshape \E {r} {\ttciepoint} \\ 
+    {\eshape \E {r} {\ttciepoint} \\
      \eset \th \E\where{\exfield r \ttciepoint \tty} : \t}
     %--------------------------------------------------
     {\eset \th \E \where{\efield r \ttcolor} : \t}
@@ -1779,7 +1788,7 @@ The derivation must end with:
 
 However, $\eshape \E {r} {\ttciepoint}$ does not hold
 either. The following judgement $\eset \th \eerase {\E\where{\eannot {\emagic
-r} {} {\gt}}} : \tp$ holds for any $\gt$.  
+r} {} {\gt}}} : \tp$ holds for any $\gt$.
 
 \end{proofcases}
 \end{example}
@@ -1958,7 +1967,7 @@ constraints carry the right intuition...  The reader may very confused.  We
 should probably explain that these implement generalization and
 instantiation respectively.  We could event call $\x \@ \tv$ an
 instantiation constraint?}
-\Xalistair{Abstractions / applications capture intuition that is useful 
+\Xalistair{Abstractions / applications capture intuition that is useful
 for solving (e.g. copying constraints).}
 
 
@@ -1984,7 +1993,7 @@ $\semenvp$ is the environment at the binding site of~$\x$,
 what this means. Actually I find this explanation quite confusing, while
 $\semenv(\x) \in \semenv (\cabs \tv \c)$ was clear enough}
 %
-\Xalistair{The point of this sentenance is to explain why membership is sufficient for application 
+\Xalistair{The point of this sentenance is to explain why membership is sufficient for application
 \eg it corresponds solving the body of the abstraction with the applied type.}
 %
 then $\semenv(\t)
@@ -1995,7 +2004,7 @@ should be equivalent to $\c \where {\tv \is \t}$.
 
 \parcomment {Suspended match constraints}
 
-Finally, we introduce \textit{suspended match constraints} $(\cmatch \t \cbrs)$, 
+Finally, we introduce \textit{suspended match constraints} $(\cmatch \t \cbrs)$,
 which consist of:
 \begin{enumerate}
 
@@ -2503,7 +2512,7 @@ The expected type $\t$ is permitted to contain type variables, which can be
 existentially bound in order to perform type inference. The models of
 constraint $\cinfer \e \t$ interpret the free variables of
 $\t$ such that $\t$ becomes a valid type of $\e$. For example, to infer the
-entire type of $\e$ we may pick a fresh type variable $\tv$ for $\t$. 
+entire type of $\e$ we may pick a fresh type variable $\tv$ for $\t$.
 
 
 \paragraph{Patterns}
@@ -2642,11 +2651,11 @@ As in the previous example, the type of \code{r} cannot be disambiguated in the
 \code{let}-definition alone. In the previous example, this type was unified
 to a known shape in the \code{let}-body. Here, this is more subtle:
 \XDR{I don't understand the next two sentences}
-\Xalistair{It is trying to justify that there is a unique shape for \code{r} 
-  without using unicity formally. I've improved it a bit. If you still feel 
+\Xalistair{It is trying to justify that there is a unique shape for \code{r}
+  without using unicity formally. I've improved it a bit. If you still feel
   confused, I'll rewrite to use unicity formally.}
 an
-\emph{instance} of \code{getx}'s type scheme is taken, 
+\emph{instance} of \code{getx}'s type scheme is taken,
   which only satisfies the application (\ocaml!getx one!)
   if \code{r} has a variable type or a type of the form
 \ocaml{point}. However, the projection \code{r.x} would be
@@ -2700,9 +2709,9 @@ That is to say, the term $\e$ is typable with $\t$ if and only if
 $\cinfer \e \tv$ is satisfiable when $\tv$ is $\t$.
 \XDR[This should juts be]{$\cinfer \e \t$ is satisfiable.}
 \XDR{Idem below}
-\Xalistair{This is the one case we \emph{cannot} just replace $\tv$ with $\t$. 
-This is because $\t$ could be considered \emph{known} in the constraint but not 
-\emph{known} in the typing rules -- in the same way we only consider an empty 
+\Xalistair{This is the one case we \emph{cannot} just replace $\tv$ with $\t$.
+This is because $\t$ could be considered \emph{known} in the constraint but not
+\emph{known} in the typing rules -- in the same way we only consider an empty
 typing context.}
 
 %
@@ -2802,9 +2811,9 @@ preserve typability in its operational semantics.
         \dots \and \ueq
       } \\
       \entry[Unification context]{\Up}{
-        \Up \cand \upb 
+        \Up \cand \upb
         \and \upa \cand \Up
-        \and \cexists \tv \Up 
+        \and \cexists \tv \Up
       }
     \end{bnfgrammar}
     \hfill
@@ -2817,7 +2826,7 @@ preserve typability in its operational semantics.
   }}
 \end{mathparsubfig}
 
-\medskip 
+\medskip
 
 \begin{mathparsubfig}
   {fig:unification-algorithm}
@@ -2871,7 +2880,7 @@ preserve typability in its operational semantics.
       {\ctrue}
 \end{mathparsubfig}
 
-\medskip 
+\medskip
 
 \begin{mathparsubfig}
   {fig:solver-basic}
@@ -2967,7 +2976,7 @@ preserve typability in its operational semantics.
 \end{mathparsubfig}
 \end{figure}
 
-% This is the start of the next subfigure, but it is placed 
+% This is the start of the next subfigure, but it is placed
 % in a separate figure to span multiple pages
 
 \clearpage
@@ -3018,7 +3027,7 @@ preserve typability in its operational semantics.
                 {\cpinst \inst \tv \tvc \cand \cunif \tvc \t}}}}
 \end{mathparsubfig}
 
-\medskip 
+\medskip
 
 \begin{mathparsubfig}
   {fig:solver-susp}
@@ -3081,7 +3090,7 @@ Our algorithm is largely standard~\citep*{Pottier-Remy/emlti}, with its main
 novelty being the use of \emph{canonical principal shapes} in place of type
 constructors. This uniform treatment of monotypes and polytypes simplifies
 unification and improves on the previous treatment of polytype unification
-\citep{Garrigue-Remy/poly-ml}. 
+\citep{Garrigue-Remy/poly-ml}.
 
 \parcomment{Explanation of the rules}
 
@@ -3222,11 +3231,11 @@ to $\cabsr \tv \tvs \ueqs$, where $\tvs$ are generalizable variables---and then
 reuses the result at each application site by only copying the solved
 constraint $\ueq$. This mirrors the \ML generalization and instantiation:
 $\cabsr \tv \tvs \ueqs$ corresponds to the type scheme $\tfor \tvs
-{\sub(\tv)}$, where $\sub$ is the most general unifier of $\ueqs$. 
+{\sub(\tv)}$, where $\sub$ is the most general unifier of $\ueqs$.
 %
 \citet*{Pottier-Remy/emlti} formalize this connection, and the optimized
 treatment is naturally expressed as a strategy on top of their
-\Rule{S-Let-App-Beta} rule. 
+\Rule{S-Let-App-Beta} rule.
 
 \parcomment{Generalization with suspended constraints is hard}
 
@@ -3257,7 +3266,7 @@ Nonetheless, to continue solving the let-body, we must assign a scheme to
 \code{x}. We naively pick $\tfor \tvb \tvb$. This appears unsound, since
 $\tvb$ will later unify with $\tint$ once the match constraint is discharged.
 But it would be incomplete to lower $\tvb$ as a monomorphic variable.
-\Xalistair{This is no-longer quite true, in this specific example it would be 
+\Xalistair{This is no-longer quite true, in this specific example it would be
 complete to lower ://...}
 %
 This motivates \emph{partial type schemes}, our second novel mechanism for
@@ -3281,7 +3290,7 @@ duplicating an abstraction at each application site, we introduce:
     equals~$\t$.
 \end{enumerate*}
 %
-The instantiation variable $\inst$ is required to ensure all incremental 
+The instantiation variable $\inst$ is required to ensure all incremental
 instantiations $\cpinst \inst \tv \t$ are solved uniformly. Within the
 solver, we view incremental instantiations as markers indicating which parts of
 the abstraction still need to be copied.
@@ -3303,7 +3312,7 @@ instantiation constraints: the math looks complicated while the intuition is
 quite simple. It is just like instantiation except that we keep track of the
 origins of the instances. A graphical view, as in solving unifications
 constraints is enlightening.}
-\Xalistair{I'm not too sure what kind of graphic you're thinking of? Could 
+\Xalistair{I'm not too sure what kind of graphic you're thinking of? Could
 you sketch one?}
 %
 Incremental instantiations (\Rule{Incr-Inst}) equate the copy of $\tv$ in
@@ -3420,7 +3429,7 @@ we search for a multi-equation $\ueq$ in $\cp$ of the form:
 \end{enumerate*}
 %
 This syntactic relation coincides with the semantic definition of
-determinacy whenever $\c$ is in solved form. Otherwise, it is a 
+determinacy whenever $\c$ is in solved form. Otherwise, it is a
 sound approximation of the semantic definition.
 
 \parcomment{Why we lower?}
@@ -3437,7 +3446,7 @@ incremental instantiation constraint $\cpinst \inst \tv \tvc$. Here, $\inst$ is
 a fresh instantiation of $\x$, $\tv$ is the \emph{root} of $\x$'s region, and
 $\tvc$ is a fresh alias for $\t$. We introduce $\tvc$ explicitly, since our
 rewriting rules for incremental instantiations generally assume that the copied
-type is a variable rather than an arbitrary type. 
+type is a variable rather than an arbitrary type.
 
 \paragraph{Suspended match constraints}
 
@@ -3473,15 +3482,15 @@ to the semantic definition of unicity (\cref{def:unicity}).
 
 \subsection{Metatheory}
 
-We establish the correctness of our solver. Correctness follows from three 
-standard metatheoretic properties: \emph{progress}, \emph{preservation}, and \emph{termination}. 
-Together, they ensure that every satisfiable constraint eventually reduces to an equivalent solved form. 
+We establish the correctness of our solver. Correctness follows from three
+standard metatheoretic properties: \emph{progress}, \emph{preservation}, and \emph{termination}.
+Together, they ensure that every satisfiable constraint eventually reduces to an equivalent solved form.
 
 % Properties
 % May look like space hacks, but restatable introduces its own space
 
 \begin{definition}
-A constraint $\c$ is term-variable-closed if all its term variables $\x$ are bound \ie $\fvs \c \subseteq \TyVars$. 
+A constraint $\c$ is term-variable-closed if all its term variables $\x$ are bound \ie $\fvs \c \subseteq \TyVars$.
 \end{definition}
 
 \begin{lemma}[Scope preservation]
@@ -3489,11 +3498,11 @@ If $\ca \csolve \cb$, then $\fvs \ca \supseteq \fvs \cb$.
 \end{lemma}
 
 \begin{theorem}[Closed Progress]
-  If a term-variable-closed constraint $\c$ cannot take a step $\c \csolve \cp$, 
-  then either: 
+  If a term-variable-closed constraint $\c$ cannot take a step $\c \csolve \cp$,
+  then either:
   \begin{enumerate}
-    \item $\c$ is solved. 
-    \item $\c$ is $\cfalse$. 
+    \item $\c$ is solved.
+    \item $\c$ is $\cfalse$.
     \item for every match constraint $\hat\C\where{\cmatch \tv \cbrs}$ in
         $\c$, $\Cshape {\hat\C} \tv \sh$ does not hold for any $\sh$.
   \end{enumerate}
@@ -3777,19 +3786,19 @@ draft version}
 \parcomment{Some programs even though they have a principal type are ill-typed}
 
 Omnidirectional inference is powerful, but not omnipotent. Some expressions
-must be rejected even though their elaboration would be unambiguous. Consider: 
+must be rejected even though their elaboration would be unambiguous. Consider:
 
 \begin{program}[input,checkocaml]
-type cie_color = { x : int; y : int; z : int }
-type cie_point = { x : int; y : int; color : cie_color }
+type rgb_color = { x : int; y : int; z : int }
+type rgb_point = { x : int; y : int; color : rgb_color }
 let ex_1_0 r = r.color.x °\ocamlflags 11°
 \end{program}
 
 Here, neither field projections can individually be disambiguated. However, if
 one were allowed to combine the constraints, they would jointly determine
-that $r$ must have type \code{cie_point}: in \code{gray_point}, the field \code{color}
+that $r$ must have type \code{rgb_point}: in \code{gray_point}, the field \code{color}
 has type \code{int}, and hence cannot itself be projected, leaving a unique
-consistent elaboration: $\efun r {\exfield {\exfield r \ttciepoint \tty} \ttciecolor \ttx}$. 
+consistent elaboration: $\efun r {\exfield {\exfield r \ttciepoint \tty} \ttciecolor \ttx}$.
 
 Our framework nonetheless rejects \code{ex_1_0}. This is intentional: implicit
 terms must be elaborated \emph{sequentially}, each in isolation, rather than
