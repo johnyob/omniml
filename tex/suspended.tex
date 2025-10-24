@@ -224,20 +224,23 @@ To this end, we introduce our two novel devices---\emph{suspended match
 constraints} and \emph{incremental instantiation}---and show how they are
 applied to these fragile features.
 %
-The subsequent sections present technical contributions: \begin{enumerate}
-  \item[(\cref{sec:constraints})]
-
-    A novel constraint language for omnidirectional inference, equipped with a
-    semantics for suspended constraints and a new declarative
-    characterization of \emph{known} type information.
+The subsequent sections present technical contributions: 
+\begin{enumerate}
 
   \item[(\cref{sec/oml})]
 
     The \OML calculus, an extension of \ML featuring \OCaml's static
     overloading of record labels and semi-explicit first-class polymorphism
     (\cref{sec/overview/polytypes}).
+    We give typing rules with a new declarative
+    characterization of \emph{known} type information.
+
+  \item[(\cref{sec:constraints})]
+
+    A novel constraint language for omnidirectional inference, equipped with a
+    semantics for suspended constraints.
     %
-    We give typing rules, a translation of \OML programs to constraints
+    We describe the translation of \OML programs to constraints
     representing typing problems, and establish the expected metatheoretic
     properties: soundness, completeness, and principality of inference.
 
@@ -1449,7 +1452,8 @@ be represented as the shape application $\shapp (\tint \tlist)$.
       \and \emagic \es
     }\\
     \entry[Term contexts]{\E}{
-      \eapp \E \e
+      \square 
+      \and \eapp \E \e
       \and \eapp \e \E
       \and \dots
     }
@@ -1784,7 +1788,6 @@ r} {} {\gt}}} : \tp$ holds for any $\gt$.
 \section{Constraints}
 \label{sec:constraints}
 
-\TODO{This section needs revising after the reshuffling}
 
 %% BEWARE: The following two figures only be located as the top of a
 %% page---otherwise  it would be  misplaced
@@ -1809,8 +1812,7 @@ r} {} {\gt}}} : \tp$ holds for any $\gt$.
 \entry[Branches]{\cbr}{\cbranch \cpat \c} \\
 \entry[Patterns]{\cpat}{
   \cpatwild
-  \and \cpatrcd \ct
-  \and \cpatpoly \cscm
+  \and \ldots 
 }{} \\
 \entry[Constraint contexts]{\C}{
   \square
@@ -1881,12 +1883,13 @@ r} {} {\gt}}} : \tp$ holds for any $\gt$.
     \cfalse & \text{otherwise}
 \end{cases}
 \end{tabular}
-\hfill
+\qquad\qquad
 {\let \Eqdef\eqdef \def \eqdef {&\Eqdef&}
 \begin{tabular}[c]{.R.C;.L.}
-  \cmatches[\eqdef] \cpatwild \sh \tvs \eset \\
-  \cmatches[\eqdef] {\cpatrcd \ct} {\parens{\any \tvcs {\Tapp \tvcs}}} \tvs {\where{\ct \is \T}} \\
-  \cmatches[\eqdef] {\cpatpoly \cscm} {\parens{\any \tvcs {\tpoly \ts}}} \tvs {\where{\cscm \is \ts\where{\tvcs \is \tvs}}} \\
+  \multicolumn{3}{c}{
+    \fbox{$\cmatches \cpat \sh \tvcs \theta$}} \\[1ex]
+  \cmatches[\eqdef] \cpatwild \sh \tvcs \eset \\
+  &\vdots&
 \end{tabular}}
 
 \infer[Match-Ctx]
@@ -1901,6 +1904,7 @@ r} {} {\gt}}} : \tp$ holds for any $\gt$.
 \end{tabular}
 \end{mathparfig}
 
+\Xalistair{Didier: can you fix the alignment in the $\cmatches \cpat \sh \tvs \theta$ fbox, it is beyond me ://}
 
 \parcomment{Why bother with a formal constraint language?}
 
@@ -1993,7 +1997,7 @@ should be equivalent to $\c \where {\tv \is \t}$.
 
 Finally, we introduce \textit{suspended match constraints} $(\cmatch \t \cbrs)$, 
 which consist of:
-\begin{enumerate*}
+\begin{enumerate}
 
 \item
   A matchee $\t$. The constraint remains suspended
@@ -2002,16 +2006,18 @@ which consist of:
 
 \item
 
-  A list of branches $\cbrs$ of the form $\cbranch \cpat \c$, where $\cpat$
-  is a shape pattern. For example, the pattern $\cpatrcd \ct$ matches record
-  types, binding its name (\eg the type constructor $\T$) to pattern variable
-  $\ct$. The constraint $\c$ is then solved in the extended context.
+  A list of branches $\cbrs$ of the form $\cbranch \cpat \c$, where $\cpat$ is
+  a shape pattern. The constraint $\c$ is solved in the extended context
+  produced by the matching shape pattern.
+
+  For example, the pattern $\cpatwild$ matches any shape, 
+  and binds nothing. 
   %
   To ensure determinism, the set of patterns $\bar \cpat$ must be
   \emph{disjoint}---that is, no shape may be matched by more than one pattern
   in the list.
 
-\end{enumerate*}
+\end{enumerate}
 The formal semantics of suspended match constraints are somewhat involved,
 so we defer a full explanation until we define \emph{shapes}.
 
@@ -2038,14 +2044,13 @@ that is, they have exactly the same set of solutions.
 
 \parcomment {Constraint contexts}
 
-Throughout this paper, we will find it convenient to work with
-\emph{constraint contexts}. A constraint context is simply a constraint with
-a \emph{hole}, analogous to evaluation contexts $\E$ used extensively in
-operational semantics. We write $\C\where{\c}$ to denote filling the hole of
-the context $\C$ with the constraint $\c$. Hole filling may capture
-variables, so we frequently require explicit side conditions when
-variable capture must be avoided. We write $\bvs \C$ for the set of
-variables bound at the hole in $\C$.
+Throughout this paper, we will find it convenient to work with \emph{constraint
+contexts}. A constraint context is simply a constraint with a \emph{hole},
+analogous to term contexts $\E$ introduced in \cref{sec/oml}. We write
+$\C\where{\c}$ to denote filling the hole of the context $\C$ with the
+constraint $\c$. Hole filling may capture variables, so we frequently require
+explicit side conditions when variable capture must be avoided. We write $\bvs
+\C$ for the set of variables bound at the hole in $\C$.
 
 \subsection{Suspended constraints}
 \label{sec/constraints/semantics}
@@ -2055,10 +2060,9 @@ variables bound at the hole in $\C$.
 A central difficulty in our work on suspended constraints was defining a
 satisfying semantics. The challenge lies in formalizing what it means for type
 information to be \emph{known} without presupposing a \emph{static} solving
-order. Our semantics is declarative but, unlike the rules of
-\citet*{Pottier-Remy/emlti}, it is not syntax-directed. This departure
-complicates reasoning and proofs. On the upside, our semantics directly suggest
-declarative typing rules for the surface language (\cref{sec/oml}).
+order. This is the same issue encountered in our typing rules
+(\cref{sec/oml/??}), and we address it in the same way: by introducing a
+contextual rule together with a unicity condition. 
 
 To define the semantics for suspended constraints, we first introduce
 \emph{discharged match constraints}.
@@ -2085,20 +2089,24 @@ determined; but it may not exist as branches need not be exhaustive, in
 which case the discharged constraint is $\cfalse$.
 \end{definition}
 
-The partial function $(\Cmatches \cpat \sh \tvcs)$ is defined in
-\cref{fig:constraints}: it matches a pattern $\cpat$ against a canonical
-principal shape $\sh$ opened with fresh shape variables $\tvcs$ (of the same
-arity as $\sh$), which either fails or returns a substitution $\theta$ from
-pattern variables (\eg nominal type variables $\ct$) to shape components (\eg
-nominal type names $\T$), which may themselves mention $\tvcs$. For example,
-the wildcard pattern $\cpatwild$ matches any shape, yielding the empty
-substitution.
+The partial function $(\Cmatches \cpat \sh \tvcs)$, is defined in
+\cref{fig:constraints}, describes how a pattern $\cpat$ is matched against a
+canonical principal shape $\sh$. Before matching, $\sh$ is opened with fresh
+shape variables $\tvcs$ (of the same arity as $\sh$), so that the result of
+matching may refer to them. The match either fails or returns a substitution
+$\theta$ mapping pattern variables (\eg nominal type variables $\ct$ from
+\cref{sec/overview/omni}) to shape components (\eg nominal type names $\T$).
+These components may themselves mention the freshly introduced variables
+$\tvcs$. For example, the wildcard pattern $\cpatwild$ matches any shape,
+yielding the empty substitution. In later sections, we will extend both the
+syntax of patterns and the mathing function itself to handle the patterns that
+arise in \OML (see ??). 
+
 
 \paragraph {A natural attempt}
 
-To provide semantics for our suspended constraints, a first idea
-is to propose the following rule---henceforth referred to as the
-\emph{natural semantics} of suspended constraints.
+Like typing rules for fragile constructs (\eg \Rule{Rcd-Proj-I-Nat}), suspended
+match constraints have a \emph{natural rule}:
 \begin{mathpar}
   \infer[Match-Nat]
   {\sh = \shape {\semenv(\t)} \\ \semenv \th \cmatched \t \sh \cbrs}
@@ -2108,11 +2116,12 @@ is to propose the following rule---henceforth referred to as the
 This rule states that a suspended constraint holds whenever the corresponding
 discharged constraint holds for the canonical shape $\sh$ of $\semenv(\t)$ in
 the semantic environment $\semenv$.
-%
+
 \parcomment {The problem}
-%
+
 Although simple and declarative, this semantics is too
-permissive. For example, $\cexists \tv \cmatch \tv {\cbranch \cpatwild {\cunif
+permissive. It allows \emph{guessing} the shape of $\t$ rather than requiring 
+it to be \emph{known}. For example, $\cexists \tv \cmatch \tv {\cbranch \cpatwild {\cunif
 \tv \tint}}$ is satisfiable under the natural semantics:
 \begin{mathpar}
 \def \cmatchex {\cmatch \tv {\cbranch \cpatwild {\cunif \tv \tint}}}
@@ -2132,20 +2141,15 @@ permissive. For example, $\cexists \tv \cmatch \tv {\cbranch \cpatwild {\cunif
   {\semenv \th \cexists \tv \cmatchex}
 }
 \end{mathpar}
-The natural semantics can \emph{guess} a type of $\tv$ (\eg $\tint$) in order to
-discharge the match constraint, rather than requiring $\tv$'s type to be
-\emph{known} from the surrounding context. This ``out of thin
-air'' behavior does not match the intended
+This ``out-of-thin-air'' behavior does not match the intended
 meaning of suspended match constraints and raises several problems:
 \begin{enumerate*}
-  \item a reasonable solver---one that avoids guessing or backtracking---cannot
-    be complete with respect to this semantics;
+  \item a reasonable solver---one that avoids backtracking---cannot
+    be complete with respect to this semantics; and
 
-  \item this breaks the existence of principal solutions.
-    Consider the function \ocaml{fun r -> r.x}, which projects the field \ocaml{x}
-    from the record \ocaml{r}. The natural semantics lets us guess any record
-    type containing the field \code{x} for $r$ (\eg \code{point}, \code{gray_point}).
-    As a result, \ocaml{r} has no most general type.
+  \item it breaks the existence of principal solutions, just 
+    as the \emph{natural} typing rules do (\eg \Rule{Rcd-Proj-I-Nat}).
+    
 \end{enumerate*}
 
 \paragraph {Contextual semantics}
@@ -2196,24 +2200,22 @@ to be \emph{known}.
   \end{mathpar}.
 \end{definition}
 
-The use of erasure $\cerase {\C\where{\cunif \t \gt}}$ in the definition of
-$\Cshape \C \t \sh$ ensures that the unicity of $\sh$ is determined only by the
-constraints that have already been discharged in $\C$; it excludes suspended
-match constraints, which may be discharged in the future. This induces a
-partial order among the suspended match constraints within a constraint,
-corresponding to the order in which a solver may discharge them: a match
-constraint may only be discharged once all of its dependencies have been
-discharged.
+\parcomment{Briefly explain unicity (using analogies to typing rules)}
 
-The erasure of $\cerase{\C\where{\cunif \t \gt}}$ is a simple constraint, so
-the use of
-$\thsimple$ avoids well-foundedness issues that would arise from
-a negative occurrence of $(\th)$ in a premise of \Rule{Match-Ctx}.
-%
-Note that, when $\t$ is not a variable, then $\Cshape \square \t \sh$
-holds trivially for $\sh = \shape \t$. Likewise, when $\C$ is unsatisfiable,
-then $\Cshape \C \tv \sh$ holds vacuously for any $\sh$. The nontrivial cases
-arise when $\t$ is a type variable and $\C$ is satisfiable.
+Similarly to the unicity conditions introduced for typing rules in ??, unicity
+for constraints $\Cshape \C \t \sh$ relies on \emph{erasure} $\cerase
+{\C\where{\cunif \t \gt}}$ to restrict attention to previously discharged match
+constraints, inducing a causal order between match constraints. The auxiliary
+judgement $\thsimple$ plays a role analogous to $\throbust$ (from ??): it is
+introduced soley to avoid well-foundedness issues. 
+
+\parcomment{The interesting cases of unicity}
+
+When $\t$ is not a variable, $\Cshape \square \t \sh$ holds trivially for $\sh
+= \shape \t$. Likewise, when $\C$ is unsatisfiable, then $\Cshape \C \tv \sh$
+holds vacuously for any $\sh$. The interesting and nontrivial cases---the ones
+we illustrate next---arise when $\t$ is a type variable and $\C$ is
+satisfiable.
 
 \parcomment {Examples}
 
@@ -2328,6 +2330,72 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
 \label{sec/oml/constraints}
 
 \begin{mathparfig}
+  {fig:patterns-oml}
+  {Patterns for \OML.}
+  \begin{bnfgrammar}
+   \entry[Nominal type variables]{\ct}{}\\
+   \entry[Scheme variables]{\cscm}{}\\
+   \entry[Patterns]{\cpat}{
+      \ldots
+      \and \cpatrcd \ct
+      \and \cpatpoly \cscm
+    } \\[1ex]
+    \entry[Constraints]{\c}{
+      \dots
+      \and \labfrom \elab \ct \leq \ta \to \tb
+      \and \dom \ct = \elabs
+      \and \cscm \leq \t
+      \and \x \leq \cscm
+    }
+ \end{bnfgrammar}
+  \\
+  \def \>{\noalign{\vskip .8ex}}
+  \newcommand{\Mrule}[5][]{{#2} \Matches {(#3)} \; #4 &\eqdef& {#5} & #1}
+  \begin{tabular}{RCLL}
+    \Mrule
+      {\cpatrcd \ct}
+      {\any \tvcs \Tapp} \tvcps
+      {[\ct \is \T]}
+    \\\>
+    \Mrule
+      {\cpatpoly \cscm}
+      {\any \tvcs \tpoly \ts} \tvcps
+      {[\cscm \is \ts \where{\tvcs \is \tvcps}]}
+  \end{tabular}
+  \\
+  \newcommand{\Srule}[3][]{{#2} &\eqdef& {#3} & {#1}}
+  \newcommand{\Scases}[3]{%
+    \left\{
+      \begin{array}{l}
+      #1\\%[0.4ex]
+      #2
+      \end{array}%
+    \right.
+    &
+    \hspace{-1ex}\begin{array}{l}
+      \text{if } #3\\%[0.4ex]
+      \text{otherwise}
+    \end{array}%
+  }
+  \begin{tabular}{RCLL}
+    \Srule[\text{if } \labenv(\labfrom \elab \T) = \tfor \tvs {\Tapp \tvs \to \t}]
+      {\labfrom \elab \T \leq \ta \to \tb}
+      {\cexists \tvs \cunif \ta \t \cand \cunif \tb {\Tapp \tvs}}
+    \\\>
+    \dom{\T} = \elabs &\eqdef&
+       \Scases{\ctrue}{\cfalse}{\Dom {\labenv(\T)} = \elabs}
+    \\\>
+    \Srule
+      {(\tfor \tvs \tp) \leq \t}
+      {\cexists \tvs \cunif \tp \t}
+    \\\>
+    \Srule
+      {\x \leq (\tfor \tvs \t)}
+      {\cfor \tvs \capp \x \t}
+  \end{tabular}
+\end{mathparfig}
+
+\begin{mathparfig}
   [htpb!]
   {fig/constraint-gen}
   {The constraint generation translation for \OML.}
@@ -2424,70 +2492,6 @@ arise when $\t$ is a type variable and $\C$ is satisfiable.
 \end{tabular}
 \end{mathparfig}
 
-% \scalebox{0.9}{
-%   \begin{bnfgrammar}
-%     \entry[Constraints]{\c}{
-%       \dots
-%       \and \labenv(\labfrom \elab \ct) \leq \ta \to \tb
-%       \and \labenv(\labfrom \elab \T) \leq \ta \to \tb
-%       \andcr \cscm \leq \t
-%       \and \ts \leq \t
-%       \andcr \x \leq \cscm
-%       \and \x \leq \ts
-%       \andcr \dom \ct = \elabs
-%       \and \dom {\T} = \elabs
-%     }
-%  \end{bnfgrammar}
-%   \def \>{\noalign{\vskip .8ex}}
-%   \newcommand{\Mrule}[5][]{{#2} \Matches {(#3)} \; #4 &\eqdef& {#5} & #1}
-%   \inferrule[Lab-Inst]
-%     {\semenv \th \labenv(\labfrom \elab {\semenv(\ct)}) \leq \ta \to \tb}
-%     {\semenv \th \labenv(\labfrom \elab \ct) \leq \ta \to \tb}
-%
-%   \inferrule[Lab-Dom]
-%     {\semenv \th \dom {(\phi(\ct))} = \elabs}
-%     {\semenv \th \dom \ct = \elabs}
-%
-%   \inferrule[Scm-Inst]
-%     {\semenv \th \semenv(\cscm) \leq \t}
-%     {\semenv \th \cscm \leq \t}
-%
-%   \inferrule[Abs-Inst]
-%     {\semenv \th \x \leq \semenv(\cscm)}
-%     {\semenv \th \x \leq \cscm}
-%   \\
-%   \newcommand{\Srule}[3][]{{#2} &\eqdef& {#3} & {#1}}
-%   \newcommand{\Scases}[3]{%
-%     \left\{
-%       \begin{array}{l}
-%       #1\\%[0.4ex]
-%       #2
-%       \end{array}%
-%     \right.
-%     &
-%     \hspace{-1ex}\begin{array}{l}
-%       \text{if } #3\\%[0.4ex]
-%       \text{otherwise}
-%     \end{array}%
-%   }
-%   \begin{tabular}{RCLL}
-%     \Srule[\text{if } \labenv(\labfrom \elab \T) = \tfor \tvs \t \to \Tapp \tvs]
-%       {\labenv(\labfrom \elab \T) \leq \ta \to \tb}
-%       {\cexists \tvs \cunif \ta \t \cand \cunif \tb {\Tapp \tvs}}
-%     \\\>
-%     \dom{\T} = \elabs &\eqdef&
-%        \Scases{\ctrue}{\cfalse}{\Dom {\labfrom \labenv \T} = \elabs}
-%     \\\>
-%     \Srule
-%       {(\tfor \tvs \tp) \leq \t}
-%       {\cexists \tvs \cunif \tp \t}
-%     \\\>
-%     \Srule
-%       {\x \leq (\tfor \tvs \t)}
-%       {\cfor \tvs \capp \x \t}
-%   \end{tabular}
-%
-% }
 
 % Intro
 We now present the formal translation from terms $\e$ to constraints $\c$,
@@ -2502,9 +2506,7 @@ $\t$ such that $\t$ becomes a valid type of $\e$. For example, to infer the
 entire type of $\e$ we may pick a fresh type variable $\tv$ for $\t$. 
 
 
-
-\TODO{This paragraph was copied verbatim from the appendix. It needs rewriting.}
-\paragraph{Pattern constraints}
+\paragraph{Patterns}
 
 Thus far, our formal presentation of constraint patterns has remained
 abstract, deliberately leaving the syntax and semantics of patterns
@@ -2515,9 +2517,6 @@ and introducing the corresponding constraints for the variables they bind.
 Patterns include:
 \begin{enumerate*}
 
-  \item Tuple patterns $\cpatprod \tv j$, matching a tuple type $\Pi\iton
-    \tys$ of arity $n \geq j$, and binding the $j$-th component to $\tv$.
-
   \item Nominal patterns $\cpatrcd \ct$, binding the name of a nominal type
     $\Tapp \tys$ to the nominal variable $\ct$.
 
@@ -2526,99 +2525,27 @@ Patterns include:
 
 \end{enumerate*}
 
-Each new constraint has an unsubstituted form ($\cscm \leq \t, \x \leq \cscm$
-\etc), whose semantics is defined via substitution into a sugared form ($\ts
-\leq \t, \x \leq \ts,$ \etc). Semantic environments $\semenv$ are extended to
-interpret nominal variables $\ct$ as names $\T$ and scheme variables $\cscm$ as
-ground type schemes $\gscm$, that is type schemes with no unbound variables
-(\ie $\tfor {\fvs \t} \t$).
+Each new kind of pattern introduces corresponding constraint formers:
+$\labfrom \elab \ct \leq \ta \to \tb$ asserts that $\ta \to \tb$ is a instance of 
+projection type associated with the qualified label $\labfrom \elab \ct$;
+$\dom \ct = \elabs$ ensures that the domain of nominal type $\ct$ is the set of labels $\elabs$; 
+and $\cscm \leq \t$ checks that $\t$ is an instance of $\cscm$, while $\x \leq \cscm$ 
+asserts that every instance of $\x$ is an instance of $\cscm$. 
 
-\begin{mathparfig}
-  {fig:patterns-oml}
-  {Patterns for \OML.}
-  \begin{bnfgrammar}
-   \entry[Patterns]{\cpat}{
-      \cpatprod \tv j
-      \and \cpatrcd \ct
-      \and \cpatpoly \cscm
-    } \\
-    \entry[Constraints]{\c}{
-      \dots
-      \and \labenv(\labfrom \elab \ct) \leq \ta \to \tb
-      \and \labenv(\labfrom \elab \T) \leq \ta \to \tb
-      \andcr \cscm \leq \t
-      \and \ts \leq \t
-      \andcr \x \leq \cscm
-      \and \x \leq \ts
-    }
- \end{bnfgrammar}
-  \\
-  \def \>{\noalign{\vskip .8ex}}
-  \newcommand{\Mrule}[5][]{{#2} \Matches {(#3)} \; #4 &\eqdef& {#5} & #1}
-  \begin{tabular}{RCLL}
-    \Mrule[\text{if } n \geq j]
-      {\cpatprod \tv j}
-      {\any \tvcs \Pi\iton \tvcs} \tvbs
-      {[\tv \is \tvb_j]}
-    \\\>
-    \Mrule
-      {\cpatrcd \ct}
-      {\any \tvcs \Tapp} \tvbs
-      {[\ct \is \T]}
-    \\\>
-    \Mrule
-      {\cpatpoly \cscm}
-      {\any \tvcs \tpoly \ts} \tvbs
-      {[\cscm \is \ts \where{\tvcs \is \tvbs}]}
-  \end{tabular}
-  \\
-  \inferrule[Lab-Inst]
-    {\semenv \th \labenv(\labfrom \elab {\semenv(\ct)}) \leq \ta \to \tb}
-    {\semenv \th \labenv(\labfrom \elab \ct) \leq \ta \to \tb}
+By definition, each of these constraint forms is unsatisfiable, since we do not
+extend the satisfiability relation to include them. Their role is purely
+syntactic: they only appear within the branches of a suspended match
+constraint. Once such a constraint is discharged $(\cmatched \t \sh {\cbranch
+\cpats \cs})$ (??), the substitution $\theta$ produced by the matching pattern
+$\cpati$---which binds the pattern variables (\eg $\ct$, $\cscm$, \etc)---is
+applied to the corresponding branch $\ci$. Hence, it sufficies to only define
+the semantics of these constraint formers only for their substituted forms (\eg
+$\labfrom \elab \T \leq \ta \to \tb$, $\dom {\T} = \elabs$, \etc), as shown in
+\cref{fig:patterns-oml}. We define the semantics of these substituted forms by
+translation into existing constraints---that is, as syntactic sugar over the
+existing core constraint language. 
 
-  \inferrule[Lab-Dom]
-    {\semenv \th \dom {(\phi(\ct))} = \elabs}
-    {\semenv \th \dom \ct = \elabs}
-
-  \inferrule[Scm-Inst]
-    {\semenv \th \semenv(\cscm) \leq \t}
-    {\semenv \th \cscm \leq \t}
-
-  \inferrule[Abs-Inst]
-    {\semenv \th \x \leq \semenv(\cscm)}
-    {\semenv \th \x \leq \cscm}
-  \\
-  \newcommand{\Srule}[3][]{{#2} &\eqdef& {#3} & {#1}}
-  \newcommand{\Scases}[3]{%
-    \left\{
-      \begin{array}{l}
-      #1\\%[0.4ex]
-      #2
-      \end{array}%
-    \right.
-    &
-    \hspace{-1ex}\begin{array}{l}
-      \text{if } #3\\%[0.4ex]
-      \text{otherwise}
-    \end{array}%
-  }
-  \begin{tabular}{RCLL}
-    \Srule[\text{if } \labenv(\labfrom \elab \T) = \tfor \tvs \t \to \Tapp \tvs]
-      {\labenv(\labfrom \elab \T) \leq \ta \to \tb}
-      {\cexists \tvs \cunif \ta \t \cand \cunif \tb {\Tapp \tvs}}
-    \\\>
-    \dom{\T} = \elabs &\eqdef&
-       \Scases{\ctrue}{\cfalse}{\Dom {\labfrom \labenv \T} = \elabs}
-    \\\>
-    \Srule
-      {(\tfor \tvs \tp) \leq \t}
-      {\cexists \tvs \cunif \tp \t}
-    \\\>
-    \Srule
-      {\x \leq (\tfor \tvs \t)}
-      {\cfor \tvs \capp \x \t}
-  \end{tabular}
-\end{mathparfig}
+\paragraph{Constraint generation}
 
 The function $\cinfer - {\mathop{=}}$ is defined in \cref{fig/constraint-gen}.
 All generated type variables are fresh with respect to the expected type $\t$,
@@ -2781,14 +2708,14 @@ typing context.}
 %
 \begin{theorem}[Constraint generation is sound and complete]
   \label{thm:constraint-gen-is-sound-and-complete}
-Given a closed term $\e$ and type $\t$. Then for any $\tv \disjoint \t$,
+Given a closed \OML term $\e$ and type $\t$. Then for any $\tv \disjoint \t$,
 $\th \e : \t$ iff\/
 $\cunif \tv \t \centails \csem {\e : \tv}$.
 \end{theorem}
 
 \begin{restatable}[Principal types]{theorem}{principalTypes}
 \label{thm:principal-types}
-For any well-typed closed term $\e$, there exists a type $\t$
+For any well-typed closed \OML term $\e$, there exists a type $\t$
 %% , which we call principal,
 such that:
 \begin{enumerate*}[(\roman*)]
@@ -3266,8 +3193,7 @@ application, let-binding, or suspended constraint.
 constraints ($\labfrom \elab \ct \leq \ta \to \tb$, $\cleq \cscm \t$,
 \etc), require no special treatment in our solver. Once their pattern variables
 are substituted---after solving a match constraint---they are desugared into
-constraints already handled by the solver.\XDR{The still need to be part of
-the (sub)constraint language appearing \emph{only} in match branches ...}
+constraints already handled by the solver.
 
 \paragraph{Let constraints}
 
