@@ -67,14 +67,14 @@ Consider the following example in \OCaml
 %%   principal type inference and escaltes the associated warnings to errors.
 %% }
 using overloaded record field names:
-\begin{program}[input,escapechar=@]
+\begin{program}[input,escapechar=@,belowskip=0em]
 type point  = {x : int; y : int}
 type gs_point = {x : int; y : int; color : int}
-
+\end{program}
+\begin{program}[input,escapechar=@,belowskip=0em]
 let getx r = r.x
 \end{program}
-\programjoin[-1ex]
-\begin{program}[error]
+\begin{program}[error,aboveskip=0em]
              ^^^
 Error (warning 41 [ambiguous-name]):
 x belongs to several types: gs_point point.
@@ -113,11 +113,11 @@ when it is:
 %
 \begin{enumerate*}
   \item part of an annotation;
-  \item supplied as input to a checking conclusion ($\Leftarrow \t$); or
-  \item an output of a synthesizing premise ($\Rightarrow \t$).
+  \item supplied as input to a checking conclusion ($\G \th e \Leftarrow \t$); or
+  \item an output of a synthesizing premise ($\G \th \e \Rightarrow \t$).
 \end{enumerate*}
-\XDR{Points 2 and 3 are unclear: as this asumes that one already know what bidirectional type inference is.}
-%
+\XDR{We still do not see the difference between being a premise or a
+conclusion}\relax
 While effective in many settings, the rigidity of a static ordering causes even
 simple examples---whose types could easily be guessed---to be rejected; for
 instance, \code{fun r -> (r.x, r.color)} is ill-typed in \OCaml.
