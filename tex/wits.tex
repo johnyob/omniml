@@ -72,12 +72,12 @@ type point  = {x : int; y : int}
 type gs_point = {x : int; y : int; color : int}
 
 let getx r = r.x
-\end{program} 
+\end{program}
 \programjoin[-1ex]
 \begin{program}[error]
              ^^^
-Error (warning 41 [ambiguous-name]): 
-x belongs to several types: gs_point point.  
+Error (warning 41 [ambiguous-name]):
+x belongs to several types: gs_point point.
 \end{program}
 When typing \code{getx}, one could \emph{guess} the type of \code{r} to be
 either \code{point} or \code{gs_point}---neither of which is strictly more
@@ -170,8 +170,8 @@ Thus far, we have developed:
     algorithm for \OML.
 
   \item
-    A formalized constraint solver as a series of non-deterministic rewriting
-    rules and an efficient implementation 
+    A formalized constraint solver as a series of non-deter\-ministic rewriting
+    rules and an efficient implementation
     % De-anonymizing URL (available at https://github.com/johnyob/mlsus)
     using \emph{incremental instantiation}.
 
@@ -182,12 +182,12 @@ systems \citep*{huet-unif, Miller/pattern-unif@iclp91, allais2022typos} and in
 \OutsideIn \citep*{conf/icfp/SchrijversJSV09} in the form of \emph{delayed
 implication} constraints---but combining this technique with \ML-style
 \emph{local let-generalization}, and giving it a declarative semantics, is
-novel. 
+novel.
 %
 Our ultimate aim is to apply this to \OCaml, where \emph{local
 let-generalization} is indepensible (unlike in \Haskell, which only generalizes
 at the top level), yet this makes omnidirectional inference especially
-challenging to specify and implement. 
+challenging to specify and implement.
 
 \clearpage
 
