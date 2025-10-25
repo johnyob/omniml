@@ -50,7 +50,7 @@
 \begin{abstract}
 
   % Background + Gap
-  Principality lies at the heart of the Damas-Hindley-Milner (\HM) type system.
+  Principality lies at the heart of the Damas-Hindley-Milner (\ML) type system.
   Yet principality is \emph{fragile}: many extensions of \ML break it. Existing
   approaches recover principality through \emph{directional} inference
   algorithms, which propagate \emph{known} type information in a fixed order
@@ -65,7 +65,7 @@
   order, suspending when progress requires known type information and resuming
   once it becomes available. Suspension is captured using \emph{suspended
   match constraints}, which defer the resolution of some constraints until the
-  context has more information about a type variable. To scale omnidirectional
+  context has more information about an inference variable. To scale omnidirectional
   inference to \ML with \emph{local let-generalization}, we introduce
   \emph{incremental instantiation}, enabling partially solved type schemes
   containing suspended constraints to be instantiated, with a mechanism to
@@ -85,9 +85,9 @@
 \section{Introduction}
 \label{sec/introduction}
 
-\parcomment {Introduction (ML, principality)}
+\parcomment {Introduction. What is \ML, what is principality?}
 
-The Damas-Hindley-Milner (\HM) \citep*{Damas-Milner/W@popl82,
+The Damas-Hindley-Milner (\ML) \citep*{Damas-Milner/W@popl82,
 hindley1969principal} type system has long occupied a sweet spot in the design
 space of strongly typed programming languages, as it enjoys the \emph{principal
 types property}: every well-typed expression $\e$ has a most general type $\ts$
@@ -95,40 +95,38 @@ from which all other valid types for $\e$ are instances of $\ts$. For example,
 the identity function $\efun \x \x$ has the principal type $\tfor \tv \tv \to
 \tv$, generalizing types like $\tint \to \tint$ and $\tbool \to \tbool$.
 
-\parcomment {Benefits of principality}
+\parcomment {Benefits of principality: practical implications}
 
-This property ensures predictable and efficient inference. Local typing
-decisions are always optimal, yielding most general types without guessing
-or backtracking. As a result, inference of subexpressions can proceed in any
-order, with one exception: let-bound expressions are typically inferred
-before their use. Still, well-typedness is preserved under common program
-transformations such as let-contraction and argument reordering.
+The existence of principal types in \ML has important practical benefits. It
+makes inference predictable, compositional, and efficient: since every
+expression has a most general type, local typing decisions are always optimal,
+with no need for guessing or backtracking. Beyond inference, principality
+ensures that well-typedness is stable under common program transformations such
+as let-contraction (or inlining) and argument reordering. 
 
-\parcomment {Extensions often break pincipality}
+\parcomment {Principality is fragile. Extensions often break it}
 
-Principality, however, is fragile. Many extensions of \ML preserve it
-straightforwardly---for example, extensible records with row-polymorphism
-\citep*{Remy/popl89, conf/popl/RemyV97, conf/lics/Wand89,
-journals/toplas/Ohori95, garrigue1998programming} or higher-kinded types
-\citep*{journals/jfp/Jones95}, preserve principality
-straightforwardly. Others, such as GADTs
-\citep*{conf/icfp/SchrijversJSV09, conf/aplas/GarrigueR13}, higher-rank
-polymorphism \citep*{conf/popl/OderskyL96, journals/pacmpl/SerranoHJV20}, and
-static overloading \citep*{Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}, are
-\emph{fragile}: they break principality under their \emph{natural} typing
-rules.
+Principality, however, is fragile. Many extensions of \ML---such as extensible
+records with row-polymorphism \citep*{Remy/popl89, conf/popl/RemyV97,
+conf/lics/Wand89, journals/toplas/Ohori95, garrigue1998programming} and
+higher-kinded types \citep*{journals/jfp/Jones95}---are \emph{robust}: they
+preserve principality. Others, including GADTs
+\citep*{conf/icfp/SchrijversJSV09, conf/aplas/GarrigueR13}, higher-rank and
+first-class polymorphism \citep*{conf/popl/OderskyL96,
+journals/pacmpl/SerranoHJV20}, and static overloading
+\citep*{Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}, are \emph{fragile}: they
+break principality under their \emph{natural} typing rules.
 
-Principality can be recovered through explicit type annotations.
-The return type of overloaded datatype constructors may be annotated; polymorphic
-expressions can be annotated with a type scheme; and for GADTs, both the type
-of the \texttt{match} scrutinee and return type can be annotated with a rigid
-type, which is refined by type equalities introduced in each branch.
+\parcomment {Example}
 
-A concrete example arises in \OCaml with impredicative higher-rank
-polymorphism via \emph{polymorphic object methods}~\citep{Garrigue-Remy/poly-ml}:
+This fragility can already be observed in \OCaml through impredicative
+higher-rank (\ie first-class) polymorphism, exposed by \emph{polymorphic object
+methods}~\citep{Garrigue-Remy/poly-ml}:
+%
 \begin{program}[input]
 let self x = x#f x in self (object method f z = z end)
 \end{program}
+%
 In \OCaml, objects are defined as a collection of methods within
 \code{object ... end}, and accessed using $\e \esend m$. Unlike Java or C++,
 \OCaml uses \emph{structural typing} for objects: object types are a list of
@@ -136,27 +134,58 @@ method types between two chevrons \eg \ocaml[angles]{<f : 'a. 'a -> 'a>},
 where the method \code{f} has the polymorphic identity function type
 $\all \tv {\tv \to \tv}$ (the $\forall$ being omitted).
 %
-When typing \code{self} in the example above, one could \emph{guess} the
-higher-rank type of \code{x} to be either $\epolymeth f \tv
-{\tv \to \tv}$ or $\epolymeth f \tv {\tv \to \tv \to \tv}$
-or---neither of which is strictly more general than the other, violating
-principality.
+When typing \code{self} in the example above, one could \emph{guess} the type
+of \code{x} to be either $\epolymeth f \tv {\tv \to \tv}$ or $\epolymeth f \tv
+{\tv \to \tv \to \tv}$---neither of which is strictly more general than the
+other, violating principality.
 
-\parcomment {Current approaches are kinda bad}
+\parcomment {Recovering principality}
 
-To restore principality, inference algorithms require\footnote {Otherwise, they
-treat \code{f} monomorphically and fail on this example.}  a minimal amount of
-\emph{known} type information; in this example the binding of \code{x} should
-be annotated with the higher-rank type $\epolymeth f \tv {\tv \to \tv}$. Yet,
-specifying \emph{known type information} declaratively is difficult. As a
-result, specifications are often twisted with some direct or indirect
-algorithmic flavor in order to preserve principality and completeness.
+Principality can be recovered through explicit type annotations. The return
+type of overloaded datatype constructors may be annotated; polymorphic
+expressions can be annotated with a type scheme; and for GADTs, both the type
+of the \texttt{match} scrutinee and return type can be annotated with a rigid
+type, which is refined by type equalities introduced in each branch.
+In this example the binding of \code{x} should be annotated with the 
+higher-rank type $\epolymeth f \tv {\tv \to \tv}$.
 
-Moreover, these (more or less) ad-hoc restrictions commonly reject examples
-whose type could easily be guessed. For instance, \OCaml accepts or rejects the
-following expression, depending on the position of the annotation
-(\smashcolorbox{welltyped}{\strut green} indicates typechecking success and
-\smashcolorbox{illtyped}{\strut red} indicates failure):
+\parcomment {Fragile constructs can be viewed as an elaboration into robust ones}
+
+Every fragile construct has a corresponding \emph{robust} form where the type
+annotation is mandatory---for instance, $\eannot {\e \esend m} {} \ts$ is the
+robust form of $\e \esend  m$ for polymorphic method invocation.  Robust forms
+preserve principality, but at the cost of being significantly more cumbersome
+to use. Fragile forms relieve this burden, but can only be elaborated into
+their robust counterpart if sufficient type information is already available
+from the context. Thus, typing fragile constructs ultimately amounts to
+identifying when type information is \emph{known}.
+
+\parcomment {The hard part of the problem -- defining known type information.}
+
+
+Intuitively, by known information, we mean typing constraints that
+must hold---either from typing rules (\eg application requires the
+function to have an arrow type) or programmer supplied type annotations. Yet,
+formulating a declarative specification for \emph{when} type information is
+known is difficult: most specifications are often twisted with some direct or
+indirect algorithmic flavor in order to preserve principality and completeness. 
+
+\parcomment {Existing approaches: all rely on a static order of inference}
+
+The two dominant approaches thus far are \emph{bidirectional} type inference
+\citep*{conf/popl/PierceT98} and \emph{\geninst-directional}
+inference~\citep*{Garrigue-Remy/poly-ml}. Each impose some \emph{static}
+ordering of inference, using it to propagate inferred types and user-provided
+annotations as \emph{known} information. 
+
+\parcomment {Static orders have limitations}
+
+While effective in many settings, the rigidity of a static ordering causes even
+simple examples whose type could easily be inferred to be rejected. For
+instance, \OCaml accepts or rejects the following expression, depending on the
+position of the annotation (\smashcolorbox{welltyped}{\strut green} indicates
+typechecking success and \smashcolorbox{illtyped}{\strut red} indicates
+failure):
 
 \begin{program}[input,angles]
 let self' (x : <f : 'a. 'a -> 'a>) = if true then x#f x else x °
@@ -165,37 +194,8 @@ let self' x = if true then x#f x else (x : <f : 'a. 'a -> 'a>) °
 \Ocamlcomment{\ocamlFlag {\OCaml}1}°
 \end{program}
 
-\parcomment {Annotations fixes all the issues (but they're problematic)}
 
-Each fragile construct admits a \emph{robust} counterpart where the type
-annotation is mandatory---for instance, $\eannot {\e \esend m} {} \ts$ is the
-robust form of $\e \esend  m$ for polymorphic method instantiation.  While
-robust constructs do not break principality, they are significantly more
-cumbersome to use, as they always require explicit type annotations. Fragile
-forms relieve this burden, but can only be elaborated into their robust
-counterpart if sufficient type information is already available from the
-context.
-
-\parcomment {The hard part of the problem -- known type information}
-
-The challenge lies in finding a specification for the propagation of contextual
-type information in a way that is sufficiently expressive, principled, and
-intuitive for programmers, while still admitting a complete and principal
-inference algorithm. By \emph{known} information, we mean typing constraints
-that \emph{must} hold---either from typing rules (\eg application requires the
-function to have an arrow type) or from explicit type annotations.
-
-\parcomment {Existing approaches (briefly)}
-
-The two dominant approaches thus far are \emph{bidirectional} type inference
-\citep*{conf/popl/PierceT98} and \emph{\geninst-directional}
-inference~\citep*{Garrigue-Remy/poly-ml}. Each impose some \emph{static}
-ordering of inference, using it to propagate inferred types and user-provided
-annotations as known information. While effective in many settings, the
-rigidity of a static ordering causes even simple examples, like the one above,
-to be rejected.
-
-\parcomment {Our solution}
+\parcomment {Our solution: a dynamic order}
 
 We propose \emph{omnidirectional} type inference, which relies on a
 \emph{dynamic} order of inference. The solving of inference constraints
@@ -204,16 +204,25 @@ type information. Other constraints may continue to be solved; once the
 missing information becomes available (typically via unification), the
 suspended typing constraints are resumed.
 
-\parcomment {Grounding our work with the requirement of let-generalization}
+\parcomment {Omnidirectionality is a framework}
 
-We intend to eventually apply our work to \OCaml, so the fragile features
-we target---static overloading, polymorphic methods, and others---are
-those present in \OCaml. In particular, while the idea of suspending
-constraints is not new (see \cref{sec:related-work}), we show how to
-combine suspended constraints and Hindley-Damas-Milner \emph{local
-  let-generalization}; it is indispensable in \OCaml\footnote{In contrast,
-  Haskell only supports top-level let-generalization.} but makes suspended
-constraints uniquely difficult to implement and specify declaratively.
+We present omnidirectionality as a general framework for inference in the
+presence of fragile features. While this paper instantiates our framework for
+two concrete features in \OCaml---static overloading and polymorphic object
+methods---its scope is broader: we expect it to extend to more complex features
+such as GADTs, ...,  and more generally any construct that relies on type-based
+disambiguation.
+\Xalistair{What features should we mention here?}
+
+\parcomment {Scaling to ML / let-generalization}
+
+Because our long-term goal is to integrate omnidirectional inference into
+\OCaml's typechecker, it must scale to \ML-style polymorphism. While the idea
+of suspending constraints is not new (see \cref{sec:related-work}), we show how
+suspended constraints can coexist with \ML \emph{local let-generalization}---an
+indispensable feature of \OCaml\footnote{In contrast, Haskell only supports
+top-level let-generalization.}---but one that makes suspended constraints
+uniquely difficult to implement and specify declaratively. 
 
 \subsection* {Contributions}
 
@@ -1932,6 +1941,7 @@ free type variable $\tv$ a ground type $\gt \in \Ground$ (a type with no free
 variables) and to each term variable $\x$ a set of ground types $\gabs
 \subseteq \Ground$ (the instances of a type scheme bound to $\x$).\XDR{The
 $\gabs$ glyph is unreadable/unparsable}
+\Xalistair{How about $\mathfrak{R}, \mathfrak{S}$}
 %
 We write $\semenv\where{\tv \is \gt}$ and $\semenv\where{\x \is \gabs}$ for the
 extension of $\semenv$ with a new binding. For a type $\t$, we write
