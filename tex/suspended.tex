@@ -49,30 +49,35 @@
 
 \begin{abstract}
 
-  % Background + Gap
+% Background + Gap
+
   Principality lies at the heart of the Damas-Hindley-Milner (\ML) type system.
   Yet principality is \emph{fragile}: many extensions of \ML break it. Existing
   approaches recover principality through \emph{directional} inference
   algorithms, which propagate \emph{known} type information in a fixed order
-  (as in bidirectional typing). Type information propagated in this way is
+  (\eg as in bidirectional typing). Type information propagated in this way is
   treated as \emph{known} and used to disambiguate otherwise non-principal
   constructs. However, the rigidity of a \emph{static} inference order often
   causes well-typed programs to be rejected.
 
-  % Innovation
+% Innovation
+
   We propose \emph{omnidirectional} type inference, where type information
   flows in a \emph{dynamic} order. Typing constraints may be solved in any
   order, suspending when progress requires known type information and resuming
   once it becomes available. Suspension is captured using \emph{suspended
   match constraints}, which defer the resolution of some constraints until the
-  context has more information about an inference variable. To scale omnidirectional
+  context has more information about an inference variable. To scale
+  omnidirectional
   inference to \ML with \emph{local let-generalization}, we introduce
   \emph{incremental instantiation}, enabling partially solved type schemes
   containing suspended constraints to be instantiated, with a mechanism to
   incrementally update instances as the scheme is refined.
 
-  % Benefit
-  Omnidirectionality provides a general framework for restoring principality in
+% Benefit
+
+  Omnidirectionality provides a \emph{general framework} for restoring
+  principality in
   the presence of fragile features. We demonstrate its versatility on two
   fundamentally different features of \OCaml: static overloading of record
   labels and datatype constructors and semi-explicit first-class polymorphism.
@@ -102,7 +107,7 @@ makes inference predictable, compositional, and efficient: since every
 expression has a most general type, local typing decisions are always optimal,
 with no need for guessing or backtracking. Beyond inference, principality
 ensures that well-typedness is stable under common program transformations such
-as let-contraction (or inlining) and argument reordering. 
+as let-contraction (or inlining) and argument reordering.
 
 \parcomment {Principality is fragile. Extensions often break it}
 
@@ -113,14 +118,14 @@ higher-kinded types \citep*{journals/jfp/Jones95}---are \emph{robust}: they
 preserve principality. Others, including GADTs
 \citep*{conf/icfp/SchrijversJSV09, conf/aplas/GarrigueR13}, higher-rank and
 first-class polymorphism \citep*{conf/popl/OderskyL96,
-journals/pacmpl/SerranoHJV20}, and static overloading
+Garrigue-Remy/poly-ml, journals/pacmpl/SerranoHJV20}, and static overloading
 \citep*{Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}, are \emph{fragile}: they
 break principality under their \emph{natural} typing rules.
 
 \parcomment {Example}
 
 This fragility can already be observed in \OCaml through impredicative
-higher-rank (\ie first-class) polymorphism, exposed by \emph{polymorphic object
+higher-rank (\ie first-class) polymorphism, exposed by \emph{polymorphic
 methods}~\citep{Garrigue-Remy/poly-ml}:
 %
 \begin{program}[input]
@@ -132,7 +137,7 @@ In \OCaml, objects are defined as a collection of methods within
 \OCaml uses \emph{structural typing} for objects: object types are a list of
 method types between two chevrons \eg \ocaml[angles]{<f : 'a. 'a -> 'a>},
 where the method \code{f} has the polymorphic identity function type
-$\all \tv {\tv \to \tv}$ (the $\forall$ being omitted).
+$\all \tv {\tv \to \tv}$ (the $\forall$ being omitted in \OCaml syntax).
 %
 When typing \code{self} in the example above, one could \emph{guess} the type
 of \code{x} to be either $\epolymeth f \tv {\tv \to \tv}$ or $\epolymeth f \tv
@@ -146,7 +151,7 @@ type of overloaded datatype constructors may be annotated; polymorphic
 expressions can be annotated with a type scheme; and for GADTs, both the type
 of the \texttt{match} scrutinee and return type can be annotated with a rigid
 type, which is refined by type equalities introduced in each branch.
-In this example the binding of \code{x} should be annotated with the 
+In this example, the binding of \code{x} should be annotated with the
 higher-rank type $\epolymeth f \tv {\tv \to \tv}$.
 
 \parcomment {Fragile constructs can be viewed as an elaboration into robust ones}
@@ -168,7 +173,7 @@ must hold---either from typing rules (\eg application requires the
 function to have an arrow type) or programmer supplied type annotations. Yet,
 formulating a declarative specification for \emph{when} type information is
 known is difficult: most specifications are often twisted with some direct or
-indirect algorithmic flavor in order to preserve principality and completeness. 
+indirect algorithmic flavor in order to preserve principality and completeness.
 
 \parcomment {Existing approaches: all rely on a static order of inference}
 
@@ -176,7 +181,7 @@ The two dominant approaches thus far are \emph{bidirectional} type inference
 \citep*{conf/popl/PierceT98} and \emph{\geninst-directional}
 inference~\citep*{Garrigue-Remy/poly-ml}. Each impose some \emph{static}
 ordering of inference, using it to propagate inferred types and user-provided
-annotations as \emph{known} information. 
+annotations as \emph{known} information.
 
 \parcomment {Static orders have limitations}
 
@@ -207,11 +212,12 @@ suspended typing constraints are resumed.
 \parcomment {Omnidirectionality is a framework}
 
 We present omnidirectionality as a general framework for inference in the
-presence of fragile features. While this paper instantiates our framework for
-two concrete features in \OCaml---static overloading and polymorphic object
-methods---its scope is broader: we expect it to extend to more complex features
-such as GADTs, ...,  and more generally any construct that relies on type-based
-disambiguation.
+presence of fragile features. While this paper instantiates our framework
+for two concrete features in \OCaml---static overloading and polymorphic
+object methods---its scope is broader: we expect it to extend to more
+complex features such as GADTs, a more general form of overloading or
+modular explicits, and more generally, any construct that relies on
+type-based disambiguation.
 \Xalistair{What features should we mention here?}
 
 \parcomment {Scaling to ML / let-generalization}
@@ -221,8 +227,8 @@ Because our long-term goal is to integrate omnidirectional inference into
 of suspending constraints is not new (see \cref{sec:related-work}), we show how
 suspended constraints can coexist with \ML \emph{local let-generalization}---an
 indispensable feature of \OCaml\footnote{In contrast, Haskell only supports
-top-level let-generalization.}---but one that makes suspended constraints
-uniquely difficult to implement and specify declaratively. 
+top-level implicit let-generalization.}---but one that makes suspended
+constraints uniquely difficult to implement and specify declaratively.
 
 \subsection* {Contributions}
 
@@ -305,7 +311,7 @@ type information} under its directional inference algorithm (discussed in
 To illustrate static overloading in \OCaml, consider two record types with
 overlapping field names:
 \begin{program}[input]
-type point = { x : int; y : int }
+type point      = { x : int; y : int }
 type gray_point = { x : int; y : int; color : int }
 \end{program}
 With both definitions in scope, \OCaml must statically disambiguate each
@@ -318,8 +324,10 @@ let ex_3 r = (r.x, (r : point).y)                        °\ocamlflags 10°
 \end{program}
 %
 The type of expression \ocaml!one! has the unambiguous type \code{point},
-even though both \code{point} and \code{gray_point} define the fields \code{x} and \code{y}
-This is because \OCaml performs \emph{closed-world reasoning}: the typechecker is able to unambiguously
+even though both \code{point} and \code{gray_point} define the fields
+\code{x} and \code{y}.
+This is because \OCaml performs \emph{closed-world reasoning}: the
+typechecker is able to unambiguously
 infer the type of \ocaml{one} as \code{point}, since it is the only record type
 whose domain is \ocaml!$\{$ x, y $\}$!. Similarly,
 \code{r.color} necessarily infers \code{gray_point} for the type of \code{r}.
@@ -502,8 +510,8 @@ $\epoly[\ts] \e$ with an explicit polytype annotation $\ts$.
 %
 The resulting expression has type $\tapoly {\tsb} \av$ where $\av$ is an
 arbitrary (typically fresh) annotation variable and $\tsb$ is a \emph{freshened
-copy} of $\ts$ \ie a variant of $\ts$ with only its annotation variables
-renamed (see \Rule{PolyML-Annot} below for details). Because
+copy} of $\tsa$, \ie a variant of $\tsa$ with only the annotation variables
+of $\ts$ renamed (see \Rule{PolyML-Annot} below for details). Because
 $\ts$ is supplied by the programmer, the polytype is treated as known:
 $\epoly[\ts] \e$ also has the generalized type scheme $\all \av {\tapoly {\tsb}
 \av}$. This is by design---the explicit annotation in $\epoly[\ts] \e$ records
@@ -533,15 +541,22 @@ prior to unboxing, rendering the term ill-typed.
 
 \parcomment {Annotations}
 
+\XDR{The description of  $(\tsa : \ts : \tsb)$ was incorrect: we must allow
+the subtitutions of regular type variables of $\ts$, which should be
+understood as flexible type variables.}
+
 \Rule{PolyML-Annot} can be used to freshen annotation variables. The auxiliary
 relation $(\tsa : \ts : \tsb)$ (also used in \Rule{PolyML-Poly}) holds if there
 exists renamings $\eta_1, \eta_2$ on annotation variables (leaving ordinary
-type variables unchanged) such that $\tsa = \eta_1(\ts)$ and $\tsb =
-\eta_2(\ts)$. Intuitively, $(\tsa : \ts : \tsb)$ produces two \emph{fresh
-copies} of $\ts$, preventing unwanted sharing
-of annotation variables that could otherwise block generalization.
-We usually omit annotation variables in annotations, since we can implicitly
-introduce fresh ones in their place.
+type variables unchanged) and a substitution $\theta$
+such that $\tsa = \theta(\eta_1(\ts))$ and $\tsb = \theta(\eta_2(\ts))$.
+%
+Intuitively, $(\tsa : \ts : \tsb)$ first produces two \emph{fresh copies} of
+$\ts$, preventing unwanted sharing of annotation variables that could
+otherwise block generalization, then allows instantiation the same
+instantiation of free type variables between those two copies.  We usually
+omit annotation variables in source type annotations, since we can
+implicitly introduce fresh ones in their place.
 
 For example, $\efun {\x : \tapoly \ts {}}
 {\einst \x}$, which is syntactic sugar for $\efun \x {\elet \x {(\x : \tapoly
@@ -557,7 +572,7 @@ We now discuss the two main directional inference approaches:
 running example. We then discuss limitations of both approaches, providing us
 with the motivation for omnidirectional type inference.
 
-\paragraph{\geninst-directional type inference}
+\paragraph{\Geninst-directional type inference}
 
 \parcomment{What is \geninst good for?}
 
@@ -600,7 +615,8 @@ To illustrate \geninst-directionality, consider:%
 % Some space hacking since it appears spaces aren't respected in lstinline w/
 % mathescape
 In \OCaml, these examples can be typechecked by translating
-$\epoly[\ts] \e$ to \ocaml[mathescape]!object method f : $\ \ts$ = $\ \e$ end!
+$\epoly[\ts] \e$ to
+\lstinline[mathescape]!object method f : $\ \ts$ = $\ \e$ end!
 and $\einst \e$ to $\e \esend \texttt{f}$. This translation is the inverse of
 that discussed in \cref{sec/overview/polymethods-reduction}.
 }
@@ -612,8 +628,9 @@ let ex_6 = (fun p -> <p>) pid °\ocamlflags 10°
 At first glance, \code{ex_5} and \code{ex_6} appear equivalent: both simply
 instantiate the polytype bound to \code{p}. Yet, \OCaml accepts \code{ex_5} and
 rejects \code{ex_6}. This is because the \code{let}-binding in \code{ex_5}
-allows \code{p} to type scheme $\tfor \av {\tapoly {\tfor \tv \tv \to \tv}
-\av}$, and thus its type is considered \emph{known}--enabling unboxing (\Rule{PolyML-Inst}).
+allows \code{p} to have type scheme $\tfor \av {\tapoly {\tfor \tv \tv \to
+\tv} \av}$, and thus its type is considered \emph{known}--enabling unboxing
+(\Rule{PolyML-Inst}).
 In \code{ex_6}, by contrast, \code{p} is monomorphic at the point of
 instantiation as it is $\lambda$-bound, and unboxing is therefore
 forbidden.
@@ -639,11 +656,12 @@ Consequently, \OCaml does not make any difference between
 
 Treating both examples uniformly is in one sense a strength of
 \geninst-directionality, but it also reveals a limitation:
-annotatability is fragile, in that well-typedness depends on the
+annotability is fragile, in that well-typedness depends on the
 \emph{precise} placement of annotations, often forcing the programmer
 to introduce annotations that would otherwise be unnecessary.
 For instance, the following two terms differ only in the position of
-the annotation, yet only the one on the left-hand side is well-typed.
+the annotation, yet only the one on the left-hand side is well-typed in
+\OCaml\XDR[Should we add:]{---while they are both well-typed in \OML}:
 \begin{mathpar}
  \efun f {\eapp {\einst {(f : \tpoly {\tfor \tv {\tv \to \tv}})}} f}
 
@@ -694,7 +712,6 @@ information, $\epoly \e$ requires no attached annotation; and because
 ``knownness'' now follows from inference modes rather than polymorphism,
 annotation variables are unnecessary. The resulting syntax and typing rules are
 as follows:
-
 \begin{mathpar}
   \begin{minipage}[l]{15em}
   %% \scalebox{0.9}{
@@ -730,6 +747,10 @@ as follows:
     {\G \th \e \Leftarrow \t}
     {\G \th \eannot \e {} \t \Rightarrow \t}
 \end{mathpar}
+\XDR{One should not change the syntax: \ie, we should keep $\epoly [\ts]
+\e$. Otherwise, the user need to write it $([e] : \tpoly)$. Besides, the
+rules are still incorrect as we should be allow to instantiate $\t$ in
+annotation $e : \t$, since it stands for $\exists \tv. (e : \t)$.}
 
 
 \parcomment{Limitations}
@@ -754,6 +775,9 @@ order of propagation, so some well-typed programs are rejected as ill-typed
 
 \TODO{Check these in contextual typing}
 
+\XDR{Should we mention QuickLook as a way to locally take into account
+multiple arguments in an order-independent manner?}
+
 \paragraph{Limitations of directional type inference}
 
 Bidirectional type inference is lightweight, practical, and well-suited for
@@ -762,7 +786,7 @@ subtyping. It supports the propagation of type information with minimal
 annotations. Its main downside lies in the need to fix an often arbitrary flow
 of type information---as in the case of function applications discussed above.
 
-On the other hand, \emph{\Geninst-directional} type inference appears better
+On the other hand, \emph{\geninst-directional} type inference appears better
 suited for \ML, relying on polymorphism\penalty 50---the essence of \ML. But it remains
 surprisingly weak in some cases: it does not even allow the propagation of
 user-provided type annotations from a function to its argument!
@@ -2762,7 +2786,7 @@ $\efun f \efun \x \eapp f \x$ and the reverse application function $\efun \x
 \end{version}
 It is well-known that
 bidirectional types inference breaks application
-equitypability. Both \Geninst-directional and omnidirectional
+equitypability. Both \geninst-directional and omnidirectional
 type inference preserve it.
 
 \paragraph{Factorization does not hold} If $\G \th \e \where {\x \is {\e_0}}
@@ -7600,7 +7624,7 @@ Let $\e$ be an arbitrary closed well-typed term; that is, there exists a type
 \subsection {Defaulting}
 \label {app/default-rules}
 
-Default rules, which does not fit well with \Geninst-inference are still
+Default rules, which does not fit well with \geninst-inference are still
 often used in practice, and therefore would deserve further investigation.
 
 \paragraph {Default shapes}
