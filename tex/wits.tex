@@ -40,7 +40,7 @@
 
 \maketitle
 
-At the heart of the Damas-Hindley-Milner (\HM) type system lies the ability to
+At the heart of the Damas-Hindley-Milner (\ML) type system lies the ability to
 \emph{guess} types. For instance, in $\efun \x \e$, the parameter type for $\x$
 is \emph{guessed} and subsequently constrained by the body $\e$. The elegance
 of the \ML discipline is that such guesses are never arbitrary: there always
@@ -112,11 +112,12 @@ when it is:
 %
 \begin{enumerate*}
   \item part of an annotation;
-  \item supplied as input to a checking conclusion ($\G \th e \Leftarrow \t$); or
-  \item an output of a synthesizing premise ($\G \th \e \Rightarrow \t$).
+  \item supplied as input to a checking {\color{orange}\bfseries conclusion} ($\color{orange}\G \th e \Leftarrow \t$); or
+  \item an output of a synthesizing {\color{blue}\bfseries premise} ($\color{blue}\G \th \e \Rightarrow \t$).
 \end{enumerate*}
 \XDR{We still do not see the difference between being a premise or a
 conclusion}\relax
+\Xalistair{I added some colours. Does this help?}
 %
 While effective in many settings, the rigidity of a static ordering causes even
 simple examples---whose types could easily be guessed---to be rejected; for
@@ -136,7 +137,7 @@ resumed.
 This approach comes naturally for simply typed systems (when inference is
 purely unification-based), but becomes challenging in the presence of \ML-style
 \emph{let-generalization}. In existing \ML inference algorithms, typing a
-let-binding $\elet \x \ea \eb$ follows a fixed order: first type $\ea$, then
+let-binding $\elet \x \ea \eb$ follows a static order: first type $\ea$, then
 generalize its type, and finally type the body $\eb$ under the extended
 environment.
 %
@@ -146,7 +147,7 @@ We solve this by introducing two novel devices:
   \item \emph{suspended match constraints}, which defer disambiguation until
     sufficient contextual information is known, and
 
-  \item \emph{incrimental instantiation} \ie the ability to instantiate type
+  \item \emph{incremental instantiation} \ie the ability to instantiate type
     schemes that are not yet fully determined and consequently revisit their
     instances when they are being refined, \emph{incrementally}.
 
@@ -155,27 +156,21 @@ We solve this by introducing two novel devices:
 
 \end{local}
 
-\TODO{Change this to focus on the implementation more!}
-
 Thus far, we have developed:
 \begin{enumerate}
 
   \item A novel constraint language for omnidirectional inference, equipped
-    with a declarative semantics for suspended constraints and a new
-    characterization of \emph{known} type information.
+    with a declarative semantics for suspended constraints using a new
+    characterization of \emph{known} type information. 
 
   \item The \OML calculus, an extension of \ML featuring advanced extensions of
-    \OCaml such as static overloading of record labels, and an
-    \emph{omnidirectional recipe} to derive its typing rules.
+    \OCaml such as static overloading of record labels, together with an
+    \emph{omnidirectional recipe} to systematically derive its typing rules.
 
   \item A sound, complete, and \emph{principal} constraint-based inference
-    algorithm for \OML.
-
-  \item
-    A formalized constraint solver as a series of non-deter\-ministic rewriting
-    rules and an efficient implementation
+    algorithm for \OML, along with an efficient prototype implementation 
+    available at \textsc{ANONYMOUS URL}.
     % De-anonymizing URL (available at https://github.com/johnyob/mlsus)
-    using \emph{incremental instantiation}.
 
 \end{enumerate}
 
