@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<style xmlns="http://purl.org/net/xbiblio/csl" class="in-text" version="1.0" demote-non-dropping-particle="sort-only" default-locale="en-US">
+  <info>
+    <!--
+This style corresponds to Gabriel Scherer's preference for citations
+and bibliographies.
+ 
+Citations look like:
+
+> [Dolan and Mycroft, 2017]
+
+Bibliographic entries look like this:
+
+> Lionel Parreaux. 2020. The simple essence of algebraic subtyping:
+> principal type inference with subtyping made easy (functional pearl).
+> Proc. ACM Program. Lang. 4, ICFP.
+
+
+## Intentional design choices
+
+- Use author-year citations. This helps the reader recognize citations
+when they come several times in the document ("ah yes, this [Dolan and
+Mycroft, 2017] comes up again here, I should have a look at that
+paper"; whereas nobody says "ooh, [23] again, let's look it up in the
+bibliography this time"), and it helps them build a gradual sense of
+who else worked in the field and when.
+
+- Do *not* abbreviate multi-author papers with "et al.",
+systematically cite all authors. (In 'natbib' parlance, this
+corresponds to systematic use of \citet* and \citep*.) We believe that
+"et al." is harmful to research communities by making the first author
+substantially more visible/memorable than all other authors, skewing
+co-authorship dynamics in an unpleasant way.
+
+
+
+## Style history
+
+This style is derived from the CSL style file for ACM SIGGRAPH,
+which is itself authored by Sebastian Karcher and licensed under
+CC-BY-SA-3.0:
+<https://github.com/citation-style-language/styles/blob/6b7b611908b20c91f34110d1c9489fb3278e0ef5/acm-siggraph.csl>
+
+Gabriel Scherer's version is currently hosted at
+<https://codeberg.org/gasche/gasche-author-date>
+
+(Feel free to add a description of your own changes here if you
+tweak this file.)
+    -->
+    <title>Author-date style</title>
+    <author>
+      <name>Gabriel Scherer</name>
+      <!-- previous author: Sebastian Karcher -->
+    </author>
+    <id>gasche-author-date</id>
+    <category citation-format="author-date"/>
+    <category field="math" />
+    <updated>2024-12-01</updated>
+    <rights license="http://creativecommons.org/licenses/by-sa/4.0/">This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 License</rights>
+  </info>
+  <macro name="author">
+    <names variable="author">
+      <name delimiter=", " and="text" sort-separator=", "/>
+      <label prefix=", "/>
+      <substitute>
+        <names variable="editor"/>
+        <text variable="title"/>
+      </substitute>
+    </names>
+  </macro>
+  <macro name="author-short">
+    <group>
+      <names variable="author">
+        <name initialize-with="." delimiter=", " and="text" name-as-sort-order="all" sort-separator=", " form="short"/>
+        <substitute>
+          <names variable="editor"/>
+        </substitute>
+      </names>
+    </group>
+  </macro>
+  <macro name="editor">
+    <names variable="editor">
+      <name initialize-with="." delimiter=", " and="text" delimiter-precedes-last="never"/>
+      <label form="short" prefix=", "/>
+    </names>
+  </macro>
+  <macro name="title">
+    <choose>
+      <if type="bill book graphic legal_case legislation motion_picture report song" match="any">
+        <text variable="title" font-style="italic" quotes="false"/>
+      </if>
+      <else>
+        <text variable="title" quotes="false"/>
+      </else>
+    </choose>
+  </macro>
+  <macro name="year">
+    <date variable="issued">
+      <date-part name="year"/>
+    </date>
+  </macro>
+  <macro name="journal">
+    <group delimiter=" ">
+      <text variable="container-title" font-style="italic"/>
+      <group delimiter=", ">
+        <text variable="volume" font-style="italic"/>
+        <text variable="issue"/>
+      </group>
+    </group>
+  </macro>
+  <macro name="conference">
+    <group delimiter=", ">
+      <text variable="container-title" font-style="italic"/>
+      <group delimiter=" ">
+        <text variable="publisher"/>
+      </group>
+    </group>
+  </macro>
+  <macro name="book-publisher">
+    <group delimiter=", ">
+      <text variable="publisher"/>
+      <text variable="publisher-place"/>
+    </group>
+  </macro>
+  <citation et-al-min="999" et-al-use-first="1" disambiguate-add-year-suffix="true">
+    <layout prefix="[" suffix="]" delimiter="; ">
+      <group delimiter=":">
+        <group delimiter=" ">
+          <text macro="author-short"/>
+          <text macro="year"/>
+        </group>
+        <text variable="locator"/>
+      </group>
+    </layout>
+  </citation>
+  <bibliography et-al-min="7" et-al-use-first="3" hanging-indent="true">
+    <sort>
+      <key variable="issued"/>
+      <key macro="author"/>
+    </sort>
+    <layout suffix=".">
+      <group delimiter=". " suffix=". ">
+        <text macro="author"/>
+        <text macro="year"/>
+        <text macro="title"/>
+      </group>
+      <choose>
+        <if type="bill book graphic legal_case legislation motion_picture report song" match="any">
+          <text macro="book-publisher" suffix="."/>
+        </if>
+        <else-if type="paper-conference">
+          <group suffix="." delimiter=", ">
+            <text macro="conference"/>
+            <text variable="page"/>
+          </group>
+        </else-if>
+        <else-if type="chapter paper-conference" match="any">
+          <text term="in" text-case="capitalize-first" suffix=": "/>
+          <text macro="editor" suffix=", "/>
+          <text variable="container-title" font-style="italic" suffix=". "/>
+          <group suffix="." delimiter=", ">
+            <text macro="book-publisher"/>
+            <text variable="page"/>
+          </group>
+        </else-if>
+        <else-if type="article-journal">
+          <group suffix="." delimiter=", ">
+            <text macro="journal"/>
+            <text variable="page"/>
+          </group>
+        </else-if>
+        <else>
+          <group suffix="." delimiter=", ">
+            <group delimiter=" " font-style="italic">
+              <text variable="container-title"/>
+              <text variable="volume"/>
+            </group>
+            <text variable="page"/>
+          </group>
+        </else>
+      </choose>
+      <text variable="URL" prefix=" "/>
+    </layout>
+  </bibliography>
+</style>
