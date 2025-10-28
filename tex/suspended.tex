@@ -892,14 +892,15 @@ $\einst \e$ into an annotated unboxing $\exinst \e {} \ts$, as captured by
 The predicate $\eshape \E \e {\tpoly \ts}$---our \emph{unicity
 condition}---formalizes precisely what it means for a type to be \emph{known}.
 We defer its technical definition, which is rather subtle, to \cref{?}.
+\XDR{Reference}
 
 \paragraph{Suspension in action}
 
 \parcomment{Suspended constraints}
 
 Suspension is the mechanism that allows inference to proceed in any order,
-in spite of constructs that require \emph{known} type information.
-In our framework, we realise this through our novel primitive: \emph{suspended
+in spite of constructs that require \emph{known} type information.  In our
+framework, we realise this through our novel primitive: \emph{suspended
 match constraints}.
 
 A match constraint $(\cmatch \t {{\overline{\cbranch \cpat \c}}})$ pairs a
@@ -1017,28 +1018,32 @@ without duplicating constraint-solving work.
 
 Practically speaking, implementing incremental instantiation efficiently is,
 however, non-trivial: it requires triggering re-instantiations upon refinements
-to the scheme, while avoiding redundant constraint solving across
-instantiations. We discuss this further in ??.
+of partial type schemes, while avoiding redundant constraint solving across
+instantiations. We discuss this further in \XDR{??}.
 
 % Something to tie everything back together / also serve as a lookup
-\Xalistair{I'm not too sure this is help / repeats what contributions states}
+
+\Xalistair{I'm not too sure this is help / repeats what contributions
+states}
+\XDR{We have space, so I would keep it, but inlined , unless we have an
+explicit table of content?}
 
 \paragraph{Plan}
 The remainder of the paper develops these three ideas in turn:
-\begin{enumerate}
+\begin{enumerate*}
 
-  \item[(\cref{sec/oml})] Formalizes our declarative characterization of
+  \item[(\cref{sec/oml})] formalizes our declarative characterization of
     \emph{known} type information and presents \penalty 50 \OML's typing rules.
 
-  \item[(\cref{sec:constraints})] Defines the semantics of suspended match
+  \item[(\cref{sec:constraints})] defines the semantics of suspended match
     constraints and introduces constraint generation function $\cinfer \e \t$
     for \OML terms.
 
   \item[(\cref{sec:solving})]
-    Describes incremental instantiation as part of our formal constraint
+    describes incremental instantiation as part of our formal constraint
     solver.
 
-\end{enumerate}
+\end{enumerate*}
 
 \section{The \OML calculus}
 \label{sec/oml}
