@@ -1180,8 +1180,10 @@ The remainder of the paper develops these three ideas in turn:
 \parcomment {We need a spec, but this itself is hard}
 
 To prove correctness of type inference, we must define a surface language and
-its type system. Surprisingly, identifying an appropriate declarative type
-system to use as a specification is itself an interesting problem! In
+its type system.
+\XDR[was Suprisingly]{This is just the oposite!}Unsurprisingly, identifying
+an appropriate declarative type system to use as a specification is itself
+a challenging problem. In
 particular, natural specifications for fragile features often fail to preserve
 principality.
 
@@ -1195,28 +1197,32 @@ principality.
 \end{mathpar}
 \end{wraphbox}
 
-Consider records. We can ask the user to provide a type annotation $\Tapp \tys$
+Consider records, for instance. We can ask the user to provide a type
+annotation $\Tapp \tys$
 when projecting, using a qualified record projection $\exfield \e \T \elab$,
-which has a simple typing rule (\Rule{Rcd-Proj-X}). On the other hand, the
+which has a simple typing rule (\Rule{Rcd-Proj-X}).
+\XDR[was On the other hand]{but there is no first hand...}By contrast, the
 natural typing rule for the overloaded projections $\efield \e \elab$ breaks
 principality (\Rule{Rcd-Proj-I-Nat}). For example, term $\efun r \efield r
-{\ttlab x}$ admits two distinct typings, \code{point -> int} and
+{\ttlab x}$ admits two icompatible types, \code{point -> int} and
 \code{gray_point -> int}, as explained in \cref{sec/introduction}.
 
 \parcomment{How we restore principal types}
 
-To restore principality, we require that the type of $\e$ be
-\emph{known}---that is, determined to be a specific nominal record type
-$\Tapp[\T_0] \tys$, rather than merely \emph{guessed}. This requirement is
-expressed via a \emph{unicity condition} (see
+To restore principality for the overloaded projection, we require that the
+type of $\e$ be \emph{known}---that is, determined to be a specific nominal
+record type $\Tapp[\T_0] \tys$, rather than merely \emph{guessed}.  This
+requirement is expressed via a \emph{unicity condition} (see
 \cref{sec/overview/omni/unicity}), yielding the contextual rule
-\Rule{Rcd-Proj-I}, which elaborates the fragile implicit projection $\efield \e
+\Rule{Rcd-Proj-I}, which elaborates the fragile overloaded projection $\efield \e
 \elab$ into its robust explicit counterpart $\exfield \e \T \elab$.
 
 \subsection{Syntax}
 
 
-\OML (\cref{fig/oml/syntax-xtyping}) extends \ML with two fragile constructs: polytypes and nominal records.
+\OML (\cref{fig/oml/syntax-xtyping}) extends \ML with two fragile
+constructs: polytypes and nominal records.  Variants are not treated
+formally in \OML, but behave analogously to records.
 
 \paragraph{Notation for collections}
 
@@ -1238,40 +1244,39 @@ are prefixed, except in \OCaml code, where they are postfixed.}  $\T \tys$, and
 polytypes $\tpoly \ts$.  Type schemes $\ts$ are of the form $\all \tvs \t$,
 they are equal up to the reordering of binders and removal of useless
 variables. We write $\TyVars$ for the set of type variables. We write $\tvs
-\disjoint \t$ as a short-hand for $\tvs \disjoint \fvs \t$, where $\fvs -$
-computes the set of free variables of a given type. Finally, $\gt \in \Ground$ denotes
-a \emph{ground type}---a type with no free variables.
-
-
+\disjoint \t$ as a short-hand for $\tvs \disjoint \fvs \t$, where $\fvs \t$
+computes the set of free variables of type $\t$. Finally, $\gt \in \Ground$
+denotes a \emph{ground type}---a type with no free variables.
 
 
 \paragraph{Terms}
 
-Its terms are: variables~$\x$, the unit literal $\eunit$,
-lambda-abstractions $\efun \x \e$, applications $\eapp \ea \eb$,
-annotations $\eannot \e \tvs \t$ and let-bindings $\elet x \ea \eb$,
-and the following extensions:
+Terms of \OML are variables~$\x$, the unit literal $\eunit$,
+lambda-abstractions $\efun \x \e$, applications $\eapp \ea \eb$, annotations
+$\eannot \e \tvs \t$, and let-bindings $\elet x \ea \eb$, extended with the
+following expressions.
 \begin{enumerate*}
-\item
-  For polytypes, we introduce implicit and explicit
-    boxing and unboxing forms: $\epoly \e$, $\expoly
-    \e \tvs \ts$, and $\einst \e$, $\exinst \e \tvs \ts$ respectively.
-\item
+\item[]
+  For polytypes, we introduce implicit and explicit boxing and unboxing
+  forms: $\epoly \e$, $\expoly \e \tvs \ts$, and $\einst \e$, $\exinst \e
+  \tvs \ts$ respectively.
+\item[]
   Overloaded record labels include record literals $\erecord { \elaba = \ea;
-    \ldots; \elab_n = \en }$ and field projections $\efield \e \elab$. Both
-    constructs have explicit counterparts: $\exrecord \T {\elaba = \ea; \ldots;
-    \elab_n = \en }$ and $\exfield \e \T \elab$, where the nominal type
-    annotation $\T$ indicates that the labels correspond to the label
-    definitions in $\T$ (thereby disambiguating overloading). Variant
-    constructors are not treated formally in \OML, but behave analogously in
-    practice.
+  \ldots; \elab_n = \en }$ and field projections $\efield \e \elab$. Both
+  constructs have explicit counterparts: $\exrecord \T {\elaba = \ea;
+  \ldots; \elab_n = \en }$ and $\exfield \e \T \elab$, where the nominal type
+  prefix $\labfrom {} \T$ indicates that the labels correspond to the label
+  definitions in type $\T$ (thereby disambiguating overloading).
+  \XDR[Variant
+  constructors are not treated formally in \OML, but behave analogously in
+  practice.]{Moved at the beginning of the subsection.}
 
 \end{enumerate*}
 
 We write $\e^i$ for fragile, implicit forms and $\e^x$ for their explicit
-counterparts. Typing rules for explicit terms are mostly standard; nominal records
-are require a more intricate (yet largely folklore) treatment of \emph{closed
-world} reasoning.
+counterparts. Typing rules for explicit terms are mostly standard; nominal
+records are require a more intricate (yet largely folklore) treatment of
+\emph{closed world} reasoning.
 %
 The crux of our work is the novel typing of the fragile constructs,
 presented in~\cref {sec/oml/typing/I}.
@@ -1297,9 +1302,10 @@ substitution $\where {\tv \is \tint}$.
 \paragraph {Explicit polytypes}
 
 Rule \Rule{Poly-X} serves as the introduction rule: given the (closed) type
-scheme
-$\ts$, it forms a first-class polytype $\tpoly \ts$, requiring the expression
-$\e$ to be at least as polymorphic as $\ts$. \Rule {Use-X} is the corresponding
+scheme~$\ts$, it forms a first-class polytype $\tpoly \ts$, requiring the
+expression
+$\e$ to be at least as polymorphic as $\ts$. Rule \Rule {Use-X} is the
+corresponding
 elimination rule, unpacking an expression of polytype $\tpoly \ts$ into
 one of polymorphic type $\ts$,
 which may be freely instantiated (via \Rule{Inst}). Both rules also allow
@@ -1327,25 +1333,27 @@ scheme $\tfor \tvs {\Tapp \tvs} \to \t$ associated with $\elab$ in $\T$ (if
 defined).
 
 Label instantiations are typed by an auxiliary judgment ${\labfrom \elab \T}
-\leq \tya \to \tyb$ (\Rule{Lab-Inst}). Explicit field projections
+\leq \tya \to \tyb$ defined by \Rule{Lab-Inst} and
+meaning that $\ta \to \tb$ is an instance of the projection scheme
+$\labenv (\labfrom \ell \T)$. Explicit field projections
 (\Rule{Rcd-Proj-X}) require that $\exfield \e \T \elab$ projects from a record
-$\e$ of type $\tya$ to $\tyb$, provided that $\tya \to \tyb$ is an instance of
-the projection scheme $\labenv (\labfrom \elab \T)$.
+$\e$ of type $\tya$ to $\tyb$, provided ${\labfrom \elab \T}
+\leq \tya \to \tyb$.
 %
 Explicit records (\Rule {Rcd-X}) are typed similarly, checking that each field
-has the appropriate type. In addition, the premise asserts $\dom {(\Labenv)} =
-\elabs$ so that the declared fields exactly match the labels of $\T$.
+has the appropriate type. In addition, the premise asserts
+that  the declared fields $\elabs$ exactly match the labels
+$\dom {(\Labenv)}$ of $\T$.
 
 \TODO{There is some syntactic ambiguity with qualified record projections
-$\efield {\efield r \x} \x$ vs $\exfield r \T \x$}
-\XDR{We may use ! instead of point for \string\exfield and change !
-for some othen symbol (such as ?) in uniquely determined shapes, which a
-matching symbol could be more intuitive}
+$\efield {\efield r \x} \x$ vs $\exfield r \T \x$}\XDR{Reolved using the
+notation $\exfield r \T \elab$}
 
 \parcomment {Closed world reasoning}
 
 Our explicit system also supports \emph{closed-world} reasoning, which exploits
-the absence of ambiguity in the label context $\labenv$ to infer record annotations.
+the absence of ambiguity in the label context $\labenv$ to infer record
+annotations.
 %
 In particular, in a record expression $\erecord {\elaba = \ea; \ldots; \elab_n
 = \en}$, if the set of labels ${ \elaba, \ldots, \elab_n }$ uniquely identifies
@@ -1366,7 +1374,7 @@ type point  = { x : int; y : int }
 type gray_point = { x : int; y : int; color : int }
 let one = { x = 42; y = 1337 }           °\ocamlflags 00°
 \end{program}
-Here, the closed set $\set {x, y}$ in \code{ex_8} uniquely identifies
+Here, the closed set $\set {x, y}$ in \code{one} uniquely identifies
 \code{point}, even though the individual labels $x$ and $y$ also appear in
 \code{cpoint}.
 %
@@ -1390,8 +1398,10 @@ label information rather than type-directed disambiguation.
 
 \parcomment {Why shapes?}
 
-We introduce \emph{shapes} as a generalization of type constructors for
-suspended match constraints. They provide a uniform treatment of both
+We introduce \emph{shapes} as a generalization of type constructors.
+%% for suspended match constraints.  They would provide the same benefit in
+%% PolyML without match constraints.
+They provide a uniform treatment of both
 constructors and polytypes, and are useful in defining polytype
 unification (\Cref{sec:implementation}).
 
@@ -1421,14 +1431,14 @@ set of non-trivial shapes.
 Shapes are equipped with the standard instantiation ordering,
 defined by \Rule{Inst-Shape}.
 %
-When writing $\Sh \preceq \Shp$, we say that $\Sh$ is more general than
-$\Shp$. When $\Sh$ and $\Shp$ are more general than one another, they are
-actually equal. The trivial shape $\bot$ is the most general shape.
+When writing $\Sh \preceq \Shp$, we say that $\Sh$ is more general
+than~$\Shp$. When $\Sh$ and $\Shp$ are more general than one another, they
+are actually equal. The trivial shape $\bot$ is the most general shape.
 %
 If $\Sh$ is $\any \tvcs \t$, the shape application $\shapp[\Sh] \tys$ is
 defined as $\t \where {\tvcs \is \tys}$. We say that $\Sh$ is a shape of
 $\t$ when there exists $\tys$ such that $\t = \shapp[\Sh] \tys$; in this
-case we write that the pair $(\Sh, \tys)$ is a decomposition of $\t$.
+case, we write that the pair $(\Sh, \tys)$ is a decomposition of $\t$.
 
 \begin{definition}
 A non-trivial shape $\Sh \in \Shapesz$ is the principal shape of the type
@@ -1461,7 +1471,8 @@ $\sh$. They are precisely the shapes $\any \tvcs \t$ satisfying two conditions:
     be variables. Shapes of this form are $\tunit$, $\tvca \to \tvcb$, and
     $\tProd \tvci$, or $\T \tvcs$.
     When $\t$ is a polytype $\tpoly {\all \tvs \tsp}$, the only subterms
-    of $\tsp$ that do not contain one of the polymorphic variables $\tvs$ must be variables in $\tvcs$.
+    of $\tsp$ that do not contain one of the polymorphic variables $\tvs$
+    must be variables in $\tvcs$.
 \end{enumerate*}
 \end{version}
 
@@ -1477,14 +1488,19 @@ is $(\any \tvcs \Tapp \tvcs)$.
 
 \parcomment {Polytypes are constructors}
 
-Polytypes are particularly interesting in this setting because they can be
-decomposed into shapes and treated analogously to type constructors.
+%% \XDR{It is not polytypes that are interesting for shapes but shapes that are
+%% interesting for polutypes}
+%% Polytypes are particularly interesting in this setting because they can be
+%% decomposed into shapes and treated analogously to type constructors.
+Shapes are particularly interesting in the context of polytypes, since
+polytypes can be decomposed into shapes and therefore treated analogously to
+type constructors.
 \begingroup
 \newcommand {\tsh}[1]%
   {\def \tsi {\all \tvb {{\parens{\tvb \to #1}}} \tprod \tvb}
   \tpoly {\all \tva {\parens {\tpoly \tsi} \to \tva} \to \tva}}%
 For instance, the polytype $\tsh {\tint \tlist}$ has the principal
-shape $\sh = \any \tvc {\tsh \tvc}$. The original polytype can thus
+shape $\any \tvc {\tsh \tvc}$, say $\sh$. The original polytype can thus
 be represented as the shape application $\shapp (\tint \tlist)$.
 \endgroup
 

@@ -18,8 +18,12 @@
       \ifthenelse{\equal{#2}{}}{}{\wraphbox@vskip {#2}}%
       %% \hrule
       \ifthenelse{\equal{#1}{}}{\hbox}{\hbox to #1}
-      \bgroup \hfil \ignorespaces}
-   {\egroup
+      \bgroup \hfil
+   \ignorespaces}
+   {%% This ignores spaces before \end{wrapbox}
+    \unskip
+    %% end the box
+    \egroup
       %% \hrule
       \wraphbox@below
       \vskip -\baselineskip
