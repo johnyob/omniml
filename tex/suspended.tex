@@ -565,7 +565,10 @@ prior to unboxing, rendering the term ill-typed.
 
 \parcomment {Annotations}
 
-\Xalistair{My original intention was that type annotations are closed (aside from annotation variables).}
+\Xalistair{My original intention was that type annotations are closed (aside
+from annotation variables).}\XDR{I understood, but \OCaml does not enforce
+that. It is clearer in \OML where we use an explicit binder.}
+
 \Rule{PolyML-Annot} can be used to freshen annotation variables. The auxiliary
 relation $(\tsa : \ts : \tsb)$ (also used in \Rule{PolyML-Poly}) holds if there
 exists renamings $\eta_1, \eta_2$ on annotation variables (leaving ordinary
@@ -776,6 +779,8 @@ and $\einst \e$. And this is what we do support.}
 rules are still incorrect as we should be allow to instantiate $\t$ in
 annotation $e : \t$, since it stands for $\exists \tv. (e : \t)$.}
 \Xalistair{Mentioned previously, but annotations ought to be closed.}
+\XDR{They are not in \OCaml. We should allow the same here and understand
+$(\e : \ts)$ as $\eannot \e {\fvs \ts} \ts$}
 
 
 \parcomment{Limitations}
@@ -805,8 +810,14 @@ multiple arguments in an order-independent manner?}
 \Xalistair{QuickLook is order-dependent. It handles multiple arguments
 by considering a spine in order. What is does do, is it does an approximation
 pass on the arguments in the spine to see if they help with the instantiation
-of the return type. But this is also order-dependent, in the same way that Freezing
-Bidirectional type inference is order dependent. }
+of the return type. But this is also order-dependent, in the same way that
+Freezing Bidirectional type inference is order dependent. }
+\XDR{Quicklook is local and
+independent of the order or arguments: it looks at them altogether.
+But let's discuss this at the next meeting.
+My point is that we should probably cite other works that lies beweeen
+directional type inference and local type inference
+}
 
 \paragraph{Limitations of directional type inference}
 
@@ -1276,9 +1287,10 @@ Terms of \OML are variables~$\x$, the unit literal $\eunit$,
 lambda-abstractions $\efun \x \e$, applications $\eapp \ea \eb$, annotations
 $\eannot \e \tvs \t$, and let-bindings $\elet x \ea \eb$, extended with the
 following expressions:
-\Xalistair{We need a colon here. We need some form of numbering to make it grammatically
-correct}
-\begin{enumerate*}
+\Xalistair{We need a colon here. We need some form of numbering to make it
+grammatically correct}\XDR{The numbering is useless. We then rathen use
+and itemize environment, which would better separate the two kinds of extensions}
+\begin{itemize}
 \item
   For polytypes, we introduce implicit and explicit boxing and unboxing
   forms: $\epoly \e$, $\expoly \e \tvs \ts$, and $\einst \e$, $\exinst \e
@@ -1291,9 +1303,12 @@ correct}
   prefix $\labfrom {} \T$ indicates that the labels correspond to the label
   definitions in type $\T$ (thereby disambiguating overloading).
 
-\end{enumerate*}
-All annotations in \OML are closed \ie their quantified variables $\tvs$ are exactly the
-free variables of the type $\t$ or type scheme $\ts$.
+\XDR{BTW, I do not like the $t/\elab$... I thought $t\cdot \elab$ nicesly
+solved it. $\t/\elab$ does not associates intuitively. For example
+$e.t/\elab$ reads $(e.t)/\elab$, which is not what we weant.}
+\end{itemize}
+All annotations in \OML are closed \ie their quantified variables $\tvs$ are
+exactly the free variables of the type $\t$ or type scheme $\ts$.
 
 \parcomment {Explicit/implicit terms + continuation onto next sections}
 
@@ -1312,7 +1327,8 @@ presented in~\cref {sec/oml/typing/I}.
 
 As usual, the main typing judgment $\G \th \e : \ts$
 (\cref{fig/oml/syntax-xtyping}) states that in context~$\G$, the expression~$\e$
-has the type $\ts$.
+has the type $\ts$. \XDR{$\ts$ you undid my change, but $\ts$ is formally a
+type scheme, which may be a type but not conversely.}
 %
 Rules \Rule{Var} through \Rule{Let} are standard. Annotations $\eannot \e \tvs
 \t$ (\Rule{Annot}) ensures that the type of $\e$ is (an instance of) the type
@@ -1398,9 +1414,9 @@ type point  = { x : int; y : int }
 type gray_point = { x : int; y : int; color : int }
 let one = { x = 42; y = 1337 }           °\ocamlflags 00°
 \end{program}
-Here, the closed set \ocaml[mathescape]{$\{$ x, y $\}$} in \code{one} uniquely identifies
-\code{point}, even though the individual labels \code{x} and \code{y} also appear in
-\code{gray_point}.
+Here, the closed set $\set {\text{\code{x}}, \text{\code{y}}}$ in \code{one}
+uniquely identifies \code{point}, even though the individual labels \code{x}
+and \code{y} also appear in \code{gray_point}.
 
 \parcomment {Formalization of closed-world reasoning}
 
@@ -1501,9 +1517,12 @@ type constructors.
 \newcommand {\tsh}[1]%
   {\def \tsi {\all \tvb {{\parens{\tvb \to #1}}} \tprod \tvb}
   \tpoly {\all \tva {\parens {\tpoly \tsi} \to \tva} \to \tva}}%
-For instance, the polytype $\tsh {\tint \tlist}$ has the principal
-shape $\sh \is \any \tvc {\tsh \tvc}$. The original polytype can thus
-be represented as the shape application $\shapp (\tint \tlist)$.
+For instance, the polytype $\tsh {\tint \tlist}$ has the principal shape
+$\sh \is \any \tvc {\tsh \tvc}$.\XDR{what about $\sh$ equal to $...$. These
+inlined bindings are not quite correct.  (Besides $\is$ is for
+substitution. At least use $\eqdef$ for definitions, but still the binding
+should better be done in english.} The original polytype can thus be
+represented as the shape application $\shapp (\tint \tlist)$.
 \endgroup
 
 
