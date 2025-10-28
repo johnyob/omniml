@@ -106,7 +106,19 @@ Existing approaches typically rely on one of two frameworks:
 \emph{\geninst-directional} inference~\citep*{Garrigue-Remy/poly-ml}. Both
 impose some \emph{static} ordering of inference \Xjeremy{I'm not sure
 ``static'' vs ``dynamic'' is the best characterisation; the
-disticntion seems to me more like syntactic-order vs dependency-order (or even semantic-order). ``Syntactic order'' aims to make clear the way in which the bi- and $\pi$- schemes fall short: they make type checking sensitive to syntax changes, even those that don't affect dependencies or static semantics, such as reordering fields in a record constructor.} using
+disticntion seems to me more like syntactic-order vs dependency-order (or even semantic-order). ``Syntactic order'' aims to make clear the way in which the bi- and $\pi$- schemes fall short: they make type checking sensitive to syntax changes, even those that don't affect dependencies or static semantics, such as reordering fields in a record constructor.} 
+%
+\Xalistair{The distiction between ``static'' and ``dynamic'' is made from the
+perspective of the constraint solver. In bidirectional /
+\geninst-directional, the solver follows some fixed constraint solving order, hard-wired into the inference algorithm (and even twist the type systems just to retain completeness!).
+By contrast, an omnidirectional solver finds an order dynamically, as it solving
+the constraints. I concur that, from the viewpoint of a type system, the terms 
+syntactic / dependency-order are clearer. However, I still prefer the 
+phrasing of ``static'' vs ``dynamic''; they are shorter (and therefore sweeter) 
+and (to me) still highlights rigidity of 
+bidirectionality / \geninst-direct-ionality. }
+%
+using
 it to propagate inferred types and user-provided annotations as known
 information.
 %
@@ -144,28 +156,20 @@ let-binding $\elet \x \ea \eb$ follows a static order: first type $\ea$, then
 generalize its type, and finally type the body $\eb$ under the extended
 environment.
 %
-We solve this \Xjeremy{An example that combines let-bindings and static overloading would strengthen the argument here: would \texttt{let f = fun r -> r.x in  f \{color; x; y\}} work?} by introducing two novel devices:
-\begin{enumerate*}
-
-  \item \emph{suspended match constraints}, which defer disambiguation until
-    sufficient contextual information is known, and
-
-  \item \emph{incremental instantiation} \ie the ability to instantiate type
-    schemes that are not yet fully determined and consequently revisit their
-    instances when they are being refined, \emph{incrementally}.
-
-\end{enumerate*}
-\sloppy
+Consider \ocaml!let f r = r.x in f {color; x; y}!. Here, 
+we cannot generalize the type of \code{f} first, since the type of \code{r.x} 
+is still unknown. Instead, we must typecheck the body \ocaml!f {color; x; y}!, 
+thereby discovering that \code{r} has the record type \code{gs_point}. 
+%
+We solve this by introducing 
+\emph{incremental instantiation} \ie the ability to instantiate type
+schemes that are not yet fully determined and consequently revisit their
+instances when they are being refined, \emph{incrementally}.
 
 \end{local}
 
 Thus far, we have developed:
 \begin{enumerate}
-
-  \item A novel constraint language for omnidirectional inference, equipped
-    with a declarative semantics for suspended constraints using a new
-    characterization of \emph{known} type information. 
-
   \item The \OML calculus, an extension of \ML featuring advanced extensions of
     \OCaml such as static overloading of record labels, together with an
     \emph{omnidirectional recipe} to systematically derive its typing rules.
@@ -174,6 +178,10 @@ Thus far, we have developed:
     algorithm for \OML, along with an efficient prototype implementation 
     available at \textsc{ANONYMOUS URL}.
     % De-anonymizing URL (available at https://github.com/johnyob/mlsus)
+
+  \item A novel constraint language for omnidirectional inference, equipped
+    with a declarative semantics for suspended constraints using a new
+    characterization of \emph{known} type information. 
 
 \end{enumerate}
 
