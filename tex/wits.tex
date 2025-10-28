@@ -104,8 +104,11 @@ declaratively is difficult.
 Existing approaches typically rely on one of two frameworks:
 \emph{bidirectional} type inference \citep*{conf/popl/PierceT98} and
 \emph{\geninst-directional} inference~\citep*{Garrigue-Remy/poly-ml}. Both
-impose some \emph{static} ordering of inference, using it to propagate inferred
-types and user-provided annotations as known information.
+impose some \emph{static} ordering of inference \Xjeremy{I'm not sure
+``static'' vs ``dynamic'' is the best characterisation; the
+disticntion seems to me more like syntactic-order vs dependency-order (or even semantic-order). ``Syntactic order'' aims to make clear the way in which the bi- and $\pi$- schemes fall short: they make type checking sensitive to syntax changes, even those that don't affect dependencies or static semantics, such as reordering fields in a record constructor.} using
+it to propagate inferred types and user-provided annotations as known
+information.
 %
 For instance, in a bidirectional system, a type $\t$ is \emph{known}
 when it is:
@@ -141,7 +144,7 @@ let-binding $\elet \x \ea \eb$ follows a static order: first type $\ea$, then
 generalize its type, and finally type the body $\eb$ under the extended
 environment.
 %
-We solve this by introducing two novel devices:
+We solve this \Xjeremy{An example that combines let-bindings and static overloading would strengthen the argument here: would \texttt{let f = fun r -> r.x in  f \{color; x; y\}} work?} by introducing two novel devices:
 \begin{enumerate*}
 
   \item \emph{suspended match constraints}, which defer disambiguation until
@@ -182,7 +185,7 @@ implication} constraints---but combining this technique with \ML-style
 novel.
 %
 Our ultimate aim is to apply this to \OCaml, where \emph{local
-let-generalization} is indepensible (unlike in \Haskell, which only generalizes
+let-generalization} is indispensible (unlike in \Haskell, which only generalizes
 at the top level), yet this makes omnidirectional inference especially
 challenging to specify and implement.
 
