@@ -549,6 +549,7 @@ prior to unboxing, rendering the term ill-typed.
 
 \parcomment {Annotations}
 
+\Xalistair{My original intention was that type annotations are closed (aside from annotation variables).}
 \Rule{PolyML-Annot} can be used to freshen annotation variables. The auxiliary
 relation $(\tsa : \ts : \tsb)$ (also used in \Rule{PolyML-Poly}) holds if there
 exists renamings $\eta_1, \eta_2$ on annotation variables (leaving ordinary
@@ -665,7 +666,7 @@ annotability is fragile, in that well-typedness depends on the
 to introduce annotations that would otherwise be unnecessary.
 For instance, the following two terms differ only in the position of
 the annotation, yet only the one on the left-hand side is well-typed in
-\OCaml\XDR[Should we add:]{---while they are both well-typed in \OML}:
+\OCaml---while they are both well-typed in \OML:
 \begin{mathpar}
  \efun f {\eapp {\einst {(f : \tpoly {\tfor \tv {\tv \to \tv}})}} f}
 
@@ -752,10 +753,13 @@ as follows:
     {\G \th \eannot \e {} \t \Rightarrow \t}
 \end{mathpar}
 
+\Xalistair{This is arguing that the original features we wanted were $\epoly \e$ 
+and $\einst \e$. And this is what we do support.}
 \XDR{One should not change the syntax: \ie, we should keep $\epoly [\ts]
 \e$. Otherwise, the user need to write it $([e] : \tpoly)$. Besides, the
 rules are still incorrect as we should be allow to instantiate $\t$ in
 annotation $e : \t$, since it stands for $\exists \tv. (e : \t)$.}
+\Xalistair{Mentioned previously, but annotations ought to be closed.}
 
 
 \parcomment{Limitations}
@@ -782,6 +786,11 @@ order of propagation, so some well-typed programs are rejected as ill-typed
 
 \XDR{Should we mention QuickLook as a way to locally take into account
 multiple arguments in an order-independent manner?}
+\Xalistair{QuickLook is order-dependent. It handles multiple arguments 
+by considering a spine in order. What is does do, is it does an approximation 
+pass on the arguments in the spine to see if they help with the instantiation 
+of the return type. But this is also order-dependent, in the same way that Freezing 
+Bidirectional type inference is order dependent. }
 
 \paragraph{Limitations of directional type inference}
 
@@ -1028,11 +1037,6 @@ instantiations. We discuss this further in \XDR{??}.
 
 % Something to tie everything back together / also serve as a lookup
 
-\Xalistair{I'm not too sure this is help / repeats what contributions
-states}
-\XDR{We have space, so I would keep it, but inlined , unless we have an
-explicit table of content?}
-
 \paragraph{Plan}
 The remainder of the paper develops these three ideas in turn:
 \begin{enumerate*}
@@ -1204,25 +1208,25 @@ which has a simple typing rule (\Rule{Rcd-Proj-X}).
 \XDR[was On the other hand]{but there is no first hand...}By contrast, the
 natural typing rule for the overloaded projections $\efield \e \elab$ breaks
 principality (\Rule{Rcd-Proj-I-Nat}). For example, term $\efun r \efield r
-{\ttlab x}$ admits two icompatible types, \code{point -> int} and
+{\ttlab x}$ admits two incompatible types, \code{point -> int} and
 \code{gray_point -> int}, as explained in \cref{sec/introduction}.
 
 \parcomment{How we restore principal types}
 
-To restore principality for the overloaded projection, we require that the
+To restore principality for overloaded projections, we require that the
 type of $\e$ be \emph{known}---that is, determined to be a specific nominal
 record type $\Tapp[\T_0] \tys$, rather than merely \emph{guessed}.  This
 requirement is expressed via a \emph{unicity condition} (see
 \cref{sec/overview/omni/unicity}), yielding the contextual rule
 \Rule{Rcd-Proj-I}, which elaborates the fragile overloaded projection $\efield \e
-\elab$ into its robust explicit counterpart $\exfield \e \T \elab$.
+\elab$ into its robust qualified counterpart $\exfield \e \T \elab$.
 
 \subsection{Syntax}
 
 
-\OML (\cref{fig/oml/syntax-xtyping}) extends \ML with two fragile
-constructs: polytypes and nominal records.  Variants are not treated
-formally in \OML, but behave analogously to records.
+\OML (\cref{fig/oml/syntax-xtyping}) extends \ML with two fragile constructs:
+polytypes and nominal records.  Variants are not treated formally in \OML, but
+behave analogously to records.
 
 \paragraph{Notation for collections}
 
@@ -1240,13 +1244,14 @@ of $\overline X$ and $\overline X'$. We often write $X$ for the singleton set
 
 Monotypes (or just types) include, as usual, type variables $\tv$, the unit
 type $\tunit$, arrow types, but also nominal types\footnote {Type constructors
-are prefixed, except in \OCaml code, where they are postfixed.}  $\T \tys$, and
+are prefixed, except in \OCaml code, where they are postfixed.}  $\T \tys$ and
 polytypes $\tpoly \ts$.  Type schemes $\ts$ are of the form $\all \tvs \t$,
 they are equal up to the reordering of binders and removal of useless
-variables. We write $\TyVars$ for the set of type variables. We write $\tvs
-\disjoint \t$ as a short-hand for $\tvs \disjoint \fvs \t$, where $\fvs \t$
-computes the set of free variables of type $\t$. Finally, $\gt \in \Ground$
-denotes a \emph{ground type}---a type with no free variables.
+variables. Standard notions such as the set of free variables $\fvs
+\ts$ and capture-avoiding substitutions $\ts\where{\tv \is \t}$ are defined in
+the usual way. We write $\TyVars$ for the set of type variables, and use $\tvs
+\disjoint \ts$ as a short-hand for $\tvs \disjoint \fvs \ts$. Finally, $\gt \in
+\Ground$ denotes a \emph{ground type}---a type with no free variables.
 
 
 \paragraph{Terms}
@@ -1254,24 +1259,27 @@ denotes a \emph{ground type}---a type with no free variables.
 Terms of \OML are variables~$\x$, the unit literal $\eunit$,
 lambda-abstractions $\efun \x \e$, applications $\eapp \ea \eb$, annotations
 $\eannot \e \tvs \t$, and let-bindings $\elet x \ea \eb$, extended with the
-following expressions.
+following expressions:
+\Xalistair{We need a colon here. We need some form of numbering to make it grammatically 
+correct}
 \begin{enumerate*}
-\item[]
+\item
   For polytypes, we introduce implicit and explicit boxing and unboxing
   forms: $\epoly \e$, $\expoly \e \tvs \ts$, and $\einst \e$, $\exinst \e
   \tvs \ts$ respectively.
-\item[]
+\item
   Overloaded record labels include record literals $\erecord { \elaba = \ea;
   \ldots; \elab_n = \en }$ and field projections $\efield \e \elab$. Both
   constructs have explicit counterparts: $\exrecord \T {\elaba = \ea;
   \ldots; \elab_n = \en }$ and $\exfield \e \T \elab$, where the nominal type
   prefix $\labfrom {} \T$ indicates that the labels correspond to the label
   definitions in type $\T$ (thereby disambiguating overloading).
-  \XDR[Variant
-  constructors are not treated formally in \OML, but behave analogously in
-  practice.]{Moved at the beginning of the subsection.}
 
 \end{enumerate*}
+All annotations in \OML are closed \ie their quantified variables $\tvs$ are exactly the 
+free variables of the type $\t$ or type scheme $\ts$. 
+
+\parcomment {Explicit/implicit terms + continuation onto next sections}
 
 We write $\e^i$ for fragile, implicit forms and $\e^x$ for their explicit
 counterparts. Typing rules for explicit terms are mostly standard; nominal
@@ -1287,8 +1295,8 @@ presented in~\cref {sec/oml/typing/I}.
 \parcomment {Simple typing rules explained}
 
 As usual, the main typing judgment $\G \th \e : \ts$
-(\cref{fig/oml/syntax-xtyping}) states that in context~$\G$, expression~$\e$
-has type scheme~$\ts$.
+(\cref{fig/oml/syntax-xtyping}) states that in context~$\G$, the expression~$\e$
+has the type $\ts$.
 %
 Rules \Rule{Var} through \Rule{Let} are standard. Annotations $\eannot \e \tvs
 \t$ (\Rule{Annot}) ensures that the type of $\e$ is (an instance of) the type
@@ -1317,20 +1325,23 @@ $\tvs$, which are existentially quantified to close the annotation, as in
 \paragraph{Explicit nominal records}
 \label {app/typing/X/records}
 
-\parcomment{Nominal records}
 
-We assume a global label context $\labenv$ mapping labels to their
-projection type, \ie type
-schemes of the form $\all \tvs \Tapp \tvs \to \t$. A label $\elab$ may
-belong to multiple record types, but is unique within each type $\T$. For a
-given $\T$,
-we write $\Labenv$ for the restriction of $\labenv$ to its labels:
-${\Labenv} \eqdef \set {\elab : \all \tvs \T \tvs \to \t
-\in \labenv}$ . Thus, $\dom (\Labenv)$ is
-the set of labels belonging to $\T$,  and $\labtyp \elab$,
-abbreviated as $\labenv (\labfrom \elab \T)$, is the unique
+\Xalistair{I changed $\exfield \e \T \elab$ to use $/$. Slightly odd that $\exrecord \T {\overline{\elab = \e}}$
+also uses the slash. But I don't hate it :shrug: However, we could use the dot syntax for records?}
+
+\parcomment {Label types and contexts}
+
+We assume a global label context $\labenv$ mapping labels to their projection
+type, \ie type schemes of the form $\all \tvs \Tapp \tvs \to \t$. A label
+$\elab$ may belong to multiple record types, but is unique within each type
+$\T$. For a given $\T$, we write $\Labenv$ for the restriction of $\labenv$ to
+its labels: ${\Labenv} \eqdef \set {\elab : \all \tvs \T \tvs \to \t \in
+\labenv}$. Thus, $\dom (\Labenv)$ is the set of labels belonging to $\T$,  and
+$\labtyp \elab$, abbreviated as $\labenv (\labfrom \elab \T)$, is the unique
 scheme $\tfor \tvs {\Tapp \tvs} \to \t$ associated with $\elab$ in $\T$ (if
 defined).
+
+\parcomment{Typing rules}
 
 Label instantiations are typed by an auxiliary judgment ${\labfrom \elab \T}
 \leq \tya \to \tyb$ defined by \Rule{Lab-Inst} and
@@ -1338,16 +1349,12 @@ meaning that $\ta \to \tb$ is an instance of the projection scheme
 $\labenv (\labfrom \ell \T)$. Explicit field projections
 (\Rule{Rcd-Proj-X}) require that $\exfield \e \T \elab$ projects from a record
 $\e$ of type $\tya$ to $\tyb$, provided ${\labfrom \elab \T}
-\leq \tya \to \tyb$.
+\leq \tya \to \tyb$ holds.
 %
 Explicit records (\Rule {Rcd-X}) are typed similarly, checking that each field
 has the appropriate type. In addition, the premise asserts
 that  the declared fields $\elabs$ exactly match the labels
 $\dom {(\Labenv)}$ of $\T$.
-
-\TODO{There is some syntactic ambiguity with qualified record projections
-$\efield {\efield r \x} \x$ vs $\exfield r \T \x$}\XDR{Reolved using the
-notation $\exfield r \T \elab$}
 
 \parcomment {Closed world reasoning}
 
@@ -1365,6 +1372,7 @@ Similarly, if the label $\elab$ is associated with exactly one record type $\T$
 in $\labenv$, then the projection $\efield \e \elab$ has the type of $\exfield
 \e \T \elab$ (by \Rule{Rcd-Proj-Closed}).
 
+\parcomment {Closed sets}
 These two forms of label uniqueness differ. A \emph{closed set} of labels
 may uniquely identify a record type even if no individual label is unique.
 Conversely, a unique label implies uniqueness of every closed set containing it.
@@ -1374,10 +1382,12 @@ type point  = { x : int; y : int }
 type gray_point = { x : int; y : int; color : int }
 let one = { x = 42; y = 1337 }           °\ocamlflags 00°
 \end{program}
-Here, the closed set $\set {x, y}$ in \code{one} uniquely identifies
-\code{point}, even though the individual labels $x$ and $y$ also appear in
-\code{cpoint}.
-%
+Here, the closed set \ocaml[mathescape]{$\{$ x, y $\}$} in \code{one} uniquely identifies
+\code{point}, even though the individual labels \code{x} and \code{y} also appear in
+\code{gray_point}.
+
+\parcomment {Formalization of closed-world reasoning}
+
 We formalize this \emph{closed world uniqueness} using the predicates $\labuni \elab \T$ (a label
 uniquely identifies $\T$) and $\labsuni \elabs \T$ (a closed label set uniquely
 identifies $\T$):
@@ -1408,17 +1418,16 @@ unification (\Cref{sec:implementation}).
 \parcomment {Definition of shape}
 
 A shape $\Sh$ is a type with holes, written $\any \tvcs \t$, where $\tvcs$
-denotes the set of type variables representing the holes.  By construction,
-we require $\tvcs$ to be \emph{exactly} the free variables of $\t$.  Hence,
-shapes are closed and do not contain useless binders.  We consider shapes up
-to $\alpha$-conversion.  When $\t$ is a ground type, we omit the binder and
-write simply $\t$.
+denotes the set of type variables representing the holes.  By construction, we
+require $\tvcs$ to be \emph{exactly} the free variables of $\t$.  Hence, shapes
+are closed and do not contain useless binders.  We consider shapes equal up to
+$\alpha$-conversion.  When $\t$ is a ground type, we omit the binder and 
+simply write $\t$.
 %
-We write $\bot$ for the shape $\any \tvc \tvc$, which we call the
-\emph{trivial} shape. We write $\Shapesz$ the
-set of non-trivial shapes.
-%% and use letter $\Sh$ to range
-%% over non trivial shapes.
+We use $\bot$ to denote the shape $\any \tvc \tvc$, which we call the
+\emph{trivial} shape. We write $\Shapesz$ the set of non-trivial shapes.
+
+\parcomment {Instantiation order of shapes}
 
 \begin{wraphbox}{}{}
 \begin{mathpar}[inline]
@@ -1438,7 +1447,7 @@ are actually equal. The trivial shape $\bot$ is the most general shape.
 If $\Sh$ is $\any \tvcs \t$, the shape application $\shapp[\Sh] \tys$ is
 defined as $\t \where {\tvcs \is \tys}$. We say that $\Sh$ is a shape of
 $\t$ when there exists $\tys$ such that $\t = \shapp[\Sh] \tys$; in this
-case, we write that the pair $(\Sh, \tys)$ is a decomposition of $\t$.
+case, we call the pair $(\Sh, \tys)$ a decomposition of $\t$.
 
 \begin{definition}
 A non-trivial shape $\Sh \in \Shapesz$ is the principal shape of the type
@@ -1457,25 +1466,6 @@ $\t$ iff:
 Any non-variable type $\t$ has a non-trivial principal shape $\Sh$.
 \end{restatable}
 
-\begin{version}{}
-There is an equivalent direct description of principal shapes
-$\sh$. They are precisely the shapes $\any \tvcs \t$ satisfying two conditions:
-\begin{enumerate*}
-  \item
-    $\tvcs$ must be linear in $\t$ \ie each variable $\tvc$ in $\tvcs$
-    occurs exactly once in $\t$.
-
-  \item
-    The type $\t$ must be shallow, meaning that its structure is limited in
-    the following way.  When $\t$ is not a polytype, all of its subterms must
-    be variables. Shapes of this form are $\tunit$, $\tvca \to \tvcb$, and
-    $\tProd \tvci$, or $\T \tvcs$.
-    When $\t$ is a polytype $\tpoly {\all \tvs \tsp}$, the only subterms
-    of $\tsp$ that do not contain one of the polymorphic variables $\tvs$
-    must be variables in $\tvcs$.
-\end{enumerate*}
-\end{version}
-
 \parcomment {Define canonical shape}
 
 A principal shape $\any \tvcs \t$ is \emph{canonical} if its free variables
@@ -1488,19 +1478,15 @@ is $(\any \tvcs \Tapp \tvcs)$.
 
 \parcomment {Polytypes are constructors}
 
-%% \XDR{It is not polytypes that are interesting for shapes but shapes that are
-%% interesting for polutypes}
-%% Polytypes are particularly interesting in this setting because they can be
-%% decomposed into shapes and treated analogously to type constructors.
 Shapes are particularly interesting in the context of polytypes, since
-polytypes can be decomposed into shapes and therefore treated analogously to
+polytypes can be decomposed into shapes and thus treated analogously to
 type constructors.
 \begingroup
 \newcommand {\tsh}[1]%
   {\def \tsi {\all \tvb {{\parens{\tvb \to #1}}} \tprod \tvb}
   \tpoly {\all \tva {\parens {\tpoly \tsi} \to \tva} \to \tva}}%
 For instance, the polytype $\tsh {\tint \tlist}$ has the principal
-shape $\any \tvc {\tsh \tvc}$, say $\sh$. The original polytype can thus
+shape $\sh \is \any \tvc {\tsh \tvc}$. The original polytype can thus
 be represented as the shape application $\shapp (\tint \tlist)$.
 \endgroup
 
@@ -1554,15 +1540,17 @@ be represented as the shape application $\shapp (\tint \tlist)$.
     {\G \th \E\where{\efield \e \elab} : \t}
 \end{mathparfig}
 
-\parcomment{Typing rules are contextual}
+\parcomment{Typing rules are contextual. Re-iterate the idea of unicity}
 
 We now turn to the typing of fragile implicit constructs
 (\cref{fig/oml/typing/I}). To prevent the kind of uncontrolled guessing
 permitted by \emph{natural} typing rules (\eg \Rule{Rcd-Proj-I-Nat}), we adopt
 \emph{contextual} typing rules: an implicit term $\e^i$ is typed \emph{within}
-a surrounding term context $\E$, which establishes that the relevant type
-information is \emph{known} from the context rather than \emph{guessed}. Such
-rules are therefore are inherently non-compositional.
+a surrounding term context $\E$. The context $\E$ is used to ensure that the
+relevant type information (\eg a shape $\sh$) is \emph{known}---that is, it is
+the unique shape $\sh$ that can be inferred from the context, rather than an
+arbitrary one that could be \emph{guessed}. Such rules are therefore are
+inherently non-compositional.
 
 \paragraph{Unicity}
 
@@ -1581,6 +1569,7 @@ $\es$, while $\Eshape \E \es \sh$ holds when the expected type of the hole in
 $\E$ (with subterms $\es$) has the unique shape $\sh$.
 
 \parcomment{The formal definition / auxiliary notions}
+
 \begin{mathpar}
 \def \Eqdef {&\eqdef&}
 {\begin{tabular}{RCL}
@@ -1628,7 +1617,6 @@ $\efun r \efield {\eannot r {} {\ttlab {point}}} {\ttlab x}$ would be ill-typed
 if we erased $\eannot r {} {\ttlab {point}}$.
 
 \parcomment{Erasure induces a causal order}
-
 
 The erasure of $\eerase{\E\where{\emagic{\eannot \e {} \gt, \es}}}$ and
 $\eerase{\E\where{\eannot {\emagic \es} {} \gt}}$ replaces all
@@ -1721,17 +1709,17 @@ We now illustrate the typing of implicit constructs with a few examples.
 \begin{example}
   \locallabelreset
 
-  Consider the term $\ttex {9} \eqdef \efun r {\erecord { \ttx = \efield r
+  Consider the term $\ttex {8} \eqdef \efun r {\erecord { \ttx = \efield r
   \ttx; \tty = \efield r \ttcolor }}$.
   % NOTE: The definition of ex9 should be kept inline with the program
   % block below. The block is hidden but used for the automated example checker
 \begin{comment}
 \begin{program}[input, checkocaml]
-let ex_9 r = { x = r.x; y = r.color }   °\ocamlflags 20°
+let ex_8 r = { x = r.x; y = r.color }   °\ocamlflags 20°
 \end{program}
 \end{comment}
   %
-  In \ocaml{ex_9}, $r$ can only be of type \ocaml{gray_color}. Indeed,
+  In \ocaml{ex_8}, $r$ can only be of type \ocaml{gray_color}. Indeed,
   considering the second projection first, we should learn that $r$ is of type
   \ocaml{gray_color} (using \Rule{Rcd-Proj-Closed}) and since it is
   $\lambda$-bound, this should then make the first projection unambiguous.
@@ -1780,28 +1768,27 @@ type of $r$.
 \end{example}
 
 \begin{example}
-\def \ttciecolor {\ttlab {rgb\_color}}
-\def \ttciepoint {\ttlab {rgb\_point}}
-
-\XDR{I change {cie} by {rgb} as it took me a while to understand the meaning
-of cie. I think {rgb} is much more common}
+\def \ttciecolor {\ttlab {cie\_color}}
+\def \ttciepoint {\ttlab {cie\_point}}
 
 Our final example illustrates a limitation of our approach: some expressions
 must be rejected even though their elaboration would be unambiguous.
 Consider:
 \begin{program}[input,checkocaml]
-type rgb_color = { x : int; y : int; z : int }
-type rgb_point = { x : int; y : int; color : rgb_color }
-let ex_1_0 r = r.color.x °\ocamlflags 11°
+type cie_color = { x : int; y : int; z : int }
+type cie_point = { x : int; y : int; color : cie_color }
+let ex_9 r = r.color.x °\ocamlflags 11°
 \end{program}
 
 Here, neither field projections can individually be disambiguated. However, if
 one were allowed to combine the constraints, they would jointly determine
-that $r$ must have type \code{rgb_point}: in \code{gray_point}, the field \code{color}
+that $r$ must have type \code{cie_point}: in \code{gray_point}, the field \code{color}
 has type \code{int}, and hence cannot itself be projected, leaving a unique
 consistent elaboration: $\efun r {\exfield {\exfield r \ttciepoint \tty} \ttciecolor \ttx}$.
 
-Our framework nonetheless rejects \code{ex_1_0}. This is intentional: implicit
+\parcomment {Why do we reject this?}
+
+Our framework nonetheless rejects \code{ex_9}. This is intentional: implicit
 terms must be elaborated \emph{sequentially}, each in isolation, rather than
 jointly with others. We view this restriction as a ``Goldilocks'' compromise:
 it rules out examples like the above, but avoids the intractability of full
@@ -1809,9 +1796,11 @@ general overloading which is NP-hard, even without let-polymorphism, as shown
 by a reduction from 3-SAT~\citep*
 {Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}.
 
-Formally, to type $\ttex {10}$ one must eliminate the final implicit
+\parcomment{Proof that this is ill-typed}
+
+Formally, to type $\ttex {9}$ one must eliminate the final implicit
 projection in a context of the form $\E\where{\efield \e \elab}$.
-Two cases arise:
+Two cases arise, neither of which are possible:
 \begin{proofcases}
 \proofcase{$\E$ is $\efun r {\square}$}
 %
@@ -3845,14 +3834,14 @@ Omnidirectional inference is powerful, but not omnipotent. Some expressions
 must be rejected even though their elaboration would be unambiguous. Consider:
 
 \begin{program}[input,checkocaml]
-type rgb_color = { x : int; y : int; z : int }
-type rgb_point = { x : int; y : int; color : rgb_color }
+type cie_color = { x : int; y : int; z : int }
+type cie_point = { x : int; y : int; color : cie_color }
 let ex_1_0 r = r.color.x °\ocamlflags 11°
 \end{program}
 
 Here, neither field projections can individually be disambiguated. However, if
 one were allowed to combine the constraints, they would jointly determine
-that $r$ must have type \code{rgb_point}: in \code{gray_point}, the field \code{color}
+that $r$ must have type \code{cie_point}: in \code{gray_point}, the field \code{color}
 has type \code{int}, and hence cannot itself be projected, leaving a unique
 consistent elaboration: $\efun r {\exfield {\exfield r \ttciepoint \tty} \ttciecolor \ttx}$.
 
