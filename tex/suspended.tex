@@ -216,7 +216,7 @@ presence of fragile features. While this paper instantiates our framework for
 two concrete features in \OCaml---static overloading and polymorphic object
 methods---its scope is broader: we expect it to extend to more richer features
 such as GADTs, modular explicits \citep{?} and implicits \citep{?}, and other
-forms of type-based disambiguation. 
+forms of type-based disambiguation.
 
 \parcomment {Scaling to ML / let-generalization}
 
@@ -341,13 +341,20 @@ fails.\footnote{
   In fact, \OCaml does not fail on ambiguous types, but instead applies a
   default resolution strategy: it emits a warning and selects the last
   matching type definition in scope. Here, this will amount to choosing the
-  % Keep \code over \texttt (TeXpresso dies on \texttt in this position)
   type \code{gray_point} for \code{r}. To check all our examples, use the options
   \code{-principal -w +41+18 -warn-error +41+18}, which enables principal
   type inference and escalates the associated warnings to errors.
   \label{fn/principal}
 }
 %
+%% Extraxted comment:
+% Keep \code over \texttt (TeXpresso dies on \texttt in footnotes)
+%% Avoid comments above that do not start at the beginning of a line as thee
+%% a real risk that fill-paragraph will mess up....
+%% The problem was that \string\texttt and \string\code did not have the
+%% same semantics: \string\code calls ocamlsettings that selects the \small
+%% font, as the program mode, and the font was oversized in footnotes.
+%% I fixed this, so \code can now be freely used in footnotes.
 In \code{ex_2}, the annotation fixes the type of \code{r}, thus \code{r}'s type
 is \emph{known} and resolves \code{r.x} and \code{r.y} unambiguously. In
 \code{ex_3}, the type of \code{r} can only be \code{point}: considering the
@@ -363,7 +370,7 @@ falls back to a syntactic default: it selects the most recently defined
 compatible type. For example, \OCaml accepts the following expression, when
 \smashcolorbox{warning}{\strut warnings} are not turned into
 \smashcolorbox{illtyped}{\strut errors}:%
-% A manual link to the fn/principal footnote. \cref prints something that 
+% A manual link to the fn/principal footnote. \cref prints something that
 % looks like a section reference (not a footnote).
 \hyperref[fn/principal]{\textsuperscript{\ref*{fn/principal}}}
 
