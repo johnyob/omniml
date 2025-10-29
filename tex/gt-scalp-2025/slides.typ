@@ -10,16 +10,16 @@
     title: [Type inference any way],
     author: [
       #let face(name) = [
-        #image("pictures/" + name + ".jpg", height:10em)
+        #image("pictures/" + name + ".jpg", height:8em)
         #v(0.6em)
       ]
       #grid(columns: (1fr,) * 3,
         face("Alistair_OBrien"),
         face("Didier_Remy"),
         face("Gabriel_Scherer"),
-        [Alistair O'Brien],
-        [Didier Remy],
-        [Gabriel Scherer (speaker)],
+        [Alistair O'Brien \ Cambridge],
+        [Didier Remy \ INRIA Paris],
+        [Gabriel Scherer (speaker) \ INRIA & IRIF, Paris],
       )
     ],
     date: datetime.today(),
@@ -143,7 +143,7 @@ Two complementary mechanisms:
 
 #v1
 
-2. Propagation from polymorphic definitions to their uses. (Hindley-Milner type inference)
+2. Propagation from `let`-definitions to their uses. (Hindley-Milner type inference)
 
    ```ocaml
    let point = (~x:41, ~y:31) in
@@ -155,13 +155,13 @@ Two complementary mechanisms:
 not 3. unification alone is *not* sufficient
 
 ```ocaml
-  if b then (True : boolean) else False (* warns *)
   if b then True else (False : boolean) (* fails *)
+  if b then (True : boolean) else False (* warns *)
 ```
 
 #v1
 
-== Problems
+== Problem: we always want more
 
 #v1
 
@@ -189,7 +189,7 @@ was expected of type "point3"                            *)
 
 #v1
 
-If we don't have type information yet, _wait_ for more information to come in.
+If we don't have type information yet, _wait_.
 
 #v1
 
@@ -206,17 +206,17 @@ $ matchwith(alpha, sh, C) $
 
 #v1#pause
 
-If a constraint remains suspended at the end of inference,
+If a constraint remains suspended at the end,
 it is an *error*.
 
 #v1
 
-== Suspended constraints in action
+== Generation of suspended constraints
 
 #v1
 
 #let condcolor = red
-#let testcolor = condcolor
+#let testcolor = olive
 #let thencolor = blue
 #let elsecolor = purple
 
@@ -272,8 +272,7 @@ keep suspended
 [ #pause
 *Hard* case (this work):
 
-$(matchwith(beta, sh, C))$ \
-with some $overline(alpha)$ mentioned in $C$
+$(matchwith(beta, sh, C))$ mentions some $overline(alpha)$
 
 how to generalize?
 ]
@@ -284,8 +283,7 @@ how to generalize?
 
 #v1
 
-*Hard* case: $(matchwith(beta, sh, C))$
-with some $overline(alpha)$ mentioned in $C$
+*Hard* case: $(matchwith(beta, sh, C))$ mentions some $overline(alpha)$
 
 #v1
 
@@ -458,8 +456,7 @@ $ #infer($Gamma derinf magic(square, overline(t)) : A$,
 #v1#pause
 
 #grid(columns: (2fr, 1fr),
-[We can now _erase_ fragile constructs \
- inside the robust fragment:],[#h1
+[We can now _erase_ fragile constructs:],[#h1
 $
   & erase(app(K^d, overline(t)))
   & quad := quad &
@@ -495,7 +492,7 @@ $
 
 #v1
 
-Type inferenence _any way_:
+*Omni-directional* type inferenence:
 
 - suspended constraints
 - incremental generalization and instantiation
