@@ -2821,24 +2821,16 @@ hence the generated constraint for \code{ex_1_1} is satisfiable.
 \subsection{Metatheory}
 \label{sec/oml/metatheory}
 
-Constraint generation is sound and complete with respect to the typing judgment.
-That is to say, the term $\e$ is typable with $\t$ if and only if
-$\cinfer \e \tv$ is satisfiable when $\tv$ is $\t$.
-\XDR[This should juts be]{$\cinfer \e \t$ is satisfiable.}
-\Xalistair{This is the one case we \emph{cannot} just replace $\tv$ with $\t$.
-This is because $\t$ could be considered \emph{known} in the constraint but not
-\emph{known} in the typing rules -- in the same way we only consider an empty
-typing context.}\XDR{We should write \emph{when
-$\cexists \tv {\cinfer \e \tv \cand \tv = \t}$ is satisfiable}.}\XDR{Does this
-mean that $\cexists \tv {\cinfer \e \tv \cand \tv = \t} \not\cequiv
+Constraint generation is sound and complete with respect to the typing judgment:
+\XDR{Is
+$\cexists \tv {(\cinfer \e \tv \cand \tv = \t)} \not\cequiv
 \cinfer \e \t$? If so it should be emphasized somewhere. Which rule breaks
 this? }
 %
 \begin{theorem}[Constraint generation is sound and complete]
-  \label{thm:constraint-gen-is-sound-and-complete}
-Given a closed \OML term $\e$ and a type $\t$, then for any $\tv \disjoint \t$,
-$\th \e : \t$ iff\/
-$\cunif \tv \t \centails \csem {\e : \tv}$.
+  \label{thm:constraint-gen-is-sound-and-complete}~\\
+A closed \OML term $\e$ is typable if and only if
+the constraint $\cexists \tv {\cinfer \e \tv}$ is satisfiable.
 \end{theorem}
 
 \begin{restatable}[Principal types]{theorem}{principalTypes}
