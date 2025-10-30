@@ -812,7 +812,7 @@ by considering a spine in order. What is does do, is it does an approximation
 pass on the arguments in the spine to see if they help with the instantiation
 of the return type. But this is also order-dependent, in the same way that
 Freezing Bidirectional type inference is order dependent. }
-\XDR{Quicklook is local and
+\XDR{QuickLook is local and
 independent of the order or arguments: it looks at them altogether.
 But let's discuss this at the next meeting.
 My point is that we should probably cite other works that lies between
@@ -1977,23 +1977,26 @@ any $\gt$.
   \ca \cequiv \cb   \eqdef
     (\ca \centails \cb) \wide\wedge   (\ca \centails \cb)
   \end{tabular}}
-
-  \par
+\par
 \begin{tabular}{.L.}
   \cmatched \t \sh {\cbranch \cpats \cs} \eqdef \\[.6ex]
 \uad \begin{cases}
-    \cexists \tvs \cunif \t \shapp \tvs \cand \theta(\ci) & \text{if } \cmatches \cpati \sh \tvs \theta\\
+    \cexists \tvs \cunif \t \shapp \tvs \cand \theta(\ci) &
+    \text{if } \cmatches \cpati \sh \tvs \theta\\
     \cfalse & \text{otherwise}
 \end{cases}
 \end{tabular}
+%% Minimal spacing
 \qquad\qquad
-{\let \Eqdef\eqdef \def \eqdef {&\Eqdef&}\def \EQ{&=&}
+%% Plus one share of free extra space
+\hfil
+{\let \Eqdef\eqdef \def \eqdef {&\Eqdef&}\def \EQ{&\partialmap&}
 \begin{tabular}[c]{.R.C;.L.}
   \hline \vrule\;
   \cmatches[\EQ] \cpat \sh \tvcs \theta
   \;\vrule \\ \hline
   \noalign{\vskip .6ex}
-  \cmatches[\eqdef] \cpatwild \sh \tvcs \eset \\
+  \cmatches[\EQ] \cpatwild \sh \tvcs \eset \\
   &\vdots&
 \end{tabular}}
 
@@ -2029,8 +2032,8 @@ semantics is given by a satisfiability judgment $\semenv \th \c$
 free type variable $\tv$ a ground type $\gt \in \Ground$ (a type with no free
 variables) and to each term variable $\x$ a set of ground types $\gabs
 \subseteq \Ground$ (the instances of a type scheme bound to $\x$).\XDR{The
-$\gabs$ glyph is unreadable/unparsable}
-\Xalistair{How about $\mathfrak{R}, \mathfrak{S}$}
+$\gabs$ glyph is unreadable/unparsable}\Xalistair{How about $\mathfrak{R},
+\mathfrak{S}$}\XDR{I implemented the replacement of G by S}
 %
 We write $\semenv\where{\tv \is \gt}$ and $\semenv\where{\x \is \gabs}$ for the
 extension of $\semenv$ with a new binding. For a type $\t$, we write
@@ -2063,7 +2066,9 @@ should probably explain that these implement generalization and
 instantiation respectively.  We could event call $\x \@ \tv$ an
 instantiation constraint?}
 \Xalistair{Abstractions / applications capture intuition that is useful
-for solving (e.g. copying constraints).}
+for solving (e.g. copying constraints).}\XDR{I thought we agreed to keep the
+notation but change the wording to generalization/instantiation, except at
+the first occurence where we explain the double lecture}
 
 
 Two constructs deal with the introduction and elimination of constraint
@@ -2074,7 +2079,7 @@ Abstractions are introduced by a let construct $(\clet \x \tv \ca \cb)$, which
 binds the constraint abstraction $\cabs \tv \ca$ to the term variable $\x$ in
 $\cb$; semantically, the abstraction $\cabs \tv \c$ is interpreted as a set
 of ground types
-that satisfies $\c$, and we require that this set be non-empty \ie
+that satisfies $\c$, and we require that this set be non-empty, \ie
 there is at least one instantiation of $\tv$ that satisfies $\c$.
 %
 Applications $\capp \x \t$ eliminate abstractions, applying the type
@@ -2089,7 +2094,8 @@ what this means. Actually I find this explanation quite confusing, while
 $\semenv(\x) \in \semenv (\cabs \tv \c)$ was clear enough}
 %
 \Xalistair{The point of this sentence is to explain why membership is sufficient for application
-\eg it corresponds solving the body of the abstraction with the applied type.}
+\eg it corresponds solving the body of the abstraction with the applied
+type.}\XDR{I understodd the intentention, but I think the wording, which is unchanged, is still unclear}
 %
 then $\semenv(\t)
 \in \semenv(\x)$ holds iff $\semenvp\where{\tv \is \semenv(\t)} \th \c$, which
@@ -2105,8 +2111,8 @@ which consist of:
 
 \item
   A matchee $\t$. The constraint remains suspended
-  while $\t$ is a type variable, that is,
-  until the \emph{shape} of $\t$ is determined.
+  until the \emph{shape} of $\t$ is determined, \ie
+  while $\t$ is a type variable.
 
 \item
 
@@ -2114,7 +2120,7 @@ which consist of:
   a shape pattern. The constraint $\c$ is solved in the extended context
   produced by the matching shape pattern.
 
-  For example, the pattern $\cpatwild$ matches any shape,
+  For example, the wildcard pattern $\cpatwild$ matches any shape,
   and binds nothing.
   %
   To ensure determinism, the set of patterns $\bar \cpat$ must be
@@ -2149,7 +2155,7 @@ that is, they have exactly the same set of solutions.
 \parcomment {Constraint contexts}
 
 Throughout this paper, we will find it convenient to work with \emph{constraint
-contexts}. A constraint context is simply a constraint with a \emph{hole},
+contexts}. A constraint context $\C$ is simply a constraint with a \emph{hole},
 analogous to term contexts $\E$ introduced in \cref{sec/oml}. We write
 $\C\where{\c}$ to denote filling the hole of the context $\C$ with the
 constraint $\c$. Hole filling may capture variables, so we frequently require
@@ -2165,7 +2171,7 @@ A central difficulty in our work on suspended constraints was defining a
 satisfying semantics. The challenge lies in formalizing what it means for type
 information to be \emph{known} without presupposing a \emph{static} solving
 order. This is the same issue encountered in our typing rules
-(\cref{sec/oml/??}), and we address it in the same way: by introducing a
+(\cref{sec/oml/typing/I}), and we address it in the same way: by introducing a
 contextual rule together with a unicity condition.
 
 To define the semantics for suspended constraints, we first introduce
@@ -2180,7 +2186,7 @@ To define the semantics for suspended constraints, we first introduce
   \cmatched \t \sh {\overline {\cbranch \cpat \c}} \uad\eqdef\uad
   \begin{cases}
     \cexists \tvs \cunif \t \shapp \tvs \cand \theta(\ci)
-    & \text{if } \Cmatches \cpati \sh \tvs = \theta\\
+    & \text{if } \cmatches \cpati \sh \tvs \theta\\
     \cfalse & \text{otherwise}
   \end{cases}
 \end{mathpar}
@@ -2193,18 +2199,20 @@ determined; but it may not exist as branches need not be exhaustive, in
 which case the discharged constraint is $\cfalse$.
 \end{definition}
 
-The partial function $(\Cmatches \cpat \sh \tvcs)$, is defined in
+The partial function $(\Cmatches \cpat \sh \tvs)$, defined in
 \cref{fig:constraints}, describes how a pattern $\cpat$ is matched against a
 canonical principal shape $\sh$. Before matching, $\sh$ is opened with fresh
-shape variables $\tvcs$ (of the same arity as $\sh$), so that the result of
+shape variables $\tvs$ (of the same arity as $\sh$), so that the result of
 matching may refer to them. The match either fails or returns a substitution
 $\theta$ mapping pattern variables (\eg nominal type variables $\ct$ from
 \cref{sec/overview/omni}) to shape components (\eg nominal type names $\T$).
 These components may themselves mention the freshly introduced variables
-$\tvcs$. For example, the wildcard pattern $\cpatwild$ matches any shape,
-yielding the empty substitution. In later sections, we will extend both the
+$\tvs$. For example, the wildcard pattern $\cpatwild$ matches any shape,
+yielding the empty substitution.\XDR{Repeatition: the same sentence appeard
+on source line 2123. One of the two should be removed.}
+In~\cref {sec/oml/constraints}, we will extend both the
 syntax of patterns and the matching function itself to handle the patterns that
-arise in \OML (see ??).
+arise in \OML.
 
 
 \paragraph {A natural attempt}
@@ -2275,7 +2283,7 @@ In this rule, a suspended match constraint $(\cmatch \t \cbrs)$ in the context
 $\C$ can be discharged, provided the shape $\sh$ is not guessed from $\semenv$,
 but recovered from the constraint context $\C$. This \emph{unicity} condition
 $\Cshape \C \t \sh$ (defined below) ensures that $\sh$ is uniquely determined
-by the context $\C$, capturing precisely what is means for the shape of a type
+by the context $\C$, capturing precisely what it means for the shape of a type
 to be \emph{known}.
 
 \begin{definition}[Erasure]
@@ -2306,20 +2314,23 @@ to be \emph{known}.
 
 \parcomment{Briefly explain unicity (using analogies to typing rules)}
 
-Similarly to the unicity conditions introduced for typing rules in ??, unicity
+Similarly to the unicity conditions introduced for typing rules in
+\cref{sec/oml/typing/I}, unicity
 for constraints $\Cshape \C \t \sh$ relies on \emph{erasure} $\cerase
-{\C\where{\cunif \t \gt}}$ to restrict attention to previously discharged match
-constraints, inducing a causal order between match constraints. The auxiliary
-judgment $\thsimple$ plays a role analogous to $\throbust$ (from ??): it is
-introduced solely to avoid well-foundedness issues.
+{\C\where{\cunif \t \gt}}$ to restrict attention to previously discharged
+match constraints, inducing a causal order between match constraints,
+enforced by Rule \Rule {Match-Ctx}. The
+auxiliary judgment $\thsimple$ plays a role analogous to $\throbust$ (from
+\cref {sec/oml/typing/I}): it is introduced solely to avoid well-foundedness
+issues.
 
 \parcomment{The interesting cases of unicity}
 
-When $\t$ is not a variable, $\Cshape \square \t \sh$ holds trivially for $\sh
-= \shape \t$. Likewise, when $\C$ is unsatisfiable, then $\Cshape \C \tv \sh$
-holds vacuously for any $\sh$. The interesting and nontrivial cases---the ones
-we illustrate next---arise when $\t$ is a type variable and $\C$ is
-satisfiable.
+When $\t$ is not a variable, $\Cshape \square \t \sh$ holds trivially when
+$\sh$ is the shape of $\t$. Likewise, when $\C$ is unsatisfiable, then
+$\Cshape \C \tv \sh$ holds vacuously for any $\sh$. The interesting and
+nontrivial cases---the ones we illustrate next---arise when $\t$ is a type
+variable and $\C$ is satisfiable.
 
 \parcomment {Examples}
 
@@ -2329,8 +2340,9 @@ satisfiable.
 \begin{mathpar}
   \cexists \tv \cmatch \tv {\cbranch \cpatwild {\cunif \tv \tint}}
 \end{mathpar}
-  Under the contextual semantics, the suspended constraint appears in a context
-  with no contextual information: $\C \is \cexists \tv \square$.
+  Under the contextual semantics, the suspended constraint appears in a
+  context $\C$
+  with no contextual information. \ie $\C$ is $\cexists \tv \square$.
   %
   So for any ground type $\gt$, $\C\where{\cunif \tv \gt}$ is satisfiable,
   allowing $\gt$ to have an arbitrary shape (\eg $\tint$, $\tbool$, \etc). As a
@@ -2373,8 +2385,8 @@ satisfiable.
   \tint$. Its erasure $\cerase \C$ is $\ctrue \cand \square \cand \cunif \tva
   \tint$, which imposes no constraints on $\tvb$. Thus both \relax $\cerase
   {{\C\where{\cunif \tvb \tint}}}$ and \relax $\cerase {\C\where{\cunif \tvb
-  \tbool}}$ are satisfiable: unicity does not hold and \Rule{Match-Ctx} cannot
-  be applied.
+  \tbool}}$ are both satisfiable: unicity does not hold and \Rule{Match-Ctx}
+  cannot be applied.
 
   By contrast, if we first discharge the match on $\tva$, we consider the
   context $\C$ equal to $\square \cand (\cmatch \tvb {\cbranch \cpatwild
@@ -7954,7 +7966,7 @@ understand whether this is a critical issue.
 % LocalWords:  monomorphization desugars Forall satisfiability formers iff
 % LocalWords:  equirecursive principalShapes subterms Susp Ctx foundedness
 % LocalWords:  unsatisfiability getx olymorphic nstances ive typings LetR
-% LocalWords:  metavariable subterm Metatheory principalTypes monotypes Rcd
+% LocalWords:  metavariable subterm Metatheory  monotypes Rcd
 % LocalWords:  ExistsLeft ExistsRight ConjLeft ConjRight equational AppR Wf
 % LocalWords:  existentials instantiations desugared susp ively renamings
 % LocalWords:  quantifications subcomponents BackProp Tarjan's invariants
@@ -7971,9 +7983,9 @@ understand whether this is a critical issue.
 % LocalWords:  determinacy subcases unifications annotatability approxi Rcx
 % LocalWords:  mation macroified cpoint concretize Dom omnidirectionality
 % LocalWords:  hindley popl garrigue monomorphically polyparams polyml Chk
-% LocalWords:  impredicativity PolyML knownness mathpar polybidir nihilo fn
+% LocalWords:  impredicativity PolyML knownness mathpar nihilo fn
 % LocalWords:  Bidirectionalized destructors unparsable metalevel Erwig CPP
-% LocalWords:  Variational Walkingshaw ifdef variational benevs goldilocks
+% LocalWords:  Variational ifdef variational benevs goldilocks
 % LocalWords:  Pottier's unsuspended sep Det Esc macroify ConRight cie Incr
-% LocalWords:  explicits mathescape annotability QuickLook Quicklook Zp
+% LocalWords:  explicits mathescape annotability QuickLook Zp
 % LocalWords:  inferrable destructor

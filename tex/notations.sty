@@ -93,7 +93,8 @@
 \newcommand{\centails}{\vDash}
 \newcommand{\ncentails}{\nvDash}
 \newcommand{\Cmatches}[3]{#1 \Matches #2\;#3}
-\newcommand{\cmatches}[5][=]{\Cmatches {#2}{#3}{#4} #1 #5}
+\newcommand{\partialmap}{\hookrightarrow}%\rightharpoonup
+\newcommand{\cmatches}[5][\partialmap]{\Cmatches {#2}{#3}{#4} #1 #5}
 
 % Solving
 
@@ -140,7 +141,7 @@
 
 % Ground types
 \defmetavar[s]{\gt}{{\mathfrak{g}}}
-\defmetavar{\gabs}{\mathfrak{G}}
+\defmetavar{\gabs}{\mathfrak{S}}%G
 \defmetavar{\gabsr}{\mathfrak{R}}
 \newcommand{\GroundRegion}{\mathcal{R}}
 \defmetavar{\gr}{\mathfrak{r}}
