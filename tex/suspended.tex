@@ -651,7 +651,7 @@ let ex_6 = (fun p -> <p>) pid °\ocamlflags 10°
 \end{program}
 At first glance, \code{ex_5} and \code{ex_6} appear equivalent: both simply
 instantiate the polytype bound to \code{p}. Yet, \OCaml accepts \code{ex_5} and
-rejects \code{ex_6}. This is because the \code{let}-binding in \code{ex_5}
+rejects \code{ex_6}. This is because the \Let-binding in \code{ex_5}
 allows \code{p} to have type scheme $\tfor \av {\tapoly {\tfor \tv \tv \to
 \tv} \av}$, and thus its type is considered \emph{known}--enabling unboxing
 (\Rule{PolyML-Inst}).
@@ -672,7 +672,7 @@ While these terms are semantically equivalent, they highlight a potential
 hazard: their typability may vary under a directionally biased inference
 algorithm, depending on whether the function or argument is typed first.  To
 limit such implementation-dependent behavior, \OCaml infers all
-subexpressions \emph{simultaneously}, until they are \code{let}-bound.
+subexpressions \emph{simultaneously}, until they are \Let-bound.
 Consequently, \OCaml does not make any difference between
 \ocaml[indices]{ex_6}, \ocaml[indices]{ex_6_2}, and \ocaml[indices]{ex_6_3}.
 
@@ -2177,7 +2177,7 @@ contextual rule together with a unicity condition.
 To define the semantics for suspended constraints, we first introduce
 \emph{discharged match constraints}.
 
-\begin{definition}[Discharged match constraint]
+\begin{definition}[Discharged match constraint]\label{def/discharged}
   Given a suspended constraint $(\cmatch \t \cbrs)$ and a canonical shape
   $\sh$, we introduce the syntactic sugar $(\cmatched \t \sh \cbrs)$ for the
   \emph{discharged match constraint} that selects the branch in $\cbrs$ that
@@ -2628,11 +2628,12 @@ $\t$ such that $\t$ becomes a valid type of $\e$. For example, to infer the
 entire type of $\e$ we may pick a fresh type variable $\tv$ for $\t$.
 
 
-\paragraph{Patterns}
+\paragraph{Patterns}\XDR{Match-constraint patterns?}
 
-Thus far, our formal presentation of constraint patterns has remained
-abstract, deliberately leaving the syntax and semantics of patterns
-unspecified to accommodate a range of language features. We now concretize
+Thus far, our formal presentation of match-constraint patterns has remained
+abstract, deliberately leaving the syntax and semantics of match constraints
+partially unspecified to accommodate a range of language features. We now
+concretize
 this by specifying the patterns used in \OML (in \cref{fig:patterns-oml}),
 and introducing the corresponding constraints for the variables they bind.
 %
@@ -2648,19 +2649,21 @@ Patterns include:
 \end{enumerate*}
 
 Each new kind of pattern introduces corresponding constraint formers:
-$\labfrom \elab \ct \leq \ta \to \tb$ asserts that $\ta \to \tb$ is a instance of
-projection type associated with the qualified label $\labfrom \elab \ct$;
-$\dom \ct = \elabs$ ensures that the domain of nominal type $\ct$ is the set of labels $\elabs$;
-and $\cscm \leq \t$ checks that $\t$ is an instance of $\cscm$, while $\x \leq \cscm$
-asserts that every instance of $\x$ is an instance of $\cscm$.
+$\labfrom \elab \ct \leq \ta \to \tb$ asserts that $\ta \to \tb$ is a
+instance of projection type associated with the qualified label $\labfrom
+\elab \ct$; $\dom \ct = \elabs$ ensures that the domain of nominal type
+$\ct$ is the set of labels $\elabs$; and $\cscm \leq \t$ checks that $\t$ is
+an instance of $\cscm$, while $\x \leq \cscm$ asserts that every instance of
+$\x$ is an instance of $\cscm$.
 
 By definition, each of these constraint forms is unsatisfiable, since we do not
 extend the satisfiability relation to include them. Their role is purely
 syntactic: they only appear within the branches of a suspended match
 constraint. Once such a constraint is discharged $(\cmatched \t \sh {\cbranch
-\cpats \cs})$ (??), the substitution $\theta$ produced by the matching pattern
-$\cpati$---which binds the pattern variables (\eg $\ct$, $\cscm$, \etc)---is
-applied to the corresponding branch $\ci$. Hence, it suffices to only define
+\cpats \cs})$ (\cref {def/discharged}), the substitution $\theta$ produced by
+the matching pattern $\cpati$---which binds the pattern variables (\eg
+$\ct$, $\cscm$, \etc)---is
+applied to the corresponding branch $\ci$. Hence, it suffices to define
 the semantics of these constraint formers only for their substituted forms (\eg
 $\labfrom \elab \T \leq \ta \to \tb$, $\dom {\T} = \elabs$, \etc), as shown in
 \cref{fig:patterns-oml}. We define the semantics of these substituted forms by
@@ -2669,26 +2672,28 @@ existing core constraint language.
 
 \paragraph{Constraint generation}
 
-The function $\cinfer - {\mathop{=}}$ is defined in \cref{fig/constraint-gen}.
+Constraint generation $\cinfer \c {\mathop{\t}}$ is defined in
+\cref{fig/constraint-gen}.
 All generated type variables are fresh with respect to the expected type $\t$,
 ensuring capture-avoidance.
 %
-Unsurprisingly, variables generate an instantiation constraint. Unit $\eunit$
-requires the type $\t$ to be $\tunit$. A function generates a constraint that
-binds two fresh flexible type variables for the argument and return types.  We
-use a $\Let$ constraint to bind the argument in the constraint generated for
-the body of the function. The $\Let$ constraint is monomorphic since $\tvp$ is
-fully constrained by type variables defined outside the abstraction's scope
-and therefore cannot be generalized. Applications introduce two fresh flexible,
-one for the argument type and one for the type of the function, typing each
-subterm with these, ensuring $\t$ is the expected return type.
- Let-bindings generate a polymorphic let constraint; $\cabs \tv
-{\cinfer \e \tv}$ is a principal constraint abstraction for $\e$: its intended
-interpretation is the set of all types that $\e$ admits.
+Unsurprisingly, variables generate an instantiation constraint. Unit
+$\eunit$ requires the type $\t$ to be $\tunit$. A function generates a
+constraint that binds two fresh flexible type variables for the argument and
+return types.  We use a $\Let$ constraint to bind the argument in the
+constraint generated for the body of the function. The $\Let$ constraint is
+monomorphic since $\tvp$ is fully constrained by type variables defined
+outside the abstraction's scope and therefore cannot be
+generalized. Applications introduce two fresh flexible type variables, one
+for the argument type and one for the type of the function, typing each
+subterm with these, ensuring $\t$ is the expected return type.  Let-bindings
+generate a polymorphic let constraint; $\cabs \tv {\cinfer \e \tv}$ is a
+principal constraint abstraction for $\e$: its intended interpretation is
+the set of all types that $\e$ admits.
 
 % New constraint gen cases
 % Annotations, tuples
-Annotations bind their flexible variables and enforce the equality of
+Annotations bind their flexible type variables and enforce the equality of
 the annotated type $\tp$ and the expected type $\t$.
 % Polytypes
 For polytypes, boxing asserts that $\e$ has the polymorphic type $\ts$ (using
@@ -2707,11 +2712,12 @@ be a polytype, bound to $\cscm$. We then assert that the principal type of $\e$
 is at least as general as $\cscm$, via the constraint $\x \leq \cscm$.
 
 % Records
-Record projections generate a fresh variable for the nominal record type and
-constrain $\e$ to this type, suspending until the type $\tv$ of $\e$ is
-known to be a nominal record type $\ct$.  Once resolved, the type of the
-projected label is retrieved from the global label context $\labenv$ and
-instantiated.
+Record projections generate a fresh variable $\tv$ for the nominal record
+type and constrain $\e$ to this type, suspending until the type $\tv$ of
+$\e$ is known to be a nominal record type $\ct$.\XDR{$\ct$ is not a
+meta-varoable for nominal record types, not itself a nominal record type.
+This introduces some confusion.} Once resolved, the type of the projected
+label is retrieved from the global label context $\labenv$ and instantiated.
 %
 For record expressions, we generate a fresh variable $\tvi$
 for each field assignment to capture the type of each $\ei$ as $\tvi$.
@@ -2729,7 +2735,8 @@ Considering the example from \cref{sec/overview/overloading}:
 \begin{program}[input]
   let ex_4 r = let x = r.x in x + (r : point).y °\ocamlflags 10°
 \end{program}
-The typing constraint generated for \code{ex_9} contains the following, where $\tv$ stands for the type of \code{r}:
+The typing constraint generated for \code{ex_4} contains the following,
+where $\tv$ stands for the type of \code{r}:
 \begin{mathpar}
   \cexists {\tv}
     \clet x \tvb
@@ -2743,15 +2750,15 @@ $\C$ equal to
   \clet \x \tvb \square \capp \x \tint \cand
   \cunif \tv \ttpoint
 \end{mathpar}.
-Although the context includes a \code{let}-binding---which in practice
-involves \code{let}-generalization---we can still deduce $\Cshape \C \tv
+Although the context includes a \Let-binding---which in practice
+involves \Let-generalization---we can still deduce $\Cshape \C \tv
   {\ttpoint}$, since the erased context $\cerase
 \C$ contains the unification constraint $\cunif \tv \ttpoint$.
 
 This example illustrates that our formulation of suspended constraints
-interacts nicely with \code{let}-polymorphism. Although the two features are
+interacts nicely with \Let-polymorphism. Although the two features are
 specified in a modular fashion, they are carefully crafted to work together,
-as we will further show in our next example.
+as we further show in our next example.
 \end{example}
 
 \begin{example}\label{ex:backprop}
@@ -2761,20 +2768,16 @@ A subtle yet crucial feature of our semantics is its support for
 let ex_1_1 = let getx r = r.x in getx one  °\ocamlflags 10°
 \end{program}
 As in the previous example, the type of \code{r} cannot be disambiguated in the
-\code{let}-definition alone. In the previous example, this type was unified
-to a known shape in the \code{let}-body. Here, this is more subtle:
-\XDR{I don't understand the next two sentences}
-\Xalistair{It is trying to justify that there is a unique shape for \code{r}
-  without using unicity formally. I've improved it a bit. If you still feel
-  confused, I'll rewrite to use unicity formally.}
-an
-\emph{instance} of \code{getx}'s type scheme is taken,
-  which only satisfies the application (\ocaml!getx one!)
-  if \code{r} has a variable type or a type of the form
-\ocaml{point}. However, the projection \code{r.x} would be
-  ill-typed if \code{r} had a variable type (unicity would fail), so
-\code{point} is the unique solution. We call this flow of
-information from instances back to definitions \emph{backpropagation}.
+\Let-definition alone. In the previous example, this type was unified
+to a known shape in the \Let-body. Here, this is more subtle: an
+\emph{instance} of \code{getx}'s type scheme is taken, which only satisfies
+the application (\ocaml!getx one!)  if \code{r} has a variable type or a
+type of the nomial type \ocaml{point}.  However, the projection \code{r.x}
+would be ill-typed if \code{r} had a variable type (unicity would fail), so
+\code{point} is the unique solution.  This information obtain from
+\Let-body flows backward to the whole \Let-expression.
+We call this flow of information from instances back to definitions
+\emph{backpropagation}.
 
 The constraint generated when typing
 \code{ex_1_1} is:
@@ -2791,14 +2794,9 @@ The constraint generated when typing
 \end{mathpar}
 With the context $\C$ equal to $\clet {getx}
 \tvd {\cexists {\tvb, \tvc} \cunif \tvd {\tvb \to \tvc} \cand \square}
-{\capp {getx} {(\ttpoint \to \tv)}}$, we can show the unicity
-predicate $\Cshape \C \tvb \sh$ for the shape $\sh$ equal to $\ttpoint$.
-%% That is:
-%% \begin{mathpar}
-%%   \all {\semenv, \gt} \uad
-%%     \semenv \th \cerase {\C\where{\cunif \tvb \gt}} \implies \shape \gt = \sh
-%% \end{mathpar}
-  For any $\gt$, the erasure $\cerase {\C \where {\cunif \tvb \gt}}$
+{\capp {getx} {(\ttpoint \to \tv)}}$, we can show that the unicity
+predicate $\Cshape \C \tvb \sh$ holds for the shape $\sh$ equal to $\ttpoint$.
+For any $\gt$, the erasure $\cerase {\C \where {\cunif \tvb \gt}}$
 is
 \begin{mathpar}[inline]
 \clet {getx}
@@ -2809,8 +2807,7 @@ Since $getx$ is bound to the constraint abstraction
 \relax $\cabs \tvd \exists \tvc.\uad \cunif \delta {(\gt \to \gamma)}$,
 the instantiation
 \relax $\capp {getx} (\ttpoint \to \tv)$
-can only be satisfied when
-\relax $\gt = \ttpoint$. This proves unicity,
+can only be satisfied when $\gt$ is equal to $\ttpoint$. This proves unicity,
 hence the generated constraint for \code{ex_1_1} is satisfiable.
 \end{example}
 
@@ -2821,16 +2818,18 @@ Constraint generation is sound and complete with respect to the typing judgment.
 That is to say, the term $\e$ is typable with $\t$ if and only if
 $\cinfer \e \tv$ is satisfiable when $\tv$ is $\t$.
 \XDR[This should juts be]{$\cinfer \e \t$ is satisfiable.}
-\XDR{Idem below}
 \Xalistair{This is the one case we \emph{cannot} just replace $\tv$ with $\t$.
 This is because $\t$ could be considered \emph{known} in the constraint but not
 \emph{known} in the typing rules -- in the same way we only consider an empty
-typing context.}
-
+typing context.}\XDR{We should write \emph{when
+$\cexists \tv {\cinfer \e \tv \cand \tv = \t}$ is satisfiable}.}\XDR{Does this
+mean that $\cexists \tv {\cinfer \e \tv \cand \tv = \t} \not\cequiv
+\cinfer \e \t$? If so it should be emphasized somewhere. Which rule breaks
+this? }
 %
 \begin{theorem}[Constraint generation is sound and complete]
   \label{thm:constraint-gen-is-sound-and-complete}
-Given a closed \OML term $\e$ and type $\t$. Then for any $\tv \disjoint \t$,
+Given a closed \OML term $\e$ and a type $\t$, then for any $\tv \disjoint \t$,
 $\th \e : \t$ iff\/
 $\cunif \tv \t \centails \csem {\e : \tv}$.
 \end{theorem}
@@ -2881,7 +2880,7 @@ $\e_0$, and if they are incompatible the factored form may not typecheck.
 
 \paragraph{Inlining does not hold} If $\G \th \elet \x \ez \e : \t$, we do
 not necessarily have $\G \th \e \where {\x \is {\e_0}} : \t$. This is
-specific to our support for \emph{backpropagation}: the $\Let$-form will use
+specific to our support for \emph{backpropagation}: the \Let-form will use
 information from all occurrences of $\x$ in $\e$ to resolve fragile
 constructs in $e_0$, but in the inlined form each copy of $\e$ must resolve
 its implicit constructs independently, and it has access to less information
@@ -3280,14 +3279,14 @@ $\tv$ is the \emph{root} of the region and $\tvs$ are auxiliary existential
 variables. The order of $\tvs$ is immaterial; regions are considered equal up
 to permutation of these variables.
 
-Satisfiability of regional $\Let$-constraints is defined in
+Satisfiability of regional \Let-constraints is defined in
 \cref{fig:constraint-let-regions}. The semantics of an
 abstraction with a region, written $\semenv(\cabsr \tv \tvs \c)$, is a set of
 \emph{ground regions} that satisfy $\c$. A ground region is a satisfying
 interpretation for the region $\semenvp$ with a designated \emph{root} variable
 $\tv$, written $\greg \tv \semenvp$.\XDR{Letter $\gr$ appearing in the
 Figure is unreadable/unparsable}
-Regional $\Let$-constraints strictly
+Regional \Let-constraints strictly
 generalize ordinary constraint abstractions, as captured by the equivalence:
 \begin{mathpar}
   \clet \x \tv \ca \cb \Wide\cequiv \cletr \x \tv \eset \ca \cb
@@ -3433,7 +3432,7 @@ $\inst$ with $\t$.
 %
 The domain of incremental instantiation constraints must lie within the closure of
 the abstraction or among the regional variables of $\x$. Consequently, the
-variables $\tv, \tvs$ bound by the $\Let$-constraint $\cletr \x \tv \tvs \ca
+variables $\tv, \tvs$ bound by the \Let-constraint $\cletr \x \tv \tvs \ca
 \cb$ are bound not only in the body of the abstraction $\ca$, but also in the
 constraint $\cb$, where they may appear in incremental instantiations of $\x$
 in the domain of renamings---and only there. Hence, they
@@ -3492,7 +3491,7 @@ instantiation constraints, written as the substitution $\where{\x.\tvb \is
 \parcomment{Lowering}
 
 \Rule{S-Exists-Lower} implements the non-trivial case of lowering
-existentials across $\Let$-binders. It identifies a subset of variables in
+existentials across \Let-binders. It identifies a subset of variables in
 the region of a $\Let$ constraint that are unified with variables from
 outside the region. Such variables are considered monomorphic and thus
 cannot be generalized; they can instead be safely lowered to the outer
@@ -3689,11 +3688,11 @@ This approach does not work for partial generalization. If
 generalization at some region is suspended by a match constraint, the
 region must remain alive while we continue inference in other
 regions. However, later parts of the constraint may introduce a new
-$\Let$-region at the same rank that is unrelated to the suspended one---neither its
+\Let-region at the same rank that is unrelated to the suspended one---neither its
 ancestor nor its descendant---breaking the linear assumption of ranks.
 
 Our implementation must instead use a \emph{tree} of nested
-$\Let$-regions. Under this scheme, ranks no longer uniquely determine a
+\Let-regions. Under this scheme, ranks no longer uniquely determine a
 variable's region. Instead, we interpret a rank relative to a path in the
 region tree from the root. When two variables are unified, they must always
 lie on some shared path---by scoping invariants---so computing their minimum
@@ -6182,7 +6181,7 @@ generally in our system.
     \begin{proofcases}
       \proofcase{$n$ is 0}
 
-	Thus $\Cpp, \Cp, \cs$ are simple. It suffices to show the equivalence on the $\Let$-constraint directly and use congruence
+	Thus $\Cpp, \Cp, \cs$ are simple. It suffices to show the equivalence on the \Let-constraint directly and use congruence
 	of equivalence for simple constraints (\cref{lem:ctxt-equiv-simple}) to establish the result.
 
 	We proceed by induction on the structure of $\Cp$ with the statement ($\ddagger$):
@@ -7136,7 +7135,7 @@ rules that are not inherently destructive.
   then prove termination of the incremental instantiations of $\x$ in
   $\cb$. (The notion of structural size used here is preserved by
   non-discharging rewrite rules, as they do not affect the
-  $\Let$-structure of the constraint.)
+  \Let-structure of the constraint.)
 
   Assuming that $\ca$ has no infinite rewriting sequence, it suffices
   to prove that only finitely many rewrites in the rest of the
@@ -7305,7 +7304,7 @@ Throughout this section, we restrict our attention to \emph{closed
 terms}. This is because the typing context $\G$ can contain bindings to
 terms whose type is ``guessed''. When we generate constraints for a term
 $\e$ under a context $\G$, we encode the type schemes in $\G$ as part of the
-constraint itself using $\Let$-constraints. However, these schemes are
+constraint itself using \Let-constraints. However, these schemes are
 treated as known within the constraint! As a result, we assume terms are
 closed from the outside to avoid $\G$ leaking any guessed type information.
 
