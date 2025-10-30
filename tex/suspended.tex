@@ -2445,6 +2445,8 @@ variable and $\C$ is satisfiable.
 \subsection{Constraint generation}
 \label{sec/oml/constraints}
 
+\XDR{Could we say \emph{Shape patterns} instead of just \emph{Patterns} ?}
+
 \begin{mathparfig}
   {fig:patterns-oml}
   {Patterns for \OML.}
@@ -2494,9 +2496,10 @@ variable and $\C$ is satisfiable.
     \end{array}%
   }
   \begin{tabular}{RCLL}
-    \Srule[\text{if } \labenv(\labfrom \elab \T) = \tfor \tvs {\Tapp \tvs \to \t}]
+    \Srule
+      [\text{if } \labenv(\labfrom \elab \T) = \tfor \tvs {\Tapp \tvs \to \t}]
       {\labfrom \elab \T \leq \ta \to \tb}
-      {\cexists \tvs \cunif \ta \t \cand \cunif \tb {\Tapp \tvs}}
+      {\cexists \tvs \cunif \ta  {\Tapp \tvs} \cand \cunif \tb \t}
     \\\>
     \dom{\T} = \elabs &\eqdef&
        \Scases{\ctrue}{\cfalse}{\Dom {\labenv(\T)} = \elabs}
@@ -2528,12 +2531,15 @@ variable and $\C$ is satisfiable.
 \\
 \Crule
   {\cinfer {\efun \x \e} \t}
-  {\cexists {\tva, \tvb} \cunif \t {\tva \to \tvb}
-    \cand \clet \x \tvp {\cunif \tvp \tv} {\cinfer \e \tvb}}
+  {\cexists {\tva, \tvb}
+    \clet \x \tvp {\cunif \tvp \tv} {\cinfer \e \tvb}
+    \cand \cunif \t {\tva \to \tvb}}
 \\
 \Crule
   {\cinfer {\eapp \ea \eb} \t}
-  {\cexists {\tva, \tvb} \cunif \tvb {\tva \to \t} \cand \cinfer \ea {\tvb} \cand \cinfer \eb \tva}\
+  {\cexists {\tva, \tvb}
+    \cinfer \ea {\tvb} \cand \cinfer \eb \tva
+    \cand \cunif \tvb {\tva \to \t}}
 \\
 \Crule
   {\cinfer {\elet \x \ea \eb} \t}
@@ -2541,7 +2547,7 @@ variable and $\C$ is satisfiable.
 \\
 \Crule
   {\cinfer {\eannot \e \tvs \tp} \t}
-  {\cexists \tvs \cunif \t \tp \cand \cinfer \e \t}
+  {\cexists \tvs  \cinfer \e \tp \cand \cunif \t \tp}
 \\
 \Crule
   {\cinfer {\expoly \e \tvs \ts} \t}
