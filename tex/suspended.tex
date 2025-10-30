@@ -215,7 +215,8 @@ We present omnidirectionality as a general framework for inference in the
 presence of fragile features. While this paper instantiates our framework for
 two concrete features in \OCaml---static overloading and polymorphic object
 methods---its scope is broader: we expect it to extend to more richer features
-such as GADTs, modular explicits \citep{?} and implicits \citep{?}, and other
+such as GADTs, polymorphic parameters \citep{White/polyparams@ml2023}, 
+modular explicits \citep{?} and implicits \citep{?}, and other
 forms of type-based disambiguation.
 \XDR{For modular explicits, which are explicits, the only use of
 omnidirectionality is the same use as polymorphic parameters, but these
@@ -565,10 +566,6 @@ prior to unboxing, rendering the term ill-typed.
 
 \parcomment {Annotations}
 
-\Xalistair{My original intention was that type annotations are closed (aside
-from annotation variables).}\XDR{I understood, but \OCaml does not enforce
-that. It is clearer in \OML where we use an explicit binder.}
-
 \Rule{PolyML-Annot} can be used to freshen annotation variables. The auxiliary
 relation $(\tsa : \ts : \tsb)$ (also used in \Rule{PolyML-Poly}) holds if there
 exists renamings $\eta_1, \eta_2$ on annotation variables (leaving ordinary
@@ -772,17 +769,6 @@ as follows:
     {\G \th \eannot \e {} \t \Rightarrow \t}
 \end{mathpar}
 
-\Xalistair{This is arguing that the original features we wanted were $\epoly \e$
-and $\einst \e$. And this is what we do support.}
-\XDR{One should not change the syntax: \ie, we should keep $\epoly [\ts]
-\e$. Otherwise, the user need to write it $([e] : \tpoly)$. Besides, the
-rules are still incorrect as we should be allow to instantiate $\t$ in
-annotation $e : \t$, since it stands for $\exists \tv. (e : \t)$.}
-\Xalistair{Mentioned previously, but annotations ought to be closed.}
-\XDR{They are not in \OCaml. We should allow the same here and understand
-$(\e : \ts)$ as $\eannot \e {\fvs \ts} \ts$}
-
-
 \parcomment{Limitations}
 
 However, there is usually no optimal assignment of modes: for any choice of
@@ -805,19 +791,22 @@ order of propagation, so some well-typed programs are rejected as ill-typed
 
 \TODO{Check these in contextual typing}
 
-\XDR{Should we mention QuickLook as a way to locally take into account
-multiple arguments in an order-independent manner?}
-\Xalistair{QuickLook is order-dependent. It handles multiple arguments
-by considering a spine in order. What is does do, is it does an approximation
-pass on the arguments in the spine to see if they help with the instantiation
-of the return type. But this is also order-dependent, in the same way that
-Freezing Bidirectional type inference is order dependent. }
-\XDR{QuickLook is local and
-independent of the order or arguments: it looks at them altogether.
-But let's discuss this at the next meeting.
-My point is that we should probably cite other works that lies between
-directional type inference and local type inference
-}
+\TODO{Mention QuickLook and Freezing Bidir -- general approaches for 
+doing bidir with more order independence.}
+
+%\XDR{Should we mention QuickLook as a way to locally take into account
+%multiple arguments in an order-independent manner?}
+%\Xalistair{QuickLook is order-dependent. It handles multiple arguments
+%by considering a spine in order. What is does do, is it does an approximation
+%pass on the arguments in the spine to see if they help with the instantiation
+%of the return type. But this is also order-dependent, in the same way that
+%Freezing Bidirectional type inference is order dependent. }
+%\XDR{QuickLook is local and
+%independent of the order or arguments: it looks at them altogether.
+%But let's discuss this at the next meeting.
+%My point is that we should probably cite other works that lies between
+%directional type inference and local type inference
+%}
 
 \paragraph{Limitations of directional type inference}
 
@@ -1210,12 +1199,9 @@ The remainder of the paper develops these three ideas in turn:
 \parcomment {We need a spec, but this itself is hard}
 
 To prove correctness of type inference, we must define a surface language and
-its type system.
-\XDR[was Surprisingly]{This is just the opposite!}Unsurprisingly, identifying
-an appropriate declarative type system to use as a specification is itself
-a challenging problem. In
-particular, natural specifications for fragile features often fail to preserve
-principality.
+its type system. Identifying an appropriate declarative type system to use as a
+specification is itself a challenging problem. In particular, natural
+specifications for fragile features often fail to preserve principality.
 
 \parcomment {Why do natural approaches not guarantee principal types.}
 
@@ -1228,13 +1214,11 @@ principality.
 \end{wraphbox}
 
 Consider records, for instance. We can ask the user to provide a type
-annotation $\Tapp \tys$
-when projecting, using a qualified record projection $\exfield \e \T \elab$,
-which has a simple typing rule (\Rule{Rcd-Proj-X}).
-\XDR[was On the other hand]{but there is no first hand...}By contrast, the
-natural typing rule for the overloaded projections $\efield \e \elab$ breaks
-principality (\Rule{Rcd-Proj-I-Nat}). For example, term $\efun r \efield r
-{\ttlab x}$ admits two incompatible types, \code{point -> int} and
+annotation $\Tapp \tys$ when projecting, using a qualified record projection
+$\exfield \e \T \elab$, which has a simple typing rule (\Rule{Rcd-Proj-X}). By
+contrast, the natural typing rule for the overloaded projections $\efield \e
+\elab$ breaks principality (\Rule{Rcd-Proj-I-Nat}). For example, term $\efun r
+\efield r {\ttlab x}$ admits two incompatible types, \code{point -> int} and
 \code{gray_point -> int}, as explained in \cref{sec/introduction}.
 
 \parcomment{How we restore principal types}
@@ -1286,9 +1270,6 @@ Terms of \OML are variables~$\x$, the unit literal $\eunit$,
 lambda-abstractions $\efun \x \e$, applications $\eapp \ea \eb$, annotations
 $\eannot \e \tvs \t$, and let-bindings $\elet x \ea \eb$, extended with the
 following expressions:
-\Xalistair{We need a colon here. We need some form of numbering to make it
-grammatically correct}\XDR{The numbering is useless. We then rather use
-and itemize environment, which would better separate the two kinds of extensions}
 \begin{itemize}
 \item
   For polytypes, we introduce implicit and explicit boxing and unboxing
@@ -1327,8 +1308,7 @@ presented in~\cref {sec/oml/typing/I}.
 
 As usual, the main typing judgment $\G \th \e : \ts$
 (\cref{fig/oml/syntax-xtyping}) states that in context~$\G$, the expression~$\e$
-has the type $\ts$. \XDR{$\ts$ you undid my change, but $\ts$ is formally a
-type scheme, which may be a type but not conversely.}
+has the type (scheme) $\ts$. 
 %
 Rules \Rule{Var} through \Rule{Let} are standard. Annotations $\eannot \e \tvs
 \t$ (\Rule{Annot}) ensures that the type of $\e$ is (an instance of) the type
@@ -1357,9 +1337,6 @@ $\tvs$, which are existentially quantified to close the annotation, as in
 \paragraph{Explicit nominal records}
 \label {app/typing/X/records}
 
-
-\Xalistair{I changed $\exfield \e \T \elab$ to use $/$. Slightly odd that $\exrecord \T {\overline{\elab = \e}}$
-also uses the slash. But I don't hate it :shrug: However, we could use the dot syntax for records?}
 
 \parcomment {Label types and contexts}
 
@@ -1518,10 +1495,7 @@ type constructors.
   {\def \tsi {\all \tvb {{\parens{\tvb \to #1}}} \tprod \tvb}
   \tpoly {\all \tva {\parens {\tpoly \tsi} \to \tva} \to \tva}}%
 For instance, the polytype $\tsh {\tint \tlist}$ has the principal shape
-$\sh \is \any \tvc {\tsh \tvc}$.\XDR{what about $\sh$ equal to $...$. These
-inlined bindings are not quite correct.  (Besides $\is$ is for
-substitution. At least use $\eqdef$ for definitions, but still the binding
-should better be done in English.} The original polytype can thus be
+$\sh$ equal to $\any \tvc {\tsh \tvc}$. The original polytype can thus be
 represented as the shape application $\shapp (\tint \tlist)$.
 \endgroup
 
@@ -1783,9 +1757,7 @@ let ex_8 r = { x = r.x; y = r.color }   °\ocamlflags 20°
   Therefore, it remains to show that $\eshape \E r {\ttgraypoint}$~\llabel
   C. Assume $\eset \th \E\where{\emagic {\eannot r {} \gt}} :
   \t$. Since $\efield r \ttcolor$ requires $r$ to have the type
-  $\ttgraypoint$ (due to Rule \Rule{Rcd-Proj-Closed})\XDR{The argument is
-  more subtle as Rule \Rule {Rcd-Proj-I} could in principle also be used but
-  would actually fail...}, it follows that there is no
+  $\ttgraypoint$ (due to Rule \Rule{Rcd-Proj-Closed}), it follows that there is no
   other choice but to take $\ttgraypoint$ for $\gt$, which proves~\lref C.
 \end{example}
 
@@ -1848,7 +1820,7 @@ by a reduction from 3-SAT~\citep*
 
 Formally, to type $\ttex {9}$ one must eliminate the final implicit
 projection in a context of the form $\E\where{\efield \e \elab}$.
-\XDR{We should first say that neither projection can be solved by the
+\TODO{We should first say that neither projection can be solved by the
 \Rule{Rcd-Proj-Closed} since both labels appear in multiple record type
 definitions. Thus, it has to be solved by \Rule{Rcd-Proj-I}.}
 Two cases arise, neither of which are possible:
@@ -2094,22 +2066,22 @@ there is at least one instantiation of $\tv$ that satisfies $\c$.
 Applications $\capp \x \t$ eliminate abstractions, applying the type
 $\t$ to the abstraction bound to $\x$. This holds precisely when $\semenv(\t)
 \in \semenv(\x)$, \ie $\t$ is one of the satisfiable instances of $\x$.
-Concretely,
-if $\semenv(\x) = \semenvp(\cabs \tv \c)$, where
-$\semenvp$ is the environment at the binding site of~$\x$,
-%
-\XDR{It is unclear
-what this means. Actually I find this explanation quite confusing, while
-$\semenv(\x) \in \semenv (\cabs \tv \c)$ was clear enough}
-%
-\Xalistair{The point of this sentence is to explain why membership is sufficient for application
-\eg it corresponds solving the body of the abstraction with the applied
-type.}\XDR{I understodd the intentention, but I think the wording, which is unchanged, is still unclear}
-%
-then $\semenv(\t)
-\in \semenv(\x)$ holds iff $\semenvp\where{\tv \is \semenv(\t)} \th \c$, which
-corresponds to the intuition that the application $\capp {(\cabs \tv \c)} \t$
-should be equivalent to $\c \where {\tv \is \t}$.
+%Concretely,
+%if $\semenv(\x) = \semenvp(\cabs \tv \c)$, where
+%$\semenvp$ is the environment at the binding site of~$\x$,
+%%
+%\XDR{It is unclear
+%what this means. Actually I find this explanation quite confusing, while
+%$\semenv(\x) \in \semenv (\cabs \tv \c)$ was clear enough}
+%%
+%\Xalistair{The point of this sentence is to explain why membership is sufficient for application
+%\eg it corresponds solving the body of the abstraction with the applied
+%type.}\XDR{I understodd the intentention, but I think the wording, which is unchanged, is still unclear}
+%%
+%then $\semenv(\t)
+%\in \semenv(\x)$ holds iff $\semenvp\where{\tv \is \semenv(\t)} \th \c$, which
+%corresponds to the intuition that the application $\capp {(\cabs \tv \c)} \t$
+%should be equivalent to $\c \where {\tv \is \t}$.
 
 
 \parcomment {Suspended match constraints}
@@ -2217,8 +2189,7 @@ $\theta$ mapping pattern variables (\eg nominal type variables $\ct$ from
 \cref{sec/overview/omni}) to shape components (\eg nominal type names $\T$).
 These components may themselves mention the freshly introduced variables
 $\tvs$. For example, the wildcard pattern $\cpatwild$ matches any shape,
-yielding the empty substitution.\XDR{Repeatition: the same sentence appeard
-on source line 2123. One of the two should be removed.}
+yielding the empty substitution.\TODO{Add reference to earlier mention}
 In~\cref {sec/oml/constraints}, we will extend both the
 syntax of patterns and the matching function itself to handle the patterns that
 arise in \OML.
@@ -2635,9 +2606,9 @@ $\t$ such that $\t$ becomes a valid type of $\e$. For example, to infer the
 entire type of $\e$ we may pick a fresh type variable $\tv$ for $\t$.
 
 
-\paragraph{Patterns}\XDR{Match-constraint patterns?}
+\paragraph{Shape patterns}
 
-Thus far, our formal presentation of match-constraint patterns has remained
+Thus far, our formal presentation of shape patterns has remained
 abstract, deliberately leaving the syntax and semantics of match constraints
 partially unspecified to accommodate a range of language features. We now
 concretize
@@ -2698,6 +2669,7 @@ generate a polymorphic let constraint; $\cabs \tv {\cinfer \e \tv}$ is a
 principal constraint abstraction for $\e$: its intended interpretation is
 the set of all types that $\e$ admits.
 
+\TODO{Talk about the witnesses of known type information before matching $\tz$}
 % New constraint gen cases
 % Annotations, tuples
 Annotations bind their flexible type variables and enforce the equality of
@@ -2822,13 +2794,9 @@ hence the generated constraint for \code{ex_1_1} is satisfiable.
 \label{sec/oml/metatheory}
 
 Constraint generation is sound and complete with respect to the typing judgment:
-\XDR{Is
-$\cexists \tv {(\cinfer \e \tv \cand \tv = \t)} \not\cequiv
-\cinfer \e \t$? If so it should be emphasized somewhere. Which rule breaks
-this? }
 %
 \begin{theorem}[Constraint generation is sound and complete]
-  \label{thm:constraint-gen-is-sound-and-complete}~\\
+  \label{thm:constraint-gen-is-sound-and-complete}
 A closed \OML term $\e$ is typable if and only if
 the constraint $\cexists \tv {\cinfer \e \tv}$ is satisfiable.
 \end{theorem}
@@ -3281,7 +3249,7 @@ to permutation of these variables.
 Satisfiability of regional \Let-constraints is defined in
 \cref{fig:constraint-let-regions}. The semantics of an
 abstraction with a region, written $\semenv(\cabsr \tv \tvs \c)$, is a set of
-\emph{ground regions} that satisfy $\c$. A ground region\footnote{$\gr$ can be pronounced ``Fraktur r'' or just ``ground r''.} $\gr$ is a satisfying
+\emph{ground regions} that satisfy $\c$. A ground region $\gr$ is a satisfying
 interpretation for the region $\semenvp$ with a designated \emph{root} variable
 $\tv$, written $\greg \tv \semenvp$.
 Regional \Let-constraints strictly
@@ -3350,11 +3318,13 @@ treatment is naturally expressed as a strategy on top of their
 \parcomment{Generalization with suspended constraints is hard}
 
 
+\TODO{Take example from coderpad}
 \Xalistair{I think we need a new example here, one with some polymorphism.}
 However, this approach \emph{does not} extend to suspended constraints. To
 illustrate this, let us reexamine \ocaml{ex_4} from \cref{sec/overview/overloading}:
 \begin{program}[input]
-let ex_4 r = let x = r.x in x + (r : point).y °\ocamlflags10°
+type 'a gcolor = { x int; y : int; color : 'a }
+let ex_4 r = let get_color r = r.x in get_color r + (r : gs_point).y °\ocamlflags10°
 \end{program}
 The generated typing constraint contains:
 \begin{mathpar}
@@ -3412,18 +3382,12 @@ additional equations to the application sites.
 
 \parcomment{Semantics of incremental applications}
 
-The semantics of the existential constraint $\cexistsi \inst \x \c$
-(\Rule{Exists-Inst}), given in \cref{fig:constraint-let-regions}, introduces
-the fresh instantiation~$\inst$ by ``guessing'' a region $\semenvp$ that
-satisfies the regional constraint abstraction bound to $\x$.
-\XDR{I am not sure that guessing carry the correct idea. This just behave
-as an existential. Also, I think the explanation is too short for
-instantiation constraints: the math looks complicated while the intuition is
-quite simple. It is just like instantiation except that we keep track of the
-origins of the instances. A graphical view, as in solving unifications
-constraints is enlightening.}
-\Xalistair{I'm not too sure what kind of graphic you're thinking of? Could
-you sketch one?}
+The existential constraint $\cexistsi \inst \x \c$ is satisfiable
+(\Rule{Exists-Inst}), given in \cref{fig:constraint-let-regions}, if 
+there exists a region $\semenvp$ that
+satisfies the regional constraint abstraction bound to $\x$ and $\c$ is satisfied 
+with $\semenvp$ bound to $\inst$.
+\TODO{Improve flow}
 %
 Incremental instantiations (\Rule{Incr-Inst}) equate the copy of $\tv$ in
 $\inst$ with $\t$.
