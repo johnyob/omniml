@@ -1638,9 +1638,16 @@ To make sense of these definitions, we rely on three auxiliary notions:
 
   \item
 
-    Finally, we define a restricted typing judgment $\G \throbust \e : \ts$,
-    which derives $\G \th \e : \ts$ without using any fragile, implicit typing
-    rules (\Rule{*-I}).
+    Finally, we define a restricted typing judgment
+    $\G \throbust \e : \ts$, which derives $\G \th \e : \ts$ without
+    using any fragile, implicit typing rules (\Rule{*-I}).
+    \Xgabriel{I don't understand why we need a separate judgment: the
+      erased terms $\eerase \e$ do not contain any syntactic occurence
+      of the fragile constructs, so the standard judgment and the
+      robust judgment are equivalent on these terms. I see why being
+      explicit on the restricted domain is a virtue, but adding a new
+      notion adds complexity, I would drop $(\throbust)$ -- and
+      reformulate sligthly the discussion of well-formedness below.}
 \end{enumerate}
 
 \parcomment{Typed holes must preserve typability of subterms}
