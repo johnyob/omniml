@@ -1545,7 +1545,7 @@ represented as the shape application $\shapp (\tint \tlist)$.
     }
   \end{bnfgrammar}
   \par
-  \inferrule[Magic]
+  \inferrule[Hole]
     {\parens{\G \th \ei : \ti}\iton}
     {\G \th \emagic \es : \tp}
 
@@ -1625,8 +1625,8 @@ To make sense of these definitions, we rely on three auxiliary notions:
 \begin{enumerate}
   \item
     We write $\emagic \es$ for a \emph{typed hole} carrying subterms $\es$.
-    The terms $\es$ are required to be well-typed in the current
-    environment (\Rule{Magic}), but their types are independent of the type of
+    The subterms $\es$ are required to be well-typed in the current
+    environment (\Rule{Hole}), but their types are independent of the type of
     the hole: the hole itself may be assigned an arbitrary type.
 
   \item
@@ -4622,7 +4622,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
      \G, x : \sigma \th \eb : \t}
     {\G \th \elet x \ea \eb : \t}
 %% \color{gray}{
-%%   \inferrule[Magic]
+%%   \inferrule[Hole]
 %%     {\G \th \e : \t}
 %%     {\G \th \emagic \e : \tp}
 %% }
@@ -4687,7 +4687,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
      \G \th \E\where{\exfield \e \T \elab} : \t}
     {\G \th \E\where{\efield \e \elab} : \t}
 
-  \inferrule[Magic]
+  \inferrule[Hole]
     {\parens{\G \th \ei : \ti}\iton}
     {\G \th \emagic {\bar \e} : \tp}
 
@@ -4895,7 +4895,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\e \simple \\ \labuni \elab \T}
     {\efield \e \elab \simple}
 
-  \inferrule[Simple-Magic]
+  \inferrule[Simple-Hole]
     {\parens{\ei \simple}\iton}
     {\emagic \es \simple}
 \end{judgboxmathpar}
@@ -7979,7 +7979,7 @@ understand whether this is a critical issue.
 % LocalWords:  huet unif conf Vytiniotis Peyton Schrijvers Sulzmann Leijen
 % LocalWords:  disambiguating namespace implicits Bour Yallop Didier Annot
 % LocalWords:  acyclicity canonicalization aaa formedness unannotated inX
-% LocalWords:  casted inMagic inAnnot unsubstituted oml RCLL Scm LCL Decomp
+% LocalWords:  casted inHole inAnnot unsubstituted oml RCLL Scm LCL Decomp
 % LocalWords:  mutli cheatsheet inI ProjX PolyX UseX unifier Gc Defn sw iw
 % LocalWords:  InstLeft InstRight mergable tw uw RRCL eqs priori multiset
 % LocalWords:  reflexitivity metatheoretic lexicographically Unifiers TODO
