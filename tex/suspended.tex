@@ -1615,7 +1615,7 @@ $\E$ (with subterms $\es$) has the unique shape $\sh$.
 \\[1ex]
 \Eshape \E \es \sh \Eqdef
   \forall \G, \t, \gt, \uad
-      \G \throbust \eerase {\E\where{\eannot {\emagic \es} {} \gt}} : \t
+      \G \throbust \eerase {\E\where{\eannotmagic \es {} \gt}} : \t
       \wide\implies \shape \gt = \sh
 \end{tabular}}
 \end{mathpar}
@@ -1661,7 +1661,7 @@ would be ill-typed if we erased $\eannot r {} {\ttlab {point}}$.
 \parcomment{Erasure induces a causal order}
 
 The erasure of $\eerase{\E\where{\emagic{\eannot \e {} \gt, \es}}}$ and
-$\eerase{\E\where{\eannot {\emagic \es} {} \gt}}$ replaces all
+$\eerase{\E\where{\eannotmagic \es {} \gt}}$ replaces all
 not-yet-elaborated implicit constructs with typed holes, ensuring that the
 unicity of $\sh$ is determined \emph{only} by implicit terms that have been
 elaborated thus far. This induces a causal, or partial, order among implicit
@@ -1868,7 +1868,7 @@ hold. Indeed, the judgment
 $\eset \th \eerase {\E \where {\eannot {\emagic {\efield r \ttcolor}} {}
 {\gt}}} : \gt \to \tp$, \ie
 %
-$\eset \th \efun r {\eannot {\emagic r} {} {\gt}} : \gt \to \tp$ holds for
+$\eset \th \efun r {\eannotmagic r {} {\gt}} : \gt \to \tp$ holds for
 any $\gt$.  Hence, the shape of the type of $\efield {\efield r \ttcolor}
 \ttx$ is not uniquely determined and this case cannot occur.
 
@@ -1886,9 +1886,9 @@ The derivation must end with:
 However, $\eshape \E {r} {\ttciepoint}$ does not hold
 either. Again, the judgment
 %
-$\eset\th \eerase {\E\where{\eannot {\emagic r} {} {\gt}}} : \tp \to \gt$, \ie
+$\eset\th \eerase {\E\where{\eannotmagic r {} {\gt}}} : \tp \to \gt$, \ie
 %
-$\eset\th \efun r {\eannot {\emagic r} {} {\gt}} : \tp \to \gt$ holds for
+$\eset\th \efun r {\eannotmagic r {} {\gt}} : \tp \to \gt$ holds for
 any $\gt$.
 
 \end{proofcases}
@@ -4696,7 +4696,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 \\[1ex]
 \Eshape \E {\bar\e} \sh \Eqdef
   \forall \G, \t, \gt, \uad
-      \G \th \eerase {\E\where{\eannot {\emagic {\bar \e}} {} \gt}} : \t
+      \G \th \eerase {\E\where{\eannotmagic {\bar \e} {} \gt}} : \t
       \wide\implies \shape \gt = \sh
 \\[1ex]
 \end{tabular}}
