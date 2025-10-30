@@ -3,9 +3,14 @@
 %% Leave the above line for didier
 %% No macros before \documentclass
 
+\input{\jobname.cfg}
+\RequirePackage{boolean}
 
-\documentclass[acmsmall,screen,nonacm,review,anonymous]{acmart}
-\input{suspended.cfg}
+\documentclass[acmsmall,screen,nonacm%
+\Anonymous{,anonymous}{}%
+\Final{}{,review}%
+\Draft{,draft}{}%
+]{acmart}
 
 \newcommand{\acmart}{\True}
 \usepackage{suspended}
