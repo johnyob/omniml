@@ -4010,7 +4010,7 @@ cases? Should we fire all default rules of all suspended
 constraints that remain after the solver terminates, simultaneously, or in
 batches, \eg. restricted to connected components of mutually dependent suspended
 constraints?  Our prototype opts for the latter, but this warrants further
-study. More details can be found in Appendix \cref {app/default-rules}.
+study. \Draft{More details can be found in Appendix \cref {app/default-rules}.}{}
 
 %%\paragraph{Behavior of default rules} Giving priority to most recent
 %%definitions is a possible default behavior for field and constructor
@@ -7670,6 +7670,7 @@ Let $\e$ be an arbitrary closed well-typed term; that is, there exists a type
   required \ref{proof:principal-types:2}.
 \end{proof}
 
+\begin{version}{\Draft}
 \section {Further study}
 
 \subsection {Defaulting}
@@ -7734,8 +7735,6 @@ solution, then following a successful strategy, and fails otherwise.
 Unfortunately, $\Sopt$ is inefficient: as described , it runs in time
 exponential in the number of remaining suspended constraints.  Therefore, we
 should seek for sub-optimal, but more efficient good strategies.
-
-\begin{version}{\Not\Final} %\Draft
 
 \paragraph {Dependencies}
 
