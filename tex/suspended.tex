@@ -36,7 +36,7 @@
 \orcid{0000-0002-0693-6278}
 \email{didier.remy@inria.fr}
 \affiliation{
-  \institution{Inria}
+  \institution{INRIA}
   \country{France}
 }
 
@@ -55,7 +55,8 @@
 \begin{document}
 
 \begin{abstract}
-
+  \TODO{This abstract is missing some bits. Sigh... I shouldn't be writing when 
+  I'm ill}
 % Background + Gap
 
   Principality lies at the heart of the Damas-Hindley-Milner (\ML) type system.
@@ -232,8 +233,6 @@ So I am not sure we should mention modular explicit, or discuss this.
 Then it should be more in the discussion/future work section.
 Modular implicit require another form of interaction, which is like general
 static overloading.}
-\XDR{As for the citations, we could ether point to the \OCaml RFC or the \ML
-workshop. I guess the latter is better.}
 
 \parcomment {Scaling to ML / let-generalization}
 
@@ -301,7 +300,7 @@ the appendices.
 We ground our work in two fragile features of \OCaml: \emph{static overloading}
 of record labels and constructors, and \emph{polymorphic object methods}. Both
 are useful in practice: static overloading is widely relied upon in large
-programs, and polymorphic methods make higher-rank polymorphism available
+programs, and polymorphic methods make first-class polymorphism available
 within \OCaml.
 
 \subsection{Static overloading of constructors and record labels}
@@ -401,13 +400,18 @@ let getx r = r.x                                      °\ocamlflags 21°
 %
 The expression is compatible with both \code{point} and \code{gray_point}, since each
 defines a field \code{x}. But \code{gray_point} is chosen simply because it appears
-later in the source. We do not treat this behavior as principal; accordingly,
-we provide no formalization of such ``default rules'', though their
-implementation is discussed further in \cref{sec:discussion}.
+later in the source. 
+
+\parcomment {Default rules are inherently non-principal}
+
+Such fallback behaviour is inherently \emph{non-principal}: it reflects the
+typechecker's decision to abandon principal inference and arbitrarily select a
+syntactic default when no unique type can be inferred. We therefore give no
+formal account of such ``default rules''.
 
 \parcomment{Default rules interact poorly with directional inference}
 
-This fallback mechanism highlights the directionality of \OCaml inference. Once
+Defaulting also interacts poorly with \OCaml's directional inference. Once 
 the compiler selects a type, it commits to it---even if that choice causes
 errors downstream. Consider:
 %
@@ -521,11 +525,10 @@ This reduction is useful for two reasons:
 \label{sec/overview/polytypes}
 
 Polytypes expose the tricky interaction with principality of interest. For the
-remainder of this work, we will focus on polytypes\penalty 50---also called
-\emph{semi-explicit first-class polymorphism}
+remainder of this work, we therefore focus on polytypes\penalty 50---also
+called \emph{semi-explicit first-class polymorphism}
 \citep*{Garrigue-Remy/poly-ml}---as originally formulated in the \PolyML
-calculus. We now review its typing rules collected in
-\cref{fig:polyml}.
+calculus, whose typing rules are collected in \cref{fig:polyml}.
 
 \parcomment {Annotation variables. Why?}
 
@@ -554,11 +557,11 @@ that the polytype is known.
 
 Conversely, to instantiate a polytype expression (\Rule{PolyML-Inst}), one must
 use an explicit unboxing operator $\einst \e$, which requires no accompanying
-type annotation. However, the operator requires $\e$ to have a polytype scheme
+type annotation. However, the operator requires $\e$ to have a \emph{known} polytype scheme
 of the form $\tfor \av {\tapoly \ts \av}$ and then assigns $\einst \e$ the type
 $\ts$. If, by contrast, $\e$ has the type $\tapoly \ts \av$ for some
 non-generalizable annotation variable $\av$, then $\e$ is considered of a
-not-yet-known polytype, and therefore $\einst \e$ is ill-typed. This
+\emph{not-yet-known} polytype, and therefore $\einst \e$ is ill-typed. This
 restriction enforces principality, preventing instantiation on \emph{guessed}
 polytypes.
 
@@ -590,7 +593,7 @@ For example, $\efun {\x : \tapoly \ts {}}
 {\einst \x}$, which is syntactic sugar for $\efun \x {\elet \x {(\x : \tapoly
 \ts {})} {\einst \x}}$, is well-typed because the explicit annotation
 introduces a fresh variable annotation $\ava$, which can then be generalized,
-yielding $\tfor \ava {\tapoly \ts \ava}$.
+yielding $\tfor \ava {\tapoly \ts \ava}$ for the type of the let-bound variable $\x$.
 
 \subsection{Directional type inference}
 \label{sec/overview/directional}
@@ -627,7 +630,7 @@ levels.
 \parcomment{Who uses this?}
 
 This mechanism was originally proposed by~\citet*{Garrigue-Remy/poly-ml} for
-semi-explicit first-class polymorphism, and later used
+polytypes in \PolyML, and later used
 by~\citet*{LeBotlan-Remy/recasting-mlf} for empowering \MLF.
 %
 It has since been adopted in \OCaml for features such as polymorphic object
@@ -796,24 +799,41 @@ successfully typechecks \code{ex_6}. Nevertheless, it still enforces a fixed
 order of propagation, so some well-typed programs are rejected as ill-typed
 (\eg \code{ex_6_2, ex_6_3}).
 
-\TODO{Check these in contextual typing}
+% Contextual typing stuff
+%
+% See typing rules in Figure 5 on pg 11 of 
+% https://dl.acm.org/doi/pdf/10.1145/3674655
+%
+% Here is a brief argument of why contextual typing fails here: Take ex_62 for
+% instance (everything inlined to avoid talking about implicit polymorphism):
+%
+% ```ocaml
+%  (fun f x -> f x) (fun p -> < p >) [ fun x -> x : 'a. 'a -> 'a ]
+% ```
+%
+% In order to type check `fun f x -> f x`, we must type check it with quantity
+% 2 (S S 0) since it has two unknown parameters (according to DLam on pg 11).
+% Thus to typecheck the application `(fun f x -> f x) (fun p -> < p >)` we need
+% to use DApp2 with quantity 1 (S 0) for the conclusion. But this requires us
+% to type `fun p -> < p >` with quantity 0! This is not possible (n- is
+% undefined for n = 0). 
+%
+% Similar argument for ex_63: `(fun x f -> f x) [ fun x -> x : 'a. 'a -> 'a ]`
+% is typable with quantity 1. But the application of `(fun p -> < p >)` would
+% (yet again) need to be typable with quantity 0 (in order to apply DApp2).
+% This is not possible.
 
-\TODO{Mention QuickLook and Freezing Bidir -- general approaches for 
-doing bidir with more order independence.}
+\parcomment{QuickLook and Freezing Bidirectional}
 
-%\XDR{Should we mention QuickLook as a way to locally take into account
-%multiple arguments in an order-independent manner?}
-%\Xalistair{QuickLook is order-dependent. It handles multiple arguments
-%by considering a spine in order. What is does do, is it does an approximation
-%pass on the arguments in the spine to see if they help with the instantiation
-%of the return type. But this is also order-dependent, in the same way that
-%Freezing Bidirectional type inference is order dependent. }
-%\XDR{QuickLook is local and
-%independent of the order or arguments: it looks at them altogether.
-%But let's discuss this at the next meeting.
-%My point is that we should probably cite other works that lies between
-%directional type inference and local type inference
-%}
+In parallel, \QuickLook \citep{journals/pacmpl/SerranoHJV20} and \Frost
+\citep{frost} take a pragmatic approach to mitigating order-dependence in
+applications. Both target impredicative higher-rank polymorphism, using partial
+approximations of function and argument types to guide type inference at the
+point of application. This enables a limited form of \emph{argument
+reordering}, where information from later arguments can influence the typing of
+earlier ones within an application spine. In practice, these mechanisms work
+well, but they still enforce a fixed overall direction of propagation between
+surrounding constructs.
 
 \paragraph{Limitations of directional type inference}
 
@@ -1076,6 +1096,8 @@ The remainder of the paper develops these three ideas in turn:
 
 \end{enumerate*}
 
+\paragraph{Limitations}
+
 \section{The \OML calculus}
 \label{sec/oml}
 
@@ -1294,6 +1316,9 @@ following expressions:
 solved it. $\t/\elab$ does not associates intuitively. For example
 $e.t/\elab$ reads $(e.t)/\elab$, which is not what we meant.}
 \TODO{Try $\elab^{\T}$ and $\erecord { \dots }^{\T}$}.
+    \Xalistair{How about, we make $\T$ ($\mathsf{T}$) uppercase (as is usual for notation for type constructors). 
+    We can have lowercase $t$ for pattern variables and we get to use our original dot syntax that 
+    we we're all happy with?}
 \end{itemize}
 All annotations in \OML are closed \ie their quantified variables $\tvs$ are
 exactly the free variables of the type $\t$ or type scheme $\ts$.
