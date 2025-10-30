@@ -1278,7 +1278,7 @@ variables. Standard notions such as the set of free variables $\fvs
 \ts$ and capture-avoiding substitutions $\ts\where{\tv \is \t}$ are defined in
 the usual way. We write $\TyVars$ for the set of type variables, and use $\tvs
 \disjoint \ts$ as a short-hand for $\tvs \disjoint \fvs \ts$. Finally, $\gt \in
-\Ground$ denotes a \emph{ground type}---a type with no free variables.
+\Ground$ denotes a \emph{ground type}---a type with no free variables.\footnote{$\gt$ can be pronounced ``Fraktur g'' or just ``ground g''.}
 
 
 \paragraph{Terms}
@@ -3279,10 +3279,9 @@ to permutation of these variables.
 Satisfiability of regional \Let-constraints is defined in
 \cref{fig:constraint-let-regions}. The semantics of an
 abstraction with a region, written $\semenv(\cabsr \tv \tvs \c)$, is a set of
-\emph{ground regions} that satisfy $\c$. A ground region is a satisfying
+\emph{ground regions} that satisfy $\c$. A ground region\footnote{$\gr$ can be pronounced ``Fraktur r'' or just ``ground r''.} $\gr$ is a satisfying
 interpretation for the region $\semenvp$ with a designated \emph{root} variable
-$\tv$, written $\greg \tv \semenvp$.\XDR{Letter $\gr$ appearing in the
-Figure is unreadable/unparsable}
+$\tv$, written $\greg \tv \semenvp$.
 Regional \Let-constraints strictly
 generalize ordinary constraint abstractions, as captured by the equivalence:
 \begin{mathpar}
