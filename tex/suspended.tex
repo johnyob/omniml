@@ -2702,10 +2702,9 @@ is at least as general as $\cscm$, via the constraint $\x \leq \cscm$.
 % Records
 Record projections generate a fresh variable $\tv$ for the nominal record
 type and constrain $\e$ to this type, suspending until the type $\tv$ of
-$\e$ is known to be a nominal record type $\ct$.\XDR{$\ct$ is not a
-meta-varoable for nominal record types, not itself a nominal record type.
-This introduces some confusion.} Once resolved, the type of the projected
-label is retrieved from the global label context $\labenv$ and instantiated.
+$\e$ is known to be a nominal record type matching the shape pattern
+$(\cpatrcd \ct)$. On discharge, the type of the projected label is
+retrieved from the global label context $\labenv$ and instantiated.
 %
 For record expressions, we generate a fresh variable $\tvi$
 for each field assignment to capture the type of each $\ei$ as $\tvi$.
