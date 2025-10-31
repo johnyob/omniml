@@ -2190,19 +2190,18 @@ determined; but it may not exist as branches need not be exhaustive, in
 which case the discharged constraint is $\cfalse$.
 \end{definition}
 
-The partial function $(\Cmatches \cpat \sh \tvs)$, defined in
-\cref{fig:constraints}, describes how a pattern $\cpat$ is matched against a
-canonical principal shape $\sh$. Before matching, $\sh$ is opened with fresh
-shape variables $\tvs$ (of the same arity as $\sh$), so that the result of
-matching may refer to them. The match either fails or returns a substitution
-$\theta$ mapping pattern variables (\eg nominal type variables $\ct$ from
-\cref{sec/overview/omni}) to shape components (\eg nominal type names $\T$).
-These components may themselves mention the freshly introduced variables
-$\tvs$. For example, the wildcard pattern $\cpatwild$ matches any shape,
-yielding the empty substitution.\TODO{Add reference to earlier mention}
-In~\cref {sec/oml/constraints}, we will extend both the syntax of shape
-patterns and the matching function itself to handle the patterns that arise
-in \OML.
+The partial function $(\Cmatches \cpat \sh \tvs)$, introduced in
+\cref{fig:constraints}, describes how a pattern $\cpat$ is matched against
+a canonical principal shape $\sh$. Before matching, $\sh$ is opened with
+fresh shape variables $\tvs$ (of the same arity as $\sh$), so that the
+result of matching may refer to them. The match either fails or returns
+a substitution $\theta$ mapping pattern variables (\eg nominal type
+variables $\ct$ from \cref{sec/overview/omni}) to shape components (\eg
+nominal type names $\T$).  These components may themselves mention the
+freshly introduced variables $\tvs$. In~\cref {fig:constraints} we only
+introduce the wildcard pattern and its matching rule; in~\cref
+{sec/oml/constraints} we extend both the syntax of shape patterns and the
+matching function itself to handle the patterns that arise in \OML.
 
 
 \paragraph {A natural attempt}
