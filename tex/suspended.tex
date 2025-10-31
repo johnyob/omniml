@@ -1616,21 +1616,21 @@ $\E$ (with subterms $\es$) has the unique shape $\sh$.
 {\begin{tabular}{RCL}
 \eshape[\es] \E \e \sh \Eqdef
   \forall \G, \t, \gt, \uad
-  \G \throbust \eerase {\E \where {\emagic {\es, \eannot \e {} \gt }}} : \t
+  \G \th \eerase {\E \where {\emagic {\es, \eannot \e {} \gt }}} : \t
       \wide\implies \shape \gt = \sh
 \\[1ex]
 \Eshape \E \es \sh \Eqdef
   \forall \G, \t, \gt, \uad
-      \G \throbust \eerase {\E\where{\eannotmagic \es {} \gt}} : \t
+      \G \th \eerase {\E\where{\eannotmagic \es {} \gt}} : \t
       \wide\implies \shape \gt = \sh
 \end{tabular}}
 \end{mathpar}
 %
-To make sense of these definitions, we rely on three auxiliary notions:
+To make sense of these definitions, we rely on a few auxiliary notions:
 %
 \begin{enumerate}
   \item
-    We write $\emagic \es$ for a \emph{typed hole} carrying subterms $\es$.
+    We write $(\emagic \es)$ for a \emph{typed hole} carrying subterms $\es$.
     The subterms $\es$ are required to be well-typed in the current
     environment (\Rule{Hole}), but their types are independent of the type of
     the hole: the hole itself may be assigned an arbitrary type.
@@ -1641,20 +1641,6 @@ To make sense of these definitions, we rely on three auxiliary notions:
     around their subterms. For example, $\eerase {\efield \e \elab}$ is
     $\emagic {\cerase \e}$. The full definition is given in
     \cref{fig:erasure}.
-
-  \item
-
-    Finally, we define a restricted typing judgment
-    $\G \throbust \e : \ts$, which derives $\G \th \e : \ts$ without
-    using any fragile, implicit typing rules (\Rule{*-I}).
-    \Xgabriel{I don't understand why we need a separate judgment: the
-      erased terms $\eerase \e$ do not contain any syntactic occurence
-      of the fragile constructs, so the standard judgment and the
-      robust judgment are equivalent on these terms. I see why being
-      explicit on the restricted domain is a virtue, but adding a new
-      notion adds complexity, I would drop $(\throbust)$ -- and
-      reformulate sligthly the discussion of well-formedness below.}
-    \TODO{Do this change, we agreed.}
 \end{enumerate}
 
 \parcomment{Typed holes must preserve typability of subterms}
@@ -1677,15 +1663,14 @@ dependencies---those providing the relevant \emph{known} type
 information---have themselves been elaborated. This ordering prevents
 self-justifying cycles in unicity and rules out ``out-of-thin-air'' guesses.
 
-\parcomment{Well-foundedness via robust turnstile}
+\parcomment{Well-foundedness}
 
-\TODO{Adapt this to not mention the $\throbust$ judgment anymore.}
-Because erasure $\eerase \e$ always produces a \emph{robust} term, our unicity
-conditions use the restricted judgment $\throbust$ in the antecedent of the
-implication (in place of $\th$). Defining unicity in terms of $\throbust$ from
-the outset avoids well-foundedness issues that would otherwise arise from the
-negative occurrence of $\th$ in the premises of contextual typing rules
-(\Rule{*-I}).
+The unicity conditions contain negative occurrences of the typing judgment;
+it remains well-founded because these are typing assumptions on erased
+terms, that do not themselves contain any implicit rules. Formally one could
+define a restricted system $\G \throbust \e : \t$ without the implicit rules
+(\Rule{*-I}), and use this strictly simpler judgment in the unicity
+conditions; we omit this distinction for simplicity.
 
 \paragraph{The omnidirectional recipe}
 %
