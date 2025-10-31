@@ -992,8 +992,8 @@ we generate the typing constraint:
   \cexists \tv \cinfer \e \tv
   \cand
   \cmatch \tv
-      {\parens{\cbranch {\cpatrcd \ct}
-  {{\labfrom \elab \ct \leq \tlab \tv \t}}}
+      {{\cbranch {\cpatrcd \ct}
+  {{\labfrom \elab \ct \leq (\tlab \tv \t)}}}
       }
 \end{mathpar}
 
@@ -1024,7 +1024,7 @@ constraint:
 \cinfer {\einst \e} \t \Wide\eqdef
     \cexists \tv \cinfer \e \tv
 \cand
-    \cmatch  \tv {\parens {\cbranch {\tpoly \cscm} \cscm \leq \t}}
+    \cmatch  \tv \cbranch {\tpoly \cscm} \cscm \leq \t}
 \end{mathpar}
 %
 The match remains suspended until $\tv$ resolves to some type $\tz$. If, upon
@@ -1046,7 +1046,7 @@ implement.
 
 \parcomment{\ML is hard}
 
-The difficulty originates from \ML \emph{implicit} let-polymorphism for which
+The difficulty originates from \ML \emph{implicit} \texttt{let}-polymorphism for which
 all known implementations follow the \geninst-order: first typing the binding,
 generalizing it into a type scheme, and finally typing the body under the
 extended typing environment that binds the generalized scheme. The
@@ -2268,7 +2268,7 @@ constraints, \Rule {Match-Ctx} (\cref{fig:constraints}), is the only non-syntax-
     {\semenv \th \C \where {\cmatch \t \cbrs}}
 \end{mathpar}
 %
-In this rule, a suspended match constraint $(\cmatch \t \cbrs)$ in the context
+In this rule, a suspended constraint $(\cmatch \t \cbrs)$ in the context
 $\C$ can be discharged, provided the shape $\sh$ is not guessed from $\semenv$,
 but recovered from the constraint context $\C$. This \emph{unicity} condition
 $\Cshape \C \t \sh$ (defined below) ensures that $\sh$ is uniquely determined
@@ -2397,7 +2397,7 @@ variable and $\C$ is satisfiable.
   \tvb \tbool$. We can therefore apply \Rule{Match-Ctx} to eliminate the final
   match constraint.
 
-  This example demonstrates that suspended match constraints must be resolved in
+  This example demonstrates that suspended constraints must be resolved in
   a dependency-respecting order: attempting to resolve a match constraint too
   early may result in unsatisfiability.
 \end{example}
@@ -2583,8 +2583,8 @@ variable and $\C$ is satisfiable.
     \cinfer {\exrecord \T {\overline{\elab = \e}}} \t
     & \text{if } \labsuni \elabs \T \\
     \cexists \tvs \cAnd\iton \cinfer \ei \tvi & \text{otherwise} \\
-    \uad\cand \cmatch \t {\cbranch {\cpatrcd \ct}
-      {\dom \ct = \elabs \cand \cAnd\iton \labfrom \elabi \ct \leq \t \to \tvi}} &
+    \uad\cand\uad \cmatch \t {\cbranch {\cpatrcd \ct}
+      {\parens{\dom \ct = \elabs \cand \cAnd\iton \labfrom \elabi \ct \leq \t \to \tvi}}} &
    \end{cases}}
 \\
 \Crule
