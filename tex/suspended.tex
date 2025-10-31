@@ -1006,7 +1006,7 @@ some type $\tz$. The branch then matches $\tz$ against the nominal type pattern
 $\cpatrcd \ct$, binding the type constructor $\T$ to the pattern variable $\ct$
 when $\tz = \Tapp \tyas$, and failing otherwise. Using this, the globally
 unique projection type (scheme) $\tfor \tvbs {\Tapp \tvbs \to \tp}$ for the
-qualified label $\labfrom \elab \T$ is instantiated, \eg to $\Tapp \tybs \to
+explicit label $\labfrom \elab \T$ is instantiated, \eg to $\Tapp \tybs \to
 \typ\where {\tvbs \is \tybs}$ for some $\tybs$. Finally, the resulting
 constraints are imposed on the domain (\ie $\tz = \Tapp \tybs$) and codomain of
 the instantiated projection type (\ie $\t = \typ\where{\tvbs \is \tybs}$).
@@ -1153,7 +1153,7 @@ The remainder of the paper develops these three ideas in turn:
   \\
   \entry[Label contexts]{\labenv}{
     \eset \and
-    \labenv, \elab : \all \tvs \Tapp \tvs \to \t
+    \labenv, \labfrom \elab \T : \all \tvs \Tapp \tvs \to \t
   }
   \\[1ex]
   \entry[Shapes] {\Sh} {\any \tvcs \t}
@@ -1197,7 +1197,7 @@ The remainder of the paper develops these three ideas in turn:
 
   \inferrule [Poly-X]
     {\G \th \e : \ts\where {\tvs \is \tys}}
-    {\G \th \epoly[\exi \tvs \ts] \e : \tpoly {\ts \where {\tvs \is \tys}}}
+    {\G \th \expoly \e \tvs \ts : \tpoly {\ts \where {\tvs \is \tys}}}
 
   \inferrule [Use-X]
     {\G \th \e : \tpoly \ts \where {\tvs \is \tys}}
@@ -1225,7 +1225,7 @@ The remainder of the paper develops these three ideas in turn:
 
   \inferrule[Lab-Inst]
     {\labenv(\labfrom \elab\T) = \tfor \tvs {\Tapp \tvs} \to \t}
-    {{\labfrom \elab \T} \leq \Tapp \tys \to \t\where{\tvs \is \tys}}
+    {{\labfrom \elab \T} \leq (\Tapp \tys \to \t\where{\tvs \is \tys})}
 \end{mathparfig}
 
 
@@ -1249,7 +1249,7 @@ specifications for fragile features often fail to preserve principality.
 \end{wraphbox}
 
 Consider records, for instance. We can ask the user to provide a type
-annotation $\Tapp \tys$ when projecting, using a qualified record projection
+annotation $\Tapp \tys$ when projecting, using an explicit record projection
 $\exfield \e \T \elab$, which has a simple typing rule (\Rule{Rcd-Proj-X}). By
 contrast, the natural typing rule for the overloaded projections $\efield \e
 \elab$ breaks principality (\Rule{Rcd-Proj-I-Nat}). For example, term $\efun r
@@ -1264,7 +1264,7 @@ record type $\Tapp[\T_0] \tys$, rather than merely \emph{guessed}.  This
 requirement is expressed via a \emph{unicity condition} (see
 \cref{sec/overview/omni/unicity}), yielding the contextual rule
 \Rule{Rcd-Proj-I}, which elaborates the fragile overloaded projection $\efield \e
-\elab$ into its robust qualified counterpart $\exfield \e \T \elab$.
+\elab$ into its robust explicit counterpart $\exfield \e \T \elab$.
 
 \subsection{Syntax}
 
@@ -1381,12 +1381,12 @@ $\tvs$, which are existentially quantified to close the annotation, as in
 We assume a global label context $\labenv$ mapping labels to their projection
 type, \ie type schemes of the form $\all \tvs \Tapp \tvs \to \t$. A label
 $\elab$ may belong to multiple record types, but is unique within each type
-$\T$. For a given $\T$, we write $\Labenv$ for the restriction of $\labenv$ to
-its labels: ${\Labenv} \eqdef \set {\elab : \all \tvs \T \tvs \to \t \in
-\labenv}$. Thus, $\dom (\Labenv)$ is the set of labels belonging to $\T$,  and
-$\labtyp \elab$, abbreviated as $\labenv (\labfrom \elab \T)$, is the unique
-scheme $\tfor \tvs {\Tapp \tvs} \to \t$ associated with $\elab$ in $\T$ (if
-defined).
+$\T$. For a given $\T$, we write $\Labenv$ for the set of labels belonging to $\T$:
+%
+${\Labenv} \eqdef \set {\elab \mid \labfrom \elab \T : \all \tvs \T \tvs \to \t \in \labenv}$.
+%
+We write $\labenv (\labfrom \elab \T)$ for the unique scheme
+$\tfor \tvs {\Tapp \tvs} \to \t$ associated with $\elab$ in $\T$ (if defined).
 
 \parcomment{Typing rules}
 
@@ -1405,9 +1405,9 @@ $\dom {(\Labenv)}$ of $\T$.
 
 \parcomment {Closed world reasoning}
 
-Our explicit system also supports \emph{closed-world} reasoning, which exploits
-the absence of ambiguity in the label context $\labenv$ to infer record
-annotations.
+Following OCaml, our explicit system also supports \emph{closed-world}
+reasoning, which exploits the absence of ambiguity in the label context
+$\labenv$ to infer record annotations.
 %
 In particular, in a record expression $\erecord {\elaba = \ea; \ldots; \elab_n
 = \en}$, if the set of labels ${ \elaba, \ldots, \elab_n }$ uniquely identifies
@@ -1573,7 +1573,7 @@ represented as the shape application $\shapp (\tint \tlist)$.
 
   \inferrule [Poly-I]
     {\Eshape \E \e {{\any \tvcs \tpoly \ts}} \\\\
-     \G \th \E \where{\epoly[\exi \tvcs \ts] \e} : \t}
+     \G \th \E \where{\expoly \e \tvcs \ts} : \t}
     {\G \th \E \where{\epoly \e} : \t}
 \\
   \inferrule[Rcd-I]
@@ -1698,7 +1698,7 @@ We first describe the framework, then present each feature separately.
     This is the secret ingredient! The unicity condition ensures that the shape
     $\sh$ is fully determined by the surrounding context $\E$ and
     subexpressions $\es$ (\eg the subexpressions $\es$ in $\erecord
-    {\overline{\elab = \e}}$). \\
+    {\overline{\elab = \e}}$).
 
     %
     If the $\e^i$ is an introduction form, we infer the shape from the context's
@@ -2649,7 +2649,7 @@ Patterns include:
 
 Each new kind of pattern introduces corresponding constraint formers:
 $\labfrom \elab \ct \leq \ta \to \tb$ asserts that $\ta \to \tb$ is a
-instance of projection type associated with the qualified label $\labfrom
+instance of projection type associated with the explicit label $\labfrom
 \elab \ct$; $\dom \ct = \elabs$ ensures that the domain of nominal type
 $\ct$ is the set of labels $\elabs$; and $\cscm \leq \t$ checks that $\t$ is
 an instance of $\cscm$, while $\x \leq \cscm$ asserts that every instance of

@@ -212,9 +212,9 @@
 \defmetavar[n,s]{\e}{e}
 \newcommand{\econstr}[2]{#1 \@ #2}
 \newcommand{\einst}[2][]{\angles {#2\ifempty{#1}{}{:#1}}}
-\newcommand{\exinst}[3]{\angles {#1 : \ifempty{#2}{{#3}}{\exi {#2} {#3}}}}
+\newcommand{\exinst}[3]{\angles {#1}^{\ifempty{#2}{{#3}}{\exi {#2} {#3}}}}
 \newcommand{\epoly}[2][]{\tpoly{#2\ifempty{#1}{}{:#1}}}
-\newcommand{\expoly}[3]{\epoly {#1 : \exi {#2} {#3}}}
+\newcommand{\expoly}[3]{\epoly {#1}^{\exi {#2} {#3}}}
 \newcommand{\eunit}{()}
 \newcommand{\efun}[2]{\lambda #1. \, #2}
 \newcommand{\eifun}[2]{\lambda_{?} #1. \, #2}
@@ -259,7 +259,7 @@
 \newcommand \labto [2]{#2 \to #1}
 \newcommand \labin {\mathinfix {in}}
 \newcommand \labsof {\mathprefix {Labs}}
-\newcommand \labfrom [2]{{#2}{/}#1}
+\newcommand \labfrom [2]{#1^{#2}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Other
