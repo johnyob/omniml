@@ -44,7 +44,9 @@
 %% could expand to capitalized or uppercase, depending on the chosen name
 \newcommand \geninst {\ensuremath{\pi}}
 %% Expected uppercase version (fully determined by the choice of \geninst)
-\def \Geninst-{\hbox{\LARGE\geninst\kern-0.2ex}\nobreak-\nobreak}
+%% Alistair: I wasn't a fan of the this uppercase \pi. It looks out of place.
+%% \def \Geninst-{\hbox{\LARGE\geninst\kern-0.2ex}\nobreak-\nobreak}
+\newcommand \Geninst {\geninst}
 
 %% Other choices for \geninst:
 %% PI --- for Polymorphism-Instantiation

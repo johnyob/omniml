@@ -55,35 +55,37 @@
 \begin{document}
 
 \begin{abstract}
-  \TODO{This abstract is missing some bits. Sigh... I shouldn't be writing when 
-  I'm ill}
-% Background + Gap
 
-  Principality lies at the heart of the Damas-Hindley-Milner (\ML) type system.
-  Yet principality is \emph{fragile}: many extensions of \ML break it. Existing
+% Background + Gap
+  The Damas-Hindley-Milner (\ML) type system owes its success to 
+  \emph{principality}, the property that every well-typed expression has a
+  unique most general type. This makes inference predictable and efficient. 
+  %
+  Yet, principality is \emph{fragile}: many extensions of \ML---GADTs,
+  higher-rank polymorphism, and static overloading---break it by introducing
+  \emph{fragile} constructs that resist principal inference. Existing
   approaches recover principality through \emph{directional} inference
-  algorithms, which propagate \emph{known} type information in a fixed order
-  (\eg as in bidirectional typing). Type information propagated in this way is
-  treated as \emph{known} and used to disambiguate otherwise non-principal
+  algorithms, which propagate \emph{known} type information in a fixed (or
+  \emph{static}) order (\eg as in bidirectional typing) to disambiguate such
   constructs. However, the rigidity of a \emph{static} inference order often
-  causes well-typed programs to be rejected.
+  causes otherwise well-typed programs to be rejected.
 
 % Innovation
 
   We propose \emph{omnidirectional} type inference, where type information
   flows in a \emph{dynamic} order. Typing constraints may be solved in any
   order, suspending when progress requires known type information and resuming
-  once it becomes available. Suspension is captured using \emph{suspended
-  match constraints}, which defer the resolution of some constraints until the
-  context has more information about an inference variable. To scale
-  omnidirectional
-  inference to \ML with \emph{local let-generalization}, we introduce
-  \emph{incremental instantiation}, enabling partially solved type schemes
-  containing suspended constraints to be instantiated, with a mechanism to
-  incrementally update instances as the scheme is refined.
-
-% Benefit
-
+  once it becomes available, using \emph{suspended match constraints}. This
+  approach is straightforward for simply typed systems, but extending it to \ML
+  is challenging due to \emph{let-generalization}. Existing \ML inference
+  algorithms type \Let-bindings $\elet \x \ea \eb$ in a fixed order---type
+  $\ea$, generalize its type, and then type $\eb$. To overcome this, we
+  introduce \emph{incremental instantiation}, allowing partially solved type
+  schemes containing suspended constraints to be instantiated, with a mechanism
+  to incrementally update instances as the scheme is refined. 
+  % 
+  % Benefit
+  %
   Omnidirectionality provides a \emph{general framework} for restoring
   principality in
   the presence of fragile features. We demonstrate its versatility on two
@@ -134,10 +136,13 @@ break principality under their \emph{natural} typing rules.
 
 This fragility can already be observed in \OCaml through impredicative
 higher-rank (\ie first-class) polymorphism, exposed by \emph{polymorphic
-methods}~\citep{Garrigue-Remy/poly-ml}:
+methods}~\citep{Garrigue-Remy/poly-ml} (\smashcolorbox{welltyped}{\strut green} indicates
+typechecking success and \smashcolorbox{illtyped}{\strut red} indicates
+failure):
 %
 \begin{program}[input]
-let self x = x#f x in self (object method f z = z end)
+let self x = x#f x in self (object method f z = z end) °
+\Ocamlcomment{\ocamlFlag {\OCaml}1}°
 \end{program}
 %
 In \OCaml, objects are defined as a collection of methods within
@@ -196,14 +201,12 @@ annotations as \emph{known} information.
 While effective in many settings, the rigidity of a static ordering causes even
 simple examples whose type could easily be inferred to be rejected. For
 instance, \OCaml accepts or rejects the following expression, depending on the
-position of the annotation (\smashcolorbox{welltyped}{\strut green} indicates
-typechecking success and \smashcolorbox{illtyped}{\strut red} indicates
-failure):
+position of the annotation:
 
 \begin{program}[input,angles]
-let self' (x : <f : 'a. 'a -> 'a>) = if true then x#f x else x °
+let self_1_1 (x : <f : 'a. 'a -> 'a>) = if true then x#f x else x °
 \Ocamlcomment{\ocamlFlag {\OCaml}0}°
-let self' x = if true then x#f x else (x : <f : 'a. 'a -> 'a>) °
+let self_1_2 x = if true then x#f x else (x : <f : 'a. 'a -> 'a>) °
 \Ocamlcomment{\ocamlFlag {\OCaml}1}°
 \end{program}
 
@@ -223,10 +226,8 @@ We present omnidirectionality as a general framework for inference in the
 presence of fragile features. While this paper instantiates our framework for
 two concrete features in \OCaml---static overloading and polymorphic object
 methods---its scope is broader: we expect it to extend to more richer features
-such as GADTs, polymorphic parameters \citep{White/polyparams@ml2023}, 
-modular explicits \citep{Vivien-Remy/explicits@ocaml2024} and implicits
-\citep{White-Bour-Yallop/Modular_Implicits/ml2014}, and other forms of
-type-based disambiguation.
+such as GADTs, polymorphic parameters \citep{White/polyparams@ml2023}, and 
+more generalized static overloading \ala Swift. 
 
 \parcomment {Scaling to ML / let-generalization}
 
@@ -317,7 +318,7 @@ labels and datatype constructors. Ambiguity is resolved using \emph{known
 type information} under its directional inference algorithm (discussed in
 \cref{sec/overview/directional}).
 %
-To illustrate static overloading in \OCaml, consider two record types with
+To illustrate static overloading in \OCaml, consider two nominal record types with
 overlapping field names:
 \begin{program}[input]
 type point      = { x : int; y : int }
@@ -430,7 +431,7 @@ only on record fields in this work. Our prototype implementation
 \parcomment{Why polymorphic methods?}
 
 Polymorphic methods \citep*{Garrigue-Remy/poly-ml} bring some System-$\F$-like
-expressiveness to \OCaml by allowing first-class polymorphism (impredicative,
+expressiveness to \OCaml by allowing first-class polymorphism (impredicative
 higher-rank polymorphism) while preserving principal type inference.
 
 %% \begin{mathparfig}[htpb!]%
@@ -561,12 +562,12 @@ polytypes.
 
 \parcomment {Example ill-typed term}
 
-For example, the expression $\efun \x {\einst \x}$ is not
-typable. Indeed, the $\lambda$-bound variable $\x$ is assigned
-a monotype. The only admissible type for $\x$ is $x : \tapoly \ts \av$
-for some $\ts$ and $\av$.  Since $\av$ is bound in the surrounding
-context at the point of typing $\einst \x$, it cannot be generalized
-prior to unboxing, rendering the term ill-typed.
+For example, the expression $\efun \x {\einst \x}$ is not typable. Indeed, the
+$\lambda$-bound variable $\x$ is assigned a monotype. The only admissible type
+for $\x$ is $x : \tapoly \ts \av$ for some $\ts$ and $\av$.  Since $\av$
+appears in the type of $\x$ in the typing context at the point of typing
+$\einst \x$, it cannot be generalized prior to unboxing, rendering the term
+ill-typed.
 
 \parcomment {Annotations}
 
@@ -599,16 +600,24 @@ with the motivation for omnidirectional type inference.
 
 \paragraph{\Geninst-directional type inference}
 
-\parcomment{What is \geninst good for?}
+\parcomment{\ML (and \geninst) have a fixed order}
 
-Most \ML type inference algorithms enforce a fixed order when typechecking
-let-bindings $\elet \x \ea \eb$: first typecheck the definition $\ea$, then the
-body $\eb$. \Geninst-directionality leverages this ordering to resolve
-overloaded or ambiguous constructs in a \emph{principal} way: the (parts of)
-types with polymorphic annotation variables (\eg $\tfor \av {\tapoly \ts \av}$)
-are treated as \emph{known} and may guide disambiguation, whereas the (parts
-of) types with monomorphic annotation variables are considered not-yet-known
-and cannot be relied on for disambiguation.
+Most \ML type inference algorithms proceed in a fixed order when typechecking
+let-bindings $\elet \x \ea \eb$: first typecheck the definition $\ea$,
+generalize its type, and then typecheck the body $\eb$ under the extended
+environment. \Geninst-directionality, originating from \PolyML
+(\cref{sec/overview/polytypes}), leverages this ordering to resolve overloaded
+or ambiguous constructs in a \emph{principal} way. The key point is that this
+ordering reveals which types are \emph{known}, namely types that are fixed by 
+generalization---and therefore stable enough to guide disambiguation.
+
+\parcomment{What is a known type?}
+
+A type $\t$ (\eg $\tapoly \ts \av$) is considered \emph{known} if its
+annotation variables are eligible for generalization (\eg $\tfor \av {\tapoly \ts
+\av}$). Conversely, types with monomorphic annotation variables are
+considered \emph{not-yet-known} and cannot be relied on for
+disambiguation.
 
 \parcomment{Naming}
 
@@ -618,19 +627,17 @@ their \textbf{i}nstances. \Geninst-directionality is subtle, but it aligns with
 the implicit inference order already present in most \ML-like typecheckers,
 making it straightforward to retrofit into existing implementations. For
 \OCaml, the mechanism for annotation variables even comes \emph{for free}, as
-a byproduct of the extensive optimizations in its inference algorithm using
-levels.
+a byproduct of the extensive optimizations in its inference algorithm. 
 
 \parcomment{Who uses this?}
 
-This mechanism was originally proposed by~\citet*{Garrigue-Remy/poly-ml} for
-polytypes in \PolyML, and later used
-by~\citet*{LeBotlan-Remy/recasting-mlf} for empowering \MLF.
+Building on its introduction in \PolyML, \geninst-directionality was later used
+by~\citet*{LeBotlan-Remy/recasting-mlf} for empowering \penalty1 \MLF.
 %
 It has since been adopted in \OCaml for features such as polymorphic object
 methods and the overloading of record fields and variant constructors. More
-generally, \OCaml uses \geninst-directionality whenever the typechecker
-disambiguates on type information.
+generally, \OCaml uses \geninst-directionality whenever the typechecker employs
+type-based disambiguation.
 
 \parcomment{Good example}
 
@@ -654,7 +661,7 @@ At first glance, \code{ex_5} and \code{ex_6} appear equivalent: both simply
 instantiate the polytype bound to \code{p}. Yet, \OCaml accepts \code{ex_5} and
 rejects \code{ex_6}. This is because the \Let-binding in \code{ex_5}
 allows \code{p} to have type scheme $\tfor \av {\tapoly {\tfor \tv \tv \to
-\tv} \av}$, and thus its type is considered \emph{known}--enabling unboxing
+\tv} \av}$, and thus its type is considered \emph{known}---permitting unboxing
 (\Rule{PolyML-Inst}).
 In \code{ex_6}, by contrast, \code{p} is monomorphic at the point of
 instantiation as it is $\lambda$-bound, and unboxing is therefore
@@ -673,8 +680,8 @@ While these terms are semantically equivalent, they highlight a potential
 hazard: their typability may vary under a directionally biased inference
 algorithm, depending on whether the function or argument is typed first.  To
 limit such implementation-dependent behavior, \OCaml infers all
-subexpressions \emph{simultaneously}, until they are \Let-bound.
-Consequently, \OCaml does not make any difference between
+subexpressions in an \emph{order-independent} manner until they are \Let-bound.
+Consequently, \OCaml does not make any distinction between
 \ocaml[indices]{ex_6}, \ocaml[indices]{ex_6_2}, and \ocaml[indices]{ex_6_3}.
 
 \parcomment{Short comings of pi-directionality}
@@ -687,12 +694,10 @@ to introduce annotations that would otherwise be unnecessary.
 For instance, the following two terms differ only in the position of
 the annotation, yet only the one on the left-hand side is well-typed in
 \OCaml---while they are both well-typed in \OML:
-\begin{mathpar}
- \efun f {\eapp {\einst {(f : \tpoly {\tfor \tv {\tv \to \tv}})}} f}
-
-\efun f {\eapp {\einst f} {(f : \tpoly {\tfor \tv {\tv \to \tv}})}}
-\end{mathpar}
-
+\begin{program}[input,angles,checkpolyml]
+let self_2_1 x = <(x : [ 'a. 'a -> 'a ])> x °\ocamlflags 00°
+let self_2_2 x = <x> (x : [ 'a. 'a -> 'a ]) °\ocamlflags 10°
+\end{program}
 
 \paragraph{Bidirectional type inference}
 
@@ -700,7 +705,7 @@ Bidirectional type inference is a standard alternative to unification for
 propagating type information. It is typically formulated by splitting typing
 rules into two modes: \emph{checking mode} ($\G \th \e \Leftarrow \t$), which
 typechecks a term $\e$ against a type $\t$ in a given context, and
-\emph{inference mode} which infers $\e$ from the context alone ($\G \th \e
+\emph{inference mode} which infers $\e$'s type from the context alone ($\G \th \e
 \Rightarrow \t$).
 
 \parcomment{Assignment of modes}
@@ -708,7 +713,7 @@ typechecks a term $\e$ against a type $\t$ in a given context, and
 The type system designer assigns modes---checking or inference---to each
 language construct. For instance, one can decide to typecheck function
 applications $\eapp \ea \eb$ by first \emph{inferring} that $\ea$ has some
-function type $\t \tarrow \tp$, and then \emph{checking} $\eb$ against $\t$ (\Rule{Syn-App});
+function type $\ta \tarrow \tb$, and then \emph{checking} $\eb$ against $\ta$ (\Rule{Syn-App});
 but the opposite, mode-correct choice (\Rule{Chk-App}) is also possible:
 \begin{mathpar}
   \infer[Syn-App]
@@ -726,10 +731,10 @@ Within the bidirectional framework, a type $\t$ is \emph{known} when it is eithe
 \begin{enumerate*}
   \item part of an annotation,
   \item supplied as input to a checking judgment in the conclusion
-  ($\Leftarrow \t$), or
-  \item produced by a synthesizing premise ($\Rightarrow \t$)
+  ($\G \th \e \Leftarrow \t$), or
+  \item produced by a synthesizing premise ($\G \th \e \Rightarrow \t$)
 \end{enumerate*}.
-%
+
 Using this discipline, we can recast polytypes and eliminate two artifacts
 needed in our \geninst-directional presentation: explicit annotations on boxing
 and annotation variables. Since $\eannot \e {} \t$ already propagates known
@@ -827,7 +832,7 @@ point of application. This enables a limited form of \emph{argument
 reordering}, where information from later arguments can influence the typing of
 earlier ones within an application spine. In practice, these mechanisms work
 well, but they still enforce a fixed overall direction of propagation between
-surrounding constructs.
+surrounding constructs (\eg let-bindings).
 
 \paragraph{Limitations of directional type inference}
 
@@ -838,24 +843,29 @@ annotations. Its main downside lies in the need to fix an often arbitrary flow
 of type information---as in the case of function applications discussed above.
 
 On the other hand, \emph{\geninst-directional} type inference appears better
-suited for \ML, relying on polymorphism\penalty 50---the essence of \ML. But it remains
-surprisingly weak in some cases: it does not even allow the propagation of
-user-provided type annotations from a function to its argument!
-This weakness is sometimes counter-intuitive to the user.
-For example,
-the following would be rejected as ambiguous using \geninst-directional
-type inference alone:
-\begin{program}[input,checkocaml]
-let ex_7 = let g (f : point -> int) = f one in g (fun r -> r.x) °\ocamlflags 00°
+suited for \ML: %
+\begin{enumerate*} 
+    \item thanks to its use of polymorphism\penalty 50---the essence of \ML; and
+    \item its ability to be retrofitted easily onto existing typecheckers.
+\end{enumerate*}
+But it remains surprisingly weak in some cases: it does not even allow the
+propagation of user-provided type annotations from a function to its argument!
+This weakness is sometimes counter-intuitive to the user. For example, the
+following would be rejected as ambiguous using \geninst-directional type
+inference alone:
+\begin{program}[input,angles,checkpolyml]
+let ex_7 = °\ocamlflags 00°
+  let g (f : [ 'a. 'a -> 'a ] -> int) = f pid in 
+  g (fun p -> <p> 42) 
 \end{program}
-Here, \code{r} is $\lambda$-bound and therefore monomorphic. Without further
-propagation, the term \code{r.x} would be ambiguous, as no polymorphic (and
-thus \emph{known}) type can be ascribed to \code{r}. \OCaml resolves this by
+Here, \code{p} is $\lambda$-bound and therefore monomorphic. Without further
+propagation, the term \ocaml[angles]{<p>} would be ambiguous, as no polymorphic (and
+thus \emph{known}) type can be ascribed to \code{p}. \OCaml resolves this by
 supplementing \geninst-directional inference with a form of bidirectional
-propagation: the expected type of \code{g}'s argument (\code{point -> int}) is
-bidirectionally propagated to the let-bound function \code{g}, assigning
-\code{r} to have the \emph{known} type \code{point} and thereby
-disambiguating \code{r.x}.
+propagation: the expected type of \code{g}'s parameter (\code{[ 'a. 'a -> 'a ] -> int}) is
+bidirectionally propagated to the application of \code{g}, assigning
+\code{p} to have the \emph{known} type \code{[ 'a. 'a -> 'a ]} and thereby
+disambiguating \ocaml[angles]{<p>}.
 
 \subsection{Omnidirectional type inference}
 \label{sec/overview/omni}
@@ -903,10 +913,10 @@ the relevant type information is \emph{known}.
 \parcomment{Idea: known = contextual uniqueness}
 
 That is the question, indeed. To specify omnidirectionality declaratively, we
-must say when part of a type (\ie its \emph{shape}) is considered
-\emph{known} without relying on any fixed directional order. Our key idea is
-that a type's shape is \emph{known} when it is the \emph{unique} shape that can
-be inferred within some surrounding term context $\E$.
+must say when a type is considered \emph{known} without relying on any fixed
+directional order. Our key idea is that a type is \emph{known} when it is the
+\emph{unique} type that can be inferred within some surrounding term context
+$\E$.
 
 \parcomment{Example: ex_62}
 
@@ -918,7 +928,7 @@ let pid = [ fun x -> x : 'a. 'a -> 'a ]
 let ex_6_2 = app (fun p -> $\square$) pid
 \end{program}
 %
-Under this context, \code{p} has a uniquely inferrable shape $\tpoly {\tfor \tv
+Here, \code{p} has a uniquely inferrable type $\tpoly {\tfor \tv
 {\tv \to \tv}}$, no other type can be inferred for \code{p}. As a result, we
 can consider \code{p}'s type \emph{known}.
 
@@ -936,7 +946,7 @@ robust explicit counterpart. For example, the unboxing \ocaml[angles]{<p>} can
 be elaborated into the explicitly annotated form \ocaml[angles]{<p : 'a. 'a -> 'a>}.
 %
 Consequently, to typecheck $\einst \e$ under the context $\E$, it suffices to
-assert that $\e$ has the known polytype shape $\tpoly \ts$ and elaborate
+assert that $\e$ has the known polytype $\tpoly \ts$ and elaborate
 $\einst \e$ into an annotated unboxing $\exinst \e {} \ts$, as captured by
 \Rule{Use-I}.
 %
@@ -953,19 +963,27 @@ in spite of constructs that require \emph{known} type information.  In our
 framework, we realize this through our novel primitive: \emph{suspended
 match constraints}.
 
+\parcomment{Syntax + informal semantics}
+
 A match constraint $(\cmatch \t {{\overline{\cbranch \cpat \c}}})$ pairs a
 (typically unknown) matchee type $\t$ with a finite series of shape-pattern
-branches $\overline{\cbranch \cpat \c}$. These constraints remain
+branches $\overline{\cbranch \cpat \c}$. Such constraints remain
 \emph{suspended} until the \textit{shape} of $\t$ (\ie its top-level
 constructor) is known. Then, they are \emph{discharged}: a unique branch is
 selected and its associated constraint has to be solved. A match constraint
 that is never discharged is considered unsatisfiable.
-%
-For now, it suffices to think of shapes as parts of types (\eg the
-type constructor $\T$ in $\Tapp \tys$) and shape patterns $\cpat$ as type `destructors'
-that may bind type information (\eg the type constructor $\T$) to
-meta-variables used in $\cs$. This will be made precise in \cref{sec/constraints/shapes}.
 
+\parcomment{A note on shape patterns}
+
+For now, it suffices to think of shapes as parts of types (\eg the type
+constructor $\T$ in $\Tapp \tys$%
+\footnote{
+  Type constructors are prefixed, except in \OCaml code, where they are postfixed.
+}) 
+while shape patterns $\cpat$ act as type `destructors', binding parts of the type 
+(\eg the constructor name $\T$) to meta-variables (\eg the pattern variable
+$\ct$) used in $\cs$. This will be made precise in
+\cref{sec/constraints/shapes}.
 
 \parcomment{Why our solution makes things easier?}
 
@@ -1008,9 +1026,8 @@ when $\tz = \Tapp \tyas$, and failing otherwise. Using this, the globally
 unique projection type (scheme) $\tfor \tvbs {\Tapp \tvbs \to \tp}$ for the
 explicit label $\labfrom \elab \T$ is instantiated, \eg to $\Tapp \tybs \to
 \typ\where {\tvbs \is \tybs}$ for some $\tybs$. Finally, the resulting
-constraints are imposed on the domain (\ie $\tz = \Tapp \tybs$) and codomain of
-the instantiated projection type (\ie $\t = \typ\where{\tvbs \is \tybs}$).
-
+constraints are imposed on the domain (\ie $\tz = \Tapp \tybs$) and codomain
+(\ie $\t = \typ\where{\tvbs \is \tybs}$) of the instantiated projection type.
 
 \parcomment{Polytypes}
 
@@ -1042,7 +1059,7 @@ unification constraints which can be solved in any order; omnidirectional
 inference with suspended match constraints is then natural and easy to
 implement.
 
-\parcomment{\ML is hard}
+\parcomment{\ML generalization has a fixed order}
 
 The difficulty originates from \ML \emph{implicit} \texttt{let}-polymorphism for which
 all known implementations follow the \geninst-order: first typing the binding,
@@ -1052,22 +1069,99 @@ Hindley-Milner algorithm $\mathcal{J}$, its variants $\mathcal{W}$ or
 $\mathcal{M}$~\citep* {Lee_Yi/algoM@toplas1998}, or more flexible
 constraint-based type inference implementations~\citep*
 {Remy/mleth,Remy/thesis, Odersky-Sulzmann-Wehr@tpos, Pottier-Remy/emlti} all
-follow this strategy, to the best of our knowledge.\relax \footnote {See
-\cref{sec:related-work} for a closer comparison with \cite*
-{Pottier-Remy/emlti}.} However, this state of affairs is not a necessity.
+follow this strategy, to the best of our knowledge. 
 
-To efficiently achieve omnidirectional type inference for fragile \ML
-extensions we work with \emph{partial types schemes}, \ie with the ability to
-\emph{incrementally instantiate} type schemes. That is, to instantiate
-type schemes that are not yet fully determined and consequently revisit
-their instances when they are being refined, incrementally. This allows
-inferring parts of a \texttt{let}-body to disambiguate its definition,
-without duplicating constraint-solving work.
+\parcomment{Example of why this problematic}
 
-Practically speaking, implementing incremental instantiation efficiently is,
-however, non-trivial: it requires triggering re-instantiations upon refinements
-of partial type schemes, while avoiding redundant constraint solving across
-instantiations. We discuss this further in \cref{sec:implementation}.
+Consider the following program:
+\begin{program}[input]
+type 'a gpoint = { x : 'a; y : 'a }
+let diag (n : 'a) : 'a gpoint = { x = n; y = n }
+°\halfline°
+let ex_8 = let getx p = p.x in getx (diag 42), getx (diag 1337.0) °\ocamlflags 20°
+\end{program}
+Here, we introduce a new parameterized record type \code{'a gpoint}, whose
+fields \code{x} and \code{y} are overloaded---recall that both \code{point} and
+\code{gray_point} already define these fields---but now have a
+\emph{polymorphic} projection type $\tfor \tv {}$ \code{'a gpoint -> 'a}. The
+function \code{diag} constructs a diagonal point, a point lying on the
+diagonal $x = y$, and has the type $\tfor \tv {}$ \code{'a -> 'a gpoint}.
+
+When typechecking \code{ex_8}, we cannot infer the type of \code{getx} first,
+since the type of \code{p.x} is still yet unknown. Instead, we must typecheck
+the body first, discovering from the calls \code{getx (mkdiag 42)} and
+\code{getx (diag 1337.0)} that \code{p} has type \code{'a gpoint}. 
+%
+Failing to do so would make inference incomplete, since the program is clearly
+well-typed. Nor can we treat the \Let-binding as monomorphic, since both calls
+to \code{getx} use different instantiations of \code{'a}. 
+ 
+\parcomment{Our solution}
+
+We solve this by introducing \emph{incremental instantiation}, \ie the ability
+to instantiate type schemes that are not yet fully determined (so-called
+\emph{partial type schemes}) and consequently revisit their instances when they
+are being refined, \emph{incrementally}. This allows inferring parts of a
+\Let-body to disambiguate its definition, without duplicating
+constraint-solving work.
+
+\paragraph{Limitations}
+
+% 1. Our framework is complex --- as a result, everything is hard :// 
+% 2. Some programs are ill-typed even though they have a principal type.
+% 3. We do not provide a formalization of default rules.
+
+\parcomment{Some programs even though they have a principal type are ill-typed}
+
+Firstly, omnidirectional inference is powerful, but not omnipotent. Some expressions
+must be rejected even though their elaboration would be unambiguous. Consider:
+
+\begin{program}[input,checkocaml]
+type cie_color = { x : int; y : int; z : int }
+type cie_point = { x : int; y : int; color : cie_color }
+let ex_1_0 r = r.color.x °\ocamlflags 11°
+\end{program}
+Neither field projections in \code{ex_1_0} can individually be disambiguated. However, if
+one were allowed to combine the constraints, they would jointly determine
+that \code{r} must have type \code{cie_point}: in \code{gray_point}, the field \code{color}
+has type \code{int}, and hence cannot itself be projected, leaving a unique
+consistent elaboration: \code{r.cie_point/color.cie_color/x}.
+
+Our framework nonetheless rejects \code{ex_1_0}. This is intentional: implicit
+terms must be elaborated \emph{sequentially}, each in isolation, rather than
+jointly with others. We view this restriction as a ``Goldilocks'' compromise:
+it rules out examples like the above, but avoids the intractability of full
+general overloading which is NP-hard, even without let-polymorphism, as shown
+by a reduction from 3-SAT~\citep*
+{Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}.
+
+\parcomment{No default rules formalism}
+
+Secondly, we do not yet provide a formal account of \emph{default rules} (??).
+However, our prototype implementation, discussed in \cref{sec:implementation},
+\emph{does} include support for defaulting. In practice, defaulting proves
+extremely useful and appears essential for scaling inference to richer features
+such as polymorphic parameters \citep{White/polyparams@ml2023}. Developing a
+formal treatment of defaulting within our framework is an important direction
+for future work.
+
+\parcomment{Our approach is complex}
+
+Finally, our framework is complex. This follows partly from its generality, but 
+also because, frankly, everything is hard: 
+\begin{enumerate}
+
+  \item[(\cref{sec/oml})] Giving a declarative characterization of \emph{known} type information 
+    without statically relying on directionality is hard.
+
+  \item[(\cref{sec:implementation})] Implementing incremental instantiation efficiently is also hard: it
+    requires triggering re-instantiations upon refinements of partial type
+    schemes, while avoiding redundant constraint solving across instantiations.
+
+\end{enumerate}
+We hope to pay off some of this complexity in future work; in particular, we believe 
+omnidirectionality is the missing piece to unlock modular implicits---an approach to generalized 
+overloading and a long-anticipated feature within the \OCaml community.
 
 \paragraph {The forest, not the trees.} Suspended match constraints
 offer a \emph{general framework} that works with all the features we
@@ -1086,7 +1180,7 @@ programs with still-undetermined disambiguation choices.
 % Something to tie everything back together / also serve as a lookup
 
 \paragraph{Plan}
-The remainder of the paper develops these three ideas in turn:
+The remainder of the paper develops our three key ideas in turn:
 \begin{enumerate*}
 
   \item[(\cref{sec/oml})] formalizes our declarative characterization of
@@ -1102,7 +1196,6 @@ The remainder of the paper develops these three ideas in turn:
 
 \end{enumerate*}
 
-\paragraph{Limitations}
 
 \section{The \OML calculus}
 \label{sec/oml}
