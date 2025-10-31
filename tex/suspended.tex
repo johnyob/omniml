@@ -1321,7 +1321,7 @@ following expressions:
 \XDR{BTW, I do not like the $t/\elab$... I thought $t\cdot \elab$ nicely
 solved it. $\t/\elab$ does not associates intuitively. For example
 $e.t/\elab$ reads $(e.t)/\elab$, which is not what we meant.}
-\TODO{Try $\elab^{\T}$ and $\erecord { \dots }^{\T}$}.
+\Xgabriel{I moved to superscript notation $\elab^{\T}$ and $\erecord { \dots }^{\T}$. What do you think?}.
     \Xalistair{How about, we make $\T$ ($\mathsf{T}$) uppercase (as is usual for notation for type constructors). 
     We can have lowercase $t$ for pattern variables and we get to use our original dot syntax that 
     we we're all happy with?}
@@ -4626,11 +4626,11 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 
   \inferrule [Poly-X]
     {\G \th \e : \ts\where {\tvs \is \tys}}
-    {\G \th \epoly[\exi \tvs \ts] \e : \tpoly {\ts \where {\tvs \is \tys}}}
+    {\G \th \expoly \e \tvs \ts : \tpoly {\ts \where {\tvs \is \tys}}}
 
   \inferrule [Poly-I]
     {\Eshape \E \e {{\any \tvcs \tpoly \ts}} \\
-     \G \th \E \where{\epoly[\exi \tvcs \ts] \e} : \t}
+     \G \th \E \where{\expoly \e \tvcs \ts} : \t}
     {\G \th \E \where{\epoly \e} : \t}
 
   \inferrule [Use-X]
@@ -4944,7 +4944,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 
   \inferrule [Can-Poly-I]
     {\Eshape \E \e {{\any \tvcs \tpoly \ts}} \\
-     \Th \E \where{\epoly[\exi \tvcs \ts] \e} : \t}
+     \Th \E \where{\expoly \e \tvcs \ts} : \t}
     {\Th \E \where{\epoly \e} : \t}
 
   \inferrule [Can-Use-I]
