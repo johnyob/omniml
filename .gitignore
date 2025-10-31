@@ -79,6 +79,7 @@ result
 *.pdfsync
 *.rubbercache
 rubber.cache
+*.rev
 
 ## Build tool directories for auxiliary files
 # latexrun
