@@ -2023,9 +2023,8 @@ semantics is given by a satisfiability judgment $\semenv \th \c$
 (\cref{fig:constraints}). The semantic environment $\semenv$ assigns to each
 free type variable $\tv$ a ground type $\gt \in \Ground$ (a type with no free
 variables) and to each term variable $\x$ a set of ground types $\gabs
-\subseteq \Ground$ (the instances of a type scheme bound to $\x$).\XDR{The
-$\gabs$ glyph is unreadable/unparsable}\Xalistair{How about $\mathfrak{R},
-\mathfrak{S}$}\XDR{I implemented the replacement of G by S}
+\subseteq \Ground$ (the instances of a type scheme bound to $\x$).
+\footnote{$\gabs$ can be pronounced ``Fraktur S'' or ``ground S''.}
 %
 We write $\semenv\where{\tv \is \gt}$ and $\semenv\where{\x \is \gabs}$ for the
 extension of $\semenv$ with a new binding. For a type $\t$, we write
