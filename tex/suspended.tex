@@ -2222,9 +2222,9 @@ $\theta$ mapping pattern variables (\eg nominal type variables $\ct$ from
 These components may themselves mention the freshly introduced variables
 $\tvs$. For example, the wildcard pattern $\cpatwild$ matches any shape,
 yielding the empty substitution.\TODO{Add reference to earlier mention}
-In~\cref {sec/oml/constraints}, we will extend both the
-syntax of patterns and the matching function itself to handle the patterns that
-arise in \OML.
+In~\cref {sec/oml/constraints}, we will extend both the syntax of shape
+patterns and the matching function itself to handle the patterns that arise
+in \OML.
 
 
 \paragraph {A natural attempt}
@@ -2643,9 +2643,9 @@ entire type of $\e$ we may pick a fresh type variable $\tv$ for $\t$.
 Thus far, our formal presentation of shape patterns has remained
 abstract, deliberately leaving the syntax and semantics of match constraints
 partially unspecified to accommodate a range of language features. We now
-concretize
-this by specifying the patterns used in \OML (in \cref{fig:patterns-oml}),
-and introducing the corresponding constraints for the variables they bind.
+concretize this by specifying the shape patterns used in \OML
+(in \cref{fig:patterns-oml}), and introducing the corresponding constraints
+for the variables they bind.
 %
 Patterns include:
 \begin{enumerate*}
