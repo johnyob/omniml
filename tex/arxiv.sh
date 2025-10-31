@@ -34,8 +34,8 @@ cp $MAIN.final.cfg arxiv/$MAIN.cfg
 # themselves. I still include the .bib file in the archive for
 # reference.
 cp $BIB.bib ACM-Reference-Format.bst arxiv/ # (unused) source .bib, for reference
-stat $MAIN.final.bbl > /dev/null || { echo "you need to run bibtex first"; exit 1; }
-cp $MAIN.final.bbl arxiv/
+stat _build/$MAIN.final.bbl > /dev/null || { echo "you need to run bibtex first"; exit 1; }
+cp _build/$MAIN.final.bbl arxiv/
 
 # Copy all local packages, class files, etc. that are necessary to build.
 cp *.sty arxiv/
