@@ -57,9 +57,9 @@
 \begin{abstract}
 
 % Background + Gap
-  The Damas-Hindley-Milner (\ML) type system owes its success to 
+  The Damas-Hindley-Milner (\ML) type system owes its success to
   \emph{principality}, the property that every well-typed expression has a
-  unique most general type. This makes inference predictable and efficient. 
+  unique most general type. This makes inference predictable and efficient.
   %
   Yet, principality is \emph{fragile}: many extensions of \ML---GADTs,
   higher-rank polymorphism, and static overloading---break it by introducing
@@ -82,8 +82,8 @@
   $\ea$, generalize its type, and then type $\eb$. To overcome this, we
   introduce \emph{incremental instantiation}, allowing partially solved type
   schemes containing suspended constraints to be instantiated, with a mechanism
-  to incrementally update instances as the scheme is refined. 
-  % 
+  to incrementally update instances as the scheme is refined.
+  %
   % Benefit
   %
   Omnidirectionality provides a \emph{general framework} for restoring
@@ -226,8 +226,8 @@ We present omnidirectionality as a general framework for inference in the
 presence of fragile features. While this paper instantiates our framework for
 two concrete features in \OCaml---static overloading and polymorphic object
 methods---its scope is broader: we expect it to extend to more richer features
-such as GADTs, polymorphic parameters \citep{White/polyparams@ml2023}, and 
-more generalized static overloading \ala Swift. 
+such as GADTs, polymorphic parameters \citep{White/polyparams@ml2023}, and
+more generalized static overloading \ala Swift.
 
 \parcomment {Scaling to ML / let-generalization}
 
@@ -348,7 +348,7 @@ By contrast, \code{r.x} is ambiguous unless the type of \code{r} is
 \emph{known}.
 %
 In \ocaml{ex_1}, the type of \code{r} is unconstrained, so disambiguation
-fails.\footnote{
+fails.\footnote{\let \code \code
   In fact, \OCaml does not fail on ambiguous types, but instead applies a
   default resolution strategy: it emits a warning and selects the last
   matching type definition in scope. Here, this will amount to choosing the
@@ -395,7 +395,7 @@ let getx r = r.x                                      °\ocamlflags 21°
 %
 The expression is compatible with both \code{point} and \code{gray_point}, since each
 defines a field \code{x}. But \code{gray_point} is chosen simply because it appears
-later in the source. 
+later in the source.
 
 \parcomment {Default rules are inherently non-principal}
 
@@ -406,7 +406,7 @@ formal account of such ``default rules''.
 
 \parcomment{Default rules interact poorly with directional inference}
 
-Defaulting also interacts poorly with \OCaml's directional inference. Once 
+Defaulting also interacts poorly with \OCaml's directional inference. Once
 the compiler selects a type, it commits to it---even if that choice causes
 errors downstream. Consider:
 %
@@ -608,7 +608,7 @@ generalize its type, and then typecheck the body $\eb$ under the extended
 environment. \Geninst-directionality, originating from \PolyML
 (\cref{sec/overview/polytypes}), leverages this ordering to resolve overloaded
 or ambiguous constructs in a \emph{principal} way. The key point is that this
-ordering reveals which types are \emph{known}, namely types that are fixed by 
+ordering reveals which types are \emph{known}, namely types that are fixed by
 generalization---and therefore stable enough to guide disambiguation.
 
 \parcomment{What is a known type?}
@@ -627,7 +627,7 @@ their \textbf{i}nstances. \Geninst-directionality is subtle, but it aligns with
 the implicit inference order already present in most \ML-like typecheckers,
 making it straightforward to retrofit into existing implementations. For
 \OCaml, the mechanism for annotation variables even comes \emph{for free}, as
-a byproduct of the extensive optimizations in its inference algorithm. 
+a byproduct of the extensive optimizations in its inference algorithm.
 
 \parcomment{Who uses this?}
 
@@ -648,7 +648,7 @@ To illustrate \geninst-directionality, consider:%
 % mathescape
 In \OCaml, these examples can be typechecked by translating
 $\epoly[\ts] \e$ to
-\ocaml[mathescape]!object method f : $\ \ts$ = $\ \e$ end!
+\Code{object method f} $: \ts = \e$ \Code{end}
 and $\einst \e$ to $\e \esend \texttt{f}$. This translation is the inverse of
 that discussed in \cref{sec/overview/polymethods-reduction}.
 }
@@ -669,9 +669,10 @@ forbidden.
 
 To emphasize that this behavior is specification-driven and not an artifact of
 \OCaml's inference algorithm, consider two equivalent versions of
-\ocaml{ex_6}:\footnote {\ocaml{app} and \ocaml{rev_app} are the application
-function \code{fun f x -> f x} and the reverse application function \code{fun x
-f -> f x}, respectively.}
+\ocaml{ex_6}:\footnote {\let \code \Code
+\code{app} and \code{rev_app} are the application
+function \Code{fun f x -> f x} and the reverse application function
+\Code{fun x f -> f x}, respectively.}
 \begin{program}[input,angles,checkpolyml]
 let ex_6_2 = app (fun p -> <p>) pid                        °\ocamlflags 10°
 let ex_6_3 = rev_app pid (fun p -> <p>)                    °\ocamlflags 20°
@@ -800,7 +801,7 @@ order of propagation, so some well-typed programs are rejected as ill-typed
 
 % Contextual typing stuff
 %
-% See typing rules in Figure 5 on pg 11 of 
+% See typing rules in Figure 5 on pg 11 of
 % https://dl.acm.org/doi/pdf/10.1145/3674655
 %
 % Here is a brief argument of why contextual typing fails here: Take ex_62 for
@@ -815,7 +816,7 @@ order of propagation, so some well-typed programs are rejected as ill-typed
 % Thus to typecheck the application `(fun f x -> f x) (fun p -> < p >)` we need
 % to use DApp2 with quantity 1 (S 0) for the conclusion. But this requires us
 % to type `fun p -> < p >` with quantity 0! This is not possible (n- is
-% undefined for n = 0). 
+% undefined for n = 0).
 %
 % Similar argument for ex_63: `(fun x f -> f x) [ fun x -> x : 'a. 'a -> 'a ]`
 % is typable with quantity 1. But the application of `(fun p -> < p >)` would
@@ -844,7 +845,7 @@ of type information---as in the case of function applications discussed above.
 
 On the other hand, \emph{\geninst-directional} type inference appears better
 suited for \ML: %
-\begin{enumerate*} 
+\begin{enumerate*}
     \item thanks to its use of polymorphism\penalty 50---the essence of \ML; and
     \item its ability to be retrofitted easily onto existing typecheckers.
 \end{enumerate*}
@@ -855,8 +856,8 @@ following would be rejected as ambiguous using \geninst-directional type
 inference alone:
 \begin{program}[input,angles,checkpolyml]
 let ex_7 = °\ocamlflags 00°
-  let g (f : [ 'a. 'a -> 'a ] -> int) = f pid in 
-  g (fun p -> <p> 42) 
+  let g (f : [ 'a. 'a -> 'a ] -> int) = f pid in
+  g (fun p -> <p> 42)
 \end{program}
 Here, \code{p} is $\lambda$-bound and therefore monomorphic. Without further
 propagation, the term \ocaml[angles]{<p>} would be ambiguous, as no polymorphic (and
@@ -979,8 +980,8 @@ For now, it suffices to think of shapes as parts of types (\eg the type
 constructor $\T$ in $\Tapp \tys$%
 \footnote{
   Type constructors are prefixed, except in \OCaml code, where they are postfixed.
-}) 
-while shape patterns $\cpat$ act as type `destructors', binding parts of the type 
+})
+while shape patterns $\cpat$ act as type `destructors', binding parts of the type
 (\eg the constructor name $\T$) to meta-variables (\eg the pattern variable
 $\ct$) used in $\cs$. This will be made precise in
 \cref{sec/constraints/shapes}.
@@ -1041,7 +1042,7 @@ constraint:
 \cinfer {\einst \e} \t \Wide\eqdef
     \cexists \tv \cinfer \e \tv
 \cand
-    \cmatch  \tv \cbranch {\tpoly \cscm} \cscm \leq \t}
+    \cmatch  \tv \cbranch {\tpoly \cscm} \cscm \leq \t
 \end{mathpar}
 %
 The match remains suspended until $\tv$ resolves to some type $\tz$. If, upon
@@ -1069,7 +1070,7 @@ Hindley-Milner algorithm $\mathcal{J}$, its variants $\mathcal{W}$ or
 $\mathcal{M}$~\citep* {Lee_Yi/algoM@toplas1998}, or more flexible
 constraint-based type inference implementations~\citep*
 {Remy/mleth,Remy/thesis, Odersky-Sulzmann-Wehr@tpos, Pottier-Remy/emlti} all
-follow this strategy, to the best of our knowledge. 
+follow this strategy, to the best of our knowledge.
 
 \parcomment{Example of why this problematic}
 
@@ -1090,12 +1091,12 @@ diagonal $x = y$, and has the type $\tfor \tv {}$ \code{'a -> 'a gpoint}.
 When typechecking \code{ex_8}, we cannot infer the type of \code{getx} first,
 since the type of \code{p.x} is still yet unknown. Instead, we must typecheck
 the body first, discovering from the calls \code{getx (mkdiag 42)} and
-\code{getx (diag 1337.0)} that \code{p} has type \code{'a gpoint}. 
+\code{getx (diag 1337.0)} that \code{p} has type \code{'a gpoint}.
 %
 Failing to do so would make inference incomplete, since the program is clearly
 well-typed. Nor can we treat the \Let-binding as monomorphic, since both calls
-to \code{getx} use different instantiations of \code{'a}. 
- 
+to \code{getx} use different instantiations of \code{'a}.
+
 \parcomment{Our solution}
 
 We solve this by introducing \emph{incremental instantiation}, \ie the ability
@@ -1107,7 +1108,7 @@ constraint-solving work.
 
 \paragraph{Limitations}
 
-% 1. Our framework is complex --- as a result, everything is hard :// 
+% 1. Our framework is complex --- as a result, everything is hard ://
 % 2. Some programs are ill-typed even though they have a principal type.
 % 3. We do not provide a formalization of default rules.
 
@@ -1121,23 +1122,25 @@ type cie_color = { x : int; y : int; z : int }
 type cie_point = { x : int; y : int; color : cie_color }
 let ex_1_0 r = r.color.x °\ocamlflags 11°
 \end{program}
-Neither field projections in \code{ex_1_0} can individually be disambiguated. However, if
-one were allowed to combine the constraints, they would jointly determine
-that \code{r} must have type \code{cie_point}: in \code{gray_point}, the field \code{color}
-has type \code{int}, and hence cannot itself be projected, leaving a unique
-consistent elaboration: \code{r.cie_point/color.cie_color/x}.
+Neither field projections in \code{ex_1_0} can individually be
+disambiguated. However, if one were allowed to combine the constraints, they
+would jointly determine that \code{r} must have type \code{cie_point}: in
+\code{gray_point}, the field \code{color} has type \code{int}, and hence
+cannot itself be projected, leaving a unique consistent elaboration:
+\code{r.cie_point/color.cie_color/x}.
 
-Our framework nonetheless rejects \code{ex_1_0}. This is intentional: implicit
-terms must be elaborated \emph{sequentially}, each in isolation, rather than
-jointly with others. We view this restriction as a ``Goldilocks'' compromise:
-it rules out examples like the above, but avoids the intractability of full
-general overloading which is NP-hard, even without let-polymorphism, as shown
-by a reduction from 3-SAT~\citep*
+Our framework nonetheless rejects \code{ex_1_0}. This is intentional:
+implicit terms must be elaborated \emph{sequentially}, each in isolation,
+rather than jointly with others. We view this restriction as a
+``Goldilocks'' compromise: it rules out examples like the above, but avoids
+the intractability of full general overloading which is NP-hard, even
+without let-polymorphism, as shown by a reduction from 3-SAT~\citep*
 {Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}.
 
 \parcomment{No default rules formalism}
 
-Secondly, we do not yet provide a formal account of \emph{default rules} (??).
+Secondly, we do not yet provide a formal account of \emph{default
+rules}\XDR{See (??)}.
 However, our prototype implementation, discussed in \cref{sec:implementation},
 \emph{does} include support for defaulting. In practice, defaulting proves
 extremely useful and appears essential for scaling inference to richer features
@@ -1147,35 +1150,69 @@ for future work.
 
 \parcomment{Our approach is complex}
 
-Finally, our framework is complex. This follows partly from its generality, but 
-also because, frankly, everything is hard: 
+\paragraph {The forest, not the trees.}
+
+\indent \Xgabriel{This paragraph below is new.}\XDR{I move it before the
+declarative spec and efficient implementation which should not be part of
+the limitations.}
+Suspended match constraints offer a \emph{general framework} that works with
+all the features we have considered so far, and more. Some of those features
+can be handled in more specific ways; for example SML implementations use
+row variables to infer tuples and structural records, and GHC uses qualified
+types to allow overloading of record fields with a simple-enough
+type. Suspended constraints are more expressive, as they can handle cases
+where the typing rule to use on the subterms depends on the disambiguation
+choice, as for polymorphic record fields and for GADT constructors in
+patterns. These simpler approaches also do not typically provide declarative
+semantics that justify rejecting programs with still-undetermined
+disambiguation choices.
+
+\begin{version}{\False}%\True
+\XDR{I do not like the next sentence. I do not think we should say that
+our framework complex.  And I do not like the
+\emph{frankly}. Or say that this is hard, as if we were complaining.
+The goal is not to sell our work to the reviewers
+but to catch interest of the readear. Hence, we should say that it is
+expressive/sophisticated, carefully/efficiently implemented, or perhaps
+\emph{some of the complexity is due to...}
+}
+
+Finally, our framework is complex.  This follows partly from its generality,
+but also because, frankly, everything is hard:
 \begin{enumerate}
 
-  \item[(\cref{sec/oml})] Giving a declarative characterization of \emph{known} type information 
-    without statically relying on directionality is hard.
+\item[(\cref{sec/oml})]
+  Giving a declarative characterization of \emph{known} type information
+  without statically relying on directionality is hard.
 
-  \item[(\cref{sec:implementation})] Implementing incremental instantiation efficiently is also hard: it
-    requires triggering re-instantiations upon refinements of partial type
-    schemes, while avoiding redundant constraint solving across instantiations.
+\item[(\cref{sec:implementation})]
+  Implementing incremental instantiation efficiently is also hard: it
+  requires triggering re-instantiations upon refinements of partial type
+  schemes, while avoiding redundant constraint solving across
+  instantiations.
 
 \end{enumerate}
-We hope to pay off some of this complexity in future work; in particular, we believe 
-omnidirectionality is the missing piece to unlock modular implicits---an approach to generalized 
-overloading and a long-anticipated feature within the \OCaml community.
+We hope to pay off some of this complexity in future work; in particular, we
+believe omnidirectionality is the missing piece to unlock modular
+implicits---an approach to generalized overloading and a long-anticipated
+feature within the \OCaml community.
+\end{version}
 
-\paragraph {The forest, not the trees.} Suspended match constraints
-offer a \emph{general framework} that works with all the features we
-have considered so far, and more. Some of those features can be
-handled in more specific ways; for example SML implementations use row
-variables to infer tuples and structural records, and GHC uses
-qualified types to allow overloading of record fields with
-a simple-enough type. Suspended constraints are more expressive, as
-they can handle cases where the typing rule to use on the subterms
-depends on the disambiguation choice, as for polymorphic record fields
-and for GADT constructors in patterns. These simpler approaches also
-do not typically provide declarative semantics that justify rejecting
-programs with still-undetermined disambiguation choices.
-\Xgabriel{This paragraph above is new.}
+\XDR{Alternative proposal}
+Beside its generality, our framework has been carefully designed to come
+with a declarative characterization of \emph{known} type information that
+does not rely on directionality (\cref{sec/oml}) and still allows for an
+efficient implementation. In  \cref{sec:implementation}, we describe
+an  implementation of incremental instantiation that triggers
+re-instantiations upon refinements of partial type schemes, while avoiding
+redundant constraint solving across instantiations.
+
+We hope the generality of the approach will benefit to future work; in
+particular, we believe omnidirectionality is the missing piece to unlock
+modular implicits---an approach to generalized overloading and a
+long-anticipated feature within the \OCaml community.
+
+
 
 % Something to tie everything back together / also serve as a lookup
 
@@ -1415,8 +1452,8 @@ following expressions:
 solved it. $\t/\elab$ does not associates intuitively. For example
 $e.t/\elab$ reads $(e.t)/\elab$, which is not what we meant.}
 \Xgabriel{I moved to superscript notation $\elab^{\T}$ and $\erecord { \dots }^{\T}$. What do you think?}.
-    \Xalistair{How about, we make $\T$ ($\mathsf{T}$) uppercase (as is usual for notation for type constructors). 
-    We can have lowercase $t$ for pattern variables and we get to use our original dot syntax that 
+    \Xalistair{How about, we make $\T$ ($\mathsf{T}$) uppercase (as is usual for notation for type constructors).
+    We can have lowercase $t$ for pattern variables and we get to use our original dot syntax that
     we we're all happy with?}
 \end{itemize}
 All annotations in \OML are closed \ie their quantified variables $\tvs$ are
@@ -1439,7 +1476,7 @@ presented in~\cref {sec/oml/typing/I}.
 
 As usual, the main typing judgment $\G \th \e : \ts$
 (\cref{fig/oml/syntax-xtyping}) states that in context~$\G$, the expression~$\e$
-has the type (scheme) $\ts$. 
+has the type (scheme) $\ts$.
 %
 Rules \Rule{Var} through \Rule{Let} are standard. Annotations $\eannot \e \tvs
 \t$ (\Rule{Annot}) ensures that the type of $\e$ is (an instance of) the type
@@ -3502,9 +3539,9 @@ additional equations to the application sites.
 \parcomment{Semantics of incremental applications}
 
 The existential constraint $\cexistsi \inst \x \c$ is satisfiable
-(\Rule{Exists-Inst}), given in \cref{fig:constraint-let-regions}, if 
+(\Rule{Exists-Inst}), given in \cref{fig:constraint-let-regions}, if
 there exists a region $\semenvp$ that
-satisfies the regional constraint abstraction bound to $\x$ and $\c$ is satisfied 
+satisfies the regional constraint abstraction bound to $\x$ and $\c$ is satisfied
 with $\semenvp$ bound to $\inst$.
 \TODO{Improve flow}
 %
