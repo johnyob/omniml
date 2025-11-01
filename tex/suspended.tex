@@ -1452,14 +1452,12 @@ following expressions:
   \ldots; \elab_n = \en }$ and $\exfield \e \T \elab$, where the explicit
   record annotation $\labfrom {} \T$ indicates that the labels unambiguously
   belong to the record $\T$.
-
-\XDR{BTW, I do not like the $t/\elab$... I thought $t\cdot \elab$ nicely
-solved it. $\t/\elab$ does not associates intuitively. For example
-$e.t/\elab$ reads $(e.t)/\elab$, which is not what we meant.}
-\Xgabriel{I moved to superscript notation $\elab^{\T}$ and $\erecord { \dots }^{\T}$. What do you think?}.
-    \Xalistair{How about, we make $\T$ ($\mathsf{T}$) uppercase (as is usual for notation for type constructors).
-    We can have lowercase $t$ for pattern variables and we get to use our original dot syntax that
-    we we're all happy with?}
+\TODO{Decide on an ultimate syntax for explicit projections and explicit records.
+Didier proposes $\e.\T/\elab$, Alistair proposes $\e.\T.\elab$, Gabriel proposes $\e.\elab^\T$.
+For records we have $\T / \erecord { \elab = \e }$,
+or $\T.\erecord { \elab = \e }$,
+or $\erecord { \elab = \e }^\T$.
+}
 \end{itemize}
 All annotations in \OML are closed \ie their quantified variables $\tvs$ are
 exactly the free variables of the type $\t$ or type scheme $\ts$.
