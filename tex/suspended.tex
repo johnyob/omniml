@@ -3459,43 +3459,48 @@ treatment is naturally expressed as a strategy on top of their
 
 \parcomment{Generalization with suspended constraints is hard}
 
-
-\TODO{Take example from coderpad}
-\Xalistair{I think we need a new example here, one with some polymorphism.}
 However, this approach \emph{does not} extend to suspended constraints. To
-illustrate this, let us reexamine \ocaml{ex_4} from \cref{sec/overview/overloading}:
+illustrate this, consider the following example: \Xgabriel{I had to change the
+  example below and tried to reformulate the following discussion to match.}
 \begin{program}[input]
-type 'a gcolor = { x int; y : int; color : 'a }
-let ex_4 r = let get_color r = r.x in get_color r + (r : gs_point).y °\ocamlflags10°
+let mk x = { v = x } in
+[...]
 \end{program}
 The generated typing constraint contains:
+\def \tvx {\tva_\mathsf{x}}
+\def \tvmk {\tvb_\mathsf{mk}}
+\def \tvmkret {\tvb}
 \begin{mathpar}
-  \cexists {\tv}
-    \clet x \tvb
-      {\cmatch \tvb {\cbranch {(\cpatrcd \ct)} {\C\where {\ct,\tva,\tvb}}}}
-      {\cinst x \tint \cand \cunif \tv {\ttpoint}}
+  \clet x \tvmk
+  {\cexists {\tvx, \tvmkret}
+    {\begin{array}{l}
+      \cunif \tvmk {\tvx \to \tvmkret} \\
+      \cand\uad
+      \cmatch \tvmkret {\cbranch {(\cpatrcd \ct)}
+      {% \dom \ct = \{\mathsf{v}\}
+       % \cand
+       \labfrom {\mathsf{v}} \ct \leq \tvx \to \tvmkret}}
+    \end{array}}}
+  {[...]}
 \end{mathpar}
-where $\C\where{\ct,\tv,\tvb}$ is ${\labfrom \elab \ct \leq \tva \to \tvb}$.
-Here, $\tv$ stands for \code{r}'s type. The constraint remains suspended until
-\code{(r : point).y} forces \code{r}'s type to be \code{point}. Crucially, the variable
-$\tvb$ (introduced inside the abstraction for the type of \code{x}) is captured
-by the suspended match constraint that is not yet resolved at the point of
-solving the $\Let$ constraint that binds \code{x}.
+
+There is not enough information in the \code{mk} function to discharge the
+suspended constraint for the ambiguous record construction. We need to
+continue inferring the right-hand-side \code{[...]} to find disambiguation
+information, for example an annotated call \code{(mk x : foo)} that would
+disambiguate the record through back-propagation.
+
+Furthermore, we cannot tell at this point if the variables $\tvx$, $\tvmkret$
+should be generalized or not -- it depends on the record type, and so treating
+the variables as non-generalized would be incomplete.
 
 \parcomment {Partial type schemes}
 
-Nonetheless, to continue solving the let-body, we must assign a scheme to
-\code{x}. We naively pick $\tfor \tvb \tvb$. This appears unsound, since
-$\tvb$ will later unify with $\tint$ once the match constraint is discharged.
-But it would be incomplete to lower $\tvb$ as a monomorphic variable.
-\Xalistair{This is no-longer quite true, in this specific example it would be
-complete to lower ://...}
-%
 This motivates \emph{partial type schemes}, our second novel mechanism for
 omnidirectional inference. Partial type schemes are type schemes that delay
-commitment to certain quantifications (\eg $\tvb$). Such \emph{partially
+commitment to certain quantifications (\eg $\tvx, \tvmkret$). Such \emph{partially
 generalized} variables are treated as generalized, but can be incrementally
-refined in future as suspended constraints are discharged.
+refined in future as suspended constraints are discharged. In our example, we will start with a partial type scheme $\all {\tvx, \tvmkret}. \tvx \to \tvmkret$, but we keep track of all instances of this scheme and refine them later if the shape of $\tvmkret$ becomes known.
 
 \parcomment {Intro partial instantiations}
 
