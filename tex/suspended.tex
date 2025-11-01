@@ -2197,48 +2197,35 @@ instantiation form.
 
 \parcomment{Constraint abstractions}
 
-\XDR{I am not sure that the word abstraction and application
-constraints carry the right intuition...  The reader may very confused.  We
-should probably explain that these implement generalization and
-instantiation respectively.  We could event call $\x \@ \tv$ an
-instantiation constraint?}
-\Xalistair{Abstractions / applications capture intuition that is useful
-for solving (e.g. copying constraints).}\XDR{I thought we agreed to keep the
-notation but change the wording to generalization/instantiation, except at
-the first occurence where we explain the double lecture}
+\Xgabriel{The consensus in a long discussion was to emphasize
+  ``generalization'' and ``instantiation'', as more familiar names than
+  ``abstractions'' and ``application'', but explain both views in this
+  paragraph. I did this change.
 
+  In fact ``generalization'' and ``abstractions'' are not interchangeable as
+  ``generalization constraints'' correspond to let-constraints, while
+  ``constraint abstractions'' correspond to constrainted type schemes. So
+  I kept ``abstraction'' when necessary, but replaced ``application'' by
+  ``instantiation''.}
 
-Two constructs deal with the introduction and elimination of constraint
-abstractions. Intuitively, a constraint abstraction $\cabs \tv \c$ is a
-function which when applied to some type $\t$ returns $\c \where {\tv \is \t}$.
+Polymorphism is introduced by a \emph{generalization} constraint
+$\clet \x \tv \ca \cb$ (also called \emph{let} constraints), and eliminated by
+an \emph{instantiation} constraint $\capp \x \tv$. The definition of $\x$ in
+the generalization constraint is a constraint abstraction $\cabs \tv \c$,
+which is a function which when applied to some type $\t$ returns
+$\c \where {\tv \is \t}$. Semantically, the abstraction $\cabs \tv \c$ is
+interpreted as a set of ground types that satisfies $\c$, and generalization
+constraints require that this set be non-empty, \ie there is at least one
+instantiation of $\tv$ that satisfies $\c$.
 %
-Abstractions are introduced by a let construct $(\clet \x \tv \ca \cb)$, which
-binds the constraint abstraction $\cabs \tv \ca$ to the term variable $\x$ in
-$\cb$; semantically, the abstraction $\cabs \tv \c$ is interpreted as a set
-of ground types
-that satisfies $\c$, and we require that this set be non-empty, \ie
-there is at least one instantiation of $\tv$ that satisfies $\c$.
-%
-Applications $\capp \x \t$ eliminate abstractions, applying the type
-$\t$ to the abstraction bound to $\x$. This holds precisely when $\semenv(\t)
-\in \semenv(\x)$, \ie $\t$ is one of the satisfiable instances of $\x$.
-%Concretely,
-%if $\semenv(\x) = \semenvp(\cabs \tv \c)$, where
-%$\semenvp$ is the environment at the binding site of~$\x$,
-%%
-%\XDR{It is unclear
-%what this means. Actually I find this explanation quite confusing, while
-%$\semenv(\x) \in \semenv (\cabs \tv \c)$ was clear enough}
-%%
-%\Xalistair{The point of this sentence is to explain why membership is sufficient for application
-%\eg it corresponds solving the body of the abstraction with the applied
-%type.}\XDR{I understodd the intentention, but I think the wording, which is unchanged, is still unclear}
-%%
-%then $\semenv(\t)
-%\in \semenv(\x)$ holds iff $\semenvp\where{\tv \is \semenv(\t)} \th \c$, which
-%corresponds to the intuition that the application $\capp {(\cabs \tv \c)} \t$
-%should be equivalent to $\c \where {\tv \is \t}$.
-
+Instantiations (or applications) $\capp \x \t$ eliminate abstractions,
+applying the type $\t$ to the abstraction bound to $\x$. This holds precisely
+when $\semenv(\t) \in \semenv(\x)$, \ie $\t$ is one of the satisfiable
+instances of $\x$. The $\lambda$-abstraction and application syntax come from
+\citet*{Pottier/inferno@icfp2014}. In other presentations, constraints
+abstractions $\cabs \tv \c$ are written as constrainted type schemes
+$\all {\tvbs [\c]} \tv$, and instantiation constraints $\capp \x \t$ are
+written $\x \leq \t$.
 
 \parcomment {Suspended match constraints}
 
@@ -2819,7 +2806,7 @@ monomorphic since $\tvp$ is fully constrained by type variables defined
 outside the abstraction's scope and therefore cannot be
 generalized. Applications introduce two fresh flexible type variables, one
 for the argument type and one for the type of the function, typing each
-subterm with these, ensuring $\t$ is the expected return type.  Let-bindings
+subterm with these, ensuring $\t$ is the expected return type. Let-bindings
 generate a polymorphic let constraint; $\cabs \tv {\cinfer \e \tv}$ is a
 principal constraint abstraction for $\e$: its intended interpretation is
 the set of all types that $\e$ admits.
@@ -3216,7 +3203,7 @@ preserve typability in its operational semantics.
 \begin{figure}[!t]\ContinuedFloat
 \begin{mathparsubfig}
   {fig:solver-schemes}
-  {Solving rules for let-bindings and applications.}
+  {Solving rules for let-bindings and instantiations.}
 
 \rewrite[S-Inst-Copy]
   {\cletr \x \tv \tvs {\c} \C\where{\cpapp \x \tvb \tvc \inst}}
@@ -3407,7 +3394,7 @@ abstraction with a region, written $\semenv(\cabsr \tv \tvs \c)$, is a set of
 interpretation for the region $\semenvp$ with a designated \emph{root} variable
 $\tv$, written $\greg \tv \semenvp$.
 Regional \Let-constraints strictly
-generalize ordinary constraint abstractions, as captured by the equivalence:
+generalize ordinary let constraints, as captured by the equivalence:
 \begin{mathpar}
   \clet \x \tv \ca \cb \Wide\cequiv \cletr \x \tv \eset \ca \cb
 \end{mathpar}
@@ -3425,7 +3412,7 @@ out of let-binders when they are independent of the local variables.
 Collectively, these lifting rules normalize the structure of each region into a
 block of existentially bound variables, whose body consists of a conjunction of
 solved multi-equations followed by a residual constraint---typically an
-application, let-binding, or suspended constraint.
+instantiation, let-binding, or suspended constraint.
 
 
 \parcomment{\OML constraints do not need dedicated rules}
@@ -3440,9 +3427,9 @@ constraints already handled by the solver.
 
 % Let-constraint solving is generalization
 
-\parcomment{Background on efficient solving of applications (aka generalization)}
+\parcomment{Background on efficient solving of abstractions (aka generalization)}
 
-Application constraints could be solved by copying constraints:
+Generalization constraints could be solved by copying constraints:
 \begin{mathpar}
 \hfil
 \rewrite
@@ -3454,16 +3441,17 @@ Application constraints could be solved by copying constraints:
 \end{mathpar}
 
 This is rule, due to \citet*{Pottier-Remy/emlti}, resembles $\beta$-reduction,
-except that the original abstraction is retained. While correct for
-\emph{simple} constraints, it may duplicate solving work across applications of
+except that the original let-constraint is retained. While correct for
+\emph{simple} constraints, it may duplicate solving work across distinct instantiations of
 the same abstraction.
 %
 A more efficient approach first solves the abstraction once---\eg reducing it
-to $\cabsr \tv \tvs \ueqs$, where $\tvs$ are generalizable variables---and then
-reuses the result at each application site by only copying the solved
-constraint $\ueq$. This mirrors the \ML generalization and instantiation:
-$\cabsr \tv \tvs \ueqs$ corresponds to the type scheme $\tfor \tvs
-{\sub(\tv)}$, where $\sub$ is the most general unifier of $\ueqs$.
+to $\cabsr \tv \tvs \ueqs$, where $\tvs$ are generalizable variables---and
+then reuses the result at each instantiation site by only copying the solved
+constraint $\ueq$. This mirrors the generalization and instantiation steps of
+\ML inference algorithms such as $\mathcal{W}$: $\cabsr \tv \tvs \ueqs$
+corresponds to the type scheme $\tfor \tvs {\sub(\tv)}$, where $\sub$ is the
+most general unifier of $\ueqs$.
 %
 \citet*{Pottier-Remy/emlti} formalize this connection, and the optimized
 treatment is naturally expressed as a strategy on top of their
@@ -3509,11 +3497,11 @@ commitment to certain quantifications (\eg $\tvb$). Such \emph{partially
 generalized} variables are treated as generalized, but can be incrementally
 refined in future as suspended constraints are discharged.
 
-\parcomment {Intro partial applications}
+\parcomment {Intro partial instantiations}
 
 To support this, we extend the constraint language with \emph{incremental
 instantiation constraints} (\cref{fig:constraint-let-regions}). Instead of
-duplicating an abstraction at each application site, we introduce:
+duplicating an abstraction at each instantiation site, we introduce:
 %
 \begin{enumerate*}
   \item
@@ -3530,11 +3518,11 @@ solver, we view incremental instantiations as markers indicating which parts of
 the abstraction still need to be copied.
 
 Incremental instantiations enables efficient handling of constraint
-applications: solved parts are reused immediately, while suspended constraints
+instantiations: solved parts are reused immediately, while suspended constraints
 can be solved later, further refining the abstraction and propagating
-additional equations to the application sites.
+additional equations to the instantiation sites.
 
-\parcomment{Semantics of incremental applications}
+\parcomment{Semantics of incremental instantiations}
 
 The existential constraint $\cexistsi \inst \x \c$ is satisfiable
 (\Rule{Exists-Inst}), given in \cref{fig:constraint-let-regions}, if
@@ -3549,7 +3537,7 @@ $\inst$ with $\t$.
 The domain of incremental instantiation constraints must lie within the closure of
 the abstraction or among the regional variables of $\x$. Consequently, the
 variables $\tv, \tvs$ bound by the \Let-constraint $\cletr \x \tv \tvs \ca
-\cb$ are bound not only in the body of the abstraction $\ca$, but also in the
+\cb$ are bound not only in the abstraction body $\ca$, but also in the
 constraint $\cb$, where they may appear in incremental instantiations of $\x$
 in the domain of renamings---and only there. Hence, they
 cannot appear in $\cb$ when the corresponding variable $\x$ does not itself
@@ -3594,7 +3582,7 @@ There are three cases in which an instantiation constraint is eliminated:
 %% Uncomment to restore the old style
 %% \let \rewrite \hrewrite
 
-\parcomment{Cleaning up partial applications and let constraints}
+\parcomment{Cleaning up partial instantiations and let constraints}
 
 \Rule{S-Let-Solve} removes a $\Let$ constraint when the bound term
 variable is
@@ -3669,7 +3657,7 @@ reduces instantiation overhead.
 
 \parcomment{S-Let-AppR}
 
-\Rule{S-Let-AppR} rewrites an application constraint $\capp \x \t$ into an
+\Rule{S-Let-AppR} rewrites an instantiation constraint $\capp \x \t$ into an
 incremental instantiation constraint $\cpinst \inst \tv \tvc$. Here, $\inst$ is
 a fresh instantiation of $\x$, $\tv$ is the \emph{root} of $\x$'s region, and
 $\tvc$ is a fresh alias for $\t$. We introduce $\tvc$ explicitly, since our
