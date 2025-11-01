@@ -1106,6 +1106,25 @@ are being refined, \emph{incrementally}. This allows inferring parts of a
 \Let-body to disambiguate its definition, without duplicating
 constraint-solving work.
 
+\paragraph {The forest, not the trees.}
+
+Suspended match constraints offer a \emph{general framework} that works with
+all the features we have considered so far, and more. Some of those features
+can be handled in more specific ways; for example SML implementations use
+row variables to infer tuples and structural records, and GHC uses qualified
+types to allow overloading of record fields with a simple-enough
+type. Suspended constraints are more expressive, as they can handle cases
+where the typing rule to use on the subterms depends on the disambiguation
+choice, as for polymorphic record fields and for GADT constructors in
+patterns. These simpler approaches also do not typically provide declarative
+semantics that justify rejecting programs with still-undetermined
+disambiguation choices.
+
+We hope the keep building on this general approach in future work; in
+particular, we believe omnidirectionality is the missing piece to unlock
+modular implicits---an approach to generalized overloading and a
+long-anticipated feature within the \OCaml community.
+
 \paragraph{Limitations}
 
 % 1. Our framework is complex --- as a result, everything is hard ://
@@ -1148,37 +1167,12 @@ such as polymorphic parameters \citep{White/polyparams@ml2023}. Developing a
 formal treatment of defaulting within our framework is an important direction
 for future work.
 
+\begin{version}{\False}
 \parcomment{Our approach is complex}
 
-\paragraph {The forest, not the trees.}
-
-\indent \Xgabriel{This paragraph below is new.}\XDR{I move it before the
-declarative spec and efficient implementation which should not be part of
-the limitations.}
-Suspended match constraints offer a \emph{general framework} that works with
-all the features we have considered so far, and more. Some of those features
-can be handled in more specific ways; for example SML implementations use
-row variables to infer tuples and structural records, and GHC uses qualified
-types to allow overloading of record fields with a simple-enough
-type. Suspended constraints are more expressive, as they can handle cases
-where the typing rule to use on the subterms depends on the disambiguation
-choice, as for polymorphic record fields and for GADT constructors in
-patterns. These simpler approaches also do not typically provide declarative
-semantics that justify rejecting programs with still-undetermined
-disambiguation choices.
-
-\begin{version}{\False}%\True
-\XDR{I do not like the next sentence. I do not think we should say that
-our framework complex.  And I do not like the
-\emph{frankly}. Or say that this is hard, as if we were complaining.
-The goal is not to sell our work to the reviewers
-but to catch interest of the readear. Hence, we should say that it is
-expressive/sophisticated, carefully/efficiently implemented, or perhaps
-\emph{some of the complexity is due to...}
-}
-
+\Xalistair{Initial version}
 Finally, our framework is complex.  This follows partly from its generality,
-but also because, frankly, everything is hard:
+but also because everything is hard:
 \begin{enumerate}
 
 \item[(\cref{sec/oml})]
@@ -1196,7 +1190,6 @@ We hope to pay off some of this complexity in future work; in particular, we
 believe omnidirectionality is the missing piece to unlock modular
 implicits---an approach to generalized overloading and a long-anticipated
 feature within the \OCaml community.
-\end{version}
 
 \XDR{Alternative proposal}
 Beside its generality, our framework has been carefully designed to come
@@ -1211,8 +1204,7 @@ We hope the generality of the approach will benefit to future work; in
 particular, we believe omnidirectionality is the missing piece to unlock
 modular implicits---an approach to generalized overloading and a
 long-anticipated feature within the \OCaml community.
-
-
+\end{version}
 
 % Something to tie everything back together / also serve as a lookup
 
