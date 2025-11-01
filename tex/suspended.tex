@@ -977,7 +977,7 @@ that is never discharged is considered unsatisfiable.
 \parcomment{A note on shape patterns}
 
 For now, it suffices to think of shapes as parts of types (\eg the type
-constructor $\T$ in $\Tapp \tys$%
+constructor $\T$ in $\Fapp[\T] \tys$%
 \footnote{
   Type constructors are prefixed, except in \OCaml code, where they are postfixed.
 })
@@ -1018,17 +1018,19 @@ we generate the typing constraint:
 
 \TODO{Come up with better syntax for $\ct$.}
 
-This constraint introduces the unification variable $\tv$, unifying it with the
-type of $\e$ (via $\cinfer \e \tv$), and suspends resolution of the return type
-$\t$ until the record type of $\e$---that is, $\tv$---becomes \emph{known}, say
-some type $\tz$. The branch then matches $\tz$ against the nominal type pattern
-$\cpatrcd \ct$, binding the type constructor $\T$ to the pattern variable $\ct$
-when $\tz = \Tapp \tyas$, and failing otherwise. Using this, the globally
-unique projection type (scheme) $\tfor \tvbs {\Tapp \tvbs \to \tp}$ for the
-explicit label $\labfrom \elab \T$ is instantiated, \eg to $\Tapp \tybs \to
-\typ\where {\tvbs \is \tybs}$ for some $\tybs$. Finally, the resulting
-constraints are imposed on the domain (\ie $\tz = \Tapp \tybs$) and codomain
-(\ie $\t = \typ\where{\tvbs \is \tybs}$) of the instantiated projection type.
+This constraint introduces the unification variable $\tv$, unifying it
+with the type of $\e$ (via $\cinfer \e \tv$), and suspends resolution
+of the return type $\t$ until the type $\tv$ of $\e$ becomes
+\emph{known} to be some non-variable type $\tz$. The branch then
+matches $\tz$ against the record type pattern $(\cpatrcd \ct)$. If $\tz$
+is a record type $(\trcd {\T} \tyas)$ for some ground record name ${\T}$,
+then the record name variable $\ct$ in the pattern is bound to $\T$,
+otherwise the whole constraint fails. When $\ct$ is bound to $\T$, the
+right-hand-side constraint becomes
+$\labfrom \elab \T \leq (\tlab \tv \t)$, which requires that the type
+of the projection of the label $\elab$ at type $\T$ in the global
+record-declaration environment can be instantiated into
+$(\tlab \tv \t)$.
 
 \parcomment{Polytypes}
 
@@ -1047,8 +1049,8 @@ constraint:
 %
 The match remains suspended until $\tv$ resolves to some type $\tz$. If, upon
 resolution, $\tz$ is $\tpoly \ts$, the pattern $\tpoly \cscm$ matches
-successfully, binding $\ts$ to the pattern variable $\cscm$ and performs the
-instantiation $\cleq \cscm \t$, that is $\cleq \ts \t$. Otherwise, the
+successfully, binding $\ts$ to the polytype variable $\cscm$ and performs the
+instantiation $\cleq \ts \t$. Otherwise, the
 pattern does not match and the constraint fails.
 
 \paragraph{Scaling to \ML}
@@ -1240,7 +1242,7 @@ The remainder of the paper develops our three key ideas in turn:
       \tunit \and
       \ta \to \tb \and
       \Pi\iton \ti \and
-      \T \tys \and
+      \trcd \T \tys \and
       \tpoly \ts
   }
   \\
@@ -1248,6 +1250,8 @@ The remainder of the paper develops our three key ideas in turn:
       \t \and
       \all \tv \ts
   }
+  \\
+  \entry[Record name]{\T}{}{}
   \\
   \entryset[Ground types]{\gt}{\Ground}
   \\[1ex]
@@ -1275,7 +1279,7 @@ The remainder of the paper develops our three key ideas in turn:
   \\
   \entry[Label contexts]{\labenv}{
     \eset \and
-    \labenv, \labfrom \elab \T : \all \tvs \Tapp \tvs \to \t
+    \labenv, \labfrom \elab \T : \all \tvs \trcd \T \tvs \to \t
   }
   \\[1ex]
   \entry[Shapes] {\Sh} {\any \tvcs \t}
@@ -1346,8 +1350,8 @@ The remainder of the paper develops our three key ideas in turn:
     {\G \th \efield \e \elab : \t}
 
   \inferrule[Lab-Inst]
-    {\labenv(\labfrom \elab\T) = \tfor \tvs {\Tapp \tvs} \to \t}
-    {{\labfrom \elab \T} \leq (\Tapp \tys \to \t\where{\tvs \is \tys})}
+    {\labenv(\labfrom \elab\T) = \tfor \tvs {\trcd \T \tvs} \to \t}
+    {{\labfrom \elab \T} \leq (\trcd \T \tys \to \t\where{\tvs \is \tys})}
 \end{mathparfig}
 
 
@@ -1371,7 +1375,7 @@ specifications for fragile features often fail to preserve principality.
 \end{wraphbox}
 
 Consider records, for instance. We can ask the user to provide a type
-annotation $\Tapp \tys$ when projecting, using an explicit record projection
+annotation by using an explicit record projection
 $\exfield \e \T \elab$, which has a simple typing rule (\Rule{Rcd-Proj-X}). By
 contrast, the natural typing rule for the overloaded projections $\efield \e
 \elab$ breaks principality (\Rule{Rcd-Proj-I-Nat}). For example, term $\efun r
@@ -1381,8 +1385,8 @@ contrast, the natural typing rule for the overloaded projections $\efield \e
 \parcomment{How we restore principal types}
 
 To restore principality for overloaded projections, we require that the
-type of $\e$ be \emph{known}---that is, determined to be a specific nominal
-record type $\Tapp[\T_0] \tys$, rather than merely \emph{guessed}.  This
+type of $\e$ be \emph{known}---that is, determined to be a specific 
+record type $\trcd {\T_0} \tys$, rather than merely \emph{guessed}.  This
 requirement is expressed via a \emph{unicity condition} (see
 \cref{sec/overview/omni/unicity}), yielding the contextual rule
 \Rule{Rcd-Proj-I}, which elaborates the fragile overloaded projection $\efield \e
@@ -1409,16 +1413,22 @@ of $\overline X$ and $\overline X'$. We often write $X$ for the singleton set
 
 \paragraph{Types}
 
-Monotypes (or just types) include, as usual, type variables $\tv$, the unit
-type $\tunit$, arrow types, but also nominal types\footnote {Type constructors
-are prefixed, except in \OCaml code, where they are postfixed.}  $\T \tys$ and
-polytypes $\tpoly \ts$.  Type schemes $\ts$ are of the form $\all \tvs \t$,
-they are equal up to the reordering of binders and removal of useless
-variables. Standard notions such as the set of free variables $\fvs
-\ts$ and capture-avoiding substitutions $\ts\where{\tv \is \t}$ are defined in
-the usual way. We write $\TyVars$ for the set of type variables, and use $\tvs
-\disjoint \ts$ as a short-hand for $\tvs \disjoint \fvs \ts$. Finally, $\gt \in
-\Ground$ denotes a \emph{ground type}---a type with no free variables.\footnote{$\gt$ can be pronounced ``Fraktur g'' or just ``ground g''.}
+Monotypes (or just types) include, as usual, type variables $\tv$, the
+unit type $\tunit$, arrow types, but also nominal record types
+$\trcd \T \tys$, and polytypes $\tpoly \ts$. We use a non-standard
+syntax $\trcd \T \tys$ for record types, where $\T$ is a \emph{record
+  name} and $\tys$ a list of type parameters.\footnote{Using $\T$ as
+  an argument of $(\trcd \T \tys)$ rather a head constructor
+  $(\Fapp[\T] \tys)$ will make record shape patterns easier to
+  understand.} Type schemes $\ts$ are of the form $\all \tvs \t$, they
+are equal up to the reordering of binders and removal of useless
+variables. Standard notions such as the set of free variables
+$\fvs \ts$ and capture-avoiding substitutions $\ts\where{\tv \is \t}$
+are defined in the usual way. We write $\TyVars$ for the set of type
+variables, and use $\tvs \disjoint \ts$ as a short-hand for
+$\tvs \disjoint \fvs \ts$. Finally, $\gt \in \Ground$ denotes
+a \emph{ground type}---a type with no free variables.\footnote{$\gt$
+  can be pronounced ``Fraktur g'' or just ``ground g''.}
 
 
 \paragraph{Terms}
@@ -1436,9 +1446,9 @@ following expressions:
   Overloaded record labels include record literals $\erecord { \elaba = \ea;
   \ldots; \elab_n = \en }$ and field projections $\efield \e \elab$. Both
   constructs have explicit counterparts: $\exrecord \T {\elaba = \ea;
-  \ldots; \elab_n = \en }$ and $\exfield \e \T \elab$, where the nominal type
-  prefix $\labfrom {} \T$ indicates that the labels correspond to the label
-  definitions in type $\T$ (thereby disambiguating overloading).
+  \ldots; \elab_n = \en }$ and $\exfield \e \T \elab$, where the explicit
+  record annotation $\labfrom {} \T$ indicates that the labels unambiguously
+  belong to the record $\T$.
 
 \XDR{BTW, I do not like the $t/\elab$... I thought $t\cdot \elab$ nicely
 solved it. $\t/\elab$ does not associates intuitively. For example
@@ -1455,7 +1465,7 @@ exactly the free variables of the type $\t$ or type scheme $\ts$.
 
 We write $\e^i$ for fragile, implicit forms and $\e^x$ for their explicit
 counterparts. Typing rules for explicit terms are mostly standard; nominal
-records are require a more intricate (yet largely folklore) treatment of
+records require a more intricate (yet largely folklore) treatment of
 \emph{closed world} reasoning.
 %
 The crux of our work is the novel typing of the fragile constructs,
@@ -1501,14 +1511,14 @@ $\tvs$, which are existentially quantified to close the annotation, as in
 \parcomment {Label types and contexts}
 
 We assume a global label context $\labenv$ mapping labels to their projection
-type, \ie type schemes of the form $\all \tvs \Tapp \tvs \to \t$. A label
-$\elab$ may belong to multiple record types, but is unique within each type
-$\T$. For a given $\T$, we write $\Labenv$ for the set of labels belonging to $\T$:
+type, \ie type schemes of the form $\all \tvs \trcd \T \tvs \to \t$. A label
+$\elab$ may belong to multiple record types, but is unique within each record
+$\T$. We write $\Labenv$ for the set of labels belonging to the record $\T$:
 %
-${\Labenv} \eqdef \set {\elab \mid \labfrom \elab \T : \all \tvs \T \tvs \to \t \in \labenv}$.
+${\Labenv} \eqdef \set {\elab \mid \labfrom \elab \T : \all \tvs \trcd \T \tvs \to \t \in \labenv}$.
 %
 We write $\labenv (\labfrom \elab \T)$ for the unique scheme
-$\tfor \tvs {\Tapp \tvs} \to \t$ associated with $\elab$ in $\T$ (if defined).
+$\tfor \tvs {\trcd \T \tvs} \to \t$ associated with $\elab$ in $\T$ (if defined).
 
 \parcomment{Typing rules}
 
@@ -1641,9 +1651,9 @@ A principal shape $\any \tvcs \t$ is \emph{canonical} if its free variables
 appear in the sequence $\tvcs$ in the order in which they occur in $\t$.  We
 write $\sh$ for canonical principal shapes.
 %
-Each non-variable type $\t$ has a unique canonical principal shape, which we
-write $\shape \t$. For example, $\shape {\Tapp \tys}$
-is $(\any \tvcs \Tapp \tvcs)$.
+Each non-variable type $\t$ has a unique canonical principal shape
+written $\shape \t$. For example, $\shape {\trcd \T \tys}$ is
+$(\any \tvcs \trcd \T \tvcs)$.
 
 \parcomment {Polytypes are constructors}
 
@@ -1699,12 +1709,12 @@ represented as the shape application $\shapp (\tint \tlist)$.
     {\G \th \E \where{\epoly \e} : \t}
 \\
   \inferrule[Rcd-I]
-    {\Eshape \E \es {\any \tvcs \Tapp \tvcs} \\
+    {\Eshape \E \es {\any \tvcs \trcd \T \tvcs} \\
      \G \th \E\where{\exrecord \T {\overline{\elab = \e}}} : \t }
     {\G \th \E\where{\erecord {\overline{\elab = \e}}} : \t}
 
   \inferrule[Rcd-Proj-I]
-    {\eshape \E \e {\any \tvcs \Tapp \tvcs} \\
+    {\eshape \E \e {\any \tvcs \trcd \T \tvcs} \\
      \G \th \E\where{\exfield \e \T \elab} : \t}
     {\G \th \E\where{\efield \e \elab} : \t}
 \end{mathparfig}
@@ -1858,17 +1868,17 @@ $\expoly \e \tvcs \ts$ (\emph{Step 3}).
 
 Overloaded record labels are handled analogously.
 %
-Typing record projections in \Rule{Rcd-Proj-I} is an \emph{elimination form}
-for the nominal type $\T$: the projection $\efield \e \elab$ is typed as
-$\exfield  \e \Tapp \elab$ (\emph{Step 3}) provided the shape of the type of
-expression $\e$ in context $\E$ is a nominal record $\any \tvcs \Tapp \tvcs$
-(\emph{Step 2}).
+Typing record projections in \Rule{Rcd-Proj-I} is an \emph{elimination
+  form} for the record type $\trcd \T \ts$: the projection $\efield \e \elab$
+is typed as $\exfield \e \T \elab$ (\emph{Step 3}) provided the
+type of expression $\e$ in context $\E$ has record shape
+$\any \tvcs \trcd \T \tvcs$ (\emph{Step 2}).
 %
 For record construction, $\erecord {\overline{\elab = \e}}$ is an
 \emph{introduction form}. In \Rule{Rcd-I}, we type an overloaded record
 $\erecord {\overline{\elab = \e}}$ as $\exrecord \T {\overline{\elab = \e}}$
 (\emph{Step 3}), provided the context $\E$ with subterms $\es$ expects a
-nominal record type of shape $\any \tvcs \Tapp \tvcs$ (\emph{Step 2}).
+record type of shape $\any \tvcs \trcd \T \tvcs$ (\emph{Step 2}).
 
 \parcomment {Illustrative examples}
 We now illustrate the typing of implicit constructs with a few examples.
@@ -1890,7 +1900,8 @@ let ex_8 r = { x = r.x; y = r.color }   °\ocamlflags 20°
   In \ocaml{ex_8}, $r$ can only be of type \ocaml{gray_color}. Indeed,
   considering the second projection first, we should learn that $r$ is of type
   \ocaml{gray_color} (using \Rule{Rcd-Proj-Closed}) and since it is
-  $\lambda$-bound, this makes the first projection unambiguous.
+  $\lambda$-bound, this makes the first projection unambiguous. (For record
+  types without parameters, we use $\T$ as a shorthand for $\trcd \T \emptyset$.)
 
   Formally, we derive:
   \begin{mathpar}
@@ -1920,7 +1931,7 @@ To illustrate a simple case of non-typability, we reconsider the example $\ttex
 If there is a derivation of $\ttex 1$, then there must be one of the form:
 \begin{mathpar}
   \infer* [Right=Rcd-Proj-I]
-    { \eshape \E r {\any \tvcs \Tapp \tvcs} \\
+    { \eshape \E r {\any \tvcs \trcd \T \tvcs} \\
       \eset \th \E\where{\exfield r \T \ttx} : \t}
     %----------------------------------------------
     { \eset \th \E\where{\efield r \ttx} : \t}
@@ -1928,7 +1939,7 @@ If there is a derivation of $\ttex 1$, then there must be one of the form:
 where $\E$ is the term $\efun r \square$, which is the largest possible
 context.
 %
-Unfortunately, $\eshape \E r {\any \tvcs \Tapp \tvcs}$ does not hold for any
+Unfortunately, $\eshape \E r {\any \tvcs \trcd \T \tvcs}$ does not hold for any
 $\T$. Indeed, we have $\eset \th \E \where {\emagic {\eannot r {} {\gt}}} :
 \gt \to \t$.  for any $\gt$ and $\t$.  Hence, $\ttpoint$ and $\ttgraypoint$
 are both possible shapes for the type of $r$.
@@ -2335,9 +2346,9 @@ The partial function $(\Cmatches \cpat \sh \tvs)$, introduced in
 a canonical principal shape $\sh$. Before matching, $\sh$ is opened with
 fresh shape variables $\tvs$ (of the same arity as $\sh$), so that the
 result of matching may refer to them. The match either fails or returns
-a substitution $\theta$ mapping pattern variables (\eg nominal type
+a substitution $\theta$ mapping pattern variables (\eg record name
 variables $\ct$ from \cref{sec/overview/omni}) to shape components (\eg
-nominal type names $\T$).  These components may themselves mention the
+record names $\T$).  These components may themselves mention the
 freshly introduced variables $\tvs$. In~\cref {fig:constraints} we only
 introduce the wildcard pattern and its matching rule; in~\cref
 {sec/oml/constraints} we extend both the syntax of shape patterns and the
@@ -2578,7 +2589,7 @@ variable and $\C$ is satisfiable.
   {fig:patterns-oml}
   {Patterns for \OML.}
   \begin{bnfgrammar}
-   \entry[Nominal type variables]{\ct}{}\\
+   \entry[Record variables]{\ct}{}\\
    \entry[Scheme variables]{\cscm}{}\\
    \entry[Shape patterns]{\cpat}{
       \ldots
@@ -2598,8 +2609,8 @@ variable and $\C$ is satisfiable.
   \newcommand{\Mrule}[5][]{{#2} \Matches {(#3)} \; #4 &\eqdef& {#5} & #1}
   \begin{tabular}{RCLL}
     \Mrule
-      {\cpatrcd \ct}
-      {\any \tvcs \Tapp} \tvcps
+      {(\cpatrcd \ct)}
+      {\any \tvcs \trcd \T \tvcs} \tvcps
       {[\ct \is \T]}
     \\\>
     \Mrule
@@ -2624,9 +2635,9 @@ variable and $\C$ is satisfiable.
   }
   \begin{tabular}{RCLL}
     \Srule
-      [\text{if } \labenv(\labfrom \elab \T) = \tfor \tvs {\Tapp \tvs \to \t}]
+      [\text{if } \labenv(\labfrom \elab \T) = \tfor \tvs {\trcd \T \tvs \to \t}]
       {\labfrom \elab \T \leq \ta \to \tb}
-      {\cexists \tvs \cunif \ta  {\Tapp \tvs} \cand \cunif \tb \t}
+      {\cexists \tvs \cunif \ta  {\trcd \T \tvs} \cand \cunif \tb \t}
     \\\>
     \dom{\T} = \elabs &\eqdef&
        \Scases{\ctrue}{\cfalse}{\Dom {\labenv(\T)} = \elabs}
@@ -2764,11 +2775,11 @@ concretize this by specifying the shape patterns used in \OML
 (in \cref{fig:patterns-oml}), and introducing the corresponding constraints
 for the variables they bind.
 %
-Patterns include:
+Shape patterns include:
 \begin{enumerate*}
 
-  \item Nominal patterns $\cpatrcd \ct$, binding the name of a nominal type
-    $\Tapp \tys$ to the nominal variable $\ct$.
+  \item Record type patterns $\cpatrcd \ct$, binding the name $\T$
+    of a record type $\trcd \T \tys$ to the record variable $\ct$.
 
   \item Polytype patterns $\cpatpoly \cscm$ matching a polytype $\tpoly \ts$ and
     binding the resulting scheme to the variable $\cscm$.
@@ -2778,7 +2789,7 @@ Patterns include:
 Each new kind of pattern introduces corresponding constraint formers:
 $\labfrom \elab \ct \leq \ta \to \tb$ asserts that $\ta \to \tb$ is a
 instance of projection type associated with the explicit label $\labfrom
-\elab \ct$; $\dom \ct = \elabs$ ensures that the domain of nominal type
+\elab \ct$; $\dom \ct = \elabs$ ensures that the domain of record type
 $\ct$ is the set of labels $\elabs$; and $\cscm \leq \t$ checks that $\t$ is
 an instance of $\cscm$, while $\x \leq \cscm$ asserts that every instance of
 $\x$ is an instance of $\cscm$.
@@ -2840,9 +2851,9 @@ be a polytype, bound to $\cscm$. We then assert that the principal type of $\e$
 is at least as general as $\cscm$, via the constraint $\x \leq \cscm$.
 
 % Records
-Record projections generate a fresh variable $\tv$ for the nominal record
+Record projections generate a fresh variable $\tv$ for the record
 type and constrain $\e$ to this type, suspending until the type $\tv$ of
-$\e$ is known to be a nominal record type matching the shape pattern
+$\e$ is known to be a record type matching the shape pattern
 $(\cpatrcd \ct)$. On discharge, the type of the projected label is
 retrieved from the global label context $\labenv$ and instantiated.
 %
@@ -4473,9 +4484,9 @@ definition in full, or when studying the meta-theory of the system.
     \Srule[\text{if } \cmatches \cpati \sh \tvs \theta]{\cmatched \t \sh {\cbranch \cpat \cs}}
       {\cexists \tvs \cunif \t \shapp \tvs \cand \theta(\ci)}
     \\[1ex]
-    \Srule[\text{if } \labenv(\labfrom \elab \T) = \tfor \tvs {\Tapp \tvs} \to \t]
+    \Srule[\text{if } \labenv(\labfrom \elab \T) = \tfor \tvs {\trcd \T \tvs} \to \t]
       {\labenv(\labfrom \elab \T) \leq \ta \to \tb}
-      {\cexists \tvs \cunif \ta {\Tapp \tvs} \cand \cunif \tb \t }
+      {\cexists \tvs \cunif \ta {\trcd \T \tvs} \cand \cunif \tb \t }
     \\[1ex]
     \dom{\T} = \elabs &\eqdef& \Scases{\ctrue}{\cfalse}{\Dom {\labfrom \labenv \T} = \elabs} \\[1ex]
     \Srule
@@ -4537,7 +4548,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     \\[1ex]
     \Mrule
       {\cpatrcd \ct}
-      {\any \tvcs \Tapp} \tvs
+      {\any \tvcs \trcd \T \tvcs} \tvs
       {[\ct \is \T]}
     \\[1ex]
     \Mrule
@@ -4671,19 +4682,19 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 
 \begin{judgboxmathpar}
   {{\labfrom \elab \T} \leq \tya \to \tyb}
-  {The label $\elab$ in the nominal record type $\T$ has the field type $\tyb$ and record type $\tya$.}
+  {The label $\elab$ of the record $\T$ has the field type $\tyb$ and record type $\tya$.}
   \inferrule[Lab-Inst]
     {\labenv(\labfrom \elab \T) = \tfor \tvs {\T \tvs} \to \t }
-    {{\labfrom \elab \T} \leq \Tapp \tys \to \t\where{\tvs \is \tys} }
+    {{\labfrom \elab \T} \leq \trcd \T \tys \to \t\where{\tvs \is \tys} }
 \end{judgboxmathpar}
 
 \judgbox
   {\labuni \elab \T}
-  {The label $\elab$ infers the unique nominal record type $\T$.}
+  {The label $\elab$ infers the unique record name $\T$.}
 
 \begin{judgboxmathpar}
   {\labsuni \elabs \T}
-  {The \emph{closed} set of labels $\elabs$ infer the unique nominal record type $\T$.}
+  {The \emph{closed} set of labels $\elabs$ infer the unique record name $\T$.}
   \infer[Lab-Uni]
     {\elab \in \Dom {\labfrom \labenv \T} \\
      \forall \Tp, \uad \elab \in \Dom {\labfrom \labenv \Tp} \implies {\T} = \Tp}
@@ -4779,7 +4790,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\G \th \erecord {\overline{\elab = \e}} : \t}
 
   \inferrule[Rcd-I]
-    {\Eshape \E \es {\any \tvcs \Tapp \tvcs} \\ \G \th \E\where{\exrecord \T {\overline{\elab = \e}}} : \t }
+    {\Eshape \E \es {\any \tvcs \trcd \T \tvcs} \\ \G \th \E\where{\exrecord \T {\overline{\elab = \e}}} : \t }
     {\G \th \E\where{\erecord {\overline{\elab = \e}}} : \t}
 
   \inferrule[Rcd-Proj-X]
@@ -4793,7 +4804,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\G \th \efield \e \elab : \t}
 
   \inferrule[Rcd-Proj-I]
-    {\eshape \E \e {\any \tvcs \Tapp \tvcs} \\
+    {\eshape \E \e {\any \tvcs \trcd \T \tvcs} \\
      \G \th \E\where{\exfield \e \T \elab} : \t}
     {\G \th \E\where{\efield \e \elab} : \t}
 
@@ -5086,12 +5097,12 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\Th \Lab[\elab] : \t}
 
   \inferrule[Can-Rcd-I]
-    {\Eshape \E \es {\any \tvcs \Tapp \tvcs} \\
+    {\Eshape \E \es {\any \tvcs \trcd \T \tvcs} \\
      \Th \E\where{\exrecord \T {\elaba = \ea; \ldots; \elab_n = \en}} : \t}
     {\Th \E\where{\erecord {\elaba = \ea; \ldots; \elab_n = \en}} : \t}
 
   \inferrule[Can-Rcd-Proj-I]
-    {\Eshape \E \e {\any \tvcs \Tapp \tvcs} \\
+    {\Eshape \E \e {\any \tvcs \trcd \T \tvcs} \\
      \Th \E\where{\exfield \e \T \elab} : \t}
     {\Th \E\where{\efield \e \elab} : \t}
 \end{judgboxmathpar}
@@ -5427,11 +5438,12 @@ soundness and completeness in \cref{app/oml/proofs}.
   \begin{proofcases}
     \proofcase{$\t$ is a type constructor $\tconstr \tys$}
 
-    $\tconstr$ is a top-level type constructor of arity $n$, which in our
-    setting may be the nullary $\tunit$, the binary arrow, the $n$-ary product,
-    or a $n$-ary nominal type. In all these cases, the shape of $\t$ is $\any
-    \tvcs \tconstr \tvcs$ where $\tvcs$ is a sequence of $n$ distinct type
-    variables. This is clearly principal.
+    $\tconstr$ is a top-level type constructor of arity $n$, which in
+    our setting may be the nullary $\tunit$, the binary arrow,
+    the $n$-ary product, or a nominal record type. In all
+    these cases, the shape of $\t$ is $\any \tvcs \tconstr \tvcs$
+    where $\tvcs$ is a sequence of $n$ distinct type variables. This
+    is clearly principal.
 
     \proofcase{$\t$ is a polytype $\tpoly {\tfor \tvs \t}$}
 

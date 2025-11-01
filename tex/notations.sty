@@ -60,7 +60,7 @@
 \newcommand{\cpatprod}[2]{\Pi~{{#1}_{#2}}}
 \newcommand{\cpatpoly}[1]{\tpoly {#1}}
 \newcommand{\cpatwild}{\wild}
-\newcommand{\cpatrcd}[1]{\Tapp[#1]\wild}
+\newcommand{\cpatrcd}[1]{\trcd{#1}{\wild}}
 \defmetavar{\cscm}{s}
 \defmetavar{\ct}{d}
 \defmetavar[s,as,bs]{\cbr}{\chi}
@@ -162,6 +162,7 @@
 \newcommand{\tlist}{\mathpostfix{list}}
 \newcommand{\trec}[2]{\mathprefix{rec}#1.#2}
 \newcommand{\tsrecord}[1]{\braces {#1}}
+\newcommand{\trcd}[2]{\mathsf{rcd} \; {#1} \; {#2}}
 
 \defmetavar \tconstr {\mathprefix{c}}
 
@@ -354,7 +355,7 @@
 
 
 \newcommand \ehole {\square}
-\newcommand \wild {{\_}}
+\newcommand \wild {\mathord{\_}}
 %% \newcommand \ecast [3]{#1  : #2 \bowtie #3}
 
 %% Previously inlined, non-local commands
