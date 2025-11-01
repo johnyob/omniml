@@ -374,7 +374,8 @@ second projection first, we learn that \code{r} must have the type
 projection unambiguous. However, \OCaml still rejects this example due to its
 \emph{static order} of inference (\cref{sec/overview/directional}).
 
-\parcomment{Default rules}
+\paragraph{Default rules}
+\label{sec/default-rules}
 
 If local type information and closed-world reasoning are insufficient, \OCaml
 falls back to a syntactic default: it selects the most recently defined
@@ -1158,14 +1159,18 @@ without let-polymorphism, as shown by a reduction from 3-SAT~\citep*
 
 \parcomment{No default rules formalism}
 
-Secondly, we do not yet provide a formal account of \emph{default
-rules}\XDR{See (??)}.
-However, our prototype implementation, discussed in \cref{sec:implementation},
-\emph{does} include support for defaulting. In practice, defaulting proves
-extremely useful and appears essential for scaling inference to richer features
-such as polymorphic parameters \citep{White/polyparams@ml2023}. Developing a
-formal treatment of defaulting within our framework is an important direction
-for future work.
+Secondly, we do not yet provide a formal account of \emph{default rules}
+mentioned in \cref{sec/default-rules}.  However, our prototype implementation,
+discussed in \cref{sec:implementation}, does support (optionally) attaching
+a default strategy to each suspended constraint.  \Draft{More details can be
+  found in Appendix \cref {app/default-rules}.}{} In practice, defaulting
+proves useful and appears essential for certain features such as polymorphic
+parameters \citep{White/polyparams@ml2023}. Defaulting behaves better than in
+OCaml: we propagate more type information, so we default less often and never
+in situations which are obviously incompatible with the program context. But
+it still breaks principality.  Developing a formal treatment of defaulting
+within our framework is an important direction for future work.
+
 
 \begin{version}{\False}
 \parcomment{Our approach is complex}
