@@ -1357,6 +1357,8 @@ feature within the \OCaml community.
     {\labenv(\labfrom \elab\T) = \tfor \tvs {\trcd \T \tvs} \to \t}
     {{\labfrom \elab \T} \leq (\trcd \T \tys \to \t\where{\tvs \is \tys})}
 \end{mathparfig}
+\Xalistair{I wanted to link shapes and canonical shapes in the above figure, but it required as $\ni$. 
+Any better suggestions?}
 
 
 \parcomment {Running example: polytypes}
@@ -1955,11 +1957,11 @@ let ex_1_0 r = r.color.x °\ocamlflags 11°
 
 \parcomment{Proof that this is ill-typed}
 
-  \Xalistair{Improve flow}
-
-  As explained in \cref{sec/overview/limitations}, \code{ex_1_0} is ill-typed
-  is precisely because each implicit field projection must be disambiguated
-  individually, in a sequential fashion. 
+As explained in \cref{sec/overview/limitations}, \code{ex_1_0} is ill-typed
+because our unicity conditions enforce that each implicit field projection
+must be resolved individually and in a sequential fashion. We view this as a
+``Goldilocks'' solution: we deliberately trade a small loss in expressivity
+for the benefit of a tractable, backtracking-free inference algorithm. 
 
 To type $\ttex {10}$ one must eliminate the final implicit
 projection in a context of the form $\E\where{\efield \e \elab}$.
@@ -2185,31 +2187,20 @@ instantiation form.
 
 \parcomment{Constraint abstractions}
 
-\Xgabriel{The consensus in a long discussion was to emphasize
-  ``generalization'' and ``instantiation'', as more familiar names than
-  ``abstractions'' and ``application'', but explain both views in this
-  paragraph. I did this change.
-
-  In fact ``generalization'' and ``abstractions'' are not interchangeable as
-  ``generalization constraints'' correspond to let-constraints, while
-  ``constraint abstractions'' correspond to constrainted type schemes. So
-  I kept ``abstraction'' when necessary, but replaced ``application'' by
-  ``instantiation''.}
-
 Polymorphism is introduced by a \emph{generalization} constraint
-$\clet \x \tv \ca \cb$ (also called \emph{let} constraints), and eliminated by
-an \emph{instantiation} constraint $\capp \x \tv$. The definition of $\x$ in
-the generalization constraint is a constraint abstraction $\cabs \tv \c$,
-which is a function which when applied to some type $\t$ returns
+$\clet \x \tv \ca \cb$ (also called \emph{let} constraints) and eliminated by
+an \emph{instantiation} constraint $\capp \x \tv$. In a generalization constraint, 
+the definition of $\x$ is given by a constraint abstraction $\cabs \tv \c$,
+a function that, when applied to a type $\t$, returns
 $\c \where {\tv \is \t}$. Semantically, the abstraction $\cabs \tv \c$ is
-interpreted as a set of ground types that satisfies $\c$, and generalization
-constraints require that this set be non-empty, \ie there is at least one
+interpreted as a set of ground types that satisfies $\c$, and the generalization
+constraint require this set to be non-empty, \ie there is at least one
 instantiation of $\tv$ that satisfies $\c$.
 %
-Instantiations (or applications) $\capp \x \t$ eliminate abstractions,
-applying the type $\t$ to the abstraction bound to $\x$. This holds precisely
+Instantiations (or applications) $\capp \x \t$ eliminate abstractions by
+applying a type $\t$ to the abstraction bound to $\x$. This holds precisely
 when $\semenv(\t) \in \semenv(\x)$, \ie $\t$ is one of the satisfiable
-instances of $\x$. The $\lambda$-abstraction and application syntax come from
+instances of $\x$. The $\lambda$-abstraction and application syntax follows 
 \citet*{Pottier/inferno@icfp2014}. In other presentations, constraints
 abstractions $\cabs \tv {\cexists \tvbs \c}$ are written as constrainted type schemes
 $\all {\tv, \tvbs} C \Rightarrow \tv$, and instantiation constraints $\capp \x \t$ are
