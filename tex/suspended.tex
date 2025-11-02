@@ -1107,26 +1107,27 @@ are being refined, \emph{incrementally}. This allows inferring parts of a
 \Let-body to disambiguate its definition, without duplicating
 constraint-solving work.
 
-\paragraph {The forest, not the trees.}
+% Something to tie everything back together / also serve as a lookup
 
-Suspended match constraints offer a \emph{general framework} that works with
-all the features we have considered so far, and more. Some of those features
-can be handled in more specific ways; for example SML implementations use
-row variables to infer tuples and structural records, and GHC uses qualified
-types to allow overloading of record fields with a simple-enough
-type. Suspended constraints are more expressive, as they can handle cases
-where the typing rule to use on the subterms depends on the disambiguation
-choice, as for polymorphic record fields and for GADT constructors in
-patterns. These simpler approaches also do not typically provide declarative
-semantics that justify rejecting programs with still-undetermined
-disambiguation choices.
+\paragraph{Plan}
+We next turn to the limtations of omnidirectionality.
+The remainder of the paper then develops our three key ideas in turn:
+\begin{enumerate*}
 
-We hope the keep building on this general approach in future work; in
-particular, we believe omnidirectionality is the missing piece to unlock
-modular implicits---an approach to generalized overloading and a
-long-anticipated feature within the \OCaml community.
+  \item[(\cref{sec/oml})] formalizes our declarative characterization of
+    \emph{known} type information and presents \penalty 50 \OML's typing rules.
 
-\paragraph{Limitations}
+  \item[(\cref{sec:constraints})] defines the semantics of suspended match
+    constraints and introduces constraint generation function $\cinfer \e \t$
+    for \OML terms.
+
+  \item[(\cref{sec:solving})]
+    describes incremental instantiation as part of our formal constraint
+    solver.
+
+\end{enumerate*}
+
+\subsection{Limitations}
 
 % 1. Our framework is complex --- as a result, everything is hard ://
 % 2. Some programs are ill-typed even though they have a principal type.
@@ -1134,7 +1135,15 @@ long-anticipated feature within the \OCaml community.
 
 \parcomment{Some programs even though they have a principal type are ill-typed}
 
-Firstly, omnidirectional inference is powerful, but not omnipotent. Some expressions
+Omnidirectional inference is powerful, but not omnipotent:
+\begin{enumerate*}
+  \item some programs are still rejected as ambiguous, even though a unique elaboration could 
+    in principle be chosen---a deliberate ``Goldilocks'' compromise;
+  \item the current formalization omits a treatment of default rules; and 
+  \item the conceptual and implementation complexity of our framework.
+\end{enumerate*}
+
+\paragraph{Not too cold, not too hot} Some expressions
 must be rejected even though their elaboration would be unambiguous. Consider:
 
 \begin{program}[input,checkocaml]
@@ -1157,27 +1166,53 @@ the intractability of full general overloading which is NP-hard, even
 without let-polymorphism, as shown by a reduction from 3-SAT~\citep*
 {Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}.
 
+
+\paragraph{No defaults, by default} 
+
 \parcomment{No default rules formalism}
 
-Secondly, we do not yet provide a formal account of \emph{default rules}
-mentioned in \cref{sec/default-rules}.  However, our prototype implementation,
-discussed in \cref{sec:implementation}, does support (optionally) attaching
-a default strategy to each suspended constraint.  \Draft{More details can be
-  found in Appendix \cref {app/default-rules}.}{} In practice, defaulting
-proves useful and appears essential for certain features such as polymorphic
-parameters \citep{White/polyparams@ml2023}. Defaulting behaves better than in
-OCaml: we propagate more type information, so we default less often and never
-in situations which are obviously incompatible with the program context. But
-it still breaks principality.  Developing a formal treatment of defaulting
-within our framework is an important direction for future work.
+We do not yet provide a formal account of \emph{default rules} mentioned in
+\cref{sec/default-rules}.  However, our prototype implementation, discussed in
+\cref{sec:implementation}, does support (optionally) attaching a default
+strategy to each suspended constraint.  \Draft{More details can be found in
+Appendix \cref {app/default-rules}.}{} In practice, defaulting proves useful
+and appears essential for certain features such as polymorphic parameters
+\citep{White/polyparams@ml2023}. 
+% Alistair: I don't think we should say anything about defaulting beside we don't 
+% know formally how to do it, we can do it in practice, we think it is important.
+% We shouldn't make any claims about being better than OCaml (especially since we 
+% don't substantiate this claim)
+%
+% Defaulting behaves better than in OCaml: we propagate more type information, 
+% so we default less often and never in situations which are obviously incompatible 
+% with the program context. But it still breaks principality.  
+Developing a formal treatment of defaulting within our framework is an
+important direction for future work.
 
+\paragraph {The forest, not the trees.}
 
-\begin{version}{\False}
-\parcomment{Our approach is complex}
+% Suspended constraints are a framework
+Suspended match constraints offer a \emph{general framework} to typing the
+features we have considered so far, and more. Some of those features can be
+handled using more specialized approaches: for example, \SML employs row
+variables to support overloaded fields for structural records, while \GHC uses
+qualified types to allow overloading of nominal record fields with a
+simple-enough type. 
 
-\Xalistair{Initial version}
-Finally, our framework is complex.  This follows partly from its generality,
-but also because everything is hard:
+% Suspended constraints are more powerful than the specialized mechanisms
+
+In contrast to these specialized mechanisms, suspended constraints are more
+expressive. They can handle cases where the typing rule to use on the subterms
+depends on the outcome of disambiguation, such as overloaded polymorphic record
+fields or overloaded GADT constructors in patterns. 
+%
+Moreover, these simpler approaches typically lack a declarative semantics that
+justify rejecting programs with unresolved disambiguation choices. 
+
+% But this has a cost
+
+But with great power comes even greater complexity.  This complexity stems not
+only from the generality of our framework, but also because everything is hard:
 \begin{enumerate}
 
 \item[(\cref{sec/oml})]
@@ -1196,39 +1231,6 @@ believe omnidirectionality is the missing piece to unlock modular
 implicits---an approach to generalized overloading and a long-anticipated
 feature within the \OCaml community.
 
-\XDR{Alternative proposal}
-Beside its generality, our framework has been carefully designed to come
-with a declarative characterization of \emph{known} type information that
-does not rely on directionality (\cref{sec/oml}) and still allows for an
-efficient implementation. In  \cref{sec:implementation}, we describe
-an  implementation of incremental instantiation that triggers
-re-instantiations upon refinements of partial type schemes, while avoiding
-redundant constraint solving across instantiations.
-
-We hope the generality of the approach will benefit to future work; in
-particular, we believe omnidirectionality is the missing piece to unlock
-modular implicits---an approach to generalized overloading and a
-long-anticipated feature within the \OCaml community.
-\end{version}
-
-% Something to tie everything back together / also serve as a lookup
-
-\paragraph{Plan}
-The remainder of the paper develops our three key ideas in turn:
-\begin{enumerate*}
-
-  \item[(\cref{sec/oml})] formalizes our declarative characterization of
-    \emph{known} type information and presents \penalty 50 \OML's typing rules.
-
-  \item[(\cref{sec:constraints})] defines the semantics of suspended match
-    constraints and introduces constraint generation function $\cinfer \e \t$
-    for \OML terms.
-
-  \item[(\cref{sec:solving})]
-    describes incremental instantiation as part of our formal constraint
-    solver.
-
-\end{enumerate*}
 
 
 \section{The \OML calculus}
@@ -1244,7 +1246,6 @@ The remainder of the paper develops our three key ideas in turn:
       \tv \and
       \tunit \and
       \ta \to \tb \and
-      \Pi\iton \ti \and
       \trcd \T \tys \and
       \tpoly \ts
   }
@@ -1285,9 +1286,9 @@ The remainder of the paper develops our three key ideas in turn:
     \labenv, \labfrom \elab \T : \all \tvs \trcd \T \tvs \to \t
   }
   \\[1ex]
-  \entry[Shapes] {\Sh} {\any \tvcs \t}
+  \entry[Shapes] {\Shapes \ni \Sh} {\any \tvcs \t}
   \\
-  \entry[Canonical principal shapes] {\sh} {}
+  \entryset[Canonical principal shapes] {\sh} {\Shapes}
   \end{bnfgrammar}
   \par
   \inferrule[Var]
@@ -1726,11 +1727,11 @@ We now turn to the typing of fragile implicit constructs
 (\cref{fig/oml/typing/I}). To prevent the kind of uncontrolled guessing
 permitted by \emph{natural} typing rules (\eg \Rule{Rcd-Proj-I-Nat}), we adopt
 \emph{contextual} typing rules: an implicit term $\e^i$ is typed \emph{within}
-a surrounding term context $\E$. The context $\E$ is used to ensure that the
-relevant type information (\eg a shape $\sh$) is \emph{known}---that is, it is
-the unique shape~$\sh$ that can be inferred from the context, rather than an
-arbitrary one that could be \emph{guessed}. Such rules are therefore
-inherently non-compositional.
+a surrounding one-hole term context $\E$ (\cref{fig/oml/typing/I}). The context
+$\E$ is used to ensure that the relevant type information (\eg a shape $\sh$)
+is \emph{known}---that is, it is the unique shape~$\sh$ that can be inferred
+from the context, rather than an arbitrary one that could be \emph{guessed}.
+Such rules are therefore inherently non-compositional.
 
 \paragraph{Unicity}
 
@@ -1864,7 +1865,7 @@ $\expoly \e \tvcs \ts$ (\emph{Step 3}).
 Overloaded record labels are handled analogously.
 %
 Typing record projections in \Rule{Rcd-Proj-I} is an \emph{elimination
-  form} for the record type $\trcd \T \ts$: the projection $\efield \e \elab$
+  form} for the record type $\trcd \T \tys$: the projection $\efield \e \elab$
 is typed as $\exfield \e \T \elab$ (\emph{Step 3}) provided the
 type of expression $\e$ in context $\E$ has record shape
 $\any \tvcs \trcd \T \tvcs$ (\emph{Step 2}).
@@ -1944,47 +1945,33 @@ are both possible shapes for the type of $r$.
 \def \ttciepoint {\ttlab {cie\_point}}
 
 \begin{example}
-Our final example illustrates a limitation of our approach: some expressions
-must be rejected even though their elaboration would be unambiguous.
-Let us reuse the definition:
+Considering the example from \cref{sec/overview/limitations}. 
 \begin{program}[input,checkocaml]
 type gray_point = { x : int; y : int; color : int }
-\end{program}
-with the additional definitions:
-\begin{program}[input,checkocaml]
 type cie_color  = { x : int; y : int; z : int }
 type cie_point  = { x : int; y : int; color : cie_color }
-let ex_9 r = r.color.x °\ocamlflags 11°
+let ex_1_0 r = r.color.x °\ocamlflags 11°
 \end{program}
-
-Here, neither field projections can individually be disambiguated. However, if
-one were allowed to combine the constraints, they would jointly determine
-that $r$ must have type \code{cie_point}: in \code{gray_point}, the field \code{color}
-has type \code{int}, and hence cannot itself be projected, leaving a unique
-consistent elaboration: $\efun r {\exfield {\exfield r \ttciepoint \tty} \ttciecolor \ttx}$.
-
-\parcomment {Why do we reject this?}
-
-Our framework nonetheless rejects \code{ex_9}. This is intentional: implicit
-terms must be elaborated \emph{sequentially}, each in isolation, rather than
-jointly with others. We view this restriction as a ``Goldilocks'' compromise:
-it rules out examples like the above, but avoids the intractability of full
-general overloading which is NP-hard, even without let-polymorphism, as shown
-by a reduction from 3-SAT~\citep*
-{Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}.
 
 \parcomment{Proof that this is ill-typed}
 
-Formally, to type $\ttex {9}$ one must eliminate the final implicit
+  \Xalistair{Improve flow}
+
+  As explained in \cref{sec/overview/limitations}, \code{ex_1_0} is ill-typed
+  is precisely because each implicit field projection must be disambiguated
+  individually, in a sequential fashion. 
+
+To type $\ttex {10}$ one must eliminate the final implicit
 projection in a context of the form $\E\where{\efield \e \elab}$.
-\TODO{We should first say that neither projection can be solved by the
-\Rule{Rcd-Proj-Closed} since both labels appear in multiple record type
-definitions. Thus, it has to be solved by \Rule{Rcd-Proj-I}.}
+It is a given that neither projection can be resolved by applying 
+\Rule{Rcd-Proj-Closed} since the labels (\code{color} and \code{x})
+are both overloaded. Thus, the implicit projections must 
+be typed using \Rule{Rcd-Proj-I}.
 Two cases arise, neither of which are possible:
 \begin{proofcases}
 \proofcase{$\E$ is $\efun r {\square}$}
 %
-If this holds, we should have a derivation that ends with
+We should have a derivation that ends with
 \begin{mathpar}
   \infer*[Right=Rcd-Proj-I]
     {\eshape \E {\efield r \ttcolor} {\ttciecolor} \\
@@ -2146,7 +2133,7 @@ any $\gt$.
 \hfill
 \begin{tabular}{.L.}
   \Cshape \C \t \sh \eqdef \\[.6ex]
-  \quad \forall \semenv, \gt. \uad \semenv \thsimple \cerase {\C\where{\cunif \t \gt}} \implies \shape \gt = \sh
+  \quad \forall \semenv, \gt. \uad \semenv \th \cerase {\C\where{\cunif \t \gt}} \implies \shape \gt = \sh
 \end{tabular}
 \end{mathparfig}
 
@@ -2169,8 +2156,9 @@ semantics is given by a satisfiability judgment $\semenv \th \c$
 (\cref{fig:constraints}). The semantic environment $\semenv$ assigns to each
 free type variable $\tv$ a ground type $\gt \in \Ground$ (a type with no free
 variables) and to each term variable $\x$ a set of ground types $\gabs
-\subseteq \Ground$ (the instances of a type scheme bound to $\x$).
-\footnote{$\gabs$ can be pronounced ``Fraktur S'' or ``ground S''.}
+\subseteq \Ground$ (the instances of a type scheme bound to $\x$)
+\footnote{$\gabs$ can be pronounced ``Fraktur S'' or ``ground S''.}.
+\Xalistair{Are these footnotes on pronouciation necessary?}
 %
 We write $\semenv\where{\tv \is \gt}$ and $\semenv\where{\x \is \gabs}$ for the
 extension of $\semenv$ with a new binding. For a type $\t$, we write
@@ -2223,8 +2211,8 @@ applying the type $\t$ to the abstraction bound to $\x$. This holds precisely
 when $\semenv(\t) \in \semenv(\x)$, \ie $\t$ is one of the satisfiable
 instances of $\x$. The $\lambda$-abstraction and application syntax come from
 \citet*{Pottier/inferno@icfp2014}. In other presentations, constraints
-abstractions $\cabs \tv \c$ are written as constrainted type schemes
-$\all {\tvbs [\c]} \tv$, and instantiation constraints $\capp \x \t$ are
+abstractions $\cabs \tv {\cexists \tvbs \c}$ are written as constrainted type schemes
+$\all {\tv, \tvbs} C \Rightarrow \tv$, and instantiation constraints $\capp \x \t$ are
 written $\x \leq \t$.
 
 \parcomment {Suspended match constraints}
@@ -2416,10 +2404,7 @@ to be \emph{known}.
 
 \begin{definition}[Simple constraints]
   We say that $\c$ is \emph{simple} if it contains no suspended match
-  constraints. We write $\semenv \thsimple \c$ for a derivation of $\semenv \th
-  \c$ that uses the rules listed in \cref{fig:constraints},
-  without using \Rule{Match-Ctx}. This judgment coincides with $\semenv \th \c$
-  on simple constraints.
+  constraints. 
 \end{definition}
 
 \begin{definition}[Unicity]
@@ -2429,7 +2414,7 @@ to be \emph{known}.
   \begin{mathpar}[inline]
     %% \Cshape \C \t \sh \Wide\eqdef
     \forall \semenv, \gt. \uad
-      \semenv \thsimple \cerase {\C\where{\cunif \t \gt}} \implies
+      \semenv \th \cerase {\C\where{\cunif \t \gt}} \implies
           \shape \gt = \sh
   \end{mathpar}.
 \end{definition}
@@ -2441,10 +2426,7 @@ Similarly to the unicity conditions introduced for typing rules in
 for constraints $\Cshape \C \t \sh$ relies on \emph{erasure} $\cerase
 {\C\where{\cunif \t \gt}}$ to restrict attention to previously discharged
 match constraints, inducing a causal order between match constraints,
-enforced by Rule \Rule {Match-Ctx}. The
-auxiliary judgment $\thsimple$ plays a role analogous to $\throbust$ (from
-\cref {sec/oml/typing/I}): it is introduced solely to avoid well-foundedness
-issues.
+enforced by \Rule {Match-Ctx}. 
 
 \parcomment{The interesting cases of unicity}
 
