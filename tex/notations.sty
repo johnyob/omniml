@@ -144,7 +144,7 @@
 \defmetavar{\gabs}{\mathfrak{S}}%G
 \defmetavar{\gabsr}{\mathfrak{R}}
 \newcommand{\GroundRegion}{\mathcal{R}}
-\defmetavar{\gr}{\mathfrak{R}}
+\defmetavar{\gr}{\mathfrak{r}}
 \newcommand{\greg}[2]{#1 \where{#2}}
 \newcommand{\gregren}[3]{{#1}\where{#2 \is #3}}
 \defmetavar{\gscm}{\mathfrak{s}}
@@ -230,8 +230,8 @@
 \newcommand{\efield}[2]{#1.#2}
 \newcommand{\exfield}[3]{#1.{\labfrom {#3}{#2}}}
 %% Could be factored as
-\newcommand{\exproj}[3]{\eproj[#3] {#1} {#2}}
-\newcommand{\eproj}[3][]{#2.#3\ifempty{#1}{}{/#1}}
+\newcommand{\exproj}[3]{\eproj {#1} {{#2}^{#3}}}
+\newcommand{\eproj}[2]{#1.#2}
 \newcommand{\erecord}[1]{\braces{\begingroup
   \mathcode`\=="203D\relax\mathcode`;="303B% 603B
   #1\endgroup}}

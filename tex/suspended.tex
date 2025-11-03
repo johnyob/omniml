@@ -2569,10 +2569,8 @@ variable and $\C$ is satisfiable.
     \end{array}%
   }
   \begin{tabular}{RCLL}
-    \Srule
-      [\text{if } \labenv(\labfrom \elab \T) = \tfor \tvs {\trcd \T \tvs \to \t}]
-      {\labfrom \elab \T \leq \ta \to \tb}
-      {\cexists \tvs \cunif \ta  {\trcd \T \tvs} \cand \cunif \tb \t}
+    \labfrom \elab \T \leq \ta \to \tb &\eqdef& 
+      \Scases{\cexists \tvs \cunif \ta  {\trcd \T \tvs} \cand \cunif \tb \t}{\cfalse}{\labenv(\labfrom \elab \T) = \tfor \tvs {\trcd \T \tvs \to \t}}
     \\\>
     \dom{\T} = \elabs &\eqdef&
        \Scases{\ctrue}{\cfalse}{\Dom {\labenv(\T)} = \elabs}
@@ -3116,9 +3114,11 @@ preserve typability in its operational semantics.
     \entry[Ground regions]{\GroundRegion \ni \gr}{
       \greg \tv \semenv
     }\\
+    \entrysubseteq[Sets of ground regions]{\gabsr}
+      {\GroundRegion}\\
     \entry[Semantic environments]{\semenv}{
       \dots \let \and \wand
-      \and \semenv\where{\x \is \gr}
+      \and \semenv\where{\x \is \gabsr}
       \and \semenv\where{\inst \is \semenvp}
     }
   \end{bnfgrammar}
@@ -4158,15 +4158,11 @@ cycles, this no longer holds---but we do not anticipate any fundamental issues.
 \section*{\Large Organization of appendices}
 \label{app:outline}
 
-\begin{local}
-\renewcommand{\paragraph}[1]{\subsubsection*{#1}}
 
 \paragraph{Reference appendix}
-\begin{itemize}
-\item \cref{app:full-reference} gives a full reference for all
+\cref{app:full-reference} gives a full reference for all
   definitions, grammars and figures in the paper, including all cases
   (even those omitted from the main paper for reasons of space).
-\end{itemize}
 
 \paragraph{Proof appendices} These appendices contain proofs for the
 formal claims in the article. They are typically written tersely.
@@ -4183,8 +4179,7 @@ formal claims in the article. They are typically written tersely.
   type system, in particular the correctness of constraint generation.
 \end{itemize}
 
-\end{local}
-
+\clearpage
 \section{Full technical reference}
 \label{appendix:figures}
 \label{app:full-reference}
@@ -4203,8 +4198,8 @@ definition in full, or when studying the meta-theory of the system.
     \tv \and
     \tunit \and
     \ta \to \tb \and
-    \Pi\iton \ti \and
-    \T \tys \and
+    \Pi \iton \ti \and
+    \trcd \T \tys \and
     \tpoly \ts
 }\\
 \entry[Type schemes]{\ts}{
@@ -4212,10 +4207,9 @@ definition in full, or when studying the meta-theory of the system.
     \all \tv \ts
 }\\[1ex]
 \entry[Ground types]{\gt}{}{}\\
-\entry[Ground type schemes]{\gscm}{}{}\\
-  \entry[Ground region]{\gr}{\greg \tv \semenv}\\
-\entry[Sets of ground types]{\gabs \subseteq \Ground}{}{}\\
-\entry[Sets of ground regions]{\gabsr \subseteq \GroundRegion}{}\\
+\entry[Ground region]{\gr}{\greg \tv \semenv}\\
+\entrysubseteq[Sets of ground types]{\gabs}{\Ground}{}{}\\
+\entrysubseteq[Sets of ground regions]{\gabsr}{\GroundRegion}{}\\
 \entry[Constraints]{\c}{
         \ctrue
   \and  \cfalse
@@ -4234,12 +4228,9 @@ definition in full, or when studying the meta-theory of the system.
   \and \cexistsi \inst \x \c
   \and \cpinst \inst \tv \t
   \nextline
-  \and \labenv(\labfrom \elab \ct) \leq \ta \to \tb
+  \and \labfrom \elab \ct \leq \ta \to \tb
   \and \dom \ct = \elabs
-  \and \labenv(\labfrom \elab \T) \leq \ta \to \tb
-  \and \dom {\T} = \elabs
-  \nextline
-  \and \cscm \leq \t \mid \ts \leq \t \mid \x \leq \cscm \mid \x \leq \ts
+  \and \cscm \leq \t \mid \x \leq \cscm 
 }\\[1ex]
 \entry[Branches]{\cbr}{\cbranch \cpat \c} \\
 \entry[Shape patterns]{\cpat}{
@@ -4250,10 +4241,7 @@ definition in full, or when studying the meta-theory of the system.
   \and \semenv\where{\x := \gabs}
   \and \semenv\where{\x := \gabsr}
   \and \semenv\where{\inst := \semenvp}
-  \nextline
-  \and \semenv\where{\ct := \T}
-  \and \semenv\where{\cscm := \gscm}
-}\\
+}\\[1ex]
 \entry[Unification problems]{\up}{
   \ctrue \and \cfalse \and \upa \cand \upb \and \cexists \tv \up \and \ueq
 } \\
@@ -4327,7 +4315,7 @@ definition in full, or when studying the meta-theory of the system.
    \G, x : \ts
 }\\
 \entry[Label environment]{\labenv}{
-  \eset \and \labenv, \elab : \tfor \tvs {\T \tvs \to \t}
+  \eset \and \labenv, \elab : \tfor \tvs {\trcd \T \tvs \to \t}
 }
 \end{bnfgrammar}
 \end{mathpar}
@@ -4396,22 +4384,6 @@ definition in full, or when studying the meta-theory of the system.
   \infer[Incr-Inst]
     {\semenv(\inst)(\tv) = \semenv(\t) }
     {\semenv \th \cpinst \inst \tv \t}
-
-  \inferrule[Lab-Inst]
-    {\semenv \th \labenv(\elab/\semenv(\ct)) \leq \ta \to \tb}
-    {\semenv \th \labenv(\labfrom \elab \ct) \leq \ta \to \tb}
-
-  \inferrule[Lab-Dom]
-    {\semenv \th \dom {\phi(\ct)} = \elabs}
-    {\semenv \th \dom \ct = \elabs}
-
-  \inferrule[Scm-Inst]
-    {\semenv \th \semenv(\cscm) \leq \t}
-    {\semenv \th \cscm \leq \t}
-
-  \inferrule[Abs-Inst]
-    {\semenv \th \x \leq \semenv(\cscm)}
-    {\semenv \th \x \leq \cscm}
 \\
   \newcommand{\Srule}[3][]{{#2} &\eqdef& {#3} & {#1}}
   \newcommand{\Scases}[3]{%
@@ -4428,14 +4400,10 @@ definition in full, or when studying the meta-theory of the system.
     \end{array}%
   }
   \begin{tabular}{RCLL}
-    \Srule[\text{if } \cmatches \cpati \sh \tvs \theta]{\cmatched \t \sh {\cbranch \cpat \cs}}
-      {\cexists \tvs \cunif \t \shapp \tvs \cand \theta(\ci)}
+    \labfrom \elab \T \leq \ta \to \tb &\eqdef& 
+      \Scases{\cexists \tvs \cunif \ta  {\trcd \T \tvs} \cand \cunif \tb \t}{\cfalse}{\labenv(\labfrom \elab \T) = \tfor \tvs {\trcd \T \tvs \to \t}}
     \\[1ex]
-    \Srule[\text{if } \labenv(\labfrom \elab \T) = \tfor \tvs {\trcd \T \tvs} \to \t]
-      {\labenv(\labfrom \elab \T) \leq \ta \to \tb}
-      {\cexists \tvs \cunif \ta {\trcd \T \tvs} \cand \cunif \tb \t }
-    \\[1ex]
-    \dom{\T} = \elabs &\eqdef& \Scases{\ctrue}{\cfalse}{\Dom {\labfrom \labenv \T} = \elabs} \\[1ex]
+    \dom{\T} = \elabs &\eqdef& \Scases{\ctrue}{\cfalse}{\Dom {\labenv(\T)} = \elabs} \\[1ex]
     \Srule
       {(\tfor \tvs \tp) \leq \t}
       {\cexists \tvs \cunif \tp \t}
@@ -4443,6 +4411,12 @@ definition in full, or when studying the meta-theory of the system.
     \Srule
       {\x \leq (\tfor \tvs \t)}
       {\cfor \tvs \capp \x \t}
+    \\[1ex]
+    \cmatched \t \sh {\cbranch \cpat \cs} &\eqdef& 
+    \Scases
+      {\cexists \tvs \cunif \t \shapp \tvs \cand \theta(\ci)}
+      {\cfalse}
+      {\cmatches \cpati \sh \tvs \theta}
   \end{tabular}
 \\
   \semenv(\cabsr \tv \tvs \c) \uad\eqdef\uad \set{\greg \tv {\semenv\where{\tv \is \gt, \tvs \is \gts}} \in \GroundRegion :
@@ -4455,7 +4429,6 @@ definition in full, or when studying the meta-theory of the system.
   \forall \semenv, \gt. \uad
       \semenv \th \cerase {\C\where{\cunif \t \gt}} \implies \shape \gt = \sh
 \end{judgboxmathpar}
-\emph{Note: in most definitions, we ignore the additional  $\OML$ constraints, as they are not particularly interesting.} \\
 
 \begin{judgboxmathpar}
   {\Sh \preceq \Shp}
@@ -4465,6 +4438,8 @@ definition in full, or when studying the meta-theory of the system.
     {\any {\tvcs_1} \t \preceq
      \any {\tvcs_2} \t \where {\tvcs_1 \is \tys_1}}
 \end{judgboxmathpar}
+
+We write $\bot$ for the trivial shape $\any \tvc \tvc$. $\Shapes$ denotes the set of shapes and $\Shapesz$ is the set of non-trivial shapes. 
 
 \begin{definition}
 A non-trivial shape $\Sh \in \Shapesz$ is the principal shape of the type
@@ -4483,25 +4458,25 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 \end{definition}
 
 \begin{judgboxmathpar}
-  {\cmatches \cpat \sh \tvs \theta}
-  {The pattern $\cpat$ matches the shape $\sh$ with components $\tvs$ binding\\pattern variables in $\theta$.}
+  {\cmatches \cpat \sh \tvcs \theta}
+  {The pattern $\cpat$ matches the shape $\sh$ with fresh components $\tvcs$ binding\\pattern variables in $\theta$.}
   \\
   \newcommand{\Mrule}[5][]{{#2} \Matches {(#3)} \; #4 &\eqdef& {#5} & #1}
   \begin{tabular}{RCLL}
     \Mrule[\text{if } n \geq j]
-      {\cpatprod \tvb j}
-      {\any \tvcs \Pi\iton \tvcs} \tvs
-      {[\tvb \is \tvj]}
+      {\cpatprod \tv j}
+      {\any \tvcs \Pi\iton \tvcs} \tvcps
+      {[\tv \is \tvc_j']}
     \\[1ex]
     \Mrule
       {\cpatrcd \ct}
-      {\any \tvcs \trcd \T \tvcs} \tvs
+      {\any \tvcs \trcd \T \tvcs} \tvcps
       {[\ct \is \T]}
     \\[1ex]
     \Mrule
       {\cpatpoly \cscm}
-      {\any \tvcs \tpoly \ts} \tvs
-      {[\cscm \is \ts \where{\tvcs \is \tvs}]}
+      {\any \tvcs \tpoly \ts} \tvcps
+      {[\cscm \is \ts \where{\tvcs \is \tvcps}]}
   \end{tabular}
 \end{judgboxmathpar}
 
@@ -4553,6 +4528,9 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     { }
     {\cpinst \inst \tv \t \simple}
 \end{judgboxmathpar}
+
+We write $\semenv \thsimple \c$ for the satisfiability of a simple constraint 
+$\c$. \\
 
 \begin{judgboxmathpar}
   {\C \simple}
@@ -4631,7 +4609,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
   {{\labfrom \elab \T} \leq \tya \to \tyb}
   {The label $\elab$ of the record $\T$ has the field type $\tyb$ and record type $\tya$.}
   \inferrule[Lab-Inst]
-    {\labenv(\labfrom \elab \T) = \tfor \tvs {\T \tvs} \to \t }
+    {\labenv(\labfrom \elab \T) = \tfor \tvs {\trcd \T \tvs} \to \t }
     {{\labfrom \elab \T} \leq \trcd \T \tys \to \t\where{\tvs \is \tys} }
 \end{judgboxmathpar}
 
@@ -4643,13 +4621,13 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
   {\labsuni \elabs \T}
   {The \emph{closed} set of labels $\elabs$ infer the unique record name $\T$.}
   \infer[Lab-Uni]
-    {\elab \in \Dom {\labfrom \labenv \T} \\
-     \forall \Tp, \uad \elab \in \Dom {\labfrom \labenv \Tp} \implies {\T} = \Tp}
+    {\elab \in \Dom {\labenv(\T)} \\
+     \forall \Tp, \uad \elab \in \Dom {\labenv(\Tp)} \implies {\T} = \Tp}
     {\labuni \elab \T}
 
   \infer[Labs-Uni]
-    {\Dom {\labfrom \labenv \T} = \elabs \\
-     \forall \Tp, \uad \Dom{\labfrom \labenv \Tp} = \elabs \implies {\T} = \Tp}
+    {\Dom {\labenv(\T)} = \elabs \\
+     \forall \Tp, \uad \Dom{\labenv(\Tp)} = \elabs \implies {\T} = \Tp}
     {\labsuni \elabs \T}
 \end{judgboxmathpar}
 
@@ -4729,7 +4707,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\G \th \E\where{\einst \e} : \t}
 
   \inferrule[Rcd-X]
-    {\parens{\G \th \ei : \tyi}\iton \\ \parens{{\labfrom \elabi \T} \leq \t \to \tyi}\iton \\ \Dom {\labfrom \labenv \T} = \elabs }
+    {\parens{\G \th \ei : \tyi}\iton \\ \parens{{\labfrom \elabi \T} \leq \t \to \tyi}\iton \\ \Dom {\labenv(\T)} = \elabs }
     {\G \th \exrecord \T {\elaba = \ea; \ldots; \elab_n = \en} : \t }
 
   \inferrule[Rcd-Closed]
@@ -4784,124 +4762,130 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
   {$\cinfer \e \ts$ is satisfiable iff $\e$ has the expected \emph{known} type scheme $\ts$.}
 
 \begin{judgboxmathpar}
-  {\cinfer \e \tv}
-  {$\cinfer \e \tv$ is satisfiable iff $\e$ has the expected type $\tv$.}
-
+  {\cinfer \e \t}
+  {$\cinfer \e \t$ is satisfiable iff $\e$ has the expected \emph{known} type $\t$.}
 \newcommand {\Crule}[2]{#1 &\eqdef& #2}
 \def \arraystretch{1.2}%4
 \begin{tabular}{LCL}
 \Crule
-   {\cinfer x \tv}
-   {\cinst x \tv}
+   {\cinfer x \t}
+   {\cinst x \t}
 \\
 \Crule
-  {\cinfer {()} \tv}
-  {\cunif \tv \tunit}
+  {\cinfer {()} \t}
+  {\cunif \t \tunit}
 \\
 \Crule
-  {\cinfer {\efun \x \e} \tv}
-  {\cexists {\tvb, \tvc} \cunif \tv {\tvb \to \tvc}
-    \cand \clet \x \tvbp {\cunif \tvbp \tvb} {\cinfer \e \tvc}}
+  {\cinfer {\efun \x \e} \t}
+  {\cexists {\tva, \tvb}
+    \clet \x \tvp {\cunif \tvp \tv} {\cinfer \e \tvb}
+    \cand \cunif \t {\tva \to \tvb}}
 \\
 \Crule
-  {\cinfer {\eapp \ea \eb} \tv}
-  {\cexists {\tvb \tvc} \cunif \tvc {\tvb \to \tv} \cand \cinfer \ea {\tvc} \cand \cinfer \eb \tvb}\
+  {\cinfer {\eapp \ea \eb} \t}
+  {\cexists {\tva, \tvb}
+    \cinfer \ea {\tvb} \cand \cinfer \eb \tva
+    \cand \cunif \tvb {\tva \to \t}}
 \\
 \Crule
-  {\cinfer {\elet \x \ea \eb} \tv}
-  {\clet \x \tvb {\cinfer \ea \tvb} {\cinfer \eb \tv}}
+  {\cinfer {\elet \x \ea \eb} \t}
+  {\clet \x \tv {\cinfer \ea \tv} {\cinfer \eb \t}}
 \\
 \Crule
-  {\cinfer {\eannot \e \tvs \t} \tv}
-  {\cexists \tvs \cunif \tv \t \cand \cinfer \e \tv}
+  {\cinfer {\eannot \e \tvs \tp} \t}
+  {\cexists \tvs  \cinfer \e \tp \cand \cunif \t \tp}
 \\
 \Crule
-  {\cinfer {\etuple {\ea, \ldots, \en}} \tv}
-  {\cexists \tvs \cunif \tv {\tProd \tvs}
+  {\cinfer {\etuple {\ea, \ldots, \en}} \t}
+  {\cexists \tvs \cunif \t {\tProd \tvs}
     \cand \cAnd \iton \cinfer \ei {\tv_i}}
 \\
 \Crule
-  {\cinfer {\exproj \e j n} \tv}
-  {\cexists {\tvb, \tvbs}
-    \cinfer \e \tvb
-    \cand \cunif \tvb {\tProd \tvbs}
-    \cand \cunif \tv {\tvb_j}}
+  {\cinfer {\exproj \e j n} \t}
+  {\cexists {\tv, \tvs}
+    \cinfer \e \tv
+    \cand \cunif \tv {\tProd \tvs}
+    \cand \cunif \t {\tvj}}
 \\
 \Crule
-  {\cinfer {\eproj \e j} \tv}
-  {\cexists \tvb \cinfer \e \tvb
-    \cand \cmatch \tvb {\cbranch {\cpatprod \tvc j} {\cunif \tv \tvc}}}
+  {\cinfer {\eproj \e j} \t}
+  {\cexists \tv \cinfer \e \tv
+    \cand \cmatch \tv {\cbranch {\cpatprod \tvb j} {\cunif \t \tvb}}}
 \\
 \Crule
-  {\cinfer {\expoly \e \tvs \ts} \tv}
+  {\cinfer {\expoly \e \tvs \ts} \t}
   {\cexists {\tvs}
     \cinfer \e \ts
-    \cand \cunif \tv {\tpoly \ts}}
+    \cand \cunif \t {\tpoly \ts}}
 \\
 \Crule
-  {\cinfer {\exinst \e \tvs \ts} \tv}
+  {\cinfer {\exinst \e \tvs \ts} \t}
   {\cexists {\tvs, \tvb}
     \cinfer \e \tvb
     \cand \cunif \tvb {\tpoly \ts}
-    \cand \ts \leq \tv}
+    \cand \ts \leq \t}
 \\
 \Crule
-  {\cinfer {\einst \e} \tv}
-  {\cexists \tvb
-    \cinfer \e \tvb
-    \cand \cmatch \tvb {\cbranch {\cpatpoly \cscm} \cscm \leq \tv}}
+  {\cinfer {\einst \e} \t}
+  {\cexists \tv
+    \cinfer \e \tv
+    \cand \cmatch \tv {\cbranch {\cpatpoly \cscm} \cscm \leq \t}}
 \\
 \Crule
-  {\cinfer {\epoly \e} \tv}
-  {\clet \x \tvb {\cinfer \e \tvb}
-    {\cmatch \tv {\cbranch {\cpatpoly \cscm} {\x \leq \cscm}}}}
+  {\cinfer {\epoly \e} \t}
+  {\clet \x \tv {\cinfer \e \tv}
+    {\cmatch \t {\cbranch {\cpatpoly \cscm} {\x \leq \cscm}}}}
 \\
 \Crule
-  {\cinfer {\efield \e \elab} \tv}
+  {\cinfer {\efield \e \elab} \t}
   {\begin{cases}
-    \cexists {\tvb} \cinfer \e \tvb \cand \labenv(\labfrom \elab \T) \leq \tvb \to \tva & \text{if } \labuni \elab \T \\
-    \cexists \tvb \cinfer \e \tvb \cand \cmatch \tvb {\cbranch {\cpatrcd \ct} {\labenv(\labfrom \elab \ct) \leq \tvb \to \tv}} & \text{otherwise}
+    \cinfer {\exfield \e \T \elab} \t
+    & \text{if } \labuni \elab \T
+    \\
+    \cexists \tv \cinfer \e \tv \cand
+    \cmatch \tv
+      {\cbranch {\cpatrcd \ct} {\labfrom \elab \ct \leq \tv \to \t}}
+    & \text{otherwise}
   \end{cases}}
 \\
 \Crule
-  {\cinfer {\exfield \e \T \elab} \tv}
-  {\cexists \tvb \cinfer \e \tvb \cand \labenv(\labfrom \elab \T) \leq \tvb \to \tva}
+  {\cinfer {\exfield \e \T \elab} \t}
+  {\cexists \tv \cinfer \e \tv \cand
+   \labfrom \elab \T \leq \tv \to \t}
 \\
 \Crule
-  {\cinfer {\erecord {\overline{\elab = \e}}} \tv}
+  {\cinfer {\erecord {\overline{\elab = \e}}} \t}
   {\begin{cases}
-  \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi \cand \cAnd\iton \labenv(\labfrom \elabi \T) \leq \tv \to \tvbi
+    \cinfer {\exrecord \T {\overline{\elab = \e}}} \t
     & \text{if } \labsuni \elabs \T \\
-    \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi & \text{otherwise} \\
-    \uad\cand \cmatch \tv {\cbranch {\cpatrcd \ct}
-      {\dom {\ct} = \elabs \cand \cAnd\iton \labenv(\labfrom \elabi \ct) \leq \tv \to \tvbi}}
-  \end{cases} }
+    \cexists \tvs \cAnd\iton \cinfer \ei \tvi & \text{otherwise} \\
+    \uad\cand\uad \cmatch \t {\cbranch {\cpatrcd \ct}
+      {\parens{\dom \ct = \elabs \cand \cAnd\iton \labfrom \elabi \ct \leq \t \to \tvi}}} &
+   \end{cases}}
 \\
 \Crule
-  {\cinfer {\exrecord \T {\overline{\elab = \e}}} \tv}
-  {\cexists \tvbs \cAnd\iton \cinfer \ei \tvbi \cand \dom {\T} = \elabs \cand \cAnd\iton \labenv(\labfrom \elabi \T) \leq \tv \to \tvbi }
+  {\cinfer {\exrecord \T {\overline{\elab = \e}}} \t}
+  {\cexists \tvs \cAnd\iton \cinfer \ei \tvi \cand \dom {\T} = \elabs \cand \cAnd\iton \labfrom \elabi \T \leq \t \to \tvi }
 \\
 \Crule
-  {\cinfer {\emagic \es} \tv}
-  {\cexists \tvbs \cAnd\iton \cinfer \ei \tvbi}
+  {\cinfer {\emagic \es} \t}
+  {\cexists \tvs \cAnd\iton \cinfer \ei \tvi}
 \\\\
-\Crule
-  {\cinfer \e \t}
-  {\cexists \tv \cunif \tv \t \cand \cinfer \e \tv}
-\\
 \Crule
   {\cinfer \e {\tfor \tvs \t}}
   {\cfor \tvs \cinfer \e \t}
 \\\\
 \Crule
-  {\csem {\eset \th \e : \t}}
+  {\cinfer {\eset \th \e} \t}
   {\cinfer \e \t}
 \\
 \Crule
-  {\csem {\x : \ts, \G \th \e : \t}}
-  {\clet \x \tv {\ts \le \tv} {\csem {\G \th \e : \t}}}
+  {\cinfer {\x : \ts, \G \th \e} \t}
+  {\clet \x \tv {\ts \leq \tv} {\cinfer {\G \th \e} \t}}
 \end{tabular}
 \end{judgboxmathpar}
+\emph{Note: When $\t$ is $\tv$ it is considered an \emph{unknown} expected type.}
+
 
 
 \begin{judgboxmathpar}
@@ -4993,7 +4977,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     \end{cases}}\\
   \Erule{\exrecord \T {\elaba = \ea; \ldots; \elab_n = \en}}{\exrecord \T {\elaba = \eerase \ea; \ldots; \elab_n = \eerase \en}}\\
     \Erule{\efield \e \elab}{\begin{cases}
-      \efield \e \elab & \text{if } \labuni \elab \T \\
+      \efield {\eerase \e} \elab & \text{if } \labuni \elab \T \\
       \emagic {\eerase \e} & \text{otherwise}
     \end{cases}}\\
   \Erule{\exfield \e \T \elab}{\exfield {\eerase \e} \T \elab}\\
@@ -5014,6 +4998,14 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
      \tvs \disjoint \G \\
      \G, x : \tfor \tvs \ta \thsimplesd \eb : \tb}
     {\G \thsimplesd \elet x \ea \eb : \tb}
+
+  \inferrule [Poly-X]
+    {\G \thsimplesd \e : \t\where {\tvs \is \tys} \\ \tvbs \disjoint \G}
+    {\G \thsimplesd \expoly \e \tvs {\tfor \tvbs \t} : \tpoly {\ts \where {\tvs \is \tys}}}
+
+  \inferrule [Use-X]
+    {\G \th \e : \tpoly {\tfor \tvbs \t} \where {\tvs \is \tys}}
+    {\G \th \exinst e \tvs {\tfor \tvbs \t} : \t \where {\tvs \is \tys, \tvbs \is \typs}}
 \end{judgboxmathpar}
 
 \begin{judgboxmathpar}
@@ -5037,11 +5029,6 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\eshape \E  \e {\any \tvcs \tpoly \ts} \\
      \Th \E\where{\exinst \e \tvcs \ts} : \t}
     {\Th \E\where{\einst \e} : \t}
-
-  \inferrule[Can-Lab-I]
-    {\Lshape \Lab \elab \T \\
-      \Th \Lab[\labfrom \elab \T] : \t}
-    {\Th \Lab[\elab] : \t}
 
   \inferrule[Can-Rcd-I]
     {\Eshape \E \es {\any \tvcs \trcd \T \tvcs} \\
@@ -5362,6 +5349,65 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
 
   \end{enumerate}
 \end{definition}
+
+\begin{judgboxmathpar}
+  {\ctxinfer \E \tp \t}
+  {$\ctxinfer \E \tp \t$ is a satisfiable context iff the context $\E$ has \\ the expected type $\t$ given the hole has the type $\tp$.}
+\newcommand {\Crule}[2]{#1 &\eqdef& #2}
+\def \arraystretch{1.4}%4
+  \scalebox{0.9}{
+\begin{tabular}{LCL}
+  \Crule{\ctxinfer \square \t \t}{\square}\\
+  \Crule{\ctxinfer {\parens{\eapp \E \e}} \tp \t}{\cexists {\tva, \tvb} \cunif \tva {\tvb \to \t} \cand \ctxinfer \E \tp \tva \cand \cinfer \e \tvb}\\
+  \Crule{\ctxinfer {\parens{\eapp \e \E}} \tp \t}{\cexists {\tva, \tvb} \cunif \tva {\tvb \to \t} \cand \cinfer \e \tva \cand \ctxinfer \E \tp \tvb}\\
+  \Crule{\ctxinfer {\parens{\elet \x \E \e}} \tp \t}{\clet \x \tv {\ctxinfer \E \tp \tv} {\cinfer \e \t}}\\
+  \Crule{\ctxinfer {\parens{\elet \x \e \E}} \tp \t}{\clet \x \tv {\cinfer \e \tv} {\ctxinfer \E \tp \t}}\\
+  \Crule{\ctxinfer {{\eannot \E \tvs \tpp}} \tp \t}{\cexists \tvs \cunif \t \tpp \cand \ctxinfer \E \tp \t}\\
+  \Crule{\ctxinfer {\etuple {\ea, \ldots, \E_j, \ldots, \en}} \tp \t}{\cexists \tvs \cunif \t {\tProd \tvi} \cand \cAnd_{i \neq j} \cinfer \ei \tvi \cand \ctxinfer {\E_j} \tp \tvj} \\
+  \Crule{\ctxinfer {\parens{\exproj \E j n}} \tp \t}{\cexists {\tv, \tvs} \ctxinfer \E \tp \tv \cand \cunif \tv {\tProd \tvi} \cand \cunif \t \tvj}\\
+  \Crule{\ctxinfer {\parens{\eproj \E j}} \tp \t}{\cexists \tv \ctxinfer \E \tp \tv \cand \cmatch \tv {\cbranch {\cpatprod \tvc j} {\cunif \t \tvc}}}\\
+  \Crule{\ctxinfer {\expoly \E \tvs \ts} \tp \t}{\cexists \tvs \ctxinfer \E \tp \ts \cand \cunif \t {\tpoly \ts}}\\
+  \Crule{\ctxinfer {\exinst \E \tvs \ts} \tp \t}{\cexists {\tvs, \tvb} \ctxinfer \E \tp \tvb \cand \cunif \tvb {\tpoly \ts} \cand \cleq \ts \t}\\
+  \Crule{\ctxinfer {\epoly \E} \tp \t}{\clet \x \tv {\ctxinfer \E \tp \tv} {\\&&\cmatch \t {\cbranch {\cpatpoly \cscm} {\cleq \x \cscm}}}}\\
+  \Crule{\ctxinfer {\einst \E} \tp \t}{\cexists \tv {\ctxinfer \E \tp \tv \cand \cmatch \tv {\cbranch {\cpatpoly \cscm} {\cleq \cscm \t}}}}\\
+\Crule
+  {\ctxinfer {\parens{\efield \E \elab}} \tp \t}
+  {\begin{cases}
+    \ctxinfer {\parens{\exfield \E \T \elab}} \tp \t & \text{if } \labuni \elab \T \\
+    \cexists \tv \ctxinfer \E \tp \tv \\ \cand ~ \cmatch \tv {\cbranch {\cpatrcd \ct} {\labfrom \elab \ct \leq \tv \to \t}} & \text{otherwise}
+  \end{cases}}
+\\
+\Crule
+  {\ctxinfer {\parens{\exfield \E \T \elab}} \tp \t}
+  {\cexists \tv \ctxinfer \E \tp \tv \cand \labfrom \elab \T \leq \tv \to \t}
+\\
+\Crule
+  {\ctxinfer {\erecord {\elaba = \ea; \ldots; \elab_j = \E_j; \ldots; \elab_n = \en}} \tp \t}
+  {\begin{cases}
+    \ctxinfer {\exrecord \T { \ldots; \elab_j = \E_j; \ldots}} \tp \t & \text{if } \labsuni \elabs \T \\
+    \cexists \tvs \cAnd_{i \neq j} \cinfer \ei \tvi \cand \ctxinfer {\E_j} \tp \tvj & \text{otherwise} \\
+    \uad\cand~\cmatch \t {\cbranch {\cpatrcd \ct}
+      {\dom {\ct} = \elabs \\
+      \hspace{3cm}\cand \cAnd\iton \labfrom \elabi \ct \leq \t \to \tvi}}
+  \end{cases} }
+\\
+\Crule
+  {\ctxinfer {\exrecord \T {\elaba = \ea; \ldots; \elab_j = \E_j; \ldots; \elab_n = \en}} \tp \t}
+  {\cexists \tvs \cAnd_{i \neq j} \cinfer \ei \tvi \cand \ctxinfer {\E_j} \tp \tvj \cand \dom {\T} = \elabs \\
+  &&\cand \cAnd\iton \labfrom \elabi \T \leq \t \to \tvi }
+\\
+\Crule
+  {\ctxinfer {\parens{\emagic {\ea, \ldots, \E_j, \ldots, \en}}} \tp \t}
+  {\cexists \tvs \cAnd_{i \neq j} \cinfer \ei \tvi \cand \ctxinfer {\E_j} \tp \tvj}
+\\\\
+\Crule
+  {\ctxinfer \E \tp {\tfor \tvs \t}}
+  {\cfor \tvs \ctxinfer \E \tp \t}
+\\\\
+\end{tabular}
+  }
+\end{judgboxmathpar}
+
 
 
 \section{Properties of the constraint language}
@@ -7038,11 +7084,8 @@ generally in our system.
 	  Either $\cletr \x \tv \tvs \ca \cb$ can progress with an instantiation constraint (in the above case) to discharge
 	  the match constraint or $\cletr \x \tv \tvs \ca \cb$ is stuck.
 	\end{proofcases}
-
     \end{proofcases}
-
-
-  \end{proofcases}
+ \end{proofcases}
 \end{proof}
 
 \subsection{Termination}
@@ -7423,7 +7466,7 @@ principle:
     \item If $\G \thsimplesd \exproj \e j n : \t$, then $\G \thsimplesd \e : \tProd \ti$ and $\t = \tj$, with $n \geq j$.
     \item If $\G \thsimplesd \expoly \e \tvs {\tfor \tvbs \tp} : \t$, then $\G \thsimplesd \e : \t\where{\tvs \is \tys}$, $\tvbs \disjoint \G$ and
       $\t = \tpoly {\tfor \tvbs \tp}\where{\tvs \is \tys}$.
-    \item If $\G \thsimplesd \exinst \e \tvs \ts : \t$, then $\G \thsimplesd \e : \tpoly \ts\where{\tvs \is \tys}$ and $\ts \leq \t$.
+    \item If $\G \thsimplesd \exinst \e \tvs \ts : \t$, then $\G \thsimplesd \e : \tpoly \ts\where{\tvs \is \tys}$ and $\ts\where{\tvs \is \tys} \leq \t$.
     \item If $\G \thsimplesd \emagic \es : \t$, then $\G \thsimplesd \ei : \tip$ for all $1 \leq i \leq n$.
     \item If $\G \thsimplesd \exrecord \T {\overline{\elab = \e}} : \t$, then $\G \thsimplesd \ei : \ti$ and ${\labfrom \elab \T} \leq \t \to \ti$ for $1 \leq i \leq n$ and $\Dom {\labfrom \labenv \T} = \elabs$.
     \item If $\G \thsimplesd \erecord {\overline{\elab = \e}} : \t$, then $\labsuni \elabs \T$ and $\G \thsimplesd \exrecord \T {\overline{\elab = \e}} : \t$.
@@ -7546,72 +7589,9 @@ and $\sub(\tvs) = \tys$.
 
 \subsection{Soundness and completeness of constraint generation}
 
-\begin{judgboxmathpar}
-  {\ctxinfer \E \tvp \tv}
-  {$\ctxinfer \E \tvp \tv$ is a satisfiable context iff the context $\E$ has \\ the expected type $\tv$ given the hole has the type $\tvp$.}
-\newcommand {\Crule}[2]{#1 &\eqdef& #2}
-\def \arraystretch{1.4}%4
-  \scalebox{0.9}{
-\begin{tabular}{LCL}
-  \Crule{\ctxinfer \square \tv \tv}{\square}\\
-  \Crule{\ctxinfer {\parens{\eapp \E \e}} \tvp \tv}{\cexists {\tvb \tvc} \cunif \tvc {\tvb \to \tv} \cand \ctxinfer \E \tvp \tvc \cand \cinfer \e \tvb}\\
-  \Crule{\ctxinfer {\parens{\eapp \e \E}} \tvp \tv}{\cexists {\tvb \tvc} \cunif \tvc {\tvb \to \tv} \cand \cinfer \e \tvc \cand \ctxinfer \E \tvp \tvb}\\
-  \Crule{\ctxinfer {\parens{\elet \x \E \e}} \tvp \tv}{\clet \x \tvb {\ctxinfer \E \tvp \tvb} {\cinfer \e \tv}}\\
-  \Crule{\ctxinfer {\parens{\elet \x \e \E}} \tvp \tv}{\clet \x \tvb {\cinfer \e \tvb} {\ctxinfer \E \tvp \tv}}\\
-  \Crule{\ctxinfer {{\eannot \E \tvs \t}} \tvp \tv}{\cexists \tvs \cunif \tv \t \cand \ctxinfer \E \tvp \tv}\\
-  \Crule{\ctxinfer {\etuple {\ea, \ldots, \E_j, \ldots, \en}} \tvp \tv}{\cexists \tvs \cunif \tv {\tProd \tvi} \cand \cAnd_{i \neq j} \cinfer \ei \tvi \cand \ctxinfer {\E_j} \tvp \tvj} \\
-  \Crule{\ctxinfer {\parens{\exproj \E j n}} \tvp \tv}{\cexists {\tvb, \tvbs} \ctxinfer \E \tvp \tvb \cand \cunif \tvb {\tProd \tvbi} \cand \cunif \tv \tvbj}\\
-  \Crule{\ctxinfer {\parens{\eproj \E j}} \tvp \tv}{\cexists \tvb \ctxinfer \E \tvp \tvb \cand \cmatch \tvb {\cbranch {\cpatprod \tvc j} {\cunif \tv \tvc}}}\\
-  \Crule{\ctxinfer {\expoly \E \tvs \ts} \tvp \tv}{\cexists \tvs \ctxinfer \E \tvp \ts \cand \cunif \tv {\tpoly \ts}}\\
-  \Crule{\ctxinfer {\exinst \E \tvs \ts} \tvp \tv}{\cexists {\tvs, \tvb} \ctxinfer \E \tvp \tvb \cand \cunif \tvb {\tpoly \ts} \cand \cleq \ts \tv}\\
-  \Crule{\ctxinfer {\epoly \E} \tvp \tv}{\clet \x \tvb {\ctxinfer \E \tvp \tvb} {\\&&\cmatch \tv {\cbranch {\cpatpoly \cscm} {\cleq \x \cscm}}}}\\
-  \Crule{\ctxinfer {\einst \E} \tvp \tv}{\cexists \tvb {\ctxinfer \E \tvp \tvb \cand \cmatch \tvb {\cbranch {\cpatpoly \cscm} {\cleq \cscm \tv}}}}\\
-\Crule
-  {\ctxinfer {\parens{\efield \E \elab}} \tvp \tv}
-  {\begin{cases}
-    \cexists {\tvb} \ctxinfer \E \tvp \tvb \cand \labenv(\labfrom \elab \T) \leq \tvb \to \tva & \text{if } \labuni \elab \T \\
-    \cexists \tvb \ctxinfer \E \tvp \tvb \\ \cand \cmatch \tvb {\cbranch {\cpatrcd \ct} {\labenv(\labfrom \elab \ct) \leq \tvb \to \tv}} & \text{otherwise}
-  \end{cases}}
-\\
-\Crule
-  {\ctxinfer {\parens{\exfield \E \T \elab}} \tvp \tv}
-  {\cexists \tvb \ctxinfer \E \tvp \tvb \cand \labenv(\labfrom \elab \T) \leq \tvb \to \tva}
-\\
-\Crule
-  {\ctxinfer {\erecord {\elaba = \ea; \ldots; \elab_j = \E_j; \ldots; \elab_n = \en}} \tvp \tv}
-  {\begin{cases}
-    \cexists \tvbs \cAnd_{i \neq j} \cinfer \ei \tvbi \cand \ctxinfer {\E_j} \tvp \tvbj     & \text{if } \labsuni \elabs \T \\
-    \cand \cAnd\iton \labenv(\labfrom \elabi \T) \leq \tv \to \tvbi \\
-    \cexists \tvbs \cAnd\iton \cinfer \ei \tvbi & \text{otherwise} \\
-    \uad\cand~\cmatch \tv {\cbranch {\cpatrcd \ct}
-      {\dom {\ct} = \elabs \\
-      \hspace{3cm}\cand \cAnd\iton \labenv(\labfrom \elabi \ct) \leq \tv \to \tvbi}}
-  \end{cases} }
-\\
-\Crule
-  {\ctxinfer {\exrecord \T {\elaba = \ea; \ldots; \elab_j = \E_j; \ldots; \elab_n = \en}} \tvp \tv}
-  {\cexists \tvbs \cAnd_{i \neq j} \cinfer \ei \tvbi \cand \ctxinfer {\E_j} \tvp \tvbj \cand \dom {\T} = \elabs \\
-  &&\cand \cAnd\iton \labenv(\labfrom \elabi \T) \leq \tv \to \tvbi }
-\\
-\Crule
-  {\ctxinfer {\emagic {\ea, \ldots, \E_j, \ldots, \en}} \tvp \tv}
-  {\cexists \tvbs \cAnd_{i \neq j} \cinfer \ei \tvbi \cand \ctxinfer {\E_j} \tvp \tvbj}
-\\\\
-\Crule
-  {\ctxinfer \E \tvp \t}
-  {\cexists \tv \cunif \tv \t \cand \ctxinfer \E \tvp \tv}
-\\
-\Crule
-  {\ctxinfer \E \tvp {\tfor \tvs \t}}
-  {\cfor \tvs \ctxinfer \E \tvp \t}
-\\\\
-\end{tabular}
-  }
-\end{judgboxmathpar}
-
 \begin{lemma}
   \label{lem:ctxt-gen-correctness}
-  For any term context $\E$, term $\e$, $\ctxinfer \E \tv \tvb \where{\cinfer \e \tv} = \cinfer {\E\where{\e}} \tvb$.
+  For any term context $\E$, term $\e$, $\ctxinfer \E \t \tp \where{\cinfer \e \t} = \cinfer {\E\where{\e}} \tp$.
   \begin{proof}
     By induction on the structure of $\E$.
   \end{proof}
@@ -7619,7 +7599,7 @@ and $\sub(\tvs) = \tys$.
 
 \begin{lemma}
   \label{lem:erasure-constraint-gen}
-  For any term $\e$, $\cerase {\cinfer \e \tv} = \cinfer {\eerase \e} \tv$.
+  For any term $\e$, $\cerase {\cinfer \e \t} = \cinfer {\eerase \e} \t$.
   \begin{proof}
     By induction on $\e$.
   \end{proof}
