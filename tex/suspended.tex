@@ -1209,15 +1209,14 @@ fields or overloaded GADT constructors in patterns.
 Moreover, these simpler approaches typically lack a declarative semantics that
 justify rejecting programs with unresolved disambiguation choices. 
 
-% But this has a cost
+\paragraph{Complexity}
+% All this goodness has a cost
 
-But with great power comes even greater complexity.  This complexity stems not
-only from the generality of our framework, but also because everything is hard:
+Implementing and specifying omni-directional type inference is more complex than bidirectional or $\Geninst$-directional type inference.
+
 \begin{enumerate}
-
 \item[(\cref{sec/oml})]
-  Giving a declarative characterization of \emph{known} type information
-  without statically relying on directionality is hard.
+  Giving a declarative characterization of \emph{known} type information without statically relying on directionality is hard. Our contextual rules nicely solve this problem, but their meta-theory is more complex than local rules.
 
 \item[(\cref{sec:implementation})]
   Implementing incremental instantiation efficiently is also hard: it
