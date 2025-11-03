@@ -3965,8 +3965,48 @@ approach inherits the limitations of fixed directionality discussed in
 \cref{sec/overview/directional}.
 
 \paragraph{Type-based disambiguation in SML implementations}
-\indent
-\TODO{}
+\SML supports positional projections for structural records; and
+tuples, which are treated as structural records for numeric
+labels. This uses row typing for projections: if $\e$ has the type
+$\tsrecord {j = \tj; \varrho}$, where $\varrho$ is a row describing
+the remaining tuple fields, then $\eproj \e j$ has type $\tj$.
+
+\SML does not actually allow row-polymorphic definitions: restricting
+to monomorphic rows allows a simple yet efficient compilation strategy
+for records. So \SML adds a prose side-condition to the typing rules
+to require that each row variable be fully determined by the
+"program context"~\citep*[Section 4.11]{sml-definition}. Our unicity
+conditions provides a declarative specification for this restriction,
+which was previously missing.
+
+\citet*[page 36]{rossberg-hamlet} remarks that the interaction of this
+feature with \texttt{let}-polymorphism is difficult and not supported
+in practice:
+
+\begin{quotation}
+  Under item 1 the Definition states that “the program context” must
+  determine the exact type of flexible records, but it does not
+  specify any bounds on the size of this context. Unlimited context is
+  clearly infeasible since it is incompatible with let polymorphism:
+  at the point of generalisation the structure of a type must be
+  determined precisely enough to know what we have to quantify
+  over. We thus restrict the context for resolving flexible records to
+  the innermost surrounding value declaration, as most other SML
+  systems seem to do as well. This is in par with our treatment of
+  overloading (see 5.8).
+\end{quotation}
+
+We solve this difficult interaction between disambiguation and
+\texttt{let}-polymorphism; and indeed we implemented tuples in our
+prototype and it works as one would expect. We also remark that
+Poly/ML~\citep*{sml-polyml} went further than other SML implementations on
+that front, and supports use-cases that go beyond the HaMLet
+restriction and involve back-propagation:
+
+\begin{verbatim}
+> let fun fst r = #1 r in (fst (1, 2), fst (true, false)) end;
+val it = (1, true): int * bool
+\end{verbatim}
 
 \paragraph{Type-based disambiguation in GHC}
 \indent
