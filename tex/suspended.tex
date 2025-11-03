@@ -1314,23 +1314,23 @@ feature within the \OCaml community.
     {\G \th \exinst e \tvs \ts : \ts \where {\tvs \is \tys}}
 
   \inferrule[Rcd-X]
-    {\parens{\G \th \ei : \ti}\iton \\
+    {\dom {(\Labenv[\T])} = \elabs \\
      \parens{{\labfrom \elabi \T} \leq \t \to \ti}\iton \\
-     \dom {(\Labenv[\T])} = \elabs}
+     \parens{\G \th \ei : \ti}\iton }
     {\G \th \exrecord \T {\elaba = \ea; \ldots; \elab_n = \en} : \t}
 
   \inferrule[Rcd-Closed]
-    {\G \th \exrecord \T {\overline{\elab = \e}} : \t \\
-     \labsuni \elabs \T }
+    {\labsuni \elabs \T \\
+     \G \th \exrecord \T {\overline{\elab = \e}} : \t }
     {\G \th \erecord {\overline{\elab = \e}} : \t}
 
   \inferrule[Rcd-Proj-X]
-    {\G \th \e : \tya \\ {\labfrom \elab \T} \leq \tya \to \tyb}
+    {{\labfrom \elab \T} \leq \tya \to \tyb \\ \G \th \e : \tya }
     {\G \th \exfield \e \T \elab : \tyb}
 
   \inferrule[Rcd-Proj-Closed]
-    {\G \th \exfield \e \T \elab : \t \\
-     \labuni \elab \T}
+    {\labuni \elab \T \\
+     \G \th \exfield \e \T \elab : \t }
     {\G \th \efield \e \elab : \t}
 
   \inferrule[Lab-Inst]
@@ -1355,7 +1355,7 @@ specifications for fragile features often fail to preserve principality.
 \begin{wraphbox}{}{}
 \begin{mathpar}[inline]
   \inferrule[Rcd-Proj-I-Nat]
-    {\G \th \e : \ta \\\\ \labfrom \elab \T \leq \ta \to \tb}
+    {\labfrom \elab \T \leq \ta \to \tb \\\\ \G \th \e : \ta}
     {\G \th \efield \e \elab : \tb}
 \end{mathpar}
 \end{wraphbox}
@@ -4764,7 +4764,7 @@ $\c$. \\
   \inferrule[Tuple]
     {\parens{\G \th \ei : \ti}\iton}
     {\G \th (\ea, \ldots, \en) : \Pi\iton \ti}
-
+\\
   \inferrule[Proj-X]
     {\G \th \e : \Pi\iton \ti \\
      1 \leq j \leq n}
@@ -4792,34 +4792,32 @@ $\c$. \\
     {\eshape \E  \e {\any \tvcs \tpoly \ts} \\
      \G \th \E\where{\exinst \e \tvcs \ts} : \t}
     {\G \th \E\where{\einst \e} : \t}
-
+\\
   \inferrule[Rcd-X]
-    {\parens{\G \th \ei : \tyi}\iton \\ \parens{{\labfrom \elabi \T} \leq \t \to \tyi}\iton \\ \Dom {\labenv(\T)} = \elabs }
+    {\Dom {\labenv(\T)} = \elabs \\ \parens{{\labfrom \elabi \T} \leq \t \to \tyi}\iton \\ \parens{\G \th \ei : \tyi}\iton }
     {\G \th \exrecord \T {\elaba = \ea; \ldots; \elab_n = \en} : \t }
-
+\\
   \inferrule[Rcd-Closed]
-    {\G \th \exrecord \T {\overline{\elab = \e}} : \t \\ \labsuni \elabs \T}
+    {\labsuni \elabs \T \\ \G \th \exrecord \T {\overline{\elab = \e}} : \t}
     {\G \th \erecord {\overline{\elab = \e}} : \t}
 
   \inferrule[Rcd-I]
     {\Eshape \E \es {\any \tvcs \trcd \T \tvcs} \\ \G \th \E\where{\exrecord \T {\overline{\elab = \e}}} : \t }
     {\G \th \E\where{\erecord {\overline{\elab = \e}}} : \t}
-
+\\
   \inferrule[Rcd-Proj-X]
-    {\G \th \e : \tya \\
-     {\labfrom \elab \T} \leq \tya \to \tyb}
+    {{\labfrom \elab \T} \leq \tya \to \tyb \\ \G \th \e : \tya }
     {\G \th \exfield \e \T \elab : \tyb}
-
+\\
   \inferrule[Rcd-Proj-Closed]
-    {\G \th \exfield \e \T \elab : \t \\
-     \labuni \elab \T}
+    {\labuni \elab \T \\ \G \th \exfield \e \T \elab : \t }
     {\G \th \efield \e \elab : \t}
 
   \inferrule[Rcd-Proj-I]
     {\eshape \E \e {\any \tvcs \trcd \T \tvcs} \\
      \G \th \E\where{\exfield \e \T \elab} : \t}
     {\G \th \E\where{\efield \e \elab} : \t}
-
+\\
   \inferrule[Hole]
     {\parens{\G \th \ei : \ti}\iton}
     {\G \th \emagic {\bar \e} : \tp}
