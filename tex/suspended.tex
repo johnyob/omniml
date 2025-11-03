@@ -1145,7 +1145,7 @@ Omnidirectional inference is powerful, but not omnipotent:
   \item the conceptual and implementation complexity of our framework.
 \end{enumerate*}
 
-\paragraph{Not too cold, not too hot} Some expressions
+\paragraph{Not too hot, not too cold} Some expressions
 must be rejected even though their elaboration would be unambiguous. Consider:
 
 \begin{program}[input,checkocaml]
@@ -1161,7 +1161,7 @@ cannot itself be projected, leaving a unique consistent elaboration:
 \code{r.cie_point/color.cie_color/x}.
 
 Our framework nonetheless rejects \code{ex_1_0}. This is intentional:
-implicit terms must be elaborated \emph{sequentially}, each in isolation,
+overloaded projections must be elaborated \emph{sequentially}, each in isolation,
 rather than jointly with others. We view this restriction as a
 ``Goldilocks'' compromise: it rules out examples like the above, but avoids
 the intractability of full general overloading which is NP-hard, even
@@ -1191,17 +1191,18 @@ and appears essential for certain features such as polymorphic parameters
 Developing a formal treatment of defaulting within our framework is an
 important direction for future work.
 
-\paragraph{Complexity}
+\paragraph{On complexity budgets}
 % All this goodness has a cost
 
-Implementing and specifying omni-directional type inference is more complex than bidirectional or $\Geninst$-directional type inference.
+Omnidirectional type inference requires a higher complexity budget than
+bidirectional or $\Geninst$-directional type inference.
 
 \begin{enumerate}
 \item[(\cref{sec/oml})]
   Giving a declarative characterization of \emph{known} type information without statically relying on directionality is hard. Our contextual rules nicely solve this problem, but their meta-theory is more complex than local rules.
 
 \item[(\cref{sec:implementation})]
-  Implementing incremental instantiation efficiently is also hard: it
+  Implementing incremental instantiation efficiently is also tricky: it
   requires triggering re-instantiations upon refinements of partial type
   schemes, while avoiding redundant constraint solving across
   instantiations.
