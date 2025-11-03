@@ -1109,6 +1109,26 @@ constraint-solving work.
 
 % Something to tie everything back together / also serve as a lookup
 
+\paragraph {The forest, not the trees.}
+
+% Suspended constraints are a framework
+Suspended match constraints offer a \emph{general framework} to typing the
+features we have considered so far, and more. Some of those features can be
+handled using more specialized approaches: for example, \SML employs row
+variables to support overloaded fields for structural records, while \GHC uses
+qualified types to allow overloading of nominal record fields with a
+simple-enough type.
+
+% Suspended constraints are more powerful than the specialized mechanisms
+
+In contrast to these specialized mechanisms, suspended constraints are more
+expressive. They can handle cases where the typing rule to use on the subterms
+depends on the outcome of disambiguation, such as overloaded polymorphic record
+fields or overloaded GADT constructors in patterns.
+%
+Moreover, these simpler approaches typically lack a declarative semantics that
+justify rejecting programs with unresolved disambiguation choices.
+
 \subsection{Limitations}
 
 % 1. Our framework is complex --- as a result, everything is hard ://
@@ -1170,26 +1190,6 @@ and appears essential for certain features such as polymorphic parameters
 % with the program context. But it still breaks principality.  
 Developing a formal treatment of defaulting within our framework is an
 important direction for future work.
-
-\paragraph {The forest, not the trees.}
-
-% Suspended constraints are a framework
-Suspended match constraints offer a \emph{general framework} to typing the
-features we have considered so far, and more. Some of those features can be
-handled using more specialized approaches: for example, \SML employs row
-variables to support overloaded fields for structural records, while \GHC uses
-qualified types to allow overloading of nominal record fields with a
-simple-enough type. 
-
-% Suspended constraints are more powerful than the specialized mechanisms
-
-In contrast to these specialized mechanisms, suspended constraints are more
-expressive. They can handle cases where the typing rule to use on the subterms
-depends on the outcome of disambiguation, such as overloaded polymorphic record
-fields or overloaded GADT constructors in patterns. 
-%
-Moreover, these simpler approaches typically lack a declarative semantics that
-justify rejecting programs with unresolved disambiguation choices. 
 
 \paragraph{Complexity}
 % All this goodness has a cost
