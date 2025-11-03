@@ -84,7 +84,7 @@ type gs_point = {x : int; y : int; color : int}
 let getx p  = r.x
 \end{program}
 \begin{program}[error,aboveskip=0em]
-             ^^^
+              ^^^
 Error (warning 41 [ambiguous-name]):
 x belongs to several types: gs_point point.
 \end{program}
@@ -137,8 +137,8 @@ when it is:
 %
 \begin{enumerate*}
   \item part of an annotation;
-  \item supplied as input to a checking {\color{orange}\bfseries conclusion} ($\color{orange}\G \th e \Leftarrow \t$); or
-  \item an output of a synthesizing {\color{blue}\bfseries premise} ($\color{blue}\G \th \e \Rightarrow \t$).
+  \item supplied as input to a checking {conclusion} ($\G \th e \Leftarrow \t$); or
+  \item an output of a synthesizing {premise} ($\G \th \e \Rightarrow \t$).
 \end{enumerate*}
 \XDR{We still do not see the difference between being a premise or a
 conclusion}\relax
