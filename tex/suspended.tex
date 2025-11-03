@@ -1109,24 +1109,6 @@ constraint-solving work.
 
 % Something to tie everything back together / also serve as a lookup
 
-\paragraph{Plan}
-We next turn to the limtations of omnidirectionality.
-The remainder of the paper then develops our three key ideas in turn:
-\begin{enumerate*}
-
-  \item[(\cref{sec/oml})] formalizes our declarative characterization of
-    \emph{known} type information and presents \penalty 50 \OML's typing rules.
-
-  \item[(\cref{sec:constraints})] defines the semantics of suspended match
-    constraints and introduces constraint generation function $\cinfer \e \t$
-    for \OML terms.
-
-  \item[(\cref{sec:solving})]
-    describes incremental instantiation as part of our formal constraint
-    solver.
-
-\end{enumerate*}
-
 \subsection{Limitations}
 
 % 1. Our framework is complex --- as a result, everything is hard ://
@@ -1229,8 +1211,6 @@ We hope to pay off some of this complexity in future work; in particular, we
 believe omnidirectionality is the missing piece to unlock modular
 implicits---an approach to generalized overloading and a long-anticipated
 feature within the \OCaml community.
-
-
 
 \section{The \OML calculus}
 \label{sec/oml}
