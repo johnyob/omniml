@@ -4008,7 +4008,26 @@ restriction and involve back-propagation:
 val it = (1, true): int * bool
 \end{verbatim}
 
-\paragraph{Type-based disambiguation in GHC}
+\paragraph{Record field disambiguation and overloading in GHC} Haskell
+98 defines derives selector functions for each record field; this
+approach does not supporting declaring two record types with the same
+field names in the same module. GHC 6.8.1 (2007) introduced the
+DisambiguateRecordField for type-directed disambiguation of record
+labels\footnote{\url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/disambiguate_record_fields.html}},
+and GHC 8.0.1 (2016) introduced DuplicateRecordFields to declare two
+records with overlapping field names in the same module. However, the
+GHC developers found that type-based disambiguation using
+bidirectional type inference is not predictible enough in practice for
+users, and are gradually moving away from type-based disambiguation
+towards an approach based on qualified types constraints
+\code{HasField a "foo" b}
+(OverloadedRecordDot, 2017)\footnote{\url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html}}. This
+qualified-types approach is however not available for record fields
+with a polymorphic type, suggesting difficulties in scaling this
+approach to other features where the choice of typing rule depends on
+the disambiguation (in OCaml: polymorphic records or methods, GADTs
+in patterns).
+
 \indent
 \TODO{}
 
