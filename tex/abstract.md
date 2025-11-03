@@ -1,22 +1,28 @@
-We propose a new concept of *omnidirectional* type inference: the
-ability to resolve ML-style typing constraints in disorder. In contrast,
-all known existing implementations which typically infer the types of
-let-bound expressions before typechecking their use sites.
+The Damas-Hindley-Milner (ML) type system owes its success to _principality_,
+the property that every well-typed expression has a unique most general type.
+This makes inference predictable and efficient. Yet, principality is _fragile_:
+many extensions of ML—GADTs, higher-rank polymorphism, and static
+overloading—break it by introducing _fragile_ constructs that resist
+principal inference. Existing approaches recover principality through
+_directional_ inference algorithms, which propagate _known_ type information in
+a fixed (or _static_) order (e.g. as in bidirectional typing) to disambiguate
+such constructs. However, the rigidity of a _static_ inference order often
+causes otherwise well-typed programs to be rejected.
 
-This relies on two technical devices: *suspended match constraints*, which
-suspend the resolution of some constraints until the context has more
-information about a type variable; and *partial type schemes*, which allow
-taking instances of a partially solved type scheme containing suspended
-constraints, with a
-mechanism to incrementally update instances as the scheme is refined.
-
-The benefits of omnidirectional type inference are most apparant for advanced
-ML extensions that rely on optional type annotations, where
-principality is fragile.  We illustrate these advantages with OCaml's static
-overloading of record labels and datatype constructors, semi-explicit
-first-class polymorphism, and tuple projections à la SML.
-
-By contrast, extensions that integrate seamlessly into the traditional 
-ML framework---such as row polymorphism---already enjoy robust 
-principality and do not gain from omnidirectionality.
-
+We propose _omnidirectional_ type inference, where type information flows in a
+_dynamic_ order. Typing constraints may be solved in any order, suspending when
+progress requires known type information and resuming once it becomes
+available, using _suspended match constraints_. This approach is
+straightforward for simply typed systems, but extending it to ML is challenging
+due to _let-generalization_. Existing ML inference algorithms type
+$\textsf{let}$-bindings $\textsf{let } x = e_1 \textsf{ in } e_2$ in a fixed
+order—type $e_1$, generalize its type, and then type $e_2$. To overcome this,
+we introduce _incremental instantiation_, allowing partially solved type
+schemes containing suspended constraints to be instantiated, with a mechanism
+to incrementally update instances as the scheme is refined. Omnidirectionality
+provides a _general framework_ for restoring principality in the presence of
+fragile features. We demonstrate its versatility on two fundamentally different
+features of OCaml: static overloading of record labels and datatype
+constructors and semi-explicit first-class polymorphism. In both cases, we
+obtain a _principal_ type inference algorithm that is more expressive than
+OCaml's current typechecker.
