@@ -1433,7 +1433,7 @@ following expressions:
   \ldots; \elab_n = \en }$ and field projections $\efield \e \elab$. Both
   constructs have explicit counterparts: $\exrecord \T {\elaba = \ea;
   \ldots; \elab_n = \en }$ and $\exfield \e \T \elab$, where the explicit
-  record annotation $\labfrom {} \T$ indicates that the labels unambiguously
+    record annotation $\labfrom {\_} \T$ indicates that the labels unambiguously
   belong to the record $\T$.
 \TODO{Decide on an ultimate syntax for explicit projections and explicit records.
 Didier proposes $\e.\T/\elab$, Alistair proposes $\e.\T.\elab$, Gabriel proposes $\e.\elab^\T$.
@@ -1701,6 +1701,16 @@ represented as the shape application $\shapp (\tint \tlist)$.
     {\eshape \E \e {\any \tvcs \trcd \T \tvcs} \\
      \G \th \E\where{\exfield \e \T \elab} : \t}
     {\G \th \E\where{\efield \e \elab} : \t}
+
+\eshape[\es] \E \e \sh \quad\eqdef\quad
+  \forall \G, \t, \gt, \uad
+  \G \th \eerase {\E \where {\emagic {\es, \eannot \e {} \gt }}} : \t
+      \wide\implies \shape \gt = \sh
+
+\Eshape \E \es \sh \quad\eqdef\quad
+  \forall \G, \t, \gt, \uad
+      \G \th \eerase {\E\where{\eannotmagic \es {} \gt}} : \t
+      \wide\implies \shape \gt = \sh
 \end{mathparfig}
 
 \parcomment{Typing rules are contextual. Re-iterate the idea of unicity}
@@ -1730,9 +1740,7 @@ In other words, $\eshape[\es] \E \e \sh$ holds when the type of the subterm
 $\e$ has a unique shape $\sh$ fixed by its context $\E$ and sibling terms
 $\es$, while $\Eshape \E \es \sh$ holds when the expected type of the hole in
 $\E$ (with subterms $\es$) has the unique shape $\sh$.
-
 \parcomment{The formal definition / auxiliary notions}
-
 \begin{mathpar}
 \def \Eqdef {&\eqdef&}
 {\begin{tabular}{RCL}
@@ -1761,9 +1769,31 @@ To make sense of these definitions, we rely on a few auxiliary notions:
     We introduce an \emph{erasure} function $\eerase \e$ that erases all
     not-yet-elaborated implicit constructs $\e^i$ in $\e$ with a typed hole
     around their subterms. For example, $\eerase {\efield \e \elab}$ is
-    $\emagic {\cerase \e}$. The full definition is given in
-    \cref{fig:erasure}.
+    $\parens{\emagic {\cerase \e}}$. The full definition is given in
+    \cref{fig/oml/erasure}.
 \end{enumerate}
+
+\begin{mathparfig}
+  {fig/oml/erasure}
+  {Selected cases of the erasure of $\e$. All other cases are homomorphic.}
+\newcommand{\Erule}[2]{\eerase {#1} &\eqdef& {#2}}
+  \begin{tabular}{RCL}
+  \Erule{\epoly \e}{\emagic {\eerase \e}}\\
+  \Erule{\einst \e}{\emagic {\eerase \e}}\\
+  \Erule{\exinst \e \tvs \ts}{\exinst {\eerase \e} \tvs \ts}\\
+    \Erule{\erecord {\elaba = \ea; \ldots; \elab_n = \en}}{\begin{cases}
+      \erecord {\elaba = \eerase \ea; \ldots; \elab_n = \eerase \en} &\text{if } \labsuni \elabs \T \\
+      \emagic {\eerase \ea, \ldots, \eerase \en} & \text{otherwise}
+    \end{cases}}\\
+  \Erule{\exrecord \T {\elaba = \ea; \ldots; \elab_n = \en}}{\exrecord \T {\elaba = \eerase \ea; \ldots; \elab_n = \eerase \en}}\\
+    \Erule{\efield \e \elab}{\begin{cases}
+      \efield {\eerase \e} \elab & \text{if } \labuni \elab \T \\
+      \emagic {\eerase \e} & \text{otherwise}
+    \end{cases}}\\
+  \Erule{\exfield \e \T \elab}{\exfield {\eerase \e} \T \elab}\\
+  \Erule{\emagic \es}{\emagic {\parens {\eerase \ei} \iton}}\\
+\end{tabular}
+\end{mathparfig}
 
 \parcomment{Typed holes must preserve typability of subterms}
 
