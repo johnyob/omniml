@@ -1138,9 +1138,10 @@ justify rejecting programs with unresolved disambiguation choices.
 
 Omnidirectional inference is powerful, but not omnipotent:
 \begin{enumerate*}
-  \item some programs are still rejected as ambiguous, even though a unique elaboration could 
+  \item some programs are still rejected as ambiguous, even though a unique
+  elaboration could
     in principle be chosen---a deliberate ``Goldilocks'' compromise;
-  \item the current formalization omits a treatment of default rules; and 
+  \item the current formalization omits a treatment of default rules; and
   \item the conceptual and implementation complexity of our framework.
 \end{enumerate*}
 
@@ -1168,7 +1169,7 @@ without let-polymorphism, as shown by a reduction from 3-SAT~\citep*
 {Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}.
 
 
-\paragraph{No defaults, by default} 
+\paragraph{No defaults, by default}
 
 \parcomment{No default rules formalism}
 
@@ -1178,15 +1179,15 @@ We do not yet provide a formal account of \emph{default rules} mentioned in
 strategy to each suspended constraint.  \Draft{More details can be found in
 Appendix \cref {app/default-rules}.}{} In practice, defaulting proves useful
 and appears essential for certain features such as polymorphic parameters
-\citep{White/polyparams@ml2023}. 
-% Alistair: I don't think we should say anything about defaulting beside we don't 
+\citep{White/polyparams@ml2023}.
+% Alistair: I don't think we should say anything about defaulting beside we don't
 % know formally how to do it, we can do it in practice, we think it is important.
-% We shouldn't make any claims about being better than OCaml (especially since we 
+% We shouldn't make any claims about being better than OCaml (especially since we
 % don't substantiate this claim)
 %
-% Defaulting behaves better than in OCaml: we propagate more type information, 
-% so we default less often and never in situations which are obviously incompatible 
-% with the program context. But it still breaks principality.  
+% Defaulting behaves better than in OCaml: we propagate more type information,
+% so we default less often and never in situations which are obviously incompatible
+% with the program context. But it still breaks principality.
 Developing a formal treatment of defaulting within our framework is an
 important direction for future work.
 
@@ -1198,13 +1199,35 @@ bidirectional or $\Geninst$-directional type inference.
 
 \begin{enumerate}
 \item[(\cref{sec/oml})]
-  Giving a declarative characterization of \emph{known} type information without statically relying on directionality is hard. Our contextual rules nicely solve this problem, but their meta-theory is more complex than local rules.
+  Giving a declarative characterization of \emph{known} type information
+  without statically relying on directionality is hard. Our contextual rules
+  nicely solve this problem, but their meta-theory is unsurprisingly more
+  complex than local rules.
 
 \item[(\cref{sec:implementation})]
   Implementing incremental instantiation efficiently is also tricky: it
   requires triggering re-instantiations upon refinements of partial type
   schemes, while avoiding redundant constraint solving across
   instantiations.
+
+\XDR
+  {We do not really describe the implementation in the paper. So the
+  complexity of the implementation should not be visible. Here, the silent
+  key point is that the formalization of constraint resolution has been
+  carefully designed to allow for an efficient implementation, \ie that can
+  closely follow the formalization.
+
+  An inefficient implementation could backtrack (which would be really bad)
+  or re-instantiate from the top of the constraint (not very good, but
+  probably feasible in practice). If you agree with this, would one of you
+  be able to articulate this idea on this item?}
+
+\XDR [Independently]
+  {Semi-unification implementation of type inference, which according to
+  Henglein has been implemented for SML, does implement incremental
+  instantiation efficiently. This is not complex by itself.  It is still
+  more compplex than unification plus generalization/instantiation, \ie. ML
+  style type inference. Again complexity is relative.}
 
 \end{enumerate}
 We hope to pay off some of this complexity in future work; in particular, we
@@ -1336,7 +1359,7 @@ feature within the \OCaml community.
     {\labenv(\labfrom \elab\T) = \tfor \tvs {\trcd \T \tvs} \to \t}
     {{\labfrom \elab \T} \leq (\trcd \T \tys \to \t\where{\tvs \is \tys})}
 \end{mathparfig}
-\Xalistair{I wanted to link shapes and canonical shapes in the above figure, but it required a $\ni$. 
+\Xalistair{I wanted to link shapes and canonical shapes in the above figure, but it required a $\ni$.
 Any better suggestions?}
 \Xgabriel{I am fine with the $\ni$, and added an explicit inclusion relation (picking a set name for canonical shapes).
 If that is okay with you, just remove both comments (or tweak the output to your liking and remove).}
@@ -1372,7 +1395,7 @@ contrast, the natural typing rule for the overloaded projections $\efield \e
 \parcomment{How we restore principal types}
 
 To restore principality for overloaded projections, we require that the
-type of $\e$ be \emph{known}---that is, determined to be a specific 
+type of $\e$ be \emph{known}---that is, determined to be a specific
 record type $\trcd {\T_0} \tys$, rather than merely \emph{guessed}.  This
 requirement is expressed via a \emph{unicity condition} (see
 \cref{sec/overview/omni/unicity}), yielding the contextual rule
@@ -1960,7 +1983,7 @@ are both possible shapes for the type of $r$.
 \def \ttciepoint {\ttlab {cie\_point}}
 
 \begin{example}
-Considering the example from \cref{sec/overview/limitations}. 
+Considering the example from \cref{sec/overview/limitations}.
 \begin{program}[input,checkocaml]
 type gray_point = { x : int; y : int; color : int }
 type cie_color  = { x : int; y : int; z : int }
@@ -1974,13 +1997,13 @@ As explained in \cref{sec/overview/limitations}, \code{ex_1_0} is ill-typed
 because our unicity conditions enforce that each implicit field projection
 must be resolved individually and in a sequential fashion. We view this as a
 ``Goldilocks'' solution: we deliberately trade a small loss in expressivity
-for the benefit of a tractable, backtracking-free inference algorithm. 
+for the benefit of a tractable, backtracking-free inference algorithm.
 
 To type $\ttex {10}$ one must eliminate the final implicit
 projection in a context of the form $\E\where{\efield \e \elab}$.
-It is a given that neither projection can be resolved by applying 
+It is a given that neither projection can be resolved by applying
 \Rule{Rcd-Proj-Closed} since the labels (\code{color} and \code{x})
-are both overloaded. Thus, the implicit projections must 
+are both overloaded. Thus, the implicit projections must
 be typed using \Rule{Rcd-Proj-I}.
 Two cases arise, neither of which are possible:
 \begin{proofcases}
@@ -2206,7 +2229,7 @@ instantiation form.
 
 Polymorphism is introduced by a \emph{generalization} constraint
 $\clet \x \tv \ca \cb$ (also called \emph{let} constraints) and eliminated by
-an \emph{instantiation} constraint $\capp \x \tv$. In a generalization constraint, 
+an \emph{instantiation} constraint $\capp \x \tv$. In a generalization constraint,
 the definition of $\x$ is given by a constraint abstraction $\cabs \tv \c$,
 a function that, when applied to a type $\t$, returns
 $\c \where {\tv \is \t}$. Semantically, the abstraction $\cabs \tv \c$ is
@@ -2217,7 +2240,7 @@ instantiation of $\tv$ that satisfies $\c$.
 Instantiations (or applications) $\capp \x \t$ eliminate abstractions by
 applying a type $\t$ to the abstraction bound to $\x$. This holds precisely
 when $\semenv(\t) \in \semenv(\x)$, \ie $\t$ is one of the satisfiable
-instances of $\x$. The $\lambda$-abstraction and application syntax follows 
+instances of $\x$. The $\lambda$-abstraction and application syntax follows
 \citet*{Pottier/inferno@icfp2014}. In other presentations, constraints
 abstractions $\cabs \tv {\cexists \tvbs \c}$ are written as constrainted type schemes
 $\all {\tv, \tvbs} C \Rightarrow \tv$, and instantiation constraints $\capp \x \t$ are
@@ -2412,7 +2435,7 @@ to be \emph{known}.
 
 \begin{definition}[Simple constraints]
   We say that $\c$ is \emph{simple} if it contains no suspended match
-  constraints. 
+  constraints.
 \end{definition}
 
 \begin{definition}[Unicity]
@@ -2434,7 +2457,7 @@ Similarly to the unicity conditions introduced for typing rules in
 for constraints $\Cshape \C \t \sh$ relies on \emph{erasure} $\cerase
 {\C\where{\cunif \t \gt}}$ to restrict attention to previously discharged
 match constraints, inducing a causal order between match constraints,
-enforced by \Rule {Match-Ctx}. 
+enforced by \Rule {Match-Ctx}.
 
 \parcomment{The interesting cases of unicity}
 
@@ -2606,7 +2629,7 @@ variable and $\C$ is satisfiable.
     \end{array}%
   }
   \begin{tabular}{RCLL}
-    \labfrom \elab \T \leq \ta \to \tb &\eqdef& 
+    \labfrom \elab \T \leq \ta \to \tb &\eqdef&
       \Scases{\cexists \tvs \cunif \ta  {\trcd \T \tvs} \cand \cunif \tb \t}{\cfalse}{\labenv(\labfrom \elab \T) = \tfor \tvs {\trcd \T \tvs \to \t}}
     \\\>
     \dom{\T} = \elabs &\eqdef&
@@ -4014,6 +4037,7 @@ restriction and involve back-propagation:
 > let fun fst r = #1 r in (fst (1, 2), fst (true, false)) end;
 val it = (1, true): int * bool
 \end{verbatim}
+\XDR{Shouldn't we say that we would also succeed here?}
 
 \paragraph{Record field disambiguation and overloading in GHC} Haskell
 98 defines derives selector functions for each record field; this
@@ -4027,13 +4051,14 @@ GHC developers found that type-based disambiguation using
 bidirectional type inference is not predictible enough in practice for
 users, and are gradually moving away from type-based disambiguation
 towards an approach based on qualified types constraints
-\code{HasField a "foo" b}
-(OverloadedRecordDot, 2017)\footnote{\url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html}}. This
-qualified-types approach is however not available for record fields
-with a polymorphic type, suggesting difficulties in scaling this
-approach to other features where the choice of typing rule depends on
-the disambiguation (in OCaml: polymorphic records or methods, GADTs
-in patterns).
+\code{HasField a "foo" b} (OverloadedRecordDot, 2017)\footnote
+{\url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html}}.\XDR
+{Is is clear that they would fail with polymorphic record fields? Is it the
+HasField constraint that does not allow polytypes?}
+This qualified-types approach is however not available for record fields
+with a polymorphic type, suggesting difficulties in scaling this approach to
+other features where the choice of typing rule depends on the disambiguation
+(in OCaml: polymorphic records or methods, GADTs in patterns).
 
 \section{Conclusions}
 \label{sec:discussion}
@@ -4323,7 +4348,7 @@ definition in full, or when studying the meta-theory of the system.
   \nextline
   \and \labfrom \elab \ct \leq \ta \to \tb
   \and \dom \ct = \elabs
-  \and \cscm \leq \t \mid \x \leq \cscm 
+  \and \cscm \leq \t \mid \x \leq \cscm
 }\\[1ex]
 \entry[Branches]{\cbr}{\cbranch \cpat \c} \\
 \entry[Shape patterns]{\cpat}{
@@ -4493,7 +4518,7 @@ definition in full, or when studying the meta-theory of the system.
     \end{array}%
   }
   \begin{tabular}{RCLL}
-    \labfrom \elab \T \leq \ta \to \tb &\eqdef& 
+    \labfrom \elab \T \leq \ta \to \tb &\eqdef&
       \Scases{\cexists \tvs \cunif \ta  {\trcd \T \tvs} \cand \cunif \tb \t}{\cfalse}{\labenv(\labfrom \elab \T) = \tfor \tvs {\trcd \T \tvs \to \t}}
     \\[1ex]
     \dom{\T} = \elabs &\eqdef& \Scases{\ctrue}{\cfalse}{\Dom {\labenv(\T)} = \elabs} \\[1ex]
@@ -4505,7 +4530,7 @@ definition in full, or when studying the meta-theory of the system.
       {\x \leq (\tfor \tvs \t)}
       {\cfor \tvs \capp \x \t}
     \\[1ex]
-    \cmatched \t \sh {\cbranch \cpat \cs} &\eqdef& 
+    \cmatched \t \sh {\cbranch \cpat \cs} &\eqdef&
     \Scases
       {\cexists \tvs \cunif \t \shapp \tvs \cand \theta(\ci)}
       {\cfalse}
@@ -4532,7 +4557,7 @@ definition in full, or when studying the meta-theory of the system.
      \any {\tvcs_2} \t \where {\tvcs_1 \is \tys_1}}
 \end{judgboxmathpar}
 
-We write $\bot$ for the trivial shape $\any \tvc \tvc$. $\Shapes$ denotes the set of shapes and $\Shapesz$ is the set of non-trivial shapes. 
+We write $\bot$ for the trivial shape $\any \tvc \tvc$. $\Shapes$ denotes the set of shapes and $\Shapesz$ is the set of non-trivial shapes.
 
 \begin{definition}
 A non-trivial shape $\Sh \in \Shapesz$ is the principal shape of the type
@@ -4622,7 +4647,7 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     {\cpinst \inst \tv \t \simple}
 \end{judgboxmathpar}
 
-We write $\semenv \thsimple \c$ for the satisfiability of a simple constraint 
+We write $\semenv \thsimple \c$ for the satisfiability of a simple constraint
 $\c$. \\
 
 \begin{judgboxmathpar}
