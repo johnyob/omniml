@@ -141,8 +141,7 @@ typechecking success and \smashcolorbox{illtyped}{\strut red} indicates
 failure):
 %
 \begin{program}[input]
-let self x = x#f x in self (object method f z = z end) °
-\Ocamlcomment{\ocamlFlag {\OCaml}1}°
+let self x = x#f x °\Ocamlcomment{\ocamlFlag {\OCaml}1}°
 \end{program}
 %
 In \OCaml, objects are defined as a collection of methods within
