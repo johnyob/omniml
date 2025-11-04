@@ -1194,7 +1194,10 @@ important direction for future work.
 \paragraph{On complexity budgets}
 % All this goodness has a cost
 
-Omnidirectional type inference requires a higher complexity budget than
+Omnidirectional type inference is conceptually straightforward but technically
+challenging. It follows a simple key idea: solving constraints in any order,
+suspending when known type information is required. However, realizing this
+idea precisely and efficiently comes at a higher complexity cost than
 bidirectional or $\Geninst$-directional type inference.
 
 \begin{enumerate}
