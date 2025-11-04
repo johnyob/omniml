@@ -956,6 +956,7 @@ condition}---formalizes precisely what it means for a type to be \emph{known}.
 We defer its technical definition, which is rather subtle, to \cref{sec/oml/typing/I}.
 
 \paragraph{Suspension in action}
+\label{sec/overview/omni/match}
 
 \parcomment{Suspended constraints}
 
@@ -1315,7 +1316,7 @@ feature within the \OCaml community.
     {\G \th () : 1}
 
   \inferrule[Gen]
-    {\G \th e : \sigma \\ \tv \disjoint \G}
+    {\G \th e : \sigma \\ \tv \disjoint \fvs \G}
     {\G \th e : \tfor \tv \sigma}
 
   \inferrule[Inst]
@@ -1368,7 +1369,11 @@ feature within the \OCaml community.
 
 \parcomment {We need a spec, but this itself is hard}
 
-To prove correctness of type inference, we must define a surface language and
+% SPJ didn't like 'surface' language here, since OCaml doesn't have 
+% polytypes in the concrete syntax (though it has them in the abstract syntax, 
+% but this is an implementation artifact and arguably something I'd like to 
+% remove).
+To prove correctness of type inference, we must define a language and
 its type system. Identifying an appropriate declarative type system to use as a
 specification is itself a challenging problem. In particular, natural
 specifications for fragile features often fail to preserve principality.
@@ -1384,25 +1389,24 @@ specifications for fragile features often fail to preserve principality.
 \end{wraphbox}
 
 Consider records, for instance. We can ask the user to provide a type
-annotation by using an explicit record projection
-$\exfield \e \T \elab$, which has a simple typing rule (\Rule{Rcd-Proj-X}). By
-contrast, the natural typing rule for the overloaded projections $\efield \e
+annotation by using an explicit record projection $\exfield \e \T \elab$, which
+has a simple typing rule (\Rule{Rcd-Proj-X} in \cref{fig/oml/syntax-xtyping}).
+By contrast, the natural typing rule for the overloaded projections $\efield \e
 \elab$ breaks principality (\Rule{Rcd-Proj-I-Nat}). For example, term $\efun r
 \efield r {\ttlab x}$ admits two incompatible types, \code{point -> int} and
 \code{gray_point -> int}, as explained in \cref{sec/introduction}.
 
-\parcomment{How we restore principal types}
+\parcomment{How we restore principal types (briefly)}
 
-To restore principality for overloaded projections, we require that the
-type of $\e$ be \emph{known}---that is, determined to be a specific
-record type $\trcd {\T_0} \tys$, rather than merely \emph{guessed}.  This
-requirement is expressed via a \emph{unicity condition} (see
-\cref{sec/overview/omni/unicity}), yielding the contextual rule
-\Rule{Rcd-Proj-I}, which elaborates the fragile overloaded projection $\efield \e
-\elab$ into its robust explicit counterpart $\exfield \e \T \elab$.
+To restore principality for overloaded projections, we require that the type of
+$\e$ be \emph{known}---that is, determined to be a specific record type $\trcd
+{\T_0} \tys$, rather than merely \emph{guessed}. As discussed earlier
+(\cref{sec/overview/omni/unicity}), this requirement is expressed via a
+\emph{unicity condition}, giving rise to the contextual rule \Rule{Rcd-Proj-I}
+(\cref{fig/oml/typing/I}), which elaborates the fragile overloaded projection
+$\efield \e \elab$ into its robust explicit counterpart $\exfield \e \T \elab$.
 
 \subsection{Syntax}
-
 
 \OML (\cref{fig/oml/syntax-xtyping}) extends \ML with two fragile constructs:
 polytypes and nominal records.  Variants are not treated formally in \OML, but
@@ -1422,22 +1426,30 @@ of $\overline X$ and $\overline X'$. We often write $X$ for the singleton set
 
 \paragraph{Types}
 
-Monotypes (or just types) include, as usual, type variables $\tv$, the
-unit type $\tunit$, arrow types, but also nominal record types
-$\trcd \T \tys$, and polytypes $\tpoly \ts$. We use a non-standard
-syntax $\trcd \T \tys$ for record types, where $\T$ is a \emph{record
-  name} and $\tys$ a list of type parameters.\footnote{Using $\T$ as
-  an argument of $(\trcd \T \tys)$ rather a head constructor
-  $(\Fapp[\T] \tys)$ will make record shape patterns easier to
-  understand.} Type schemes $\ts$ are of the form $\all \tvs \t$, they
-are equal up to the reordering of binders and removal of useless
-variables. Standard notions such as the set of free variables
-$\fvs \ts$ and capture-avoiding substitutions $\ts\where{\tv \is \t}$
-are defined in the usual way. We write $\TyVars$ for the set of type
-variables, and use $\tvs \disjoint \ts$ as a short-hand for
-$\tvs \disjoint \fvs \ts$. Finally, $\gt \in \Ground$ denotes
-a \emph{ground type}---a type with no free variables.\footnote{$\gt$
-  can be pronounced ``Fraktur g'' or just ``ground g''.}
+Monotypes (or just types) include, as usual, type variables $\tv$, the unit
+type $\tunit$, arrow types, but also nominal record types $\trcd \T \tys$, and
+polytypes $\tpoly \ts$. We use a non-standard syntax $\trcd \T \tys$ for record
+types, where $\T$ is a \emph{record name} and $\tys$ a list of type
+parameters.%
+%
+\footnote{
+  Using $\T$ as an argument of $(\trcd \T \tys)$ rather a
+  head constructor $(\Fapp[\T] \tys)$ will make record 
+  shape patterns easier to understand.
+} 
+%
+\Xalistair{For the record, I really don't see the readability benefit of $\trcd
+\T \tys$ over $\Tapp \tys$. This would be like writing $\textsf{pair } \ta \;
+\tb$ instead of $\ta \times \tb$.}
+%
+Type schemes $\ts$ are of the form $\all \tvs \t$, they are equal up to the
+reordering of binders and removal of useless variables. Standard notions such
+as the set of free variables $\fvs \ts$ and capture-avoiding substitutions
+$\ts\where{\tv \is \t}$ are defined in the usual way. We write $\TyVars$ for
+the set of type variables, and use $\tvs \disjoint \ts$ as a short-hand for
+$\tvs \disjoint \fvs \ts$. Finally, $\gt \in \Ground$ denotes a \emph{ground
+type}---a type with no free variables.\footnote{$\gt$ can be pronounced
+``Fraktur g'' or just ``ground g''.}
 
 
 \paragraph{Terms}
@@ -1457,7 +1469,7 @@ following expressions:
   constructs have explicit counterparts: $\exrecord \T {\elaba = \ea;
   \ldots; \elab_n = \en }$ and $\exfield \e \T \elab$, where the explicit
     record annotation $\labfrom {\_} \T$ indicates that the labels unambiguously
-  belong to the record $\T$.
+  belong to the record type $\T$.
 \TODO{Decide on an ultimate syntax for explicit projections and explicit records.
 Didier proposes $\e.\T/\elab$, Alistair proposes $\e.\T.\elab$, Gabriel proposes $\e.\elab^\T$.
 For records we have $\T / \erecord { \elab = \e }$,
@@ -1468,11 +1480,13 @@ Currently trying $\e.\elab@\T$.
 \end{itemize}
 All annotations in \OML are closed \ie their quantified variables $\tvs$ are
 exactly the free variables of the type $\t$ or type scheme $\ts$.
+%
+We use $\e^i$ to range over fragile, implicit terms (\eg $\efield \e \elab$) and 
+$\e^x$ for their explicit counterparts (\eg $\exfield \e \T \elab$). 
 
-\parcomment {Explicit/implicit terms + continuation onto next sections}
+\parcomment {Continuation onto next sections}
 
-We write $\e^i$ for fragile, implicit forms and $\e^x$ for their explicit
-counterparts. Typing rules for explicit terms are mostly standard; nominal
+Typing rules for explicit terms are mostly standard; nominal
 records require a more intricate (yet largely folklore) treatment of
 \emph{closed world} reasoning.
 %
@@ -1499,10 +1513,11 @@ substitution $\where {\tv \is \tint}$.
 
 \paragraph {Explicit polytypes}
 
-Rule \Rule{Poly-X} serves as the introduction rule: given the (closed) type
+% We do *not* write Rule \Rule{X}. X is a noun.
+\Rule{Poly-X} serves as the introduction rule: given the (closed) type
 scheme~$\ts$, it forms a first-class polytype $\tpoly \ts$, requiring the
 expression
-$\e$ to be at least as polymorphic as $\ts$. Rule \Rule {Use-X} is the
+$\e$ to be at least as polymorphic as $\ts$. \Rule {Use-X} is the
 corresponding
 elimination rule, unpacking an expression of polytype $\tpoly \ts$ into
 one of polymorphic type $\ts$,
@@ -1521,7 +1536,7 @@ $\tvs$, which are existentially quantified to close the annotation, as in
 We assume a global label context $\labenv$ mapping labels to their projection
 type, \ie type schemes of the form $\all \tvs \trcd \T \tvs \to \t$. A label
 $\elab$ may belong to multiple record types, but is unique within each record
-$\T$. We write $\Labenv$ for the set of labels belonging to the record $\T$:
+type $\T$. We write $\Labenv$ for the set of labels belonging to the record type $\T$:
 %
 ${\Labenv} \eqdef \set {\elab \mid \labfrom \elab \T : \all \tvs \trcd \T \tvs \to \t \in \labenv}$.
 %
@@ -1539,9 +1554,9 @@ $\e$ of type $\tya$ to $\tyb$, provided ${\labfrom \elab \T}
 \leq \tya \to \tyb$ holds.
 %
 Explicit records (\Rule {Rcd-X}) are typed similarly, checking that each field
-has the appropriate type. In addition, the premise asserts
-that  the declared fields $\elabs$ exactly match the labels
-$\dom {(\Labenv)}$ of $\T$.
+has the appropriate type. In addition, the premise asserts that the fields
+$\elabs$ appearing in the record expression exactly match the labels of $\T$
+(\ie $\dom {(\Labenv)}$).
 
 \parcomment {Closed world reasoning}
 
@@ -1609,10 +1624,11 @@ denotes the set of type variables representing the holes.  By construction, we
 require $\tvcs$ to be \emph{exactly} the free variables of $\t$.  Hence, shapes
 are closed and do not contain useless binders.  We consider shapes equal up to
 $\alpha$-conversion.  When $\t$ is a ground type, we omit the binder and
-simply write $\t$.
+simply write $\t$ for the shape.
 %
 We use $\bot$ to denote the shape $\any \tvc \tvc$, which we call the
-\emph{trivial} shape. We write $\Shapesz$ the set of non-trivial shapes.
+\emph{trivial} shape. Let $\Shapes$ denote the set of all shapes and 
+$\Shapesz \subset \Shapes$ the set of non-trivial shapes.
 
 \parcomment {Instantiation order of shapes}
 
@@ -1656,13 +1672,13 @@ Any non-variable type $\t$ has a non-trivial principal shape $\Sh$.
 \parcomment {Define canonical shape}
 
 A principal shape $\any \tvcs \t$ is \emph{canonical} if its free variables
-appear in the sequence $\tvcs$ in the order in which they occur in $\t$.  We
-write $\sh$ for canonical principal shapes, and $\CanonicalShapes$ for the
-set of canonical principal shapes.
+appear in the sequence $\tvcs$ in the order in which they occur in $\t$. Canonical 
+principal shapes are written $\sh$, and we write $\CanonicalShapes$ for the set of 
+all such chapes.
 %
-Each non-variable type $\t$ has a unique canonical principal shape
+Each non-variable type $\t$ has a unique canonical principal shape,
 written $\shape \t$. For example, $\shape {\trcd \T \tys}$ is
-$(\any \tvcs \trcd \T \tvcs)$.
+$\any \tvcs \trcd \T \tvcs$.
 
 \parcomment {Polytypes are constructors}
 
@@ -1822,7 +1838,7 @@ To make sense of these definitions, we rely on a few auxiliary notions:
 
 \parcomment{Typed holes must preserve typability of subterms}
 
-Typed holes ensure that subterms---such as type annotations---must remain
+Typed holes ensure that subterms---such as type annotations---remain
 present even when the implicit construct containing them is erased. This is
 because they may introduce constraints that can still contribute to unicity.
 For instance, $\efun r \efield {\eannot r {} {\ttlab {point}}} {\ttlab x}$
@@ -1842,12 +1858,14 @@ self-justifying cycles in unicity and rules out ``out-of-thin-air'' guesses.
 
 \parcomment{Well-foundedness}
 
-The unicity conditions contain negative occurrences of the typing judgment;
-it remains well-founded because these are typing assumptions on erased
-terms, that do not themselves contain any implicit rules. Formally one could
-define a restricted system $\G \throbust \e : \t$ without the implicit rules
-(\Rule{*-I}), and use this strictly simpler judgment in the unicity
-conditions; we omit this distinction for simplicity.
+The attentive reader may notice that our unicity conditions contain a negative
+occurrences of the typing judgment. At first glance, this seems problematic for
+well-foundedness. However, the issue is easily resolved by noting that these
+occurrences arise only as typing assumptions on erased terms, which do not
+themselves involve any implicit rules. Formally one could make this explicit by
+introducing a restricted typing judgement $\G \throbust \e : \t$ that exlcudes the 
+implicit rules (\Rule{*-I}), and by using this strictly simpler judgment
+in the antecedent of unicity conditions. We omit this distinction for simplicity.
 
 \paragraph{The omnidirectional recipe}
 %
@@ -1886,10 +1904,10 @@ We first describe the framework, then present each feature separately.
 \paragraph{Implicit polytypes}
 
 Unboxing a polytype $\einst \e$ is an \emph{elimination form}. Following the
-omnidirectional recipe, \Rule{Use-I} requires that $\e$ (the principal term) has
-the unique shape $\any \tvcs \tpoly \ts$ in the context $\E$ (\emph{Step 2}).
-Following \emph{Step 3}, we elaborate $\einst \e$ into $\exinst \e \tvcs
-\ts$
+omnidirectional recipe, \Rule{Use-I} is a contextual rule (\emph{Step 1}) 
+requiring that the principal term $\e$ have the unique shape $\any \tvcs \tpoly
+\ts$ in the context $\E$ (\emph{Step 2}). In \emph{Step 3}, we then elaborate
+$\einst \e$ into $\exinst \e \tvcs \ts$.
 %
 Conversely, boxing with $\epoly \e$ is an \emph{introduction form}. In
 \Rule{Poly-I}, we require that the expected type of the context's hole $\E$ has
@@ -1920,40 +1938,37 @@ We now illustrate the typing of implicit constructs with a few examples.
 % Order of solving
 \begin{example}
   \locallabelreset
-  Consider the term $\ttex {8} \eqdef \efun r {\erecord { \ttx = \efield r
-  \ttx; \tty = \efield r \ttcolor }}$.
-  % NOTE: The definition of ex9 should be kept inline with the program
-  % block below. The block is hidden but used for the automated example checker
-\begin{comment}
-\begin{program}[input, checkocaml]
-let ex_8 r = { x = r.x; y = r.color }   °\ocamlflags 20°
-\end{program}
-\end{comment}
+  Consider the term $\ttex {3} \eqdef \efun r {\etuple {\efield r \ttx,
+  \exfield r \ttpoint \tty}}$ from \cref{sec/overview/overloading}.%
   %
-  In \ocaml{ex_8}, $r$ can only be of type \ocaml{gray_color}. Indeed,
+  \footnote{
+    The typing rules for tuples are standard and present in Appendix
+    \cref{app:full-reference}.
+  }
+  In \ocaml{ex_3}, $r$ can only be of type \ocaml{point}. Indeed,
   considering the second projection first, we should learn that $r$ is of type
-  \ocaml{gray_color} (using \Rule{Rcd-Proj-Closed}) and since it is
+  \ocaml{point} (using \Rule{Rcd-Proj-I}) and since it is
   $\lambda$-bound, this makes the first projection unambiguous. (For record
   types without parameters, we use $\T$ as a shorthand for $\trcd \T \emptyset$.)
 
   Formally, we derive:
   \begin{mathpar}
     \infer* [Right=Rcd-Proj-I]
-      {\eshape \E r {\ttgraypoint} \\
-       \eset \th \E\where{\exfield r \ttgraypoint \ttx} : \ttgraypoint \to \ttpoint}
+      {\eshape \E r {\ttpoint} \\
+       \eset \th \E\where{\exfield r \ttpoint \ttx} : \ttpoint \to \tint \tprod \tint}
       %--------------------------------------------------------------------------------------
-      {\eset \th \E\where{\efield r \ttx} : \ttgraypoint \to \ttpoint }
+      {\eset \th \E\where{\efield r \ttx} : \ttpoint \to \tint \tprod \tint }
   \end{mathpar}
   %
-  where the context $\E$ is $\efun r {\erecord { \ttx = \hole; \tty = \efield
-  r \ttcolor }}$. We have $\eset \th \E\where{\exfield r \ttgraypoint \ttx} :
-  \ttgraypoint \to \ttpoint$, indeed.
+  where the context $\E$ is $\efun r {\etuple {\square, \exfield r \ttpoint \tty}}$. 
+  We have $\eset \th \E\where{\exfield r \ttpoint \ttx} :
+  \ttpoint \to \tint \tprod \tint$, indeed.
   %
-  Therefore, it remains to show that $\eshape \E r {\ttgraypoint}$~\llabel
+  Therefore, it remains to show that $\eshape \E r {\ttpoint}$~\llabel
   C. Assume $\eset \th \E\where{\emagic {\eannot r {} \gt}} :
-  \t$. Since $\efield r \ttcolor$ requires $r$ to have the type
-  $\ttgraypoint$ (due to Rule \Rule{Rcd-Proj-Closed}), it follows that there is no
-  other choice but to take $\ttgraypoint$ for $\gt$, which proves~\lref C.
+  \t$. Since $\exfield r \ttpoint \tty$ requires $r$ to have the type
+  $\ttpoint$ (due to Rule \Rule{Rcd-Proj-X} and \Rule{Lab-Inst}), 
+  it follows that there is no other choice but to take $\ttpoint$ for $\gt$, which proves~\lref C.
 \end{example}
 
 % Unicity is good
@@ -2017,13 +2032,13 @@ We should have a derivation that ends with
     {\eset \th \E \where {\efield {\efield r \ttcolor} \ttx} : \t}
 \end{mathpar}
 
-However, $\eshape \E {\efield r \ttcolor} {\ttciecolor}$ does not
-hold. Indeed, the judgment
+However, $\eshape \E {\efield r \ttcolor} {\ttciecolor}$ does not hold. Indeed,
+the judgment
 %
-$\eset \th \eerase {\E \where {\eannot {\emagic {\efield r \ttcolor}} {}
-{\gt}}} : \gt \to \tp$, \ie
+  $\eset \th \eerase {\E \where {\eannot {\emagic {\efield r \ttcolor}} {}
+  {\gt}}} : \gt \to \tp$
 %
-$\eset \th \efun r {\eannotmagic r {} {\gt}} : \gt \to \tp$ holds for
+(\ie $\eset \th \efun r {\eannotmagic r {} {\gt}} : \gt \to \tp$) holds for
 any $\gt$.  Hence, the shape of the type of $\efield {\efield r \ttcolor}
 \ttx$ is not uniquely determined and this case cannot occur.
 
@@ -2041,9 +2056,9 @@ The derivation must end with:
 However, $\eshape \E {r} {\ttciepoint}$ does not hold
 either. Again, the judgment
 %
-$\eset\th \eerase {\E\where{\eannotmagic r {} {\gt}}} : \tp \to \gt$, \ie
+$\eset\th \eerase {\E\where{\eannotmagic r {} {\gt}}} : \tp \to \gt$, 
 %
-$\eset\th \efun r {\eannotmagic r {} {\gt}} : \tp \to \gt$ holds for
+(\ie $\eset\th \efun r {\eannotmagic r {} {\gt}} : \tp \to \gt$) holds for
 any $\gt$.
 
 \end{proofcases}
@@ -2180,13 +2195,14 @@ To reason about constraint-based inference, we need more than a procedure for
 generating and solving constraints: we require a \emph{formal logic} of
 constraints, with a syntax and a declarative semantics that characterizes
 satisfiability. This semantics is essential: it validates the design of our
-constraint language and provides the foundation for soundness, completeness,
-and principality proofs of inference. Without it, the meta-theory of our
+constraint language and provides the foundation for proving the soundness,
+completeness, and principality of inference. Without it, the meta-theory of our
 approach cannot be stated precisely.
 
-\parcomment{Figure / Judgment shape}
+\parcomment{Defining the syntax / semantics}
 
-Building atop the constraint-based type inference framework of
+We now introduce the syntax and semantics of our constraint language. 
+Building atop the constraint-based inference framework of
 \citet*{Pottier-Remy/emlti}, we adopt a constraint language
 (\cref{fig:constraints}) that includes both term and type variables. Its
 semantics is given by a satisfiability judgment $\semenv \th \c$
@@ -2204,9 +2220,9 @@ just say `G' or `set of ground types G'.}\XDR{Meta-comment: Be careful not
 to add extra-spaces with inlined comments by leaving spaces between too
 comments in horizontal mode.}
 %
-We write $\semenv\where{\tv \is \gt}$ and $\semenv\where{\x \is \gabs}$ for the
-extension of $\semenv$ with a new binding. For a type $\t$, we write
-$\semenv(\t)$ for the ground type obtained by substitution.
+We write $\semenv\where{\tv \is \gt}$ and $\semenv\where{\x \is \gabs}$ for 
+extensions of $\semenv$, and $\semenv(\t)$ for the ground type obtained by 
+substitution.
 
 
 \parcomment{Semantics detailed}
@@ -2222,31 +2238,32 @@ $\cfor \tv \c$ holds if $\c$ is satisfied for every binding of $\tv$
 (\Rule{Forall}).
 %
 When $\ts$ is a polymorphic type scheme $\tfor \tvs \tp$, we use the notation
-$\cleq \ts \t$ as syntactic sugar for the instantiation constraint $\cexists
+$\cleq \ts \t$ as shorthand for the instantiation constraint $\cexists
 \tvs \cunif \tp \t$. \OML-specific constraints, such as record label
-instantiation $\labfrom \elab \ct \leq \ta \to \tb$, are defined using this
-instantiation form.
+instantiation $\labfrom \elab \ct \leq \ta \to \tb$
+(\cref{sec/overview/omni/match}), are introduced later (\cref{sec/oml/constraints}).
 
 \parcomment{Constraint abstractions}
 
-Polymorphism is introduced by a \emph{generalization} constraint
-$\clet \x \tv \ca \cb$ (also called \emph{let} constraints) and eliminated by
-an \emph{instantiation} constraint $\capp \x \tv$. In a generalization constraint,
-the definition of $\x$ is given by a constraint abstraction $\cabs \tv \c$,
-a function that, when applied to a type $\t$, returns
-$\c \where {\tv \is \t}$. Semantically, the abstraction $\cabs \tv \c$ is
-interpreted as a set of ground types that satisfies $\c$, and the generalization
-constraint require this set to be non-empty, \ie there is at least one
-instantiation of $\tv$ that satisfies $\c$.
+Polymorphism in the constraint language is expressed through
+\emph{generalization} and \emph{instantiation} constraints. In a generalization
+constraint (or \emph{let} constraint) $\clet \x \tv \ca \cb$, the definition of
+$\x$ is a constraint abstraction $\cabs \tv \ca$, a function that, when applied
+to a type $\t$, returns $\ca \where {\tv \is \t}$. The binding of $\x$ is then
+available in $\cb$ and refers to this abstraction. Semantically, the
+abstraction $\cabs \tv \ca$ is interpreted as a set of ground types that
+satisfies $\ca$, and the generalization constraint requires this set to be
+non-empty, \ie there is at least one instantiation of $\tv$ that satisfies
+$\ca$.
 %
 Instantiations (or applications) $\capp \x \t$ eliminate abstractions by
 applying a type $\t$ to the abstraction bound to $\x$. This holds precisely
 when $\semenv(\t) \in \semenv(\x)$, \ie $\t$ is one of the satisfiable
 instances of $\x$. The $\lambda$-abstraction and application syntax follows
-\citet*{Pottier/inferno@icfp2014}. In other presentations, constraints
-abstractions $\cabs \tv {\cexists \tvbs \c}$ are written as constrainted type schemes
-$\all {\tv, \tvbs} C \Rightarrow \tv$, and instantiation constraints $\capp \x \t$ are
-written $\x \leq \t$.
+\citet*{Pottier/inferno@icfp2014}. In other presentations, constraint
+abstractions $\cabs \tv {\cexists \tvbs \c}$ are written as constrained type
+schemes $\all {\tv, \tvbs} C \Rightarrow \tv$, and instantiation constraints
+$\capp \x \t$ are written $\x \leq \t$.
 
 \parcomment {Suspended match constraints}
 
@@ -2263,7 +2280,7 @@ which consist of:
 
   A list of branches $\cbrs$ of the form $\cbranch \cpat \c$, where $\cpat$ is
   a shape pattern. The constraint $\c$ is solved in the extended context
-  produced by the matching shape pattern.
+  produced by the matching pattern.
 
   For example, the wildcard pattern $\cpatwild$ matches any shape,
   and binds nothing.
@@ -2273,8 +2290,8 @@ which consist of:
   in the list.
 
 \end{enumerate}
-The formal semantics of suspended match constraints are somewhat involved,
-so we defer a full explanation until we define \emph{shapes}.
+The formal semantics of suspended match constraints are somewhat involved;
+we return to them in the next subsection (\cref{sec/constraints/semantics}).
 
 \begin{wraphbox}{0.2}{0.6}
 \begin{mathpar}[inline]
@@ -2335,32 +2352,34 @@ To define the semantics for suspended constraints, we first introduce
     \cfalse & \text{otherwise}
   \end{cases}
 \end{mathpar}
+
 The first conjunct ($\tau = \shapp \tvs$) ensures that $\sh$ is indeed the
 canonical shape of $\t$, and the second conjunct is the selected branch
 constraint $\ci$ under the appropriate substitution. Since the syntax of
 suspended match constraints requires that branch patterns are
 non-overlapping, the matching branch $\cbranch \cpati \ci$ is uniquely
-determined; but it may not exist as branches need not be exhaustive, in
-which case the discharged constraint is $\cfalse$.
+determined. It may, however, be undefined if the branches are not exhaustive,
+in which case the discharged constraint is $\cfalse$.
+
 \end{definition}
 
 The partial function $(\Cmatches \cpat \sh \tvs)$, introduced in
-\cref{fig:constraints}, describes how a pattern $\cpat$ is matched against
-a canonical principal shape $\sh$. Before matching, $\sh$ is opened with
-fresh shape variables $\tvs$ (of the same arity as $\sh$), so that the
-result of matching may refer to them. The match either fails or returns
-a substitution $\theta$ mapping pattern variables (\eg record name
-variables $\ct$ from \cref{sec/overview/omni}) to shape components (\eg
-record names $\T$).  These components may themselves mention the
-freshly introduced variables $\tvs$. In~\cref {fig:constraints} we only
-introduce the wildcard pattern and its matching rule; in~\cref
-{sec/oml/constraints} we extend both the syntax of shape patterns and the
-matching function itself to handle the patterns that arise in \OML.
+\cref{fig:constraints}, describes how a pattern $\cpat$ is matched against a
+canonical principal shape $\sh$. Before matching, $\sh$ is applied with fresh
+shape variables $\tvs$ (of the same arity as $\sh$), so that the result of
+matching may refer to them. The match either fails or returns a substitution
+$\theta$ mapping pattern variables (\eg record name variables $\ct$ from
+\cref{sec/overview/omni}) to shape components (\eg record names $\T$).  These
+components may themselves mention the freshly introduced variables $\tvs$.
+In~\cref {fig:constraints}, we only introduce the wildcard pattern and its
+matching rule; in~\cref {sec/oml/constraints} we extend both the syntax of
+shape patterns and the matching function itself to handle the patterns that
+arise in \OML.
 
 
 \paragraph {A natural attempt}
 
-Like typing rules for fragile constructs (\eg \Rule{Rcd-Proj-I-Nat}), suspended
+As with typing rules for fragile constructs (\eg \Rule{Rcd-Proj-I-Nat}), suspended
 match constraints have a \emph{natural rule}:
 \begin{mathpar}
   \infer[Match-Nat]
@@ -2369,8 +2388,7 @@ match constraints have a \emph{natural rule}:
 \end{mathpar}
 %
 This rule states that a suspended constraint holds whenever the corresponding
-discharged constraint holds for the canonical shape $\sh$ of $\semenv(\t)$ in
-the semantic environment $\semenv$.
+discharged constraint holds for the canonical shape of $\semenv(\t)$.
 
 \parcomment {The problem}
 
@@ -2463,11 +2481,11 @@ enforced by \Rule {Match-Ctx}.
 
 \parcomment{The interesting cases of unicity}
 
-When $\t$ is not a variable, $\Cshape \hole \t \sh$ holds trivially when
-$\sh$ is the shape of $\t$. Likewise, when $\C$ is unsatisfiable, then
-$\Cshape \C \tv \sh$ holds vacuously for any $\sh$. The interesting and
-nontrivial cases---the ones we illustrate next---arise when $\t$ is a type
-variable and $\C$ is satisfiable.
+When $\t$ is not a variable, $\Cshape \square \t \sh$ holds trivially when
+$\sh$ is the shape of $\t$. Likewise, when (the erasure of) $\C$ is
+unsatisfiable, then $\Cshape \C \tv \sh$ holds vacuously for any $\sh$. The
+interesting and nontrivial cases---the ones we illustrate next---arise when
+$\t$ is a type variable and $\C$ is satisfiable.
 
 \parcomment {Examples}
 
@@ -2481,10 +2499,12 @@ variable and $\C$ is satisfiable.
   context $\C$
   with no contextual information. \ie $\C$ is $\cexists \tv \hole$.
   %
-  So for any ground type $\gt$, $\C\where{\cunif \tv \gt}$ is satisfiable,
-  allowing $\gt$ to have an arbitrary shape (\eg $\tint$, $\tbool$, \etc). As a
-  result, the uniqueness condition $\Cshape \C \tv \sh$ never holds making
-  \Rule{Match-Ctx} inapplicable. The constraint is unsatisfiable as intended.
+  So for any ground type $\gt$, $\cerase{\C\where{\cunif \tv \gt}}$ (\ie
+  $\cexists \tv {\cunif \tv \gt}$) is satisfiable, allowing $\gt$ to have an
+  arbitrary shape (\eg $\tint$, $\tbool$, \etc). As a result, the uniqueness
+  condition $\Cshape \C \tv \sh$ never holds making \Rule{Match-Ctx}
+  inapplicable. The constraint is unsatisfiable as intended.
+
 \end{example}
 
 \begin{example}
@@ -2767,11 +2787,13 @@ Thus far, our formal presentation of shape patterns has remained
 abstract, deliberately leaving the syntax and semantics of match constraints
 partially unspecified to accommodate a range of language features. We now
 concretize this by specifying the shape patterns used in \OML
-(in \cref{fig:patterns-oml}), and introducing the corresponding constraints
+(see \cref{fig:patterns-oml}), and introducing the corresponding constraints
 for the variables they bind.
 %
 Shape patterns include:
-\begin{enumerate*}
+% This is a important part of prose. It deserves more space (and thus an enumerate 
+% over enumerate*)
+\begin{enumerate}
 
   \item Record type patterns $\cpatrcd \ct$, binding the name $\T$
     of a record type $\trcd \T \tys$ to the record variable $\ct$.
@@ -2779,7 +2801,7 @@ Shape patterns include:
   \item Polytype patterns $\cpatpoly \cscm$ matching a polytype $\tpoly \ts$ and
     binding the resulting scheme to the variable $\cscm$.
 
-\end{enumerate*}
+\end{enumerate}
 
 Each new kind of pattern introduces corresponding constraint formers:
 $\labfrom \elab \ct \leq \ta \to \tb$ asserts that $\ta \to \tb$ is a
@@ -2805,61 +2827,75 @@ existing core constraint language.
 
 \paragraph{Constraint generation}
 
-Constraint generation $\cinfer \c {\mathop{\t}}$ is defined in
-\cref{fig/constraint-gen}.
-All generated type variables are fresh with respect to the expected type $\t$,
-ensuring capture-avoidance.
-%
-Unsurprisingly, variables generate an instantiation constraint. Unit
-$\eunit$ requires the type $\t$ to be $\tunit$. A function generates a
-constraint that binds two fresh flexible type variables for the argument and
-return types.  We use a $\Let$ constraint to bind the argument in the
-constraint generated for the body of the function. The $\Let$ constraint is
-monomorphic since $\tvp$ is fully constrained by type variables defined
-outside the abstraction's scope and therefore cannot be
-generalized. Applications introduce two fresh flexible type variables, one
-for the argument type and one for the type of the function, typing each
-subterm with these, ensuring $\t$ is the expected return type. Let-bindings
-generate a polymorphic let constraint; $\cabs \tv {\cinfer \e \tv}$ is a
-principal constraint abstraction for $\e$: its intended interpretation is
-the set of all types that $\e$ admits.
+Constraint generation $\cinfer \e {\mathop{\t}}$ is defined in
+\cref{fig/constraint-gen}. All generated type variables are fresh with respect
+to the expected type $\t$, ensuring capture-avoidance. We now review the cases
+of the constraint generator, beginning with the cases corresponding to
+traditional \ML constructs.
 
-\TODO{Talk about the witnesses of known type information before matching $\tz$}
-% New constraint gen cases
-% Annotations, tuples
-Annotations bind their flexible type variables and enforce the equality of
-the annotated type $\tp$ and the expected type $\t$.
-% Polytypes
-For polytypes, boxing asserts that $\e$ has the polymorphic type $\ts$ (using
-universal quantification) and that the expected type is the polytype $\tpoly
-\ts$.
-Conversely, explicit unboxing requires that $\t$ be an instance of $\ts$.
+\parcomment{Simple \ML terms}
+
+Unsurprisingly, variables $\x$ generate an instantiation constraint $\capp \x
+\t$. The unit term $\eunit$ requires $\t$ to be the unit type $\tunit$. A
+function generates a constraint that binds two fresh flexible type variables
+for the parameter and return types.  We use a $\Let$ constraint to bind the
+parameter in the constraint generated for the body of the function. The $\Let$
+constraint is monomorphic since $\tvp$ is fully constrained by type variables
+defined outside the abstraction's scope and therefore cannot be generalized.
+Applications introduce two fresh flexible type variables, one for the argument
+type and one for the type of the function, typing each subterm with these,
+ensuring $\t$ is the expected return type. Let-bindings generate a polymorphic
+let constraint; $\cabs \tv {\cinfer \e \tv}$ is a principal constraint
+abstraction for $\e$: its intended interpretation is the set of all types that
+$\e$ admits. Annotations bind their flexible type variables and enforce the
+equality of the annotated type $\tp$ and the expected type $\t$.
+
+
+\parcomment{Polytypes}
+
+For polytypes, explicit boxing asserts that $\e$ has the polymorphic type $\ts$
+(using universal quantification) and that the expected type is the polytype
+$\tpoly \ts$. Conversely, explicit unboxing requires that $\t$ be an instance
+of $\ts$. These cases introduce no suspended match constrains because the
+annotations can the required type information: the polytype $\tpoly \ts$.
+
 By contrast, implicit unboxing suspends until the inferred type of $\e$ is
-known to be a polytype, captured by the pattern $\cpatpoly \cscm$, at which
-point we require $\t$ to be an instance of $\cscm$.
-%% Explicit unboxing is analogous, but uses an
-%% explicit scheme $\ts$ and therefore does not require a suspended match
-%% constraint.
-Implicit boxing infers the principal type for $\e$ using a $\Let$
-constraint and suspends until the expected type of the entire term is known to
-be a polytype, bound to $\cscm$. We then assert that the principal type of $\e$
-is at least as general as $\cscm$, via the constraint $\x \leq \cscm$.
+known to be some non-variable type $\tz$. At that point, the suspended match
+constraint attempts to match $\tz$ against the pattern $\cpatpoly \cscm$. If
+$\tz = \tpoly \ts$, the match succeeds, binding $\ts$ to $\cscm$ and requiring
+$\t$ to be an instance of $\cscm$ (\ie $\ts \leq \t$); otherwise, the match
+fails and the term is ill-typed. 
+
+Implicit boxing behaves dually: we infer the principal type for $\e$ using a
+$\Let$ constraint and suspend until the expected type of the entire term
+resolves to some type $\tz$. If $\tz$ matches the same pattern $\cpatpoly
+\cscm$ (\ie $\tz = \tpoly \ts$), we assert that the principal type of $\e$ is
+at least as general as $\cscm$, via the constraint $\x \leq \cscm$ (\ie $\x
+\leq \ts$); otherwise, the match fails. 
+
+\parcomment{Records}
 
 % Records
-Record projections generate a fresh variable $\tv$ for the record
-type and constrain $\e$ to this type, suspending until the type $\tv$ of
-$\e$ is known to be a record type matching the shape pattern
-$(\cpatrcd \ct)$. On discharge, the type of the projected label is
-retrieved from the global label context $\labenv$ and instantiated.
-%
-For record expressions, we generate a fresh variable $\tvi$
-for each field assignment to capture the type of each $\ei$ as $\tvi$.
-The rest of the
+Record constructs are handled in a similar way, but their matching patterns
+concern record shapes rather than polytypes. A record projection generate a
+fresh variable $\tv$ for the record type and constrain $\e$ to this type,
+suspending until the type of $\e$ ($\tv$) resolves to some type $\tz$. When
+$\tz = \trcd \T \tys$, the shape pattern $(\cpatrcd \ct)$ matches successfully,
+binding $\T$ to the record name variable $\ct$; the matching branch then
+retrieves the projected label's type from the global label context $\labenv$ 
+and instantiates it to match $\tv \to \t$. If $\tz$ is not a
+record type, the match fails and the term is ill-typed.
+
+For record expressions, we generate a fresh variable $\tvi$ for each field
+assignment to capture the type of each $\ei$ as $\tvi$. The rest of the
 constraint is deferred until the context determines the type of the whole
-record type to be $\ct$. Once known, the labels are instantiated to match
-the projection types $\t \to \tvi$, and we additionally check that the domain
-of $\ct$ is exactly $\elabs$, ensuring that every label is defined.
-%
+record type to be $\tz$. Once known, it is matched against the same pattern
+$\parens{\cpatrcd \ct}$. If the match succeeds (\ie $\tz = \trcd \T \tys$ and
+$\ct = \T$) the labels are instantiated to match the projection types $\t \to
+\tvi$, and we additionally check that the domain of $\ct$ is exactly $\elabs$,
+ensuring that every label is defined. Otherwise, the constraint is
+unsatisfiable as intended. 
+
 Explicit records and projections, along with closed-world disambiguated terms,
 bypass suspension and directly instantiate the appropriate labels.
 
@@ -2900,17 +2936,17 @@ A subtle yet crucial feature of our semantics is its support for
 \begin{program}[input,checkocaml]
 let ex_1_1 = let getx r = r.x in getx one  °\ocamlflags 10°
 \end{program}
-As in the previous example, the type of \code{r} cannot be disambiguated in the
-\Let-definition alone. In the previous example, this type was unified
-to a known shape in the \Let-body. Here, this is more subtle: an
-\emph{instance} of \code{getx}'s type scheme is taken, which only satisfies
-the application (\ocaml!getx one!)  if \code{r} has a variable type or a
-type of the nomial type \ocaml{point}.  However, the projection \code{r.x}
-would be ill-typed if \code{r} had a variable type (unicity would fail), so
-\code{point} is the unique solution.  This information obtain from
-\Let-body flows backward to the whole \Let-expression.
-We call this flow of information from instances back to definitions
-\emph{backpropagation}.
+
+As in the previous example, the type of \code{r} cannot be disambiguated from
+the \Let-definition alone. There, the ambiguity was resolved when the type
+($\tv$) was unified to a known type ($\ttpoint$) in the \Let-body. Here, the
+situation is more subtle: an \emph{instance} of \code{getx}'s type scheme is
+taken, which only satisfies the application (\ocaml!getx one!) if \code{r}
+has either a variable type or the record type \ocaml{point}.  However, the
+projection \code{r.x} would be ill-typed if \code{r} had a variable type
+(unicity would fail), so \code{point} is the unique consistent solution. This
+information therefore flows back from the instances in the \Let-body to the
+\Let-definition, a phenomenon we call \emph{backpropagation}.
 
 The constraint generated when typing
 \code{ex_1_1} is:
@@ -2928,7 +2964,7 @@ The constraint generated when typing
 With the context $\C$ equal to $\clet {getx}
 \tvd {\cexists {\tvb, \tvc} \cunif \tvd {\tvb \to \tvc} \cand \hole}
 {\capp {getx} {(\ttpoint \to \tv)}}$, we can show that the unicity
-predicate $\Cshape \C \tvb \sh$ holds for the shape $\sh$ equal to $\ttpoint$.
+predicate $\Cshape \C \tvb \ttpoint$ holds. 
 For any $\gt$, the erasure $\cerase {\C \where {\cunif \tvb \gt}}$
 is
 \begin{mathpar}[inline]
@@ -5121,7 +5157,7 @@ $\c$. \\
 
   \inferrule[Let-SD]
     {\G \thsimplesd \ea : \ta\\
-     \tvs \disjoint \G \\
+     \tvs \disjoint \fvs \G \\
      \G, x : \tfor \tvs \ta \thsimplesd \eb : \tb}
     {\G \thsimplesd \elet x \ea \eb : \tb}
 
@@ -7586,7 +7622,7 @@ principle:
     \item If $\G \thsimplesd \efun \x \e : \t$, then $\G, \x : \ta \thsimplesd \e : \tb$ and $\t = \ta \to \tb$.
     \item If $\G \thsimplesd \eapp \ea \eb : \t$, then $\G \thsimplesd \ea : \tp \to \t$ and $\G \thsimplesd \eb : \tp$.
     \item If $\G \thsimplesd \eunit : \t$, then $\t = \tunit$.
-    \item If $\G \thsimplesd \elet \x \ea \eb : \t$, then $\G \thsimplesd \ea : \tp$, $\tvs \disjoint \G$, and $\G, \x : \tfor \tvs \tp \thsimplesd \eb : \t$.
+    \item If $\G \thsimplesd \elet \x \ea \eb : \t$, then $\G \thsimplesd \ea : \tp$, $\tvs \disjoint \fvs \G$, and $\G, \x : \tfor \tvs \tp \thsimplesd \eb : \t$.
     \item If $\G \thsimplesd \eannot \e \tvs \tp : \t$, then $\G \thsimplesd \e : \tp\where{\tvs \is \tys}$ and $\t = \tp\where{\tvs \is \tys}$.
    \item If $\G \thsimplesd \etuple {\ea, \ldots, \en} : \t$, then $\G \thsimplesd \ei : \ti$ for all $1 \leq i \leq n$ and $\t = \tProd \ti$.
     \item If $\G \thsimplesd \exproj \e j n : \t$, then $\G \thsimplesd \e : \tProd \ti$ and $\t = \tj$, with $n \geq j$.
