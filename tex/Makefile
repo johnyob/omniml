@@ -21,7 +21,7 @@ all: $(addsuffix .pdf,${PRJ})
 
 %.pdf: %.tex %.cfg ${SOURCES}
 	@mkdir -p _build
-	$(LATEXMK) $< || (cp _build/$@ . && false)
+	$(LATEXMK) $* || (cp _build/$@ . && false)
 	cp _build/$@ .
 
 %.wpdf: %.tex ${SOURCES}
