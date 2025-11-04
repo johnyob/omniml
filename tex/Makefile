@@ -19,7 +19,7 @@ all: $(addsuffix .pdf,${PRJ})
 
 .PRECIOUS: %.pdf
 
-%.pdf: %.tex ${SOURCES}
+%.pdf: %.tex %.cfg ${SOURCES}
 	@mkdir -p _build
 	$(LATEXMK) $< || (cp _build/$@ . && false)
 	cp _build/$@ .

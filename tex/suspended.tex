@@ -9,7 +9,7 @@
 \documentclass[acmsmall,screen,nonacm%
 \Anonymous{,anonymous}{}%
 \Final{}{,review}%
-\Draft{,draft}{}%
+%% \Draft{,draft}{}% Intendedly hidden, as it destroys hyperrefs
 ]{acmart}
 
 \newcommand{\acmart}{\True}
@@ -922,11 +922,11 @@ $\E$.
 \parcomment{Example: ex_62}
 
 Take \code{ex_6_2} as an example, using the following term context where
-$\square$ denotes the hole:
+$\hole$ denotes the hole:
 %
 \begin{program}[input, mathescape=true]
 let pid = [ fun x -> x : 'a. 'a -> 'a ]
-let ex_6_2 = app (fun p -> $\square$) pid
+let ex_6_2 = app (fun p -> $\hole$) pid
 \end{program}
 %
 Here, \code{p} has a uniquely inferrable type $\tpoly {\tfor \tv
@@ -1237,6 +1237,7 @@ We hope to pay off some of this complexity in future work; in particular, we
 believe omnidirectionality is the missing piece to unlock modular
 implicits---an approach to generalized overloading and a long-anticipated
 feature within the \OCaml community.
+
 
 \section{The \OML calculus}
 \label{sec/oml}
@@ -1690,7 +1691,7 @@ represented as the shape application $\shapp (\tint \tlist)$.
       \and \emagic \es
     }\\
     \entry[Term contexts]{\E}{
-      \square
+      \hole
       \and \eapp \E \e
       \and \eapp \e \E
       \and \dots
@@ -1758,7 +1759,7 @@ a term's type is \emph{uniquely determined} by its surrounding context $\E$. We
 capture this with our \emph{unicity conditions} $\eshape[\es] \E \e \sh$ and
 $\Eshape \E \es \sh$, which state that all valid typings of the (erased)
 context $\E$ assign the same canonical shape $\sh$ to the subterm $\e$ and the
-context's hole $\square$, respectively.
+context's hole $\hole$, respectively.
 
 In other words, $\eshape[\es] \E \e \sh$ holds when the type of the subterm
 $\e$ has a unique shape $\sh$ fixed by its context $\E$ and sibling terms
@@ -1944,7 +1945,7 @@ let ex_8 r = { x = r.x; y = r.color }   °\ocamlflags 20°
       {\eset \th \E\where{\efield r \ttx} : \ttgraypoint \to \ttpoint }
   \end{mathpar}
   %
-  where the context $\E$ is $\efun r {\erecord { \ttx = \square; \tty = \efield
+  where the context $\E$ is $\efun r {\erecord { \ttx = \hole; \tty = \efield
   r \ttcolor }}$. We have $\eset \th \E\where{\exfield r \ttgraypoint \ttx} :
   \ttgraypoint \to \ttpoint$, indeed.
   %
@@ -1968,7 +1969,7 @@ If there is a derivation of $\ttex 1$, then there must be one of the form:
     %----------------------------------------------
     { \eset \th \E\where{\efield r \ttx} : \t}
 \end{mathpar}
-where $\E$ is the term $\efun r \square$, which is the largest possible
+where $\E$ is the term $\efun r \hole$, which is the largest possible
 context.
 %
 Unfortunately, $\eshape \E r {\any \tvcs \trcd \T \tvcs}$ does not hold for any
@@ -2005,7 +2006,7 @@ are both overloaded. Thus, the implicit projections must
 be typed using \Rule{Rcd-Proj-I}.
 Two cases arise, neither of which are possible:
 \begin{proofcases}
-\proofcase{$\E$ is $\efun r {\square}$}
+\proofcase{$\E$ is $\efun r {\hole}$}
 %
 We should have a derivation that ends with
 \begin{mathpar}
@@ -2026,7 +2027,7 @@ $\eset \th \efun r {\eannotmagic r {} {\gt}} : \gt \to \tp$ holds for
 any $\gt$.  Hence, the shape of the type of $\efield {\efield r \ttcolor}
 \ttx$ is not uniquely determined and this case cannot occur.
 
-\proofcase{$\E$ is $\efun r {\efield {\square} \ttx}$}
+\proofcase{$\E$ is $\efun r {\efield {\hole} \ttx}$}
 %
 The derivation must end with:
 \begin{mathpar}
@@ -2079,7 +2080,7 @@ any $\gt$.
   \and \ldots
 }{} \\
 \entry[Constraint contexts]{\C}{
-  \square
+  \hole
   \and \C \cand \c
   \and \c \cand \C
   \and \cexists \tv \C
@@ -2190,16 +2191,18 @@ Building atop the constraint-based type inference framework of
 (\cref{fig:constraints}) that includes both term and type variables. Its
 semantics is given by a satisfiability judgment $\semenv \th \c$
 (\cref{fig:constraints}). The semantic environment $\semenv$ assigns to each
-free type variable $\tv$ a ground type $\gt \in \Ground$ (a type with no free
-variables) and to each term variable $\x$ a set of ground types $\gabs
-\subseteq \Ground$ (the instances of a type scheme bound to $\x$)
-\footnote{$\gabs$ can be pronounced ``Fraktur S'' or ``ground S''.}.
-\Xalistair{Are these footnotes on pronouciation necessary?}
-\Xgabriel{They may help some reader who, like Didier, are unfamiliar with
-  Fraktur fonts, and they don't cost much space, so personally I think that
-  the cost/benefits tradeoff is worth it, but I don't object to removing
-  them.}
-\Xalistair{Personally I wouldn't try pronoucing them. I'd just say `G' or `set of ground types G'.}
+free type variable $\tv$ a ground type $\gt \in \Ground$ (a type with no
+free variables) and to each term variable $\x$ a set of ground
+types\footnote {$\gabs$ can be pronounced ``Fraktur S'' or ``ground S''.}
+$\gabs \subseteq \Ground$ (the instances of a type scheme bound to
+$\x$).\Xalistair{Are these footnotes on pronouciation
+necessary?}\Xgabriel{They may help some reader who, like Didier, are
+unfamiliar with Fraktur fonts, and they don't cost much space, so personally
+I think that the cost/benefits tradeoff is worth it, but I don't object to
+removing them.}\Xalistair{Personally I wouldn't try pronoucing them. I'd
+just say `G' or `set of ground types G'.}\XDR{Meta-comment: Be careful not
+to add extra-spaces with inlined comments by leaving spaces between too
+comments in horizontal mode.}
 %
 We write $\semenv\where{\tv \is \gt}$ and $\semenv\where{\x \is \gabs}$ for the
 extension of $\semenv$ with a new binding. For a type $\t$, we write
@@ -2460,7 +2463,7 @@ enforced by \Rule {Match-Ctx}.
 
 \parcomment{The interesting cases of unicity}
 
-When $\t$ is not a variable, $\Cshape \square \t \sh$ holds trivially when
+When $\t$ is not a variable, $\Cshape \hole \t \sh$ holds trivially when
 $\sh$ is the shape of $\t$. Likewise, when $\C$ is unsatisfiable, then
 $\Cshape \C \tv \sh$ holds vacuously for any $\sh$. The interesting and
 nontrivial cases---the ones we illustrate next---arise when $\t$ is a type
@@ -2476,7 +2479,7 @@ variable and $\C$ is satisfiable.
 \end{mathpar}
   Under the contextual semantics, the suspended constraint appears in a
   context $\C$
-  with no contextual information. \ie $\C$ is $\cexists \tv \square$.
+  with no contextual information. \ie $\C$ is $\cexists \tv \hole$.
   %
   So for any ground type $\gt$, $\C\where{\cunif \tv \gt}$ is satisfiable,
   allowing $\gt$ to have an arbitrary shape (\eg $\tint$, $\tbool$, \etc). As a
@@ -2492,7 +2495,7 @@ variable and $\C$ is satisfiable.
   \cmatch \tv {\cbranch \cpatwild \ctrue}
 \end{mathpar}
   Here, we apply the contextual rule with the context $\C$ equal to $\cexists \tv
-  \cunif \tv \tint \cand \square$. Any solution $\semenv$ of this context
+  \cunif \tv \tint \cand \hole$. Any solution $\semenv$ of this context
   necessarily satisfies \relax $\cunif \tv \tint$, so we have \relax $\Cshape
   \C \tv \tint$ and the suspended constraint can be discharged.
 \end{example}
@@ -2515,17 +2518,17 @@ variable and $\C$ is satisfiable.
   Suppose we attempt to apply \Rule{Match-Ctx} to the match on $\tvb$ first. We
   want to show $\Cshape \C \tvb \tbool$ for the context $\C$ equal to
   $(\cmatch \tv
-  {\cbranch \cpatwild {\cunif \tvb \tbool}}) \cand \square \cand \cunif \tva
-  \tint$. Its erasure $\cerase \C$ is $\ctrue \cand \square \cand \cunif \tva
+  {\cbranch \cpatwild {\cunif \tvb \tbool}}) \cand \hole \cand \cunif \tva
+  \tint$. Its erasure $\cerase \C$ is $\ctrue \cand \hole \cand \cunif \tva
   \tint$, which imposes no constraints on $\tvb$. Thus both \relax $\cerase
   {{\C\where{\cunif \tvb \tint}}}$ and \relax $\cerase {\C\where{\cunif \tvb
   \tbool}}$ are both satisfiable: unicity does not hold and \Rule{Match-Ctx}
   cannot be applied.
 
   By contrast, if we first discharge the match on $\tva$, we consider the
-  context $\C$ equal to $\square \cand (\cmatch \tvb {\cbranch \cpatwild
+  context $\C$ equal to $\hole \cand (\cmatch \tvb {\cbranch \cpatwild
   \ctrue}) \cand
-  \cunif \tva \tint$. Its erasure $\cerase \C$ equal to $\square \cand \ctrue \cand
+  \cunif \tva \tint$. Its erasure $\cerase \C$ equal to $\hole \cand \ctrue \cand
   \cunif \tva \tint$ does constraint $\tva$, giving $\Cshape \C \tva \tint$.
   %
   We may therefore discharge the match on $\tva$, rewriting it as
@@ -2571,8 +2574,8 @@ variable and $\C$ is satisfiable.
 
   Without loss of generality, suppose we attempt to apply \Rule{Match-Ctx} on
   $\tva$ first. We must establish $\Cshape \C \tva \tint$ for the context $\C
-  \is \square \cand \cmatch \tvb {\cbranch \cpatwild {\cunif \tva \tint}}$. But
-  the erasure $\cerase \C$ is $\square \cand \ctrue$, which imposes no constraint on
+  \is \hole \cand \cmatch \tvb {\cbranch \cpatwild {\cunif \tva \tint}}$. But
+  the erasure $\cerase \C$ is $\hole \cand \ctrue$, which imposes no constraint on
   $\tva$. Hence unicity fails and \Rule{Match-Ctx} is inapplicable.
 
 \end{example}
@@ -2877,7 +2880,7 @@ The suspended constraint can be discharged under our contextual semantics.
 We apply the \Rule{Match-Ctx} rule with context
 $\C$ equal to
 \begin{mathpar}[inline]
-  \clet \x \tvb \square \capp \x \tint \cand
+  \clet \x \tvb \hole \capp \x \tint \cand
   \cunif \tv \ttpoint
 \end{mathpar}.
 Although the context includes a \Let-binding---which in practice
@@ -2923,7 +2926,7 @@ The constraint generated when typing
 \end{tabular}
 \end{mathpar}
 With the context $\C$ equal to $\clet {getx}
-\tvd {\cexists {\tvb, \tvc} \cunif \tvd {\tvb \to \tvc} \cand \square}
+\tvd {\cexists {\tvb, \tvc} \cunif \tvd {\tvb \to \tvc} \cand \hole}
 {\capp {getx} {(\ttpoint \to \tv)}}$, we can show that the unicity
 predicate $\Cshape \C \tvb \sh$ holds for the shape $\sh$ equal to $\ttpoint$.
 For any $\gt$, the erasure $\cerase {\C \where {\cunif \tvb \gt}}$
@@ -3041,7 +3044,8 @@ preserve typability in its operational semantics.
         \dots \and \ueq
       } \\
       \entry[Unification context]{\Up}{
-        \Up \cand \upb
+        \hole
+        \and \Up \cand \upb
         \and \upa \cand \Up
         \and \cexists \tv \Up
       }
@@ -3076,7 +3080,7 @@ preserve typability in its operational semantics.
       {\up}
 
     \rewrite[U-False]
-      {\Up\where\cfalse }{ \Up \neq \square}
+      {\Up\where\cfalse }{ \Up \neq \hole}
       {\cfalse}
 
     \rewrite[U-Merge]
@@ -3122,7 +3126,7 @@ preserve typability in its operational semantics.
 
   \rewrite[S-False]
     {\C\where\cfalse}
-    {\C \neq \square}
+    {\C \neq \hole}
     {\cfalse}
 
   \rewrite[S-Let]
@@ -3271,18 +3275,18 @@ preserve typability in its operational semantics.
 
 \infer[Uni-Var]
   {\color{gray}\tv \disjoint \bvs \Cb}
-  {\th \Cshape {\Ca\where{\cunif \tv {\cunif \t \ueq} \cand \Cb\where{\square}}} \tv {\shape \t}}
+  {\th \Cshape {\Ca\where{\cunif \tv {\cunif \t \ueq} \cand \Cb\where{\hole}}} \tv {\shape \t}}
 
 \infer[Uni-Type]
   {{\color{gray}\t \notin \TyVars}}
   {\th \Cshape \C \t {\shape \t}}
 
 \infer[Uni-BackProp]
-  {\th \Cshape{\parens{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand \square}}}} \tvc \sh \\
+  {\th \Cshape{\parens{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand \hole}}}} \tvc \sh \\
    \color{gray}\tvp \in \tv, \tvs \\
    \color{gray}\x \disjoint \bvs \Cb \\
    \color{gray}\tvp \disjoint \bvs \Ca}
-  {\th \Cshape{\parens{\cletr \x \tv \tvs {\Ca\where{\square}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}}} \tvp \sh}
+  {\th \Cshape{\parens{\cletr \x \tv \tvs {\Ca\where{\hole}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}}} \tvp \sh}
 \end{mathparsubfig}
 \end{figure}
 }
@@ -3295,6 +3299,9 @@ operates as a rewriting system on constraints $\c \csolve \cp$. Once no further
 transitions are applicable, \ie $\c \cnsolve$, the constraint $\c$ is either in
 solved form---from which we can read off a most general solution---or the
 solver becomes stuck, indicating that $\c$ is unsatisfiable.
+\XDR{The solved formed may also be $\cfalse$: We have tow cases of errors,
+explicit errors $\cfalse$ when unification clashes or implicit errors as
+stuck configurations.}
 
 \subsection{Unification}
 
@@ -3316,7 +3323,7 @@ considered equal modulo permutation of their members.
 
 The unification rules are listed in \cref{fig:unification-algorithm}. Rewriting
 proceeds under an arbitrary context $\Up$, modulo $\alpha$-equivalence and
-associativity/commutativity of conjunctions.
+associativity and commutativity of conjunctions.
 %
 Our algorithm is largely standard~\citep*{Pottier-Remy/emlti}, with its main
 novelty being the use of \emph{canonical principal shapes} in place of type
@@ -3333,7 +3340,7 @@ all multi-equations eventually become part of a single conjunction.
 \Rule{U-Stutter} removes duplicate variables. \Rule{U-Decomp} decomposes equal
 types with matching shapes into equalities between their subcomponents, while
 \Rule{U-Clash} detects shape mismatches that result in failure. \Rule{U-Name}
-introduces fresh variable for subcomponents, ensuring unification operates on
+introduces fresh variables for subcomponents, ensuring unification operates on
 \emph{shallow terms}, making sharing of type variables explicit and avoiding
 copying types in rules such as \Rule{U-Decomp}. \Rule{U-True} and
 \Rule{U-Trivial} eliminate trivial constraints, and \Rule{U-False} propagates
@@ -3342,10 +3349,15 @@ failure.
 Finally, \Rule{U-Cycle} implements the \emph{occurs check}, ensuring that a
 type variable does not occur in the type it is being unified with. This is a
 necessary condition for unification, as it would otherwise lead to infinite
-types\footnote{We discuss relaxing this constraint in \cref{sec/rec-types}.}.
-This is formalized by the relation $\tv \prec_\up \tvb$ indicating that $\tv$
-occurs in a type assigned to $\tvb$ in $\up$. A unification problem is cyclic,
-written $\cyclic \up$, if $\tv \prec_\up^* \tv$ for some $\tv$.
+types.\footnote{We discuss relaxing this constraint in
+\cref{sec/rec-types}\XDR{No longer in the short version}.}
+This is formalized by the relation $\tv \prec_\up \tvb$ indicating that
+$\tv$ occurs in a type assigned to $\tvb$ in $\up$.\XDR{Is it clear that
+assigned to $\tvb$ means \emph{a member of a multi-equation in which $\tvb$
+is also a member?}}
+%
+A unification problem is cyclic, written $\cyclic \up$, if $\tv \prec_\up^*
+\tv$ for some $\tv$.
 
 
 % Something fishy appears to be happening here.
@@ -3369,7 +3381,7 @@ A solved form is a constraint $\hat\up$ of the form $\cexists \tvs {\cAnd
 % What we do (introduce / explain the solver)
 
 We now gradually introduce the rules of the constraint solver itself
-(\cref {fig:solver-basic,fig:solver-schemes,fig:solver-susp,}).
+(\cref {fig:solver-basic,fig:solver-schemes,fig:solver-susp}).
 These rules define a non-deterministic rewriting
 system, operating modulo $\alpha$-equivalence, and the associativity and
 commutativity of conjunction. Rewriting takes place under an arbitrary
@@ -4051,8 +4063,7 @@ bidirectional type inference is not predictible enough in practice for
 users, and are gradually moving away from type-based disambiguation
 towards an approach based on qualified types constraints
 \code{HasField a "foo" b} (OverloadedRecordDot, 2017)\footnote
-{\url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html}}.\XDR
-{Is is clear that they would fail with polymorphic record fields? Is it the
+{\url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html}}.\XDR{Is is clear that they would fail with polymorphic record fields? Is it the
 HasField constraint that does not allow polytypes?}
 This qualified-types approach is however not available for record fields
 with a polymorphic type, suggesting difficulties in scaling this approach to
@@ -4366,7 +4377,7 @@ definition in full, or when studying the meta-theory of the system.
   \eset \mid \cunif \t \ueq
 } \\[1ex]
 \entry[Constraint contexts]{\C}{
-  \square
+  \hole
   \and \C \cand \c
   \and \c \cand \C
   \and \cexists \tv \C
@@ -4407,7 +4418,7 @@ definition in full, or when studying the meta-theory of the system.
    \and \emagic \es
 }\\
 \entry[Term contexts]{\E}{
-  \square
+  \hole
   \and \eapp \E \e
   \and \eapp \e \E
   \and \elet \x \E \e
@@ -4656,7 +4667,7 @@ $\c$. \\
 
   \inferrule[Simple-Ctx-Hole]
     { }
-    {\square \simple}
+    {\hole \simple}
 
   \inferrule[Simple-Ctx-Conj-Left]
     {\C \simple \\ \c \simple}
@@ -5176,7 +5187,7 @@ $\c$. \\
 
     \rewrite[U-False]
       {\Up\where{\cfalse}}
-      { \Up \neq \square}
+      { \Up \neq \hole}
       {\cfalse}
 
     \rewrite[U-Merge]
@@ -5229,7 +5240,7 @@ $\c$. \\
 
   \rewrite[S-False]
     {\C\where\cfalse}
-    {\C \neq \square}
+    {\C \neq \hole}
     {\cfalse}
 
   \rewrite[S-Let]
@@ -5472,7 +5483,7 @@ $\c$. \\
 \def \arraystretch{1.4}%4
   \scalebox{0.9}{
 \begin{tabular}{LCL}
-  \Crule{\ctxinfer \square \t \t}{\square}\\
+  \Crule{\ctxinfer \hole \t \t}{\hole}\\
   \Crule{\ctxinfer {\parens{\eapp \E \e}} \tp \t}{\cexists {\tva, \tvb} \cunif \tva {\tvb \to \t} \cand \ctxinfer \E \tp \tva \cand \cinfer \e \tvb}\\
   \Crule{\ctxinfer {\parens{\eapp \e \E}} \tp \t}{\cexists {\tva, \tvb} \cunif \tva {\tvb \to \t} \cand \cinfer \e \tva \cand \ctxinfer \E \tp \tvb}\\
   \Crule{\ctxinfer {\parens{\elet \x \E \e}} \tp \t}{\clet \x \tv {\ctxinfer \E \tp \tv} {\cinfer \e \t}}\\
@@ -5673,7 +5684,7 @@ for example, if $\semenv \thsimple {\ca \cand \cb}$ then by inversion $\semenv
 \paragraph{Congruence} Congruence does not hold in general in our system due to
 the contextual rule. For example, $\ca \eqdef (\cmatch \tva {\cbranch \wild
 \ctrue})$ is unsatisfiable so we have $\ca \cequiv \cfalse$, but for $\C \eqdef
-(\cexists \tva \cunif \tva \tint \cand \square)$ we have $\C \where \ca \cequiv
+(\cexists \tva \cunif \tva \tint \cand \hole)$ we have $\C \where \ca \cequiv
 \ctrue$ and $\C \where \cfalse \equiv \cfalse$. It holds simply for simple
 constraints.
 
@@ -5700,7 +5711,7 @@ composability property.
   \begin{proof}
     Induction on the structure of $\Cb$.
     \begin{proofcases}
-      \proofcase{$\square$}
+      \proofcase{$\hole$}
         immediate.
       \proofcase{$\Cc \cand \c$}
 
@@ -6116,7 +6127,7 @@ composability property.
 	      \decolumnizePf
 	      \VdashPf{\semenv}{\Ctwo\where{\cmatch \t \cbrs, \cmatched \tp \shp \cbrs'}}{Premise}
 	      \decolumnizePf
-	      \ForallPf{\semenvp, \gtp}{}{\hspace{32.5ex}Defn. of $\Cshape {\Ctwo\where{\square, \cmatched \tp \shp \cbrs'}} \t \sh$}
+	      \ForallPf{\semenvp, \gtp}{}{\hspace{32.5ex}Defn. of $\Cshape {\Ctwo\where{\hole, \cmatched \tp \shp \cbrs'}} \t \sh$}
 	      \decolumnizePf
 	      \vdashPf{\semenvp}{\cerase {\Ctwo\where{\cunif \t \gtp, \cmatched \tp \shp \cbrs'}}}{$\implies$I}
 	      \vdashPf{\semenvp}{\cerase {\Ctwo\where{\cunif \t \gtp, \ctrue}}}{\cref{lem:cong-simple}}
@@ -6125,10 +6136,10 @@ composability property.
 	      \continueeqPf{\cerase {\C\where{\cunif \t \gtp}}}{By definition}
 	      \vdashPf{\semenvp}{\cerase {\C\where{\cunif \t \gtp}}}{Above}
 	      \eqPf{\shape \gtp}{\sh}{$\implies$E on $\Cshape \C \t \sh$}
-	      \shapePf{\Ctwo\where{\square, \cmatched \tp \shp \cbrs'}}{\t}{\sh}{Above}
+	      \shapePf{\Ctwo\where{\hole, \cmatched \tp \shp \cbrs'}}{\t}{\sh}{Above}
 	      \VdashPf{\semenv}{\Ctwo\where{\cmatched \t \sh \cbrs, \cmatched \tp \shp \cbrs'}}{By \ih}
 	      \decolumnizePf
-	      \ForallPf{\semenvp, \gtp}{}{\hspace{32.5ex}Defn. of $\Cshape {\Ctwo\where{\cmatched \t \sh \cbrs, \square}} \tp \shp$}
+	      \ForallPf{\semenvp, \gtp}{}{\hspace{32.5ex}Defn. of $\Cshape {\Ctwo\where{\cmatched \t \sh \cbrs, \hole}} \tp \shp$}
 	      \decolumnizePf
 	      \vdashPf{\semenvp}{\cerase {\Ctwo\where{\cmatched \t \sh \cbrs, \cunif \tp \gtp}}}{$\implies$I}
 	      \vdashPf{\semenvp}{\cerase {\Ctwo\where{\ctrue, \cunif \tp \gtp}}}{\cref{lem:cong-simple}}
@@ -6137,7 +6148,7 @@ composability property.
 	      \vdashPf{\semenvp}{\cerase {\C\where{\cunif \t \gtp}}}{Above}
 	      \shapePf{\Cp}{\tp}{\shp}{Premise}
 	      \eqPf{\shape \gtp}{\shp}{$\implies$E on $\Cshape \Cp \tp \shp$}
-	      \shapePf{\Ctwo\where{\cmatched \t \sh \cbrs, \square}}{\tp}{\shp}{Above}
+	      \shapePf{\Ctwo\where{\cmatched \t \sh \cbrs, \hole}}{\tp}{\shp}{Above}
 \Hand 	      \VdashPf{\semenv}{\Ctwo\where{\cmatched \t \sh \cbrs, \cmatch \tp \cbrs'}}{By \Rule{Con-Match-Ctx}}
 	    \end{llproof}
 	\end{proofcases}
@@ -6198,7 +6209,7 @@ equivalence. That is, it is no longer the case that $\ca \cequiv \cb$ implies
 $\C\where\ca \cequiv \C\where\cb$.
 %
 For instance, we have $\cmatch \tv \cbrs \cequiv \cfalse$, yet
-$\C\where{\cmatch \tv \cbrs} \cnequiv \C\where\cfalse$ for $\C \is \square
+$\C\where{\cmatch \tv \cbrs} \cnequiv \C\where\cfalse$ for $\C \is \hole
 \cand \cunif \tv \tint$.
 
 As a result, we must prove \emph{contextual equivalence} for each rewriting
@@ -6257,7 +6268,7 @@ generally in our system.
 	    \vdashPf{\semenvp}{\cerase{\Cp\where{\t \is \gt}}}{Above}
 	    \eqPf{\shape \gt}{\sh}{$\implies$E on $\Cshape \Cp \t \sh$}
 	    \decolumnizePf
-	    \shapePf{\Ctwo\where{\square, \cb}}{\t}{\sh}{Above}
+	    \shapePf{\Ctwo\where{\hole, \cb}}{\t}{\sh}{Above}
 \Hand	    \vdashPf{\semenv}{\Ctwo\where{\cmatch \t \cbrs, \cb}}{By \Rule{Match-Ctx}}
 	  \end{llproof}
 
@@ -6357,7 +6368,7 @@ generally in our system.
 		\vdashPf{\semenvp}{\cerase{\Ctwo\where{\cunif \t \gt, \Cb\where\cs}}}{Premise}
 		\vdashPf{\semenvp}{\cerase{\Ctwo\where{\cunif \t \gt, \Ca\where\cs}}}{$\dagger$}
 		\eqPf{\shape \gt}{\sh}{$\implies$E on $\Cshape \Cp \t \sh$}
-		\shapePf{\Ctwo\where{\square, \Cb\where\cs}}{\t}{\sh}{Above}
+		\shapePf{\Ctwo\where{\hole, \Cb\where\cs}}{\t}{\sh}{Above}
 \Hand		\vdashPf{\semenv}{\Ctwo\where{\cmatch \t \cbrs, \Cb\where\cs}}{By \Rule{Match-Ctx}}
 	      \end{llproof}
 
@@ -6391,8 +6402,8 @@ generally in our system.
     \end{mathpar}
   Then, for any context $\Cp$ that does not re-bind $\x$, we have:
     \begin{mathpar}
-      \cletr \x \tv \tvs {\C\where{\bar\square}} {\Cp\where\ca}
-	\cctxequiv^P \cletr \x \tv \tvs {\C\where{\bar\square}} {\Cp\where\cb}
+      \cletr \x \tv \tvs {\C\where{\bar\hole}} {\Cp\where\ca}
+	\cctxequiv^P \cletr \x \tv \tvs {\C\where{\bar\hole}} {\Cp\where\cb}
     \end{mathpar}
   for any match-closed guard $P$ on the holes.
 
@@ -7063,11 +7074,11 @@ generally in our system.
   \proofcase{$\t$ is a non-variable type} Apply \Rule{S-Match-Ctx} using \Rule{S-Uni-Type}
 	\proofcase{$\t$ is a type variable $\tv$}
 
-	  We have $\nCshape \square \tv$. It suffices
+	  We have $\nCshape \hole \tv$. It suffices
 	  that every match constraint in a context-reachable position
 	  $\hat\C\where{\cmatch \tvp \cbrs}$ satisfies $\nCshape {\hat\C} \tvp$.
 	  By the definition of constraint contexts, there is only one such
-	  $\hat\C$, namely $\square$, for which we already have $\nCshape \square \tv$.
+	  $\hat\C$, namely $\hole$, for which we already have $\nCshape \hole \tv$.
 	  Hence $\cmatch \t \cbrs$ is stuck.
       \end{proofcases}
 
@@ -7765,7 +7776,7 @@ and $\sub(\tvs) = \tys$.
 		\continueequivPf{\cexists {\tvaa} \cinfer \e \tvaa \cand \cmatched \tvaa {\any \tvcs \Pi\iton \tvcs}{\cbranch {\cpatprod \tvc j} {\cunif \tvb \tvc}}}{\ditto}
 		\UnifierPf{\sub}{\cletG \ctxinfer \E \tvb \tv \where{\cexists \tvaa \cinfer \e \tvaa \cand \ldots}}{Above}
 		\eshapePf{\E}{\e}{\any \tvcs \Pi\iton \tvcs}{Premise}
-		\LetPf{\C}{\cletG \ctxinfer\E \tvb \tv \where{\cexists \tvaa \cinfer \e \tvaa \cand \square}}{}
+		\LetPf{\C}{\cletG \ctxinfer\E \tvb \tv \where{\cexists \tvaa \cinfer \e \tvaa \cand \hole}}{}
 		\vdashPf{\semenv}{\cerase{\C\where{\cunif \tvaa \gt}}}{Premise}
 		\eqPf{\cexists \tvaa \cinfer \e \tvaa \cand \cunif \tvaa \gt}{\cexists \tvaa \cinfer {\eannot \e {} \gt} \tvaa}{By definition}
 		\decolumnizePf
@@ -7806,7 +7817,7 @@ and $\sub(\tvs) = \tys$.
 
 	      \begin{llproof}
 		\eqPf{\csem {\e : \t}}{\cletG \cinfer {\E\where{\eproj \e j}} \tv}{Premise}
-		\eqPf{\C}{\cletG \ctxinfer \E \tvb \tv\where{\cexists \tv \cinfer \e \tv \cand \square}}{Premise}
+		\eqPf{\C}{\cletG \ctxinfer \E \tvb \tv\where{\cexists \tv \cinfer \e \tv \cand \hole}}{Premise}
 		\UnifierPf{\sub}{\C\where{\cmatched \tvaa {\any \tvcs \Pi\iton \tvcs} {\ldots}}}{Premise}
 		\UnifierPf{\sub}{\csem {\E\where{\exproj \e j n} : \tv}}{Above (See $\implies$ direction)}
 		\ThTypPf{}{\E\where{\exproj \e j n}}{\sub(\tv)}{By \ih}
