@@ -1268,7 +1268,7 @@ feature within the \OCaml community.
   \\[1ex]
   \entry[Shapes] {\Shapes \ni \Sh} {\any \tvcs \t}
   \\
-  \entryset[Canonical principal shapes] {\sh} {\Shapes}
+  \entryset[Canonical principal shapes] {\sh} {\CanonicalShapes \qquad (\CanonicalShapes \subset \Shapes)}
   \end{bnfgrammar}
   \par
   \inferrule[Var]
@@ -1337,8 +1337,10 @@ feature within the \OCaml community.
     {\labenv(\labfrom \elab\T) = \tfor \tvs {\trcd \T \tvs} \to \t}
     {{\labfrom \elab \T} \leq (\trcd \T \tys \to \t\where{\tvs \is \tys})}
 \end{mathparfig}
-\Xalistair{I wanted to link shapes and canonical shapes in the above figure, but it required as $\ni$. 
+\Xalistair{I wanted to link shapes and canonical shapes in the above figure, but it required a $\ni$. 
 Any better suggestions?}
+\Xgabriel{I am fine with the $\ni$, and added an explicit inclusion relation (picking a set name for canonical shapes).
+If that is okay with you, just remove both comments (or tweak the output to your liking and remove).}
 
 
 \parcomment {Running example: polytypes}
@@ -1634,7 +1636,8 @@ Any non-variable type $\t$ has a non-trivial principal shape $\Sh$.
 
 A principal shape $\any \tvcs \t$ is \emph{canonical} if its free variables
 appear in the sequence $\tvcs$ in the order in which they occur in $\t$.  We
-write $\sh$ for canonical principal shapes.
+write $\sh$ for canonical principal shapes, and $\CanonicalShapes$ for the
+set of canonical principal shapes.
 %
 Each non-variable type $\t$ has a unique canonical principal shape
 written $\shape \t$. For example, $\shape {\trcd \T \tys}$ is
