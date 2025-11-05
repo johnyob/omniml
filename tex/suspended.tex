@@ -4217,12 +4217,12 @@ Conditional constraints \citep*{journals/njc/Pottier00} also delay resolution,
 waiting until the top-level constructor of a type is known. They provide an
 \code{if-then-else}-like primitive, but differ crucially from our suspended
 constraints: in Pottier's system, an unresolved conditional constraint is
-considered satisfiable, whereas in ours, an unsuspended constraint is not. This
-difference forces our semantics to track what is \emph{known} in a context.
-Consequently, unresolved conditional constraints may enter a generalized type
-scheme as a form of qualified types, while our suspended constraints cannot.
-These semantic differences lead the two approaches to address very different
-user-facing type system features.
+considered satisfiable, whereas in ours, an unresolved suspended constraint is
+not. This difference forces our semantics to track what is \emph{known} in a
+context. Consequently, unresolved conditional constraints may enter a
+generalized type scheme as a form of qualified types, while our suspended
+constraints cannot. These semantic differences lead the two approaches to
+address very different user-facing type system features.
 
 
 \OutsideIn~\citep*{conf/icfp/SchrijversJSV09} is a type system for GADTs that
