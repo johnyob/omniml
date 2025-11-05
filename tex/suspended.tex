@@ -3895,28 +3895,37 @@ responsible for eventually solving them.
 % generalization at a given region consists precisely of those
 % whose rank remains equal to that of the region.
 
-Many standard \ML implementations, for example \Inferno, represent the solver
+Efficient \ML implementations, for example \Inferno\XDR{This was already
+present in my implementation of \citep*{Remy/mleth}}, represent the solver
 state as a linear \emph{stack} of inference regions, from the outermost
-variable scope to the current region. Unification associates
-an integer \emph{rank} (or \emph{level}) for each variable, that indexes the
-region in the stack to which it belongs.
+variable scope to the current region. Unification associates an integer
+\emph{rank} (or \emph{level}) for each variable, that indexes the region in
+the stack to which it belongs.
 %
-This approach does not work for partial generalization. If
+The use of integer levels does not suffice for partial generalization. If
 generalization at some region is suspended by a match constraint, the
 region must remain alive while we continue inference in other
 regions. However, later parts of the constraint may introduce a new
 \Let-region at the same rank that is unrelated to the suspended one---neither its
 ancestor nor its descendant---breaking the linear assumption of ranks.
 
-Our implementation must instead use a \emph{tree} of nested
-\Let-regions. Under this scheme, ranks no longer uniquely determine a
-variable's region. Instead, we interpret a rank relative to a path in the
-region tree from the root. When two variables are unified, they must always
-lie on some shared path---by scoping invariants---so computing their minimum
-rank (along this path) suffices to determine the lowered region: we keep
-the efficient integer comparisons of generalization.
+\XDR{I would prefer we call rename rank/level as scopes.
+Scopes are then nodes of the region tree. They still \emph{uniquely determine} a
+region. They also have a depth in the tree, which is an integer, which can
+be used to compare them. Below you make the depth of scope primitive, when
+scopes should be the primitive notion.}
+
+We must instead use a \emph{tree} of nested \Let-regions. Under this scheme,
+ranks no longer uniquely determine a variable's region.  Instead, we
+interpret a rank relative to a path in the region tree from the root. When
+two variables are unified, they must always lie on some shared path---by
+scoping invariants---so computing their minimum rank (along this path)
+suffices to determine the lowered region: we keep the efficient integer
+comparisons of generalization.
 
 \paragraph{Partial generalization}
+
+\XDR{I find the description below too abstract to be reproduced}
 
 Partial generalization arises when a region cannot be fully
 generalized due to suspended constraints that may still update
@@ -3930,7 +3939,8 @@ into four categories:
     \emph{Introduced by instantiations or source types in constraints}
 
   \item[G] Variables that are generalized.
-    \emph{Not accessible from any instance type; treated polymorphically.}
+    \emph{Not accessible from any instance type;
+    \XDR[I would add]{definitely}treated polymorphically.}
 
   \item[PG] Variables that are partially generalizable. %\\
     \emph{Generalizable variables mentioned by suspended match constraint or partial
@@ -3964,6 +3974,23 @@ by \Rule{S-Lower-Exists}), it must be unified with all its instances.
 update is expensive.  Instead we generalize on demand. We mark regions as
 ``stale'' when they may require re-generalization. When an instance is taken,
 we re-generalize the stale descendants of the region in the region tree.
+
+\XDR{This suggest an optimal strategy, while I think we have none at the
+moment. We should not hide this.}
+
+\XDR{This section talk about the efficiency of the implementation. I think
+we should first remind that the worse case complexity is exponential (not
+double exponential if we print types as graphs). That ins practice, \ML is
+almost linear when the size of types and embedding of lets is bounded.
+That to reach this complexity, we need to be careful: use union-find (treat
+types as dags rather than trees). Keep maximal sharing. An by contrast with
+\ML we should minimize copying/instantiation. Hence perform instantiation
+last, as a guideline, except that monomorphization (which you call
+re-generalization) may also cost a lost, as it requires a recursive visit
+and may produce no monomorphization at the end. Hence, re-generalization
+should also be minimized, delayed, amortized. And we have not found any
+optimal.
+}
 
 \section{Related work}
 \label{sec:related-work}
