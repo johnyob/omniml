@@ -246,9 +246,11 @@ directional inference, its limitations, and motivate omnidirectional inference.
 To this end, we introduce our three key ideas: a new characterization of
 \emph{known} type information, \emph{suspended match constraints}, and
 \emph{incremental instantiation}, and demonstrate how together they enable
-principal type inference for these fragile features.
-%
-The subsequent sections present technical contributions:
+principal type inference for these fragile features. Before turning to
+technical developments, we also discuss the \emph{limitations and trade-offs}
+of omnidirectionality.
+
+The subsequent sections present our main contributions:
 \begin{enumerate}
 
   \item[(\cref{sec/oml})]
@@ -283,7 +285,7 @@ The subsequent sections present technical contributions:
 
 \end{enumerate}
 Finally, \cref{sec:related-work} compares related work. Section
-\cref{sec:future-work} concludes with limitations and future work. Appendix
+\cref{sec:future-work} concludes with future work. Appendix
 \cref{app:full-reference} contains a complete technical reference, collecting
 key definitions and figures for convenient lookup. All proofs are deferred to
 the appendices.
