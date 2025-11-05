@@ -234,7 +234,7 @@ Because our long-term goal is to integrate omnidirectional inference into
 \OCaml's typechecker, it must scale to \ML-style polymorphism. While the idea
 of suspending constraints is not new (see \cref{sec:related-work}), we show how
 suspended constraints can coexist with \ML \emph{local let-generalization}---an
-indispensable feature of \OCaml\footnote{In contrast, Haskell only supports
+indispensable feature of \OCaml\footnote{In contrast, \Haskell only supports
 top-level implicit let-generalization.}---but one that makes suspended
 constraints uniquely difficult to implement and specify declaratively.
 
@@ -4072,8 +4072,11 @@ comparisons of generalization.
 \paragraph{Partial generalization}
 
 \XDR{I find the description below too abstract to be reproduced}
+\Xalistair{What confuses you here?}
 
-Partial generalization arises when a region cannot be fully
+Generalization is the process of determing which type variables are 
+polymoprhic and which are monomorphic (\ie implementing \Rule{S-Lower-Exists}).
+\emph{Partial generalization} arises when a region cannot be fully
 generalized due to suspended constraints that may still update
 its variables. To manage this, we classify type variables
 into four categories:
@@ -4081,19 +4084,18 @@ into four categories:
   %% \let \\ \relax
   \let \Item \item
   \renewcommand \item [1][]{\Item[(\textbf{#1})]}
-  \item[I] Variables are yet to be generalized.
+  \item[I] Variables are yet to be generalized. \\
     \emph{Introduced by instantiations or source types in constraints}
 
-  \item[G] Variables that are generalized.
-    \emph{Not accessible from any instance type;
-    \XDR[I would add]{definitely}treated polymorphically.}
+  \item[G] Variables that are generalized. \\
+    \emph{Not accessible from any instance type. Definitely polymorphically.}
 
-  \item[PG] Variables that are partially generalizable. %\\
+  \item[PG] Variables that are partially generalizable. \\
     \emph{Generalizable variables mentioned by suspended match constraint or partial
-    instantiations.}
+    instantiations. Maybe polymorphic, maybe monomorphic.}
 
   \item[PI] Variables that were previously partially generalized
-    but have since been updated.  %\\
+    but have since been updated.  \\
     \emph{Awaiting re-generalization. Introduced by the unification of partial
     generics.}
 \end{itemize}
@@ -4156,7 +4158,7 @@ back pointer (just as we do in the pen and paper solver!)}
 \paragraph{Overloading}
 
 Qualified types~\citep*{jones-qualified-types}, best known for their use in
-Haskell's type-classes, are related to our suspended match constraints: both
+\Haskell's type-classes, are related to our suspended match constraints: both
 represent constraints on types or type variables that are delayed. At
 generalization time, constraints on generalizable variables are retained in the
 type scheme, yielding a \emph{constrained type scheme} $\tfor \tvs {\c
@@ -4165,8 +4167,8 @@ schemes, but it provides a different behavior: each instance may resolve $\c$
 differently (as the constraint is copied on instantiation).
 %
 Qualified types are excellent choice when this is the desired behavior,
-typically for \emph{dynamic overloading} \XDR{\citep{??}}. But they are
-insufficient when we require a unique resolution of the constraint across
+typically for \emph{dynamic overloading} \citep{conf/popl/WadlerB89}. But they
+are insufficient when we require a unique resolution of the constraint across
 all instances---as in \emph{static overloading}.
 
 \citet{Leijen-Ye/prefix@pldi2025} recently proposed a bidirectional account of
@@ -4251,12 +4253,14 @@ specification would be ``as complicated and hard to understand as the
 could provide a declarative specification: one capable of being principal and
 complete for GADTs, and we would be interested in studying this application.
 
-\paragraph{Higher-rank Polymorphism}
+\paragraph{Higher-rank polymorphism}
 
 Polytypes are not \emph{higher-rank} in the usual sense; our interest in them
 stems from their role in \OCaml's inference of polymorphic methods. Many
 systems for higher-rank polymorphism exist; here we highlight a few in the
-context of \ML. \MLF is an extension of \ML that supports first-class
+context of \ML. 
+
+\MLF is an extension of \ML that supports first-class
 polymorphism that goes beyond the power of System $\mathsf{F}$, while retaining
 type inference. It is a generalization of \citet{Garrigue-Remy/poly-ml}'s
 polytypes, relying on \geninst-directionality, but it remains unclear how to
@@ -4268,38 +4272,44 @@ instantiation on ordinary (unfrozen) variables $x$. Unlike polytypes,
 \FreezeML permits higher-rank types directly in the syntax of types, though these
 can be encoded back into polytypes. The essential difference is that generalization
 of higher-rank types is implicit, inferring the most-general type (if one exists).
+
+\QuickLook \citep{journals/pacmpl/SerranoHJV20}, \Haskell's latest approach at
+impredicative higher-rank polymorphism, uses bidirectional propagation to take
+a ``quick look'' at the spine of an application to guide instantiation of
+higher-rank functions. This permits \emph{argument reordering}, by allowing
+later arguments to influence the type of earlier ones within the same
+application spine. It mitigates the order-dependence of fixed directionality
+(\cref{sec/overview/directionality}) but still enforces a global direction of
+type propagation between surrounding constructs (\eg \Let-bindings). In this
+sense, \QuickLook is \emph{locally omnidirectional} but \emph{globally
+directional}: they reduce order sensitivity within applications, but do not
+provide a declarative account of type flow between arbitrary constructs, as
+required for omnidirectionality. More recently, \Frost \citep{frost} follows a
+similar line but extends it to handle $\eta$-expansion and introduces a
+freezing operator, akin to that of \FreezeML, that helps propagate type
+information when the default order of inference is insufficient. 
+
+\Xalistair{Didier, what do you think?}
+
+\paragraph{Type-based disambiguation in \SML}
+
+In \SML, tuples are treated as structural records with numeric labels, and
+projections such as \code{#1} or \code{#2} are type-directed. This relies on
+row typing: if $\e$ has the type $\tsrecord {j = \tj; \varrho}$, where
+$\varrho$ is a row describing the remaining tuple fields, then $\eproj \e j$
+has type $\tj$. The same mechanism also underlies record projections.
+
+However, \SML does not support row-polymorphic definitions: restricting to
+monomorphic rows allows a simple yet efficient compilation strategy for records
+and tuples. To enforce this, \SML adds a prose side-condition to the typing
+rules requiring that each row variable be fully determined by the ``program
+context''~\citep*[Section 4.11]{sml-definition}. Our unicity conditions
+provides a precise, declarative specification for this informal restriction,
+filling a gap in the original specification.
+
+\citet*[page 36]{rossberg-hamlet} remarks that this restriction interacts
+poorly with \texttt{let}-polymorphism and therefore not supported in practice:
 %
-\QuickLook, Haskell's latest approach at impredicative higher-rank polymorphism,
-uses bidirectional propagation to take a ``quick look'' at the spine of an
-application to guide instantiation of higher-rank functions. However, this
-approach inherits the limitations of fixed directionality discussed in
-\cref{sec/overview/directional}.\XDR{This is a bit short, as it is not
-exactly the same limitations: it uses only local constraints, where local is
-not so well-defined (this part is thus directional by definition), and it
-avoids directionality among the local constraints. I think it would deserve
-a bit more explaination, as the different forms of directionality is a key
-of our story telling, and there may be other better forms of locality than
-just bi- and pi-.}
-
-\paragraph{Type-based disambiguation in SML implementations}
-\SML supports positional projections for structural records; and
-tuples, which are treated as structural records for numeric
-labels. This uses row typing for projections: if $\e$ has the type
-$\tsrecord {j = \tj; \varrho}$, where $\varrho$ is a row describing
-the remaining tuple fields, then $\eproj \e j$ has type $\tj$.
-
-\SML does not actually allow row-polymorphic definitions: restricting
-to monomorphic rows allows a simple yet efficient compilation strategy
-for records. So \SML adds a prose side-condition to the typing rules
-to require that each row variable be fully determined by the
-"program context"~\citep*[Section 4.11]{sml-definition}. Our unicity
-conditions provides a declarative specification for this restriction,
-which was previously missing.
-
-\citet*[page 36]{rossberg-hamlet} remarks that the interaction of this
-feature with \texttt{let}-polymorphism is difficult and not supported
-in practice:
-
 \begin{quotation}
   Under item 1 the Definition states that “the program context” must
   determine the exact type of flexible records, but it does not
@@ -4312,40 +4322,67 @@ in practice:
   systems seem to do as well. This is in par with our treatment of
   overloading (see 5.8).
 \end{quotation}
+%
+We have solved this difficult interaction between disambiguation and
+\texttt{let}-polymorphism. In particular, we implemented tuples in our
+prototype and formalize their meta-theory in Appendix
+\cref{app:full-reference}; the system behaves as expected. 
 
-We solve this difficult interaction between disambiguation and
-\texttt{let}-polymorphism; and indeed we implemented tuples in our
-prototype and it works as one would expect. We also remark that
-Poly/ML~\citep*{sml-polyml} went further than other SML implementations on
-that front, and supports use-cases that go beyond the HaMLet
-restriction and involve back-propagation:
-
-\begin{program}[deletekeywords={true,false}]
-> let fun fst r = #1 r in (fst (1, 2), fst (true, false)) end;
+We also remark that \PolySML~\citep*{sml-polyml} goes further than other \SML
+implementations on this front, supporting examples that even rely on 
+back-propagation
+\begin{program}[input][deletekeywords={true,false}]
+> let fun fst r = #1 r in (fst (1, 2), fst (true, false)) end; °\polysmlflags 00°
 val it = (1, true): int * bool
 \end{program}
-\XDR{Shouldn't we say that we would also succeed here?}
 
-\paragraph{Record field disambiguation and overloading in GHC} Haskell
-98 defines derives selector functions for each record field; this
-approach does not support declaring two record types with the same
-field names in the same module. GHC 6.8.1 (2007) introduced the
-DisambiguateRecordField for type-directed disambiguation of record
-labels,\footnote
-{\url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/disambiguate_record_fields.html}}
-and GHC 8.0.1 (2016) introduced DuplicateRecordFields to declare two
-records with overlapping field names in the same module. However, the
-GHC developers found that type-based disambiguation using
-bidirectional type inference is not predictible enough in practice for
-users, and are gradually moving away from type-based disambiguation
-towards an approach based on qualified types constraints
-\code{HasField a "foo" b} (OverloadedRecordDot, 2017).\footnote
-{\url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html}}\XDR{Is is clear that they would fail with polymorphic record fields? Is it the
-HasField constraint that does not allow polytypes?}
-This qualified-types approach is however not available for record fields
-with a polymorphic type, suggesting difficulties in scaling this approach to
-other features where the choice of typing rule depends on the disambiguation
-(in OCaml: polymorphic records or methods, GADTs in patterns).
+\paragraph{Record field overloading in \GHC} 
+
+\Haskell 98 defines derives selector functions for each record field, an
+approach that precludes declaring two record types with the same field names
+within a single module. \GHC 6.8.1 (2007) introduced the
+\texttt{DisambiguateRecordField} extension for type-directed disambiguation of
+record labels,%
+%
+\footnote{
+  \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/disambiguate_record_fields.html}
+}
+%
+and \GHC 8.0.1 (2016) added \texttt{DuplicateRecordFields}, allowing distinct
+record types with overlapping field names in the same module. 
+
+However, the \GHC developers found that type-based disambiguation using bidirectional type inference is not
+sufficiently predictible enough in practice for users. As a result, \GHC is gradually moving away from
+type-based disambiguation towards an approach based on qualified types
+constraints of the form \code{HasField a "foo" b} (\texttt{OverloadedRecordDot}, 2017).%
+%
+\footnote{
+  \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html}
+}
+For instance, the projection \code{ex_1} from \cref{sec/overview/overloading} would be written as:
+\begin{program}[input]
+ex_1 :: HasField a "x" b => a -> b
+ex_1 r = getField @"x" r
+\end{program}
+
+
+This \texttt{HasField} approach, however, does not extend to record fields with 
+polymorphic types,%
+%
+\footnote{
+  \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html\#solving-hasfield-constraints}
+}
+%
+revealing difficulties in scaling it to features where the typing rule itself 
+depends on disambiguation---such as polymorphic records and GADT patterns in \OCaml.
+In contrast, omnidirectional inference naturally accommodates such non-uniformity 
+in typing rules. 
+
+\XDR{Is
+is clear that they would fail with polymorphic record fields? Is it the
+HasField constraint that does not allow polytypes?} 
+
+\Xalistair{I added a link to where it discusses that polymorphic fields are not permitted. }
 
 \section{Conclusions}
 \label{sec:discussion}
@@ -4362,192 +4399,12 @@ principality held \emph{anyway}, precisely because of omnidirectionality.
 
 \paragraph{Future work}
 
-\begin{version}{\Draft}
-\paragraph {Limitations}
-
-\def \ttciecolor {\ttlab {cie\_color}}
-\def \ttciepoint {\ttlab {cie\_point}}
-
-% 1. Some programs are ill-typed even though they have a principal type.
-% 2. We do not provide a formalization of default rules.
-
-\parcomment{Some programs even though they have a principal type are ill-typed}
-
-Omnidirectional inference is powerful, but not omnipotent. Some expressions
-must be rejected even though their elaboration would be unambiguous. Consider:
-
-\begin{program}[input,checkocaml]
-type cie_color = { x : int; y : int; z : int }
-type cie_point = { x : int; y : int; color : cie_color }
-let ex_1_0 r = r.color.x °\ocamlflags 11°
-\end{program}
-
-Here, neither field projections can individually be disambiguated. However, if
-one were allowed to combine the constraints, they would jointly determine
-that $r$ must have type \code{cie_point}: in \code{gray_point}, the field \code{color}
-has type \code{int}, and hence cannot itself be projected, leaving a unique
-consistent elaboration: $\efun r {\exfield {\exfield r \ttciepoint \tty} \ttciecolor \ttx}$.
-
-Our framework nonetheless rejects \code{ex_1_0}. This is intentional: implicit
-terms must be elaborated \emph{sequentially}, each in isolation, rather than
-jointly with others. We view this restriction as a ``Goldilocks'' compromise:
-it rules out examples like the above, but avoids the intractability of full
-general overloading which is NP-hard, even without let-polymorphism, as shown
-by a reduction from 3-SAT~\citep*
-{Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}.
-
-
-Currently, our framework only disambiguate on the shape of types, which are
-shallow, \ie only describe the toplevel structure of types.  For instance,
-for nominal records, this means that we can only disambiguate on the set of
-record fields, and not on the type of fields: given the existing definition
-of \ocaml{point}, the following example fails:
-\begin{program}[input]
-type complex = {x : float; y : float}
-let p = {x = 1; y = 2}          °\ocamlflags 11°
-\end{program}
-Indeed, both \ocaml{point} and \ocaml{complex} have the set of fields. Even
-though the fields are of different types these are not taken into account
-for disambiguation.  What the system sees are constructor and destructor
-functions with the following types:
-\begin{center}
-\vskip -\lastskip
-\begin{tabular*}{\hsize}{.p{0.45\hsize}Zp{0.52\hsize}.}%
-\begin{program}[input,aboveskip=0em]
-point_make : int -> int -> point
-point_getx : point -> int
-point_gety : point -> int
-\end{program}
-&&
-\begin{program}[input,aboveskip=0em]]
-complex_make : float -> float -> complex
-complex_getx : complex -> float
-complex_gety : complex -> float
-\end{program}
-\end{tabular*}
-\end{center}
-However, our setup only disambiguate on the shape of the either the domain
-of destructors or the codomain of constructors, thus ignoring the types of
-the fields. Taking the whole type of constructors or destructors, hence
-deeper shapes, would allow more disambiguation.  In fact, extending our
-framework to suspend on deeper shapes would also allow to solve general
-(static) overloading, \ie between expressions of arbitrary types.
-\end{version}
-
 We aim to extend our framework to support more advanced features. One direction
 is generalized \emph{static overloading}; another is \emph{higher-rank
 polymorphism}. We also plan to investigate \emph{default rules}---a mechanism
 where ambiguity is resolved by falling back on a default, non-principal choice
 \eg \OCaml selects the most recent matching record type in scope for ambiguous
 field names.
-
-\begin{version}{}
-
-Our nominal records use a restricted form of overloading.  We have also
-experimented with a more general overloading mechanism in which several
-definitions may be bound to the same identifier ${\color{gray}\M.}\x$, but
-prefixed with a namespace\footnote {Reusing the notation
-of~\citet*{Leijen-Ye/prefix@pldi2025}.}~$\color{gray}\M$ used for
-disambiguation: an implicit form $\x$ in the source is elaborated to an
-explicit form~$\exover {{\color{gray}\M}} \x$.
-%
-Although implemented in a prototype, we have not yet
-%% identified a satisfactory typing behavior or
-formalized this feature.  Nevertheless, we conjecture
-that it should be typable with our framework.
-
-Modular implicits \citep*{White-Bour-Yallop/Modular_Implicits/ml2014} are a
-proposed extension to \OCaml's module system, intended to support ad-hoc
-polymorphism through type-directed implicit parameters. We believe
-omnidirectional type inference could serve as a principled, constraint-based
-approach foundation for resolving implicits in the presence of
-let-generalization.
-%
-As future work, we aim to extend our constraint language to typecheck an
-implicit-parameters calculus, similar to \COCHIS
-\citep*{journals/jfp/SchrijversOWM19}, but with \ML polymorphism.
-
-
-\paragraph{Higher-rank polymorphism}
-
-In \cref{sec/introduction} and \cref{sec:related-work}, we compared
-omnidirectional and bidirectional type inference in the context of static
-overloading. While overloading is non-trivial, it poses little challenge for the
-bidirectional framework, making the comparison somewhat limited. Bidirectional
-typing is best known for its scalability to more complex settings, such as
-higher-rank polymorphism. We are therefore interested in extending our
-framework to support higher-rank polymorphism, in the style of
-\citet*{dunfield-krishnaswami-bidirectional-poly}. This would provide a more
-meaningful basis for understanding the trade-offs of omnidirectional and
-bidirectional inference.
-
-\MLF is an extension of \ML that support first-class polymorphism that
-goes beyond the power of System $\F$, while retaining type inference.
-It is a generalization of \OCaml's polytypes, relying on \geninst-directionality.
-It would therefore be worth exploring whether omnidirectional type inference
-could further empower \MLF.
-
-\paragraph{Default rules}
-
-Some type systems disambiguate fragile constructs using known type information,
-but fall back on default, non-principal choices when none is available. \OCaml
-selects the most recent matching record type in scope for ambiguous field
-names; \SML assigns default types to overloaded numeric
-literals~\citep*[Section 5.8]{rossberg-hamlet}.
-
-We explored adding such \emph{default rules} to suspended match constraints,
-allowing unresolved constraints to discharge with a default shape rather
-than fail. Using default shapes rather that default types ensures that the
-default behavior could also have been obtained by adding an extra shape
-annotation in the code.
-%
-While pragmatic, such rules are inherently non-principal and difficult to
-reconcile with our framework.  In particular, they introduce subtle semantic
-complexities: if two suspended constraints could unlock each other, then
-defaulting one over the other may force an unsatisfiable branch to be taken.
-%
-%% Still, we can formulzate some good propeties that a strategy for firing
-%% defaulting rules should satisfy.  It appears that under some reasonable
-%% blackbox asumptions (the stategy cannot explore the suspended constraints,
-%% but only know type variables they may contraint), there is actually an
-%% optimal strategy.
-
-Is there an optimal or principled strategy for applying defaults in such
-cases? Should we fire all default rules of all suspended
-constraints that remain after the solver terminates, simultaneously, or in
-batches, \eg. restricted to connected components of mutually dependent suspended
-constraints?  Our prototype opts for the latter, but this warrants further
-study. \Draft{More details can be found in Appendix \cref {app/default-rules}.}{}
-
-%%\paragraph{Behavior of default rules} Giving priority to most recent
-%%definitions is a possible default behavior for field and constructor
-%%disambiguation. For structural tuples there is no reasonable default
-%%rule.
-%
-%%For polytypes, one option is to fallback to a monomorphic polytype. The
-%%other one is to pick the principal type scheme of the expression with an
-%%unresolved polytype. Of course, there are examples that favor one choice
-%%and other examples that favor the other.
-
-\paragraph{Equi-recursive types}
-\label {sec/rec-types}
-
-\OCaml allows equi-recursive types to express recursive polymorphic variants
-and objects types. Supporting such types is a necessary step towards integrating
-our approach into \OCaml's typechecker.
-%% In this work,
-For the sake of simplicity, we treated ground types as finite
-trees. Supporting equi-recursive types amounts to using regular trees instead
-\citep*{Pottier-Remy/emlti}. Our prototype already supports them,
-but the formalization of our solver relies on acyclicity to ensure
-termination.  Extending the formalization to accommodate cycles would
-require some changes.  Following the implementation, incremental
-instantiation might require to instantiate cycles atomically.
-
-Shapes may also be equi-recursive, though only minimal shapes of polytypes
-can be recursive. In the acyclic setting, shape equality is syntactic; with
-cycles, this no longer holds---but we do not anticipate any fundamental issues.
-\end{version}
 
 \section*{Acknowledgments}
 \TODO{}
