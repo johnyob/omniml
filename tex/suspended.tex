@@ -1369,9 +1369,9 @@ feature within the \OCaml community.
 
 \parcomment {We need a spec, but this itself is hard}
 
-% SPJ didn't like 'surface' language here, since OCaml doesn't have 
-% polytypes in the concrete syntax (though it has them in the abstract syntax, 
-% but this is an implementation artifact and arguably something I'd like to 
+% SPJ didn't like 'surface' language here, since OCaml doesn't have
+% polytypes in the concrete syntax (though it has them in the abstract syntax,
+% but this is an implementation artifact and arguably something I'd like to
 % remove).
 To prove correctness of type inference, we must define a language and
 its type system. Identifying an appropriate declarative type system to use as a
@@ -1434,9 +1434,9 @@ parameters.%
 %
 \footnote{
   Using $\T$ as an argument of $(\trcd \T \tys)$ rather a
-  head constructor $(\Fapp[\T] \tys)$ will make record 
+  head constructor $(\Fapp[\T] \tys)$ will make record
   shape patterns easier to understand.
-} 
+}
 %
 \Xalistair{For the record, I really don't see the readability benefit of $\trcd
 \T \tys$ over $\Tapp \tys$. This would be like writing $\textsf{pair } \ta \;
@@ -1481,8 +1481,8 @@ Currently trying $\e.\elab@\T$.
 All annotations in \OML are closed \ie their quantified variables $\tvs$ are
 exactly the free variables of the type $\t$ or type scheme $\ts$.
 %
-We use $\e^i$ to range over fragile, implicit terms (\eg $\efield \e \elab$) and 
-$\e^x$ for their explicit counterparts (\eg $\exfield \e \T \elab$). 
+We use $\e^i$ to range over fragile, implicit terms (\eg $\efield \e \elab$) and
+$\e^x$ for their explicit counterparts (\eg $\exfield \e \T \elab$).
 
 \parcomment {Continuation onto next sections}
 
@@ -1627,7 +1627,7 @@ $\alpha$-conversion.  When $\t$ is a ground type, we omit the binder and
 simply write $\t$ for the shape.
 %
 We use $\bot$ to denote the shape $\any \tvc \tvc$, which we call the
-\emph{trivial} shape. Let $\Shapes$ denote the set of all shapes and 
+\emph{trivial} shape. Let $\Shapes$ denote the set of all shapes and
 $\Shapesz \subset \Shapes$ the set of non-trivial shapes.
 
 \parcomment {Instantiation order of shapes}
@@ -1672,8 +1672,8 @@ Any non-variable type $\t$ has a non-trivial principal shape $\Sh$.
 \parcomment {Define canonical shape}
 
 A principal shape $\any \tvcs \t$ is \emph{canonical} if its free variables
-appear in the sequence $\tvcs$ in the order in which they occur in $\t$. Canonical 
-principal shapes are written $\sh$, and we write $\CanonicalShapes$ for the set of 
+appear in the sequence $\tvcs$ in the order in which they occur in $\t$. Canonical
+principal shapes are written $\sh$, and we write $\CanonicalShapes$ for the set of
 all such chapes.
 %
 Each non-variable type $\t$ has a unique canonical principal shape,
@@ -1863,7 +1863,7 @@ occurrences of the typing judgment. At first glance, this seems problematic for
 well-foundedness. However, the issue is easily resolved by noting that these
 occurrences arise only as typing assumptions on erased terms, which do not
 themselves involve any implicit rules. Formally one could make this explicit by
-introducing a restricted typing judgement $\G \throbust \e : \t$ that exlcudes the 
+introducing a restricted typing judgement $\G \throbust \e : \t$ that exlcudes the
 implicit rules (\Rule{*-I}), and by using this strictly simpler judgment
 in the antecedent of unicity conditions. We omit this distinction for simplicity.
 
@@ -1904,7 +1904,7 @@ We first describe the framework, then present each feature separately.
 \paragraph{Implicit polytypes}
 
 Unboxing a polytype $\einst \e$ is an \emph{elimination form}. Following the
-omnidirectional recipe, \Rule{Use-I} is a contextual rule (\emph{Step 1}) 
+omnidirectional recipe, \Rule{Use-I} is a contextual rule (\emph{Step 1})
 requiring that the principal term $\e$ have the unique shape $\any \tvcs \tpoly
 \ts$ in the context $\E$ (\emph{Step 2}). In \emph{Step 3}, we then elaborate
 $\einst \e$ into $\exinst \e \tvcs \ts$.
@@ -1960,14 +1960,14 @@ We now illustrate the typing of implicit constructs with a few examples.
       {\eset \th \E\where{\efield r \ttx} : \ttpoint \to \tint \tprod \tint }
   \end{mathpar}
   %
-  where the context $\E$ is $\efun r {\etuple {\square, \exfield r \ttpoint \tty}}$. 
+  where the context $\E$ is $\efun r {\etuple {\square, \exfield r \ttpoint \tty}}$.
   We have $\eset \th \E\where{\exfield r \ttpoint \ttx} :
   \ttpoint \to \tint \tprod \tint$, indeed.
   %
   Therefore, it remains to show that $\eshape \E r {\ttpoint}$~\llabel
   C. Assume $\eset \th \E\where{\emagic {\eannot r {} \gt}} :
   \t$. Since $\exfield r \ttpoint \tty$ requires $r$ to have the type
-  $\ttpoint$ (due to Rule \Rule{Rcd-Proj-X} and \Rule{Lab-Inst}), 
+  $\ttpoint$ (due to Rule \Rule{Rcd-Proj-X} and \Rule{Lab-Inst}),
   it follows that there is no other choice but to take $\ttpoint$ for $\gt$, which proves~\lref C.
 \end{example}
 
@@ -2056,7 +2056,7 @@ The derivation must end with:
 However, $\eshape \E {r} {\ttciepoint}$ does not hold
 either. Again, the judgment
 %
-$\eset\th \eerase {\E\where{\eannotmagic r {} {\gt}}} : \tp \to \gt$, 
+$\eset\th \eerase {\E\where{\eannotmagic r {} {\gt}}} : \tp \to \gt$,
 %
 (\ie $\eset\th \efun r {\eannotmagic r {} {\gt}} : \tp \to \gt$) holds for
 any $\gt$.
@@ -2201,7 +2201,7 @@ approach cannot be stated precisely.
 
 \parcomment{Defining the syntax / semantics}
 
-We now introduce the syntax and semantics of our constraint language. 
+We now introduce the syntax and semantics of our constraint language.
 Building atop the constraint-based inference framework of
 \citet*{Pottier-Remy/emlti}, we adopt a constraint language
 (\cref{fig:constraints}) that includes both term and type variables. Its
@@ -2220,8 +2220,8 @@ just say `G' or `set of ground types G'.}\XDR{Meta-comment: Be careful not
 to add extra-spaces with inlined comments by leaving spaces between too
 comments in horizontal mode.}
 %
-We write $\semenv\where{\tv \is \gt}$ and $\semenv\where{\x \is \gabs}$ for 
-extensions of $\semenv$, and $\semenv(\t)$ for the ground type obtained by 
+We write $\semenv\where{\tv \is \gt}$ and $\semenv\where{\x \is \gabs}$ for
+extensions of $\semenv$, and $\semenv(\t)$ for the ground type obtained by
 substitution.
 
 
@@ -2791,7 +2791,7 @@ concretize this by specifying the shape patterns used in \OML
 for the variables they bind.
 %
 Shape patterns include:
-% This is a important part of prose. It deserves more space (and thus an enumerate 
+% This is a important part of prose. It deserves more space (and thus an enumerate
 % over enumerate*)
 \begin{enumerate}
 
@@ -2864,14 +2864,14 @@ known to be some non-variable type $\tz$. At that point, the suspended match
 constraint attempts to match $\tz$ against the pattern $\cpatpoly \cscm$. If
 $\tz = \tpoly \ts$, the match succeeds, binding $\ts$ to $\cscm$ and requiring
 $\t$ to be an instance of $\cscm$ (\ie $\ts \leq \t$); otherwise, the match
-fails and the term is ill-typed. 
+fails and the term is ill-typed.
 
 Implicit boxing behaves dually: we infer the principal type for $\e$ using a
 $\Let$ constraint and suspend until the expected type of the entire term
 resolves to some type $\tz$. If $\tz$ matches the same pattern $\cpatpoly
 \cscm$ (\ie $\tz = \tpoly \ts$), we assert that the principal type of $\e$ is
 at least as general as $\cscm$, via the constraint $\x \leq \cscm$ (\ie $\x
-\leq \ts$); otherwise, the match fails. 
+\leq \ts$); otherwise, the match fails.
 
 \parcomment{Records}
 
@@ -2882,7 +2882,7 @@ fresh variable $\tv$ for the record type and constrain $\e$ to this type,
 suspending until the type of $\e$ ($\tv$) resolves to some type $\tz$. When
 $\tz = \trcd \T \tys$, the shape pattern $(\cpatrcd \ct)$ matches successfully,
 binding $\T$ to the record name variable $\ct$; the matching branch then
-retrieves the projected label's type from the global label context $\labenv$ 
+retrieves the projected label's type from the global label context $\labenv$
 and instantiates it to match $\tv \to \t$. If $\tz$ is not a
 record type, the match fails and the term is ill-typed.
 
@@ -2894,7 +2894,7 @@ $\parens{\cpatrcd \ct}$. If the match succeeds (\ie $\tz = \trcd \T \tys$ and
 $\ct = \T$) the labels are instantiated to match the projection types $\t \to
 \tvi$, and we additionally check that the domain of $\ct$ is exactly $\elabs$,
 ensuring that every label is defined. Otherwise, the constraint is
-unsatisfiable as intended. 
+unsatisfiable as intended.
 
 Explicit records and projections, along with closed-world disambiguated terms,
 bypass suspension and directly instantiate the appropriate labels.
@@ -2964,7 +2964,7 @@ The constraint generated when typing
 With the context $\C$ equal to $\clet {getx}
 \tvd {\cexists {\tvb, \tvc} \cunif \tvd {\tvb \to \tvc} \cand \hole}
 {\capp {getx} {(\ttpoint \to \tv)}}$, we can show that the unicity
-predicate $\Cshape \C \tvb \ttpoint$ holds. 
+predicate $\Cshape \C \tvb \ttpoint$ holds.
 For any $\gt$, the erasure $\cerase {\C \where {\cunif \tvb \gt}}$
 is
 \begin{mathpar}[inline]
@@ -3560,7 +3560,7 @@ The generated typing constraint contain is of the form:
 \begin{mathpar}
   \clet x \tvmk
   {\cexists {\tvx, \tvmkret}
-    {\bigwedge \Lbraces {
+    {\bigwedge \PARENS {
       \cunif \tvmk {\tvx \to \tvmkret} \\
       \cmatch \tvmkret {\cbranch {(\cpatrcd \ct)}
          {\labfrom {\ell} \ct \leq \tvx \to \tvmkret}}
@@ -3570,8 +3570,9 @@ The generated typing constraint contain is of the form:
 There is not enough information in the $\xmk$ function to discharge the
 suspended constraint for the ambiguous record construction. We need to
 continue solving the right-hand-side $\c_e$ to find disambiguation
-information.  For example, the constraint corresponding to a call
-$\eannot {\eapp \xmk \ea}{}{\foo}$ in~$\e$ would disambiguate the record $\ct$ through back-propagation.
+information.  For example, the constraint corresponding to a call $\eannot
+{\eapp \xmk \ea}{}{\foo}$ in~$\e$ would disambiguate the record $\ct$
+through back-propagation.
 
 Furthermore, we cannot tell at this point whether the variables $\tvx$ and
 $\tvmkret$ should be generalized, which depends on the record type, so treating
@@ -3587,7 +3588,8 @@ commitment to certain quantifications (\eg~$\tvx$ and~$\tvmkret$). Such
 be incrementally refined in future as suspended constraints are
 discharged. In our example, we will start with a partial type scheme $\all
 {\tvx, \tvmkret} \tvx \to \tvmkret$, but we keep track of all instances of
-this scheme and refine them later if the shape of $\tvmkret$ becomes known.
+this scheme and refine them later if they are instantiated, typically
+if the shape of $\tvmkret$ becomes known.
 \end{local}
 
 \parcomment {Intro partial instantiations}
@@ -3652,7 +3654,7 @@ Incremental instantiation constraints are reduced using the following rules, sum
     termination, the abstraction must contain acyclic types.
 
   \item \Rule{S-Inst-Unify} unifies two instantiations if they both refer to the
-    source variable $\tvb$ at same instantiation site $\inst$.
+    same source variable $\tvb$ at the same instantiation site $\inst$.
 \end{enumerate}
 There are three cases in which an instantiation constraint is eliminated:
 \begin{enumerate}
@@ -3663,12 +3665,14 @@ There are three cases in which an instantiation constraint is eliminated:
   \item
     The copied variable $\tvb$ is polymorphic, and thus the instantiation
     constraint imposes no restriction (\Rule{S-Inst-Poly}), provided no
-    other instantiations of $\tvb$ remain (if not, then apply
-    \Rule{S-Inst-Unify}).
+    other instantiations of $\tvb$ remain at the same instantiation side (if
+    not, then apply \Rule{S-Inst-Unify}).
 
   \item
     The copy is monomorphic and in scope, so we unify it directly
     (\Rule{S-Inst-Mono}).
+    \XDR{The Rule is missing in the short version, I thought we decided to
+    have all rules in the core of the paper.}
 \end{enumerate}
 
 
@@ -3678,12 +3682,14 @@ There are three cases in which an instantiation constraint is eliminated:
 \parcomment{Cleaning up partial instantiations and let constraints}
 
 \Rule{S-Let-Solve} removes a $\Let$ constraint when the bound term
-variable is
-unused and the abstraction is satisfiable. \Rule{S-Compress} determines that a
-regional variable $\tvb$ is an an alias for $\tvc$. We replace every free
-occurrence of $\tvb$ with $\tvc$---\emph{including} the domains of any partial
-instantiation constraints, written as the substitution $\where{\x.\tvb \is
+variable is unused and the abstraction is satisfiable. \Rule{S-Compress}
+determines that a regional variable $\tvb$ is an an alias for $\tvc$. We
+replace every free occurrence of $\tvb$ with $\tvc$---\emph{including} the
+domains of any partial instantiation constraints, written as the
+substitution $\where{\x.\tvb \is
 \tvc}$. We view this as an analogous copy rule for variables.
+\XDR{I don't know what a \emph{copy rule} means. Besides, this is not
+any copying/unsharing, but the oppposite...}
 
 \parcomment{Lowering}
 
@@ -3719,12 +3725,16 @@ condition in \ML: a type variable \emph{cannot} be generalized if it appears
 in the typing context. In the constraint setting, it \emph{cannot} be
 generalized if it depends on variables from outside the region. For
 instance, $\cexists \tvb \cunif \tv {\tvb \to \tvc}$ determines $\tvc$,
-as $\tvc$ is free.
+as $\tvc$ is free.\XDR{The justification is not correct, as $\tv$ is also
+free but it is not determined by the constraint. (Indeed, it does not satisfy the
+syntactic criteria below.)}\XDR{I am not sure that this paragraph, starting
+with conceptually, helps.}
 
 \parcomment{How to decide the relation}
 
-To decide when $\cdetermines \c \tvs$, we introduce the judgment $\th \cdetermines \c \tvs$,
-which syntactically proves that $\tvs$ are determined in $\c$.
+To decide when $\cdetermines \c \tvs$, we introduce the judgment $\th
+\cdetermines \c \tvs$, which syntactically proves that $\tvs$ are determined
+in $\c$.
 %
 If $\c$ is of the form $\cexists \tvbs \cp$ where $\tvbs \disjoint \tvs$, then
 we search for a multi-equation $\ueq$ in $\cp$ of the form:
@@ -3745,7 +3755,9 @@ sound approximation of the semantic definition.
 
 Lowering such variables improves solver efficiency. It avoids unnecessary
 duplication of work that would otherwise occur via \Rule{S-Inst-Copy}. By
-reducing the number of variables that need to be copied, lowering directly
+reducing the number of variables that are\XDR[was need]{they need not be
+copied---since they are \emph{semantically} determined, but the would have
+been copied by the algorithm} to be copied, lowering directly
 reduces instantiation overhead.
 
 \parcomment{S-Let-AppR}
@@ -3774,26 +3786,31 @@ and $\t$ is a non-variable type. In this case, the shape of $\tv$ is $\shape
 %
 Finally, \Rule{Uni-BackProp} expresses \emph{backpropagation}, previously
 illustrated in \cref{ex:backprop}. In particular, the shape of a regional
-variable can sometimes be determined from its instantiations. If an abstraction
-contains a regional variable $\tvp$, and the constraint context includes a
-incremental instantiation $\cpapp \x \tvp \tvc \inst$ together with a proof that the copy of
-$\tvc$ has the unique shape $\sh$. Then $\tvp$ must also have shape $\sh$,
-as any other shape would render the instantiation unsatisfiable.
+variable can sometimes be determined from its instantiations. If an
+abstraction contains a regional variable $\tvp$, and the constraint context
+includes an incremental instantiation $\cpapp \x \tvp \tvc \inst$ together
+with a proof that the copy of $\tvc$ has the unique shape $\sh$. Then $\tvp$
+must also have shape $\sh$, as any other shape would render the
+instantiation unsatisfiable.
 %
 This final case (\Rule{Uni-BackProp}) may raise concerns about the
 well-foundedness of $\th \Cshape \C \t \sh$.
 However, well-foundedness follows directly from the fact that in
 \Rule{Uni-BackProp} the regional depth of the hole strictly decreases.
 %
-For a solved context $\hat\C$, this relation is moreover sound and complete with respect
-to the semantic definition of unicity (\cref{def:unicity}).
+For a solved context $\hat\C$, this relation is moreover sound and complete
+with respect to the semantic definition of unicity (\cref{def:unicity}).
 
+\XDR{Rule \Rule {Uni-BackProp} assumes that $\ctrue$ appears in he premise,
+which may require the reverse of \Rule {S-True}, which is not currently
+present. Hence, we may be fail to apply \Rule {Uni-BackProp} and be stuck.}
 
 \subsection{Metatheory}
 
 We establish the correctness of our solver. Correctness follows from three
-standard metatheoretic properties: \emph{progress}, \emph{preservation}, and \emph{termination}.
-Together, they ensure that every satisfiable constraint eventually reduces to an equivalent solved form.
+standard metatheoretic properties: \emph{progress}, \emph{preservation}, and
+\emph{termination}.  Together, they ensure that every satisfiable constraint
+eventually reduces to an equivalent solved form.
 
 % Properties
 % May look like space hacks, but restatable introduces its own space
@@ -7410,7 +7427,7 @@ rules that are not inherently destructive.
 
   \paragraph{Starting instantiations} By a similar argument, the number
   of non-incremental instantiations $\capp \x \t$ decreases strictly on
-  \Rule{S-Let-AppR} when a incremental instantiation starts, and is
+  \Rule{S-Let-AppR} when an incremental instantiation starts, and is
   preserved by other non-discharge rules. The rule \Rule{S-Let-AppR}
   can thus only occur finitely many times in non-discharging sequences,
   and it suffices to prove that all rewriting sequences that are
