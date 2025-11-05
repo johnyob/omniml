@@ -4007,9 +4007,9 @@ schemes, but it provides a different behavior: each instance may resolve $\c$
 differently (as the constraint is copied on instantiation).
 %
 Qualified types are excellent choice when this is the desired behavior,
-typically for \emph{dynamic overloading} \citep{??}. But they are insufficient
-when we require a unique resolution of the constraint across all instances---as
-in \emph{static overloading}.
+typically for \emph{dynamic overloading} \XDR{\citep{??}}. But they are
+insufficient when we require a unique resolution of the constraint across
+all instances---as in \emph{static overloading}.
 
 \citet{Leijen-Ye/prefix@pldi2025} recently proposed a bidirectional account of
 generalized static overloading within \ML. However, their approach is limited by
@@ -4018,7 +4018,7 @@ its reliance on fixed directionality (\cref{sec/overview/directional}).
 Variational typechecking \citep{Chen-Erwig-Walkingshaw/variational@toplas2014}
 was originally developed for reasoning about well-typed CPP \code{#ifdef}-style
 macros, introducing \emph{choices}  $a \angles {\ea, \eb}$, where $a$ is a
-\emph{dimension} with \emph{alternatives} $\ea$, $\eb$. Once dimensions are
+\emph{dimension} with \emph{alternatives} $\ea$ and $\eb$. Once dimensions are
 fixed, we are able to project a well-typed non-variational program.
 \citet{benevs2025simple} apply this machinery to recast static overloading as
 variational typing, with a resolution algorithm that uniquely selects the
@@ -4026,7 +4026,8 @@ dimensions.
 %
 However, their system removes \emph{local let-generalization} and requires an
 exponential-time resolution procedure---an unavoidable consequence of the
-NP-hardness of general static overloading \citep* {Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}.
+NP-hardness of \emph{general} static overloading \citep*
+{Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}.
 
 Partial type schemes provide an alternative that preserves \ML's local
 let-generalization while suspended constraints offer a tractable account of
@@ -4114,7 +4115,13 @@ of higher-rank types is implicit, inferring the most-general type (if one exists
 uses bidirectional propagation to take a ``quick look'' at the spine of an
 application to guide instantiation of higher-rank functions. However, this
 approach inherits the limitations of fixed directionality discussed in
-\cref{sec/overview/directional}.
+\cref{sec/overview/directional}.\XDR{This is a bit short, as it is not
+exactly the same limitations: it uses only local constraints, where local is
+not so well-defined (this part is thus directional by definition), and it
+avoids directionality among the local constraints. I think it would deserve
+a bit more explaination, as the different forms of directionality is a key
+of our story telling, and there may be other better forms of locality than
+just bi- and pi-.}
 
 \paragraph{Type-based disambiguation in SML implementations}
 \SML supports positional projections for structural records; and
@@ -4155,26 +4162,27 @@ Poly/ML~\citep*{sml-polyml} went further than other SML implementations on
 that front, and supports use-cases that go beyond the HaMLet
 restriction and involve back-propagation:
 
-\begin{verbatim}
+\begin{program}[deletekeywords={true,false}]
 > let fun fst r = #1 r in (fst (1, 2), fst (true, false)) end;
 val it = (1, true): int * bool
-\end{verbatim}
+\end{program}
 \XDR{Shouldn't we say that we would also succeed here?}
 
 \paragraph{Record field disambiguation and overloading in GHC} Haskell
 98 defines derives selector functions for each record field; this
-approach does not supporting declaring two record types with the same
+approach does not support declaring two record types with the same
 field names in the same module. GHC 6.8.1 (2007) introduced the
 DisambiguateRecordField for type-directed disambiguation of record
-labels\footnote{\url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/disambiguate_record_fields.html}},
+labels,\footnote
+{\url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/disambiguate_record_fields.html}}
 and GHC 8.0.1 (2016) introduced DuplicateRecordFields to declare two
 records with overlapping field names in the same module. However, the
 GHC developers found that type-based disambiguation using
 bidirectional type inference is not predictible enough in practice for
 users, and are gradually moving away from type-based disambiguation
 towards an approach based on qualified types constraints
-\code{HasField a "foo" b} (OverloadedRecordDot, 2017)\footnote
-{\url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html}}.\XDR{Is is clear that they would fail with polymorphic record fields? Is it the
+\code{HasField a "foo" b} (OverloadedRecordDot, 2017).\footnote
+{\url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html}}\XDR{Is is clear that they would fail with polymorphic record fields? Is it the
 HasField constraint that does not allow polytypes?}
 This qualified-types approach is however not available for record fields
 with a polymorphic type, suggesting difficulties in scaling this approach to
@@ -4198,6 +4206,9 @@ principality held \emph{anyway}, precisely because of omnidirectionality.
 
 \begin{version}{\Draft}
 \paragraph {Limitations}
+
+\def \ttciecolor {\ttlab {cie\_color}}
+\def \ttciepoint {\ttlab {cie\_point}}
 
 % 1. Some programs are ill-typed even though they have a principal type.
 % 2. We do not provide a formalization of default rules.
