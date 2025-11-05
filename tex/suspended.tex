@@ -3359,20 +3359,28 @@ preserve typability in its operational semantics.
 \parcomment{Intro}
 
 We now present a machine for solving constraints in our language. The solver
-operates as a rewriting system on constraints $\c \csolve \cp$. Once no further
-transitions are applicable, \ie $\c \cnsolve$, the constraint $\c$ is either a 
-solved form---from which we can read off a most general solution---or a stuck state, 
-signalling unsatisfiability (if the constraint $\c$ is closed).
+operates as a rewriting system on constraints $\c \csolve \cp$. Once no
+further transitions are applicable, \ie $\c \cnsolve$, the constraint $\c$
+is either a solved form---from which we can read off a most general
+solution---or a stuck state, signalling unsatisfiability (if the constraint
+$\c$ is closed).
 
 \XDR{The solved forms may also be $\cfalse$: We have two cases of errors,
 explicit errors $\cfalse$ when unification clashes or implicit errors as
 stuck configurations (other forms that do not reduce). We could consider
 that $\cfalse$ is a stuck constraint, but this is not the
 usage/conunter-intuitive. In case case we should be explicit about this.}
-%
-\Xalistair{Disagree, the solver is designed \emph{not} to normalize everything 
-to $\cfalse$. $\cfalse$ is just one example of a stuck constraint. This solver is 
-not like the EMLTI solver (this is on purpose, as it makes life easier)}
+
+\Xalistair{Disagree, the solver is designed \emph{not} to normalize everything
+to $\cfalse$. $\cfalse$ is just one example of a stuck constraint. This
+solver is not like the EMLTI solver (this is on purpose, as it makes life
+easier)}
+
+\XDR{I think you misunderstood me: I know and agree with what you said.
+What I meant is that the statement above is then incorrect, since there are
+3 cases and not 2: false, solved form, or stuck. Since by solved form, you
+mean that you can build a solution, this excludes false. Unless by stuck you
+also mean false, which is rather unusual: then we'd better be explicit.}
 
 \subsection{Unification}
 
@@ -3463,16 +3471,20 @@ A unification problem $\up$ is said to be cyclic, written $\cyclic \up$, if $\tv
 }
 
 \Xalistair{
-  Dislike the first one --- $\tvs$ are technically bound after $\tv$ ( 
-  since regions are $\exists \tvs. $ prefixes in $\Let$ constraints).
-  Also, for \texttt{let and}, we can just generate normal let constraints. 
-  Perhaps you mean \texttt{let} patterns? If so, then we would still typically 
-  generate a single constraint for the entire pattern. So multiple abstractions doesn't 
-  really help us. We would want something like 
-  $\Let \overline{(\x : \tv)} \; \where\tvbs = \ca \In \cb$.
+  Dislike the first one --- $\tvs$ are technically bound after $\tv$ ( since
+  regions are $\exists \tvs. $ prefixes in $\Let$ constraints).  Also, for
+  \texttt{let and}, we can just generate normal let constraints.  Perhaps
+  you mean \texttt{let} patterns? If so, then we would still typically
+  generate a single constraint for the entire pattern. So multiple
+  abstractions doesn't really help us. We would want something like $\Let
+  \overline{(\x : \tv)} \; \where\tvbs = \ca \In \cb$.
 
   The second one is okay, but I'm not a huge fan of the subscript.
 }
+\XDR
+  {I was not pushing for making any change, just some thought I had when
+  reading. For let-and, the $\tvs$ should contain $\tv$ and be unordered,
+  and then have one or several explicit entry points.}
 
 \subsection{Solving rules}
 
@@ -3488,10 +3500,11 @@ one-hole constraint context $\C$.
 % Solved forms
 A constraint $\c$ is satisfiable if it rewrites to a solved form
 $\hat\up$ (\cref{def:solved-form}); otherwise it gets
-stuck. 
+stuck.
 
 \XDR{or it is $\cfalse$, see above at the beginning of the section.}
 \Xalistair{No, see my reply.}
+
 
 \paragraph{Basic rules}
 
@@ -3557,7 +3570,7 @@ constraints already handled by the solver.
 % This paragraph is titled Let constraints (seems odd to start off with
 % 'Generalization constraints ...'
 
-Solving $\Let$ constraints is deceptively difficult. 
+Solving $\Let$ constraints is deceptively difficult.
 Naively, let constraints (or \emph{generalization} constraints) could be solved by
 copying constraints:
 \begin{mathpar}
@@ -3573,11 +3586,11 @@ copying constraints:
 This rule, due to \citet*{Pottier-Remy/emlti}, resembles $\beta$-reduction,
 except that the original let-constraint is retained. While this rule is sound
 when $\ca$ is a \emph{simple} constraint, it becomes unsound for abstractions
-containing suspended constraints. 
+containing suspended constraints.
 
 %
 \Xgabriel{I had to change the example below and tried to reformulate the
-  following discussion to match.} 
+  following discussion to match.}
 %
 \Xalistair{I changed the example again. There are two points that we want to
   convey: we cannot make $\Let$ monomorphic, we cannot apply $\beta$-reduction.
@@ -3618,7 +3631,7 @@ The (simplified) generated constraint for \code{ex_8} contains:
       \cmatch \tvp {\cbranch {(\cpatrcd \ct)}
          {\labfrom {\ttlab \x} \ct \leq \tvp \to \tvgetxret}}
     }}}
-  {\\ \capp \xgetx \parens{\trcd \tgpoint \tint \to \tvd} 
+  {\\ \capp \xgetx \parens{\trcd \tgpoint \tint \to \tvd}
       \cand \capp \xgetx \parens{\tvgp \to \tfloat}}
 \end{mathpar}
   If we now apply \Rule{S-Let-App-Beta} to both applications of $\xgetx$
@@ -3633,7 +3646,7 @@ The (simplified) generated constraint for \code{ex_8} contains:
       \cmatch {\tvp_1} {\cbranch {(\cpatrcd \ct)}
          {\labfrom {\ttlab \x} \ct \leq \tvp_1 \to \tvgetxret_1}}
     } \\
-  
+
     \cand & \cexists {\tvp_2, \tvgetxret_2}
 \bigwedge \PARENS {
   \cunif {\tvgp \to \tfloat} {\tvp_2 \to \tvgetxret_2} \\
@@ -3642,14 +3655,14 @@ The (simplified) generated constraint for \code{ex_8} contains:
     }
   \end{array}
 \end{mathpar}
-The first conjuct is satisfiable, since $\tvp_1$ is unified with $\trcd \tgpoint \tint$, thereby discharging 
-the match constraint on $\tvp_1$. 
+The first conjuct is satisfiable, since $\tvp_1$ is unified with $\trcd \tgpoint \tint$, thereby discharging
+the match constraint on $\tvp_1$.
 The second, however, is not: $\tvp_2$ remains underdetermined, leaving its match
 constraint unsatisfiable. Thus, although the original constraint was
 satisfiable, the application of \Rule{S-Let-App-Beta} makes it unsatisfiable.
 By copying the abstraction, we lose the essential \emph{sharing} between both
-instantiations---namely, that both copies of $\tvp$ ($\tvp_1$ and $\tvp_2$) must 
-have the same shape $\any \tvc \trcd \tgpoint \tvc$. This loss of sharing is precisely 
+instantiations---namely, that both copies of $\tvp$ ($\tvp_1$ and $\tvp_2$) must
+have the same shape $\any \tvc \trcd \tgpoint \tvc$. This loss of sharing is precisely
 why \Rule{S-Let-App-Beta} is unsound in the presence of suspended constraints.
 
 \parcomment{What about treating let constraints monomorphically?}
@@ -3664,7 +3677,7 @@ gpoint}, respectively.
 
 \parcomment{Generalization in the context of constraint solving}
 
-Even setting soundness aside, \Rule{S-Let-App-Beta} is inefficient. 
+Even setting soundness aside, \Rule{S-Let-App-Beta} is inefficient.
 Each application duplicates constraint solving work for the same abstraction.
 %
 A more efficient approach first solves the abstraction once---\eg reducing it
@@ -3682,15 +3695,15 @@ treatment is naturally expressed as a strategy on top of their
 \parcomment{The two problems and the solution}
 
 We therefore face two related challenges: \begin{enumerate*}
-  \item handle instantiation soundly in the presence of suspended constraints, and 
-  \item to avoid redundant work by reusing \emph{partial} results across instantiations. 
+  \item handle instantiation soundly in the presence of suspended constraints, and
+  \item to avoid redundant work by reusing \emph{partial} results across instantiations.
 \end{enumerate*}
 
 To address both, we introduce \emph{partial type schemes}, our second novel
 mechanism for omnidirectional inference. Partial type schemes are type schemes
 that delay commitment to certain quantifications (\eg~$\tvp$ and~$\tvgetxret$).
 Such \emph{partially generalized} variables are treated as generalized, but can
-be incrementally refined in future as suspended constraints are discharged. 
+be incrementally refined in future as suspended constraints are discharged.
 
 Returning to our running example, we begin with the partial type scheme $\all
 {\tvp, \tvgetxret} \tvp \to \tvgetxret$ for \code{getx}, since the suspended
@@ -3711,7 +3724,7 @@ $\tvp_2$ with $\trcd \tgpoint \tvb_2$ and $\tvgetxret_2$ with $\tvb_2$.
 
 To support partial type schemes, we extend the constraint language with
 \emph{incremental instantiation constraints}
-(\cref{fig:constraint-let-regions}).  
+(\cref{fig:constraint-let-regions}).
 We introduce two new constraint formers:
 %
 \begin{enumerate}
@@ -3725,8 +3738,8 @@ We introduce two new constraint formers:
 The instantiation variable $\inst$ is required to ensure all incremental
 instantiations $\cpinst \inst \tv \t$ are solved uniformly.
 
-% I wanted to put this before the syntax introduction, but I think this order 
-% works better since it is hard to conceptually understand incremental instantiations 
+% I wanted to put this before the syntax introduction, but I think this order
+% works better since it is hard to conceptually understand incremental instantiations
 % without the syntax
 
 \parcomment {Conceptual model}
@@ -3738,7 +3751,7 @@ themselves are treated as partial type schemes.
 This mechanism enables efficient handling of constraint
 instantiations: solved parts are reused immediately, while suspended
 constraints can be solved later, further refining the abstraction and
-propagating new equations to all instantiation sites. 
+propagating new equations to all instantiation sites.
 
 \parcomment{Semantics of incremental instantiations}
 
@@ -3821,15 +3834,20 @@ determines that a regional variable $\tvb$ is an an alias for $\tvc$. We
 replace every free occurrence of $\tvb$ with $\tvc$---\emph{including} the
 domains of any partial instantiation constraints, written as the
 substitution $\where{\x.\tvb \is
-\tvc}$. 
+\tvc}$.
 
-Conceptually, \Rule{S-Compress} acts a variable-level analogue of \Rule{S-Inst-Copy}: 
-it propagates equalities between variables from the abstraction into its instantiation 
-constraints, thereby enabling subsequent applications of \Rule{S-Inst-Unify}. 
+Conceptually, \Rule{S-Compress} acts a variable-level analogue of \Rule{S-Inst-Copy}:
+it propagates equalities between variables from the abstraction into its instantiation
+constraints, thereby enabling subsequent applications of \Rule{S-Inst-Unify}.
 
 \XDR{I don't know what a \emph{copy rule} means. Besides, this is not
 any copying/unsharing, but the oppposite...}
 \Xalistair{Does the updated text help you?}
+\XDR{I now understand what you meant. It is better, as the rule you refer to
+is explicit. I still do not think it helps understand what S-Compress
+does. S-Inst-Copy propagate some structure and allocate some structure while
+S-Compress propayages and equality and its effect will be to share some
+structure}
 
 \parcomment{Lowering}
 
@@ -3867,12 +3885,6 @@ generalized if it depends on variables from outside the region. For
 instance, $\cexists \tvb \cunif \tv {\tvb \to \tvc}$ determines $\tvc$,
 as $\tv$ is free and therefore constrains the solution of $\tvc$.
 
-\XDR{The justification is not correct, as $\tv$ is also
-free but it is not determined by the constraint. (Indeed, it does not satisfy the
-syntactic criteria below.)}\XDR{I am not sure that this paragraph, starting
-with conceptually, helps.}
-\Xalistair{How about now?}
-
 \parcomment{How to decide the relation}
 
 To decide when $\cdetermines \c \tvs$, we introduce the judgment $\th
@@ -3901,9 +3913,10 @@ duplication of work that would otherwise occur via \Rule{S-Inst-Copy}. Because
 these variables are determined by monomorphic ones, lowering allows the solver
 to apply \Rule{S-Inst-Mono} directly at instantiation sites, rather than
 duplicating equivalent constraints that ultimately express the same semantic
-fact---that the variable is monomorphic and shared across instances. 
+fact---that the variable is monomorphic and shared across instances.
 
-\Xalistair{Didier, I rewrote this. What do you think?}
+\Xalistair{Didier, I rewrote this. What do you think?}\XDR{Perfect!}
+
 
 \paragraph{Suspended match constraints}
 
@@ -3938,14 +3951,23 @@ However, well-foundedness follows directly from the fact that in
 For a solved context $\hat\C$, this relation is moreover sound and complete
 with respect to the semantic definition of unicity (\cref{def:unicity}).
 
-\XDR{Rule \Rule {Uni-BackProp} assumes that $\ctrue$ appears in he premise,
+\XDR{Rule \Rule {Uni-BackProp} assumes that $\ctrue$ appears in the premise,
 which may require the reverse of \Rule {S-True}, which is not currently
-present. Hence, we may be fail to apply \Rule {Uni-BackProp} and be stuck.}
-%
+present.  Hence, we may fail to apply \Rule {Uni-BackProp} and be stuck.}
+
 \Xalistair{We don't get stuck. I don't see the problem here, the \Rule{Uni-*}
 rules simply looks for a multi-equation or apply back propagation. There is no
 solving here. It is an entirely different set of rules (hence the \Rule{Uni-}
 prefix instead of \Rule{S-})}
+
+\XDR{You are right: I mistakenly read \Rule{Uni-BackProp} as a rewritting rule...
+which is of course incorrect as $\Cshape \C \tv \sh$ is not a constraint
+but a predicate, defined by ``reasoning rules''.  I was fooled by the
+notation and was probably tired. Visually, we hardly see the difference
+between inference rules and rewritting rules. Perhaps, the text should
+emphasize that this is a predicate.}
+
+
 
 \subsection{Metatheory}
 
@@ -4063,6 +4085,14 @@ from the perspective of a reader, it might be preferable to stick with language
 that they may be familiar with. Also to the well-versed \OCaml compiler
 engineer, scopes have a different meaning (for GADTs)}
 
+\XDR{I did not mean to erase the original name, but suggest that level or
+ranks in fact \emph{represent} scopes.  (When I introduced ranks, I used to
+call pools what you now call regions, i.e. the store at each scope that
+collect all variables introduced in that scope.)  Levels or ranks suggest
+integers wile scopes do not carry this imnplicit restriction. So when we
+replace levels by a nodes of a tree, we just keep the same notionof scopes,
+but cannot just represent them by the length of their path from the root.}
+
 We must instead use a \emph{tree} of nested \Let-regions. Under this scheme,
 ranks no longer uniquely determine a variable's region.  Instead, we
 interpret a rank relative to a path in the region tree from the root. When
@@ -4075,8 +4105,11 @@ comparisons of generalization.
 
 \XDR{I find the description below too abstract to be reproduced}
 \Xalistair{What confuses you here?}
+\XDR{I am not confused and I can follow myself. But I think it is lacking
+details for someone else to reproduce it. Before we were short in
+space. Now, we have more space, so maybe you could detail it more.}
 
-Generalization is the process of determing which type variables are 
+Generalization is the process of determing which type variables are
 polymoprhic and which are monomorphic (\ie implementing \Rule{S-Lower-Exists}).
 \emph{Partial generalization} arises when a region cannot be fully
 generalized due to suspended constraints that may still update
@@ -4101,11 +4134,12 @@ into four categories:
     \emph{Awaiting re-generalization. Introduced by the unification of partial
     generics.}
 \end{itemize}
-At generalization time, we conservatively approximate whether a variable may be
-updated in the future using \emph{guards}. A guard is a mark on a variable that
-indicates the variable is captured by some suspended constraint that has not
-yet been solved. Guarded variables are generalized as partial generics (\textbf{PG});
-unguarded ones are fully generalized (\textbf{G}).
+At generalization time, we conservatively approximate whether a variable may
+be updated in the future using \emph{guards}. A guard is a mark on a
+variable that indicates the variable is captured by some suspended
+constraint that has not yet been solved. Guarded variables are generalized
+as partial generics (\textbf{PG}); unguarded ones are fully generalized
+(\textbf{G}).
 
 When an instance is taken from a partial generic, we retain a forward reference
 from the partial generic (\textbf{PG}) to the instance. This enables the
@@ -4128,9 +4162,13 @@ we re-generalize the stale descendants of the region in the region tree.
 \XDR{This suggest an optimal strategy, while I think we have none at the
 moment. We should not hide this.}
 
-\Xalistair{I don't see how lazy generalization implies optimality? To me, 
-it suggests that there is a degenerate case \ie one where you force the 
+\Xalistair{I don't see how lazy generalization implies optimality? To me,
+it suggests that there is a degenerate case \ie one where you force the
 re-generalization of a region multiple times.}
+
+\XDR{It does not imply it. I said it sugested it. Eeager generalization is
+innefficient (for those you know). Lazy generalization is better. So it is
+about efficiency.}
 
 \XDR{This section talk about the efficiency of the implementation. I think
 we should first remind that the worse case complexity is exponential (not
@@ -4153,6 +4191,26 @@ eagerly on generalization, but only when we need to access the type (\eg for
 unification and generalization). When we take an instance, instead of
 generalizing the region to take the instance, we just create a variable with a
 back pointer (just as we do in the pen and paper solver!)}
+
+\XDR{There might be good strategies, at least that do not introduce
+inefficiencies. But I do not undestant what you mean by a ``backpointer''.
+I do not either know what is \emph{the pen and paper solver}: is it drawing
+graphs on a board, or following our rewritting rules? Our rewritting rules
+cheat as they use auxiliary predicates  without telling how to implement
+them efficiently.
+
+My worry is how to arbitrate between too competing expensive operations:
+(1) instantiation and (2) monomorphization, which is I think what you call
+re-generalization. Doing (2) may avoid doing (1), which would then be
+followed by unification later on (perhaps much later on). But doing (2) may
+cost reviviting a lot of the generic structure and perphaps monomorphize
+nothing. Perhaps, we can amortized the cost of monomorphization.
+
+In the worst case, delayed constraints may require many instantiation and
+copy a lot of structure and at the very end force monomorphization that will
+unifies all the copies...
+}
+
 
 \section{Related work}
 \label{sec:related-work}
@@ -4260,7 +4318,7 @@ complete for GADTs, and we would be interested in studying this application.
 Polytypes are not \emph{higher-rank} in the usual sense; our interest in them
 stems from their role in \OCaml's inference of polymorphic methods. Many
 systems for higher-rank polymorphism exist; here we highlight a few in the
-context of \ML. 
+context of \ML.
 
 \MLF is an extension of \ML that supports first-class
 polymorphism that goes beyond the power of System $\mathsf{F}$, while retaining
@@ -4289,7 +4347,7 @@ provide a declarative account of type flow between arbitrary constructs, as
 required for omnidirectionality. More recently, \Frost \citep{frost} follows a
 similar line but extends it to handle $\eta$-expansion and introduces a
 freezing operator, akin to that of \FreezeML, that helps propagate type
-information when the default order of inference is insufficient. 
+information when the default order of inference is insufficient.
 
 \Xalistair{Didier, what do you think?}
 
@@ -4328,17 +4386,17 @@ poorly with \texttt{let}-polymorphism and therefore not supported in practice:
 We have solved this difficult interaction between disambiguation and
 \texttt{let}-polymorphism. In particular, we implemented tuples in our
 prototype and formalize their meta-theory in Appendix
-\cref{app:full-reference}; the system behaves as expected. 
+\cref{app:full-reference}; the system behaves as expected.
 
 We also remark that \PolySML~\citep*{sml-polyml} goes further than other \SML
-implementations on this front, supporting examples that even rely on 
+implementations on this front, supporting examples that even rely on
 back-propagation
 \begin{program}[input][deletekeywords={true,false}]
 > let fun fst r = #1 r in (fst (1, 2), fst (true, false)) end; °\polysmlflags 00°
 val it = (1, true): int * bool
 \end{program}
 
-\paragraph{Record field overloading in \GHC} 
+\paragraph{Record field overloading in \GHC}
 
 \Haskell 98 defines derives selector functions for each record field, an
 approach that precludes declaring two record types with the same field names
@@ -4351,7 +4409,7 @@ record labels,%
 }
 %
 and \GHC 8.0.1 (2016) added \texttt{DuplicateRecordFields}, allowing distinct
-record types with overlapping field names in the same module. 
+record types with overlapping field names in the same module.
 
 However, the \GHC developers found that type-based disambiguation using bidirectional type inference is not
 sufficiently predictible enough in practice for users. As a result, \GHC is gradually moving away from
@@ -4368,23 +4426,20 @@ ex_1 r = getField @"x" r
 \end{program}
 
 
-This \texttt{HasField} approach, however, does not extend to record fields with 
+This \texttt{HasField} approach, however, does not extend to record fields with
 polymorphic types,%
 %
 \footnote{
   \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html\#solving-hasfield-constraints}
 }
 %
-revealing difficulties in scaling it to features where the typing rule itself 
-depends on disambiguation---such as polymorphic records and GADT patterns in \OCaml.
-In contrast, omnidirectional inference naturally accommodates such non-uniformity 
-in typing rules. 
+revealing difficulties in scaling it to features where the typing rule
+itself depends on disambiguation---such as polymorphic records and GADT
+patterns in \OCaml.  In contrast, omnidirectional inference naturally
+accommodates such non-uniformity in typing rules.
 
-\XDR{Is
-is clear that they would fail with polymorphic record fields? Is it the
-HasField constraint that does not allow polytypes?} 
-
-\Xalistair{I added a link to where it discusses that polymorphic fields are not permitted. }
+\XDR{Are we sure that we can can ourselves do disambiguation
+with polymorphic record fields? I think so but I haven't checked.}
 
 \section{Conclusions}
 \label{sec:discussion}
