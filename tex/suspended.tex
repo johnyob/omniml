@@ -3773,15 +3773,16 @@ type is a variable rather than an arbitrary type.
 
 \parcomment{S-Match-Ctx}
 
-\Rule{S-Match-Ctx} (\cref{fig:solver-susp}) solves suspended match constraints when the surrounding
-context $\C$ \emph{proves} that the scrutinee $\t$ has the unique shape $\sh$,
-denoted $\th \Cshape \C \t \sh$.
+\Rule{S-Match-Ctx} (\cref{fig:solver-susp}) solves suspended match
+constraints when the surrounding context $\C$ \emph{proves} that the
+scrutinee $\t$ has the unique shape $\sh$, denoted $\th \Cshape \C \t \sh$.
 %
-\Rule{Uni-Type} handles the case when $\t$ is a non-variable type $\t$, in which
-case the shape is simply $\shape \t$. \Rule{Uni-Var} applies when the scrutinee
-is a variable $\tv$ and the context establishes that $\tv$ is equal to some
-non-variable type $\t$ by exhibiting an equality $\cunif \tv {\cunif \t \ueq}$
-and $\t$ is a non-variable type. In this case, the shape of $\tv$ is $\shape
+\Rule{Uni-Type} handles the case when $\t$ is a non-variable type $\t$, in
+which case the shape is simply $\shape \t$. \Rule{Uni-Var} applies when the
+scrutinee is a variable $\tv$ and the context establishes that $\tv$ is
+equal to some non-variable type $\t$ by exhibiting an equality $\cunif \tv
+{\cunif \t \ueq}$ and $\t$ is a non-variable type. In this case, the shape
+of $\tv$ is $\shape
 \t$.
 %
 Finally, \Rule{Uni-BackProp} expresses \emph{backpropagation}, previously
@@ -3816,7 +3817,8 @@ eventually reduces to an equivalent solved form.
 % May look like space hacks, but restatable introduces its own space
 
 \begin{definition}
-A constraint $\c$ is term-variable-closed if all its term variables $\x$ are bound \ie $\fvs \c \subseteq \TyVars$.
+A constraint $\c$ is term-variable-closed if all its term variables $\x$ are
+bound \ie $\fvs \c \subseteq \TyVars$.
 \end{definition}
 
 \begin{lemma}[Scope preservation]
@@ -3846,8 +3848,9 @@ If $\ca \csolve \cb$, then $\fvs \ca \supseteq \fvs \cb$.
 \end{restatable}
 
 \begin{corollary}[Correctness]
-  For the term-variable-closed constraint $\c$, $\c$ is satisfiable if and only if
-  $\c \csolve^* \hat\c$ and $\hat\c$ is a solved form equivalent to $\c$.
+  For the term-variable-closed constraint $\c$, $\c$ is satisfiable if and
+  only if\/ $\c \csolve^* \hat\c$ and $\hat\c$ is a solved form equivalent
+  to $\c$.
 \end{corollary}
 
 \section{Implementation}
