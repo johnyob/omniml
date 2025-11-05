@@ -104,8 +104,8 @@
 \newcommand{\unif}{\longrightarrow}
 \newcommand{\Determines}{\mathinfix{determines}}
 \newcommand{\cdetermines}[2]{#1 \Determines #2}
-\newcommand{\cyclic}[1]{\mathprefix{cyclic}(#1)}
-\newcommand{\acyclic}[1]{\mathprefix{acyclic}(#1)}
+\newcommand{\cyclic}[1]{\mathsf{cyclic}(#1)}
+\newcommand{\acyclic}[1]{\neg\cyclic{{#1}}}
 \newcommand{\trivial}[1]{\mathprefix{trivial}(#1)}
 
 % Semantics
@@ -158,6 +158,7 @@
 \newcommand{\tapoly}[2]{\tpoly{#1}^{#2}}
 \newcommand{\tunit}{1}
 \newcommand{\tint}{\mathsf{int}}
+\newcommand{\tfloat}{\mathsf{float}}
 \newcommand{\tbool}{\mathsf{bool}}
 \newcommand{\tlist}{\mathpostfix{list}}
 \newcommand{\trec}[2]{\mathprefix{rec}#1.#2}
