@@ -1,3 +1,8 @@
+%% Fixing useless warning
+\AtBeginDocument
+ {\let \@vspace@acm \@vspace@orig
+  \let \@vspacer@acm \@vspacer@orig}
+
 \newcommand{\Not}{\BNot}
 \newcommand \Short {\Not\Long}
 

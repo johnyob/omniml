@@ -302,6 +302,9 @@ within \OCaml.
 \subsection{Static overloading of constructors and record labels}
 \label{sec/overview/overloading}
 
+\XDR{We never say nor show that we do not use field types for
+disambiguation, which the reader could expect}
+
 \parcomment{What do we mean by static overloading?}
 
 \emph{Static overloading} denotes a form of overloading in which resolution is
@@ -1669,7 +1672,7 @@ $\t$ iff:
 \end{enumerate}
 \end{definition}
 
-\begin{restatable}[Principal shapes]{theorem}{principalShapes}
+\begin{restatable}[Principal shapes]{theorem}{principalShapesBIS}
   \label{thm:principal-shapes}
 Any non-variable type $\t$ has a non-trivial principal shape $\Sh$.
 \end{restatable}
@@ -2997,7 +3000,7 @@ A closed \OML term $\e$ is typable if and only if
 the constraint $\cexists \tv {\cinfer \e \tv}$ is satisfiable.
 \end{theorem}
 
-\begin{restatable}[Principal types]{theorem}{principalTypes}
+\begin{restatable}[Principal types]{theorem}{principalTypesBIS}
 \label{thm:principal-types}
 For any well-typed closed \OML term $\e$, there exists a type $\t$
 %% , which we call principal,
@@ -4004,12 +4007,12 @@ If $\ca \csolve \cb$, then $\fvs \ca \supseteq \fvs \cb$.
 \end{theorem}
 
 \vskip -\lastskip
-\begin{restatable}[Termination]{theorem}{termination}
+\begin{restatable}[Termination]{theorem}{terminationBIS}
   \label{thm:termination}
   The constraint solver terminates on all inputs.
 \end{restatable}
 \vskip -\lastskip
-\begin{restatable}[Preservation]{theorem}{preservation}
+\begin{restatable}[Preservation]{theorem}{preservationBIS}
   \label{thm:preservation}
   If $\ca \csolve \cb$, then $\ca \cequiv \cb$.
 \end{restatable}
@@ -4442,8 +4445,14 @@ itself depends on disambiguation---such as polymorphic records and GADT
 patterns in \OCaml.  In contrast, omnidirectional inference naturally
 accommodates such non-uniformity in typing rules.
 
+\XDR{Reading the Haskell doc, I thought that HasField was using the type of
+the field to disambiguate, but trying examples it apparently does not
+(neither do we).}
+
+
 \XDR{Are we sure that we can can ourselves do disambiguation
-with polymorphic record fields? I think so but I haven't checked.}
+with polymorphic record fields? Well, sine we do not use
+the type of fields, yes we do. But that's not a big deal.}
 
 \section{Conclusions}
 \label{sec:discussion}
@@ -5748,7 +5757,7 @@ soundness and completeness in \cref{app/oml/proofs}.
 
 \subsection{Principality of shapes}
 
-\principalShapes*
+\principalShapesBIS*
 \begin{proof}
   Let us assume $\t$ is a non-variable type.
 
@@ -6815,7 +6824,7 @@ generally in our system.
   \end{proof}
 \end{lemma}
 
-\preservation*
+\preservationBIS*
 \newcommand{\unifPf}[3]{\Pf{#1}{\unif}{#2}{#3}}
 \newcommand{\equivctxPf}[3]{\Pf{#1}{\cequivctx}{#2}{#3}}
 \newcommand{\ctxequivPf}[3]{\Pf{#1}{\cctxequiv}{#2}{#3}}
@@ -7518,7 +7527,7 @@ rules that are not inherently destructive.
   \end{proof}
 \end{lemma}
 
-\termination*
+\terminationBIS*
 \begin{proof}
   The difficulty for termination comes from the ``suspended match discharge'' rule
   \Rule{S-Match-Ctx} which can make arbitrary
@@ -8045,7 +8054,7 @@ and $\sub(\tvs) = \tys$.
 
 \subsection{Principal types}
 
-\principalTypes*
+\principalTypesBIS*
 \begin{proof}
 
 Let $\e$ be an arbitrary closed well-typed term; that is, there exists a type
