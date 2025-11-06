@@ -31,6 +31,7 @@
 \define@key {metavar}{j}[]{\metavar@jtrue}
 \define@key {metavar}{k}[]{\metavar@ktrue}
 \define@key {metavar}{s}[]{\metavar@strue}
+\define@key {metavar}{S}[]{\metavar@sfalse}
 \define@key {metavar}{n}[]{\metavar@ntrue}
 \define@key {metavar}{as}[]{\metavar@astrue}
 \define@key {metavar}{bs}[]{\metavar@bstrue}
@@ -51,17 +52,19 @@
   \mva@newcommand {#2}{ap}{{#3_1'}}%
   \mva@newcommand {#2}{bp}{{#3_2'}}%
   \let \mva@do \empty%
-  \def \mva@add ##1##2{\g@addto@macro \mva@do{\mva@newcommand{#2}{##1}{##2}}}%
+  \def \mva@add ##1##2{%
+    \csname ifmetavar@##1\endcsname
+       \g@addto@macro \mva@do{\mva@newcommand{#2}{##1}{##2}}\fi}%
   \begingroup
   \setmetavar{#1}%
-  \ifmetavar@i  {#2}{i}{{#3_i}}\fi%
-  \ifmetavar@j \mva@add{j}{{#3_j}}\fi%
-  \ifmetavar@k \mva@add{k}{{#3_k}}\fi%
-  \ifmetavar@n \mva@add{n}{{#3_n}}\fi%
-  \ifmetavar@s \mva@add{s}{{\bar #3}}\fi%
-  \ifmetavar@as \mva@add{as}{{\bar #3_1}}\fi%
-  \ifmetavar@bs \mva@add{bs}{{\bar #3_2}}\fi%
-  \ifmetavar@ps \mva@add{ps}{{\bar #3'}}\fi%
+  \mva@add{i}{{#3_i}}%
+  \mva@add{j}{{#3_j}}%
+  \mva@add{k}{{#3_k}}%
+  \mva@add{n}{{#3_n}}%
+  \mva@add{s}{{\bar #3}}%
+  \mva@add{as}{{\bar #3_1}}%
+  \mva@add{bs}{{\bar #3_2}}%
+  \mva@add{ps}{{\bar #3'}}%
   \endgroup
   \mva@do
   \let \mva@do \empty

@@ -590,7 +590,8 @@ For example, $\efun {\x : \tapoly \ts {}}
 {\einst \x}$, which is syntactic sugar for $\efun \x {\elet \x {(\x : \tapoly
 \ts {})} {\einst \x}}$, is well-typed because the explicit annotation
 introduces a fresh variable annotation $\ava$, which can then be generalized,
-yielding $\tfor \ava {\tapoly \ts \ava}$ for the type of the let-bound variable $\x$.
+yielding $\tfor \ava {\tapoly \ts \ava}$ for the type of the let-bound
+variable $\x$.
 
 \subsection{Directional type inference}
 \label{sec/overview/directional}
@@ -1133,6 +1134,7 @@ Moreover, these simpler approaches typically lack a declarative semantics that
 justify rejecting programs with unresolved disambiguation choices.
 
 \subsection{Limitations}
+\label{sec/overview/limitations}
 
 % 1. Our framework is complex --- as a result, everything is hard ://
 % 2. Some programs are ill-typed even though they have a principal type.
@@ -1861,14 +1863,15 @@ self-justifying cycles in unicity and rules out ``out-of-thin-air'' guesses.
 
 \parcomment{Well-foundedness}
 
-The attentive reader may notice that our unicity conditions contain a negative
-occurrences of the typing judgment. At first glance, this seems problematic for
-well-foundedness. However, the issue is easily resolved by noting that these
-occurrences arise only as typing assumptions on erased terms, which do not
-themselves involve any implicit rules. Formally one could make this explicit by
-introducing a restricted typing judgement $\G \throbust \e : \t$ that exlcudes the
-implicit rules (\Rule{*-I}), and by using this strictly simpler judgment
-in the antecedent of unicity conditions. We omit this distinction for simplicity.
+The attentive reader may notice that our unicity conditions contain a
+negative occurrences of the typing judgment. At first glance, this seems
+problematic for well-foundedness. However, the issue is easily resolved by
+noting that these occurrences arise only as typing assumptions on erased
+terms, which do not themselves involve any implicit rules. Formally one
+could make this explicit by introducing a restricted typing judgement $\G
+\throbust \e : \t$ that exlcudes the implicit rules (\NoRule{*-I}), and by
+using this strictly simpler judgment in the antecedent of unicity
+conditions. We omit this distinction for simplicity.
 
 \paragraph{The omnidirectional recipe}
 %
@@ -3955,10 +3958,10 @@ with respect to the semantic definition of unicity (\cref{def:unicity}).
 which may require the reverse of \Rule {S-True}, which is not currently
 present.  Hence, we may fail to apply \Rule {Uni-BackProp} and be stuck.}
 
-\Xalistair{We don't get stuck. I don't see the problem here, the \Rule{Uni-*}
+\Xalistair{We don't get stuck. I don't see the problem here, the \NoRule{Uni-*}
 rules simply looks for a multi-equation or apply back propagation. There is no
-solving here. It is an entirely different set of rules (hence the \Rule{Uni-}
-prefix instead of \Rule{S-})}
+solving here. It is an entirely different set of rules (hence the \NoRule{Uni-}
+prefix instead of \NoRule{S-})}
 
 \XDR{You are right: I mistakenly read \Rule{Uni-BackProp} as a rewritting rule...
 which is of course incorrect as $\Cshape \C \tv \sh$ is not a constraint
@@ -4046,7 +4049,7 @@ responsible for eventually solving them.
 
 \paragraph{From a stack to a tree}
 
-% To implement generalization (the \Rule{S-Lower-Exists} rule)
+% To implement generalization (the \Rule{S-Exists-Lower} rule)
 % efficiently, we follow the classic rank-based approach to
 % generalization. Each $\Let$ constraint and type variable is allocated
 % an integer \emph{rank}, which informs us the depth of the region
@@ -4110,7 +4113,7 @@ details for someone else to reproduce it. Before we were short in
 space. Now, we have more space, so maybe you could detail it more.}
 
 Generalization is the process of determing which type variables are
-polymoprhic and which are monomorphic (\ie implementing \Rule{S-Lower-Exists}).
+polymoprhic and which are monomorphic (\ie implementing \Rule{S-Exists-Lower}).
 \emph{Partial generalization} arises when a region cannot be fully
 generalized due to suspended constraints that may still update
 its variables. To manage this, we classify type variables
@@ -4152,7 +4155,7 @@ is either lowered or fully generalized.
 Once a suspended match constraint is solved, it removes the guards it
 introduced. This may enable previously partial generics to become fully
 generalizable. Conversely, if a partially generalized variable is lowered (\eg
-by \Rule{S-Lower-Exists}), it must be unified with all its instances.
+by \Rule{S-Exists-Lower}), it must be unified with all its instances.
 
 \paragraph{Lazy generalization} Repeatedly generalizing a region after every
 update is expensive.  Instead we generalize on demand. We mark regions as
@@ -4330,8 +4333,9 @@ effectively scale \MLF to the rest of \OCaml's features.
 variables can be \emph{frozen}, written $\lceil x \rceil$, and only allowing
 instantiation on ordinary (unfrozen) variables $x$. Unlike polytypes,
 \FreezeML permits higher-rank types directly in the syntax of types, though these
-can be encoded back into polytypes. The essential difference is that generalization
-of higher-rank types is implicit, inferring the most-general type (if one exists).
+can be encoded back into polytypes. The essential difference is that
+generalization of higher-rank types is implicit, inferring the most-general
+type (if one exists).
 
 \QuickLook \citep{journals/pacmpl/SerranoHJV20}, \Haskell's latest approach at
 impredicative higher-rank polymorphism, uses bidirectional propagation to take
@@ -4339,7 +4343,7 @@ a ``quick look'' at the spine of an application to guide instantiation of
 higher-rank functions. This permits \emph{argument reordering}, by allowing
 later arguments to influence the type of earlier ones within the same
 application spine. It mitigates the order-dependence of fixed directionality
-(\cref{sec/overview/directionality}) but still enforces a global direction of
+(\cref{sec/overview/directional}) but still enforces a global direction of
 type propagation between surrounding constructs (\eg \Let-bindings). In this
 sense, \QuickLook is \emph{locally omnidirectional} but \emph{globally
 directional}: they reduce order sensitivity within applications, but do not
@@ -4349,7 +4353,6 @@ similar line but extends it to handle $\eta$-expansion and introduces a
 freezing operator, akin to that of \FreezeML, that helps propagate type
 information when the default order of inference is insufficient.
 
-\Xalistair{Didier, what do you think?}
 
 \paragraph{Type-based disambiguation in \SML}
 
@@ -4419,7 +4422,8 @@ constraints of the form \code{HasField a "foo" b} (\texttt{OverloadedRecordDot},
 \footnote{
   \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html}
 }
-For instance, the projection \code{ex_1} from \cref{sec/overview/overloading} would be written as:
+For instance, the projection \code{ex_1} from
+\cref{sec/overview/overloading} would be written as:
 \begin{program}[input]
 ex_1 :: HasField a "x" b => a -> b
 ex_1 r = getField @"x" r
@@ -5744,7 +5748,7 @@ soundness and completeness in \cref{app/oml/proofs}.
 
 \subsection{Principality of shapes}
 
-\principalShapes
+\principalShapes*
 \begin{proof}
   Let us assume $\t$ is a non-variable type.
 
@@ -6343,7 +6347,7 @@ composability property.
 	      \shapePf{\Cp}{\tp}{\shp}{Premise}
 	      \eqPf{\shape \gtp}{\shp}{$\implies$E on $\Cshape \Cp \tp \shp$}
 	      \shapePf{\Ctwo\where{\cmatched \t \sh \cbrs, \hole}}{\tp}{\shp}{Above}
-\Hand 	      \VdashPf{\semenv}{\Ctwo\where{\cmatched \t \sh \cbrs, \cmatch \tp \cbrs'}}{By \Rule{Con-Match-Ctx}}
+\Hand 	      \VdashPf{\semenv}{\Ctwo\where{\cmatched \t \sh \cbrs, \cmatch \tp \cbrs'}}{By \Rule{Can-Match-Ctx}}
 	    \end{llproof}
 	\end{proofcases}
     \end{proofcases}
@@ -6767,7 +6771,7 @@ generally in our system.
         \\
 
         \Wlog all constraints that may determine the shape of $\tv$ are located
-        with the regional binder (following the \Rule{S-Lower-Exists} and
+        with the regional binder (following the \Rule{S-Exists-Lower} and
         \Rule{S-Let-ConjLeft} rules). There are two cases:
 
         \begin{proofcases}
@@ -6811,7 +6815,7 @@ generally in our system.
   \end{proof}
 \end{lemma}
 
-\preservation
+\preservation*
 \newcommand{\unifPf}[3]{\Pf{#1}{\unif}{#2}{#3}}
 \newcommand{\equivctxPf}[3]{\Pf{#1}{\cequivctx}{#2}{#3}}
 \newcommand{\ctxequivPf}[3]{\Pf{#1}{\cctxequiv}{#2}{#3}}
@@ -6866,8 +6870,10 @@ generally in our system.
 
       \proofcase{\Rule{S-Let}, \Rule{S-True}, \Rule{S-False},
       \Rule{S-Let-ExistsLeft},
-      \Rule{S-Let-Exists-InstLeft}, \Rule{S-Let-ExistsRight},
-      \Rule{S-Let-Exists-InstRight}, \Rule{S-Let-ConjLeft},
+      \XDR[No longer exists]{Rule{S-Let-Exists-InstLeft},}
+      \Rule{S-Let-ExistsRight},
+      \XDR[No longer exists]{Rule{S-Let-Exists-InstRight},}
+      \Rule{S-Let-ConjLeft},
       \Rule{S-Let-ConjRight}, \Rule{S-Inst-Name}, \Rule{S-Exists-Exists-Inst},
       \Rule{S-Exists-Inst-Conj}, \Rule{S-Exists-Inst-Let}, \Rule{S-Exists-Inst-Solve},
       \Rule{S-All-Conj}}
@@ -7381,7 +7387,7 @@ generally in our system.
 		  So we can apply \Rule{S-Inst-Poly}.
 
 		  \proofcase{$\cexists {\tv, \tvs} \ueqs \cnequiv \ctrue$}
-		  Apply \Rule{S-Lower-Exists} (using the same logic as above).
+		  Apply \Rule{S-Exists-Lower} (using the same logic as above).
 
 		\end{itemize}
 
@@ -7512,7 +7518,7 @@ rules that are not inherently destructive.
   \end{proof}
 \end{lemma}
 
-\termination
+\termination*
 \begin{proof}
   The difficulty for termination comes from the ``suspended match discharge'' rule
   \Rule{S-Match-Ctx} which can make arbitrary
@@ -8039,7 +8045,7 @@ and $\sub(\tvs) = \tys$.
 
 \subsection{Principal types}
 
-\principalTypes
+\principalTypes*
 \begin{proof}
 
 Let $\e$ be an arbitrary closed well-typed term; that is, there exists a type
@@ -8313,7 +8319,6 @@ may be needed. In any case, experimentation will be needed to
 understand whether this is a critical issue.
 \end{version}
 \end{version}
-
 
 \clearpage
 \setcounter{tocdepth}{1}
