@@ -322,11 +322,27 @@ labels and datatype constructors. Ambiguity is resolved using \emph{known
 type information} under its directional inference algorithm (discussed in
 \cref{sec/overview/directional}).
 %
-To illustrate static overloading in \OCaml, consider two nominal record types with
-overlapping field names:
+To illustrate static overloading in \OCaml, consider two nominal
+record types with overlapping field names:
+%% Fixing the wierd page break
+%% Option 1: insert a page break, manually.
+%% Option 2: just add a vertical penalty, manually.
+%%
+%% (1) looks nicer when there is a page break, but is wrong otherwise.
+%% (2) is always correct but looks not so nice when there is a break.
+%%
+%% \begin{program}[input]
+%% type point      = { x : int; y : int }
+%% \end{program}
+%% \pagebreak
+%% \begin{program}[input=0em]
+%% type gray_point = { x : int; y : int; color : int }
+%% \end{program}
+%%
 \begin{program}[input]
 type point      = { x : int; y : int }
-type gray_point = { x : int; y : int; color : int }
+type gray_point = { x : int; y : int; color : int } °
+\vadjust {\penalty 10000}°
 \end{program}
 With both definitions in scope, \OCaml must statically disambiguate each
 field usage:
@@ -4444,6 +4460,7 @@ revealing difficulties in scaling it to features where the typing rule
 itself depends on disambiguation---such as polymorphic records and GADT
 patterns in \OCaml.  In contrast, omnidirectional inference naturally
 accommodates such non-uniformity in typing rules.
+p[ro
 
 \XDR{Reading the Haskell doc, I thought that HasField was using the type of
 the field to disambiguate, but trying examples it apparently does not
