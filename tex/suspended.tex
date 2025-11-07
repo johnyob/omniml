@@ -1410,7 +1410,7 @@ By contrast, the natural typing rule for the overloaded projections $\efield \e
 
 To restore principality for overloaded projections, we require that the type of
 $\e$ be \emph{known}---that is, determined to be a specific record type $\trcd
-{\T_0} \tys$, rather than merely \emph{guessed}. As discussed earlier
+\T \tys$, rather than merely \emph{guessed}. As discussed earlier
 (\cref{sec/overview/omni/unicity}), this requirement is expressed via a
 \emph{unicity condition}, giving rise to the contextual rule \Rule{Rcd-Proj-I}
 (\cref{fig/oml/typing/I}), which elaborates the fragile overloaded projection
@@ -1481,11 +1481,11 @@ following expressions:
     record annotation $\labfrom {\_} \T$ indicates that the labels unambiguously
   belong to the record type $\T$.
 \TODO{Decide on an ultimate syntax for explicit projections and explicit records.
-Didier proposes $\e.\T/\elab$, Alistair proposes $\e.\T.\elab$, Gabriel proposes $\e.\elab^\T$.
+Didier proposes $\e.\T/\elab$, Alistair proposes $\e.\T.\elab$, Gabriel proposes $\e.\elab^\T$ and $e.\elab@\T$.
 For records we have $\T / \erecord { \elab = \e }$,
 or $\T.\erecord { \elab = \e }$,
-or $\erecord { \elab = \e }^\T$.
-Currently trying $\e.\elab@\T$.
+or $\erecord { \elab = \e }^\T$,
+or $\erecord { \elab = \e }@\T$.
 }
 \end{itemize}
 All annotations in \OML are closed \ie their quantified variables $\tvs$ are
