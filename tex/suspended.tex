@@ -3961,51 +3961,36 @@ fact---that the variable is monomorphic and shared across instances.
 \parcomment{S-Match-Ctx}
 
 \Rule{S-Match-Ctx} (\cref{fig:solver-susp}) solves suspended match
-constraints when the surrounding context $\C$ \emph{proves} that the
-scrutinee $\t$ has the unique shape $\sh$, denoted $\th \Cshape \C \t \sh$.
-%
-\Rule{Uni-Type} handles the case when $\t$ is a non-variable type $\t$, in
-which case the shape is simply $\shape \t$. \Rule{Uni-Var} applies when the
-scrutinee is a variable $\tv$ and the context establishes that $\tv$ is
-equal to some non-variable type $\t$ by exhibiting an equality $\cunif \tv
-{\cunif \t \ueq}$ and $\t$ is a non-variable type. In this case, the shape
-of $\tv$ is $\shape
-\t$.
-%
-Finally, \Rule{Uni-BackProp} expresses \emph{backpropagation}, previously
-illustrated in \cref{ex:backprop}. In particular, the shape of a regional
-variable can sometimes be determined from its instantiations. If an
-abstraction contains a regional variable $\tvp$, and the constraint context
-includes an incremental instantiation $\cpapp \x \tvp \tvc \inst$ together
-with a proof that the copy of $\tvc$ has the unique shape $\sh$. Then $\tvp$
-must also have shape $\sh$, as any other shape would render the
-instantiation unsatisfiable.
+constraints. It would not be effective to allow rewriting whenever the
+unicity condition $\Cshape \C \t \sh$ holds, because it is not
+a-priori feasible to check or decide this semantic condition which
+quantifies over all solutions. Instead we introduce a restricted,
+decidable subset of the unicity condition that relies on syntactic
+conditions, which we describe as three ``unicity rules'' for a judgment
+written $\th \Cshape \C \t \sh$.
 
-This final case (\Rule{Uni-BackProp}) may raise concerns about the
-well-foundedness of $\th \Cshape \C \t \sh$.
-However, well-foundedness follows directly from the fact that in
-\Rule{Uni-BackProp} the regional depth of the hole strictly decreases.
-%
-For a solved context $\hat\C$, this relation is moreover sound and complete
-with respect to the semantic definition of unicity (\cref{def:unicity}).
+The unicity rule \Rule{Uni-Type} applies when $\t$ is a non-variable
+type $\t$, in which case the shape is simply $\shape \t$. The unicity
+rule \Rule{Uni-Var} applies when the scrutinee is a variable $\tv$ and
+the context establishes that $\tv$ is equal to some non-variable type
+$\t$ by exhibiting an equality $\cunif \tv {\cunif \t \ueq}$ and $\t$ is
+a non-variable type. In this case, the shape of $\tv$ is $\shape \t$.
 
-\XDR{Rule \Rule {Uni-BackProp} assumes that $\ctrue$ appears in the premise,
-which may require the reverse of \Rule {S-True}, which is not currently
-present.  Hence, we may fail to apply \Rule {Uni-BackProp} and be stuck.}
+Finally, the unicity rule \Rule{Uni-BackProp} expresses
+\emph{backpropagation}, previously illustrated in \cref{ex:backprop}. In
+particular, the shape of a regional variable can sometimes be determined
+from its instantiations. If an abstraction contains a regional variable
+$\tvp$, and the constraint context includes an incremental instantiation
+$\cpapp \x \tvp \tvc \inst$ such that the instance $\tvc$ of $\tvp$ has
+the unique shape $\sh$, then $\tvp$ must also have shape $\sh$, as any
+other shape would render the instantiation unsatisfiable. This rule is
+well-founded because the regional depth of the hole strictly decreases
+in the premise.
 
-\Xalistair{We don't get stuck. I don't see the problem here, the \NoRule{Uni-*}
-rules simply looks for a multi-equation or apply back propagation. There is no
-solving here. It is an entirely different set of rules (hence the \NoRule{Uni-}
-prefix instead of \NoRule{S-})}
-
-\XDR{You are right: I mistakenly read \Rule{Uni-BackProp} as a rewritting rule...
-which is of course incorrect as $\Cshape \C \tv \sh$ is not a constraint
-but a predicate, defined by ``reasoning rules''.  I was fooled by the
-notation and was probably tired. Visually, we hardly see the difference
-between inference rules and rewritting rules. Perhaps, the text should
-emphasize that this is a predicate.}
-
-
+For a solved context $\hat\C$, this syntactic is moreover sound and
+complete with respect to the semantic definition of unicity:
+$\Cshape \C \tau \sh$ holds if and only if $\th \Cshape \C \tau \sh$ is
+derivable.\Xgabriel{Is this proved somewhere?}
 
 \subsection{Metatheory}
 
