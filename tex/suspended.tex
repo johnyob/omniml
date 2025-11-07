@@ -3374,27 +3374,6 @@ is either a solved form---from which we can read off a most general
 solution---or unsatisfiable (if the constraint
 $\c$ is closed).
 
-\XDR{The solved forms may also be $\cfalse$: We have two cases of errors,
-explicit errors $\cfalse$ when unification clashes or implicit errors as
-stuck configurations (other forms that do not reduce). We could consider
-that $\cfalse$ is a stuck constraint, but this is not the
-usage/conunter-intuitive. In case case we should be explicit about this.}
-
-\Xalistair{Disagree, the solver is designed \emph{not} to normalize everything
-to $\cfalse$. $\cfalse$ is just one example of a stuck constraint. This
-solver is not like the EMLTI solver (this is on purpose, as it makes life
-easier)}
-
-\XDR{I think you misunderstood me: I know and agree with what you said.
-What I meant is that the statement above is then incorrect, since there are
-3 cases and not 2: false, solved form, or stuck. Since by solved form, you
-mean that you can build a solution, this excludes false. Unless by stuck you
-also mean false, which is rather unusual: then we'd better be explicit.}
-
-\Xgabriel{I reformulated as ``either a solved constraint or unsatisfiable'' -- it was sort of tautologic to say that a constraint that does not reduce is either a value or stuck. I agree that we should be clear if we consider $\cfalse$ as a stuck constraint (where is the definition of stuck constraints?), but this technical point should not be clarified here, which is an informal introductory paragraph, but later on.}
-
-\Xalistair{Also good with this fix}
-
 \subsection{Unification}
 
 Our constraints ultimately reduce to equations between types, which we solve
