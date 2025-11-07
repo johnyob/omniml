@@ -114,21 +114,7 @@ declaratively is difficult.
 Existing approaches typically rely on one of two frameworks:
 \emph{bidirectional} type inference \citep*{conf/popl/PierceT98} and
 \emph{\geninst-directional} inference~\citep*{Garrigue-Remy/poly-ml}. Both
-impose some \emph{static} ordering of inference \Xjeremy{I'm not sure
-``static'' vs ``dynamic'' is the best characterisation; the
-disticntion seems to me more like syntactic-order vs dependency-order (or even semantic-order). ``Syntactic order'' aims to make clear the way in which the bi- and $\pi$- schemes fall short: they make type checking sensitive to syntax changes, even those that don't affect dependencies or static semantics, such as reordering fields in a record constructor.} 
-%
-\Xalistair{The distiction between ``static'' and ``dynamic'' is made from the
-perspective of the constraint solver. In bidirectional /
-\geninst-directional, the solver follows some fixed constraint solving order, hard-wired into the inference algorithm (and even twist the type systems just to retain completeness!).
-By contrast, an omnidirectional solver finds an order dynamically, as it solving
-the constraints. I concur that, from the viewpoint of a type system, the terms 
-syntactic / dependency-order are clearer. However, I still prefer the 
-phrasing of ``static'' vs ``dynamic''; they are shorter (and therefore sweeter) 
-and (to me) still highlights rigidity of 
-bidirectionality / \geninst-direct-ionality. }
-%
-using
+impose some \emph{static} ordering of inference using
 it to propagate inferred types and user-provided annotations as known
 information.
 %
@@ -140,9 +126,6 @@ when it is:
   \item supplied as input to a checking {conclusion} ($\G \th e \Leftarrow \t$); or
   \item an output of a synthesizing {premise} ($\G \th \e \Rightarrow \t$).
 \end{enumerate*}
-\XDR{We still do not see the difference between being a premise or a
-conclusion}\relax
-\Xalistair{I added some colours. Does this help?}
 %
 While effective in many settings, the rigidity of a static ordering causes even
 simple examples---whose types could easily be guessed---to be rejected; for
@@ -186,9 +169,7 @@ Thus far, we have developed:
 
   \item A sound, complete, and \emph{principal} constraint-based inference
     algorithm for \OML, along with an efficient prototype implementation 
-    available at \url{https://github.com/johnyob/mlsus}.
-    \Xalistair{On reflection of including this, I think I ought to rename the
-    repository to \code{omniml}.}
+    available at \url{https://github.com/johnyob/omniml}.
 
   \item A novel constraint language for omnidirectional inference, equipped
     with a declarative semantics for suspended constraints using a new

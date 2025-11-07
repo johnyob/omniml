@@ -2,7 +2,7 @@ PRJ = suspended suspended.final suspended.draft wits
 
 LATEXMK = latexmk -bibtex -pdf -outdir=_build -auxdir=_build
 
-SOURCES=$(shell find . -name '*.tex' -or -name '*.bib' -or -name '*.sty')
+SOURCES=$(shell find . -name '*.tex' -or -name '*.bib' -or -name '*.sty' -or -name '*.cfg')
 
 BUILD=_build
 
@@ -16,6 +16,8 @@ wits: wits.pdf
 
 wits-final: wits.final.pdf
 
+wits-submit: wits.submit.pdf
+
 all: $(addsuffix .pdf,${PRJ})
 
 %.log: %.pdf
@@ -27,7 +29,7 @@ all: $(addsuffix .pdf,${PRJ})
 
 .PRECIOUS: %.pdf
 
-%.pdf: %.tex %.cfg ${SOURCES}
+%.pdf: %.tex ${SOURCES}
 	@mkdir -p $(BUILD)
 	$(LATEXMK) $* || (cp $(BUILD)/$@ . && false)
 	cp $(BUILD)/$@ .
