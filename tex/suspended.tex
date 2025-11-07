@@ -3630,6 +3630,10 @@ containing suspended constraints.
   convey: we cannot make $\Let$ monomorphic, we cannot apply $\beta$-reduction.
   The previous example demonstrates the former but not the latter.}
 %
+\Xgabriel{I am fine with the new writing and I propose to leave it at that, but for the record I feel that there are several points to be made, I don't know if we should try to handle them together or separately, and it is not obvious that everything is covered. A first point worth making is that (A) the constraint-duplication rule is inefficient, so ML engines generalize eagerly. Then one can point (as you do here) that (B) duplication in fact becomes incorrect in our setting. One can also point out independently that (C) it is not obvious how to generalize 'eagerly' in presence of suspended constraints. I also tried to say that (D) when we encounter a use of the term variable later on, suspended the instantiation completely would be incomplete (note: this does not require back-propagation, as I already observed this with Olivier before we introduced the idea of back-propagation), and finally (E) back-propagation can occur. The previous structure talked about (A) first and then (C, D) (and (E) in passing but it was not the focus). The new structure talks about (B) first, then (A), and then (E) (reading (D) between the lines). My favorite treatment of this discussion would be to explain (A) first (it corresponds to previous work), then (B) as a remark, then (C) and (D) together which I think are the key take-aways. Then we could remark (E) that we obtain back-propagation as an emergent property of the design (with the same example or a different example, depending on what we find that is simple and natural).}
+
+
+ (this is interesting and worth pointing out, but I don't know that it is required to explain incremental generalization; it could be said separately, maybe first). We can also point out that we are stuck during generalization }
 
 \begin{local}
 \def \xgetx{{\ttlab {getx}}}
