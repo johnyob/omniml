@@ -3519,6 +3519,9 @@ abstraction with a region, written $\semenv(\cabsr \tv \tvs \c)$, is a set of
 \emph{ground regions} that satisfy $\c$. A ground region $\gr$ is a satisfying
 interpretation $\semenvp$ for the region with a designated \emph{root} variable
 $\tv$, written $\greg \tv \semenvp$.
+\Xgabriel{I would consider changing $(\alpha, \phi)$
+into $(\tau, \phi)$ where $\tau$ is $\phi(\alpha)$.
+Alistair is okay.}
 Regional \Let-constraints strictly
 generalize ordinary let constraints, as captured by the equivalence:
 \begin{mathpar}
@@ -4049,7 +4052,7 @@ responsible for eventually solving them.
 % generalization at a given region consists precisely of those
 % whose rank remains equal to that of the region.
 
-Efficient \ML implementations, for example \Inferno\XDR{This was already
+Some efficient \ML implementations, for example \Inferno\XDR{This was already
 present in my implementation of \citep*{Remy/mleth}}\Xalistair{We can attribute both. I think 
 Inferno is a prime example of what a good implementation of rank-based generalization looks like, 
 and is often what I point people towards when they're interested in my work}, represent the solver
