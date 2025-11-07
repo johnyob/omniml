@@ -2320,9 +2320,15 @@ which consist of:
 
 \item
 
-  A list of branches $\cbrs$ of the form $\cbranch \cpat \c$, where $\cpat$ is
-  a shape pattern. The constraint $\c$ is solved in the extended context
-  produced by the matching pattern.
+  A list of branches $\cbrs$ of the form $\cbranch \cpat \c$, where
+  $\cpat$ is a shape pattern.\footnote{The match constraints in this
+    paper only use a single branch; but in a larger language there
+    would be use-cases for having several branches; for example,
+    record projection could be overloaded to work both on nominal
+    records and on tuples (or objects, modules, etc.), requiring
+    several branches in its generated constraint. So we kept the
+    general syntax.} The constraint $\c$ is solved in the extended
+  context produced by the matching pattern.
 
   For example, the wildcard pattern $\cpatwild$ matches any shape,
   and binds nothing.
