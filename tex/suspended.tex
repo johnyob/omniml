@@ -273,9 +273,12 @@ The subsequent sections present our main contributions:
   \item[(\cref{sec:solving})]
 
     A formal definition of our constraint solver as a series of
-    non-deterministic rewriting rules. Here, we detail our treatment
-    for the interaction of let-generalization with suspended constraints
-    via \emph{incremental instantiation}.
+    non-deterministic rewriting rules, proved correct with respect to
+    the constraint semantics. The rewriting rules detail our treatment
+    for the interaction of let-generalization with suspended
+    constraints via \emph{incremental instantiation}, and the formal
+    description can be directly related to an efficient
+    implementation.
 
   \item[(\cref{sec:implementation})]
 
@@ -1249,6 +1252,13 @@ bidirectional or $\Geninst$-directional type inference.
   or re-instantiate from the top of the constraint (not very good, but
   probably feasible in practice). If you agree with this, would one of you
   be able to articulate this idea on this item?}
+%
+\Xgabriel{I think that the comment on the quality of our formalization
+  which you make is interesting, but better placed in the
+  ``Contributions'' paragraph than in the ``Limitations''
+  paragraph. In response to your comment, I reformulated the
+  Contributions to mention the relation between the formalisation of
+  incremental instantiation and the implementation.}
 
 \XDR [Independently]
   {Semi-unification implementation of type inference, which according to
