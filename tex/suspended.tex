@@ -4549,7 +4549,11 @@ where ambiguity is resolved by falling back on a default, non-principal choice
 field names.
 
 \section*{Acknowledgments}
-\TODO{}
+
+\Xgabriel{I am pushing a draft below to help the discussion this afternoon, but I will not have the time to put it in fully-written form before the meeting.}
+
+The insatisfactory situation of type-directed propagation in OCaml has been on our mind for years; a first concrete step to which this work can be traced to a specific example of inconvenient order of propagation (between pattern and expression in a let-binding) presented by Andreas Rossberg as part of general feedback on the use of OCaml in the \texttt{wasm} reference interpreter \citep*{rossberg-wasm}\TODO{ref: bugtracker issue}. Gabriel Scherer proposed to delay the resolution of ambiguous constraints and advised Olivier Martinot as an intern on this topic in Summer 2020~\citep*{https://inria.hal.science/hal-03510890}. Together they identified the implementation and specification difficulties; their implementation would only handle simple cases where no incremental generalization is necessary (in particular it did not support back-propagation), and they did not have a precise declarative specification. Gabriel Scherer kept working on this infrequently until 2024, identified the need for incremental generalization and instantiation, but its implementations and declarative specifications remained incomplete.
+
 
 %% \bibliographystyle{ACM-Reference-Format}
 \begin{local}
