@@ -1245,35 +1245,6 @@ bidirectional or $\Geninst$-directional type inference.
   requires triggering re-instantiations upon refinements of partial type
   schemes, while avoiding redundant constraint solving across
   instantiations.
-
-\XDR
-  {We do not really describe the implementation in the paper. So the
-  complexity of the implementation should not be visible. Here, the silent
-  key point is that the formalization of constraint resolution has been
-  carefully designed to allow for an efficient implementation, \ie that can
-  closely follow the formalization.
-
-  An inefficient implementation could backtrack (which would be really bad)
-  or re-instantiate from the top of the constraint (not very good, but
-  probably feasible in practice). If you agree with this, would one of you
-  be able to articulate this idea on this item?}
-%
-\Xgabriel{I think that the comment on the quality of our formalization
-  which you make is interesting, but better placed in the
-  ``Contributions'' paragraph than in the ``Limitations''
-  paragraph. In response to your comment, I reformulated the
-  Contributions to mention the relation between the formalisation of
-  incremental instantiation and the implementation.}
-
-\Xalistair{I like this reformulation :)}
-
-\XDR [Independently]
-  {Semi-unification implementation of type inference, which according to
-  Henglein has been implemented for SML, does implement incremental
-  instantiation efficiently. This is not complex by itself.  It is still
-  more compplex than unification plus generalization/instantiation, \ie. ML
-  style type inference. Again complexity is relative.}
-
 \end{enumerate}
 We hope to pay off some of this complexity in future work; in particular, we
 believe omnidirectionality is the missing piece to unlock modular
@@ -4291,6 +4262,12 @@ has the correct level.}
 
 \section{Related work}
 \label{sec:related-work}
+
+\XDR
+  {Semi-unification implementation of type inference, which according to
+  Henglein has been implemented for SML, does implement incremental
+  instantiation efficiently.}%
+\TODO{Include a paragraph of Related Work to mention this.}
 
 \paragraph{Overloading}
 
