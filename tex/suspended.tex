@@ -3394,7 +3394,7 @@ We now present a machine for solving constraints in our language. The solver
 operates as a rewriting system on constraints $\c \csolve \cp$. Once no
 further transitions are applicable, \ie $\c \cnsolve$, the constraint $\c$
 is either a solved form---from which we can read off a most general
-solution---or a stuck state, signalling unsatisfiability (if the constraint
+solution---or unsatisfiable (if the constraint
 $\c$ is closed).
 
 \XDR{The solved forms may also be $\cfalse$: We have two cases of errors,
@@ -3413,6 +3413,8 @@ What I meant is that the statement above is then incorrect, since there are
 3 cases and not 2: false, solved form, or stuck. Since by solved form, you
 mean that you can build a solution, this excludes false. Unless by stuck you
 also mean false, which is rather unusual: then we'd better be explicit.}
+
+\Xgabriel{I reformulated as ``either a solved constraint or unsatisfiable'' -- it was sort of tautologic to say that a constraint that does not reduce is either a value or stuck. I agree that we should be clear if we consider $\cfalse$ as a stuck constraint (where is the definition of stuck constraints?), but this technical point should not be clarified here, which is an informal introductory paragraph, but later on.}
 
 \subsection{Unification}
 
