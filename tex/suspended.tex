@@ -4116,6 +4116,8 @@ integers wile scopes do not carry this imnplicit restriction. So when we
 replace levels by a nodes of a tree, we just keep the same notionof scopes,
 but cannot just represent them by the length of their path from the root.}
 
+\Xgabriel{I call \emph{regions} the nodes of the generalization tree (or stack). I am not in favor of calling them \emph{scopes} which means something else to me. Ranks/levels are heights so they do not identify regions uniquely anymore, and this is the point. Ranks/levels are not primitive notions in my mind (I wrote the paragraph that we are discussing here), but they are what people who know about efficient type inference are familiar with, so it is worth explaining why they are harder to use now. I don't see a reason to change the writing above.}
+
 We must instead use a \emph{tree} of nested \Let-regions. Under this scheme,
 ranks no longer uniquely determine a variable's region.  Instead, we
 interpret a rank relative to a path in the region tree from the root. When
