@@ -4457,27 +4457,50 @@ field names.
 
 \section*{Acknowledgments}
 
-\Xgabriel{I am pushing a draft below to help the discussion this afternoon,
-but I will not have the time to put it in fully-written form before the
-meeting.}
-
-The insatisfactory situation of type-directed propagation in OCaml has been
-on our mind for years; a first concrete step to which this work can be
-traced to a specific example of inconvenient order of propagation (between
-pattern and expression in a let-binding) presented by Andreas Rossberg as
-part of general feedback on the use of OCaml in the \texttt{wasm} reference
-interpreter \citep*{rossberg-wasm}\TODO{ref: bugtracker issue}. Gabriel
-Scherer proposed to delay the resolution of ambiguous constraints and
-advised Olivier Martinot as an intern on this topic in Summer
+The insatisfactory situation of type-directed propagation in OCaml has
+been on our mind for years; a first concrete step to which this work
+can be traced to a specific
+example\footnote{\url{https://github.com/ocaml/ocaml/issues/7388}} of
+inconvenient order of propagation (between pattern and expression in
+a let-binding) presented by Andreas Rossberg as part of general
+feedback on the use of OCaml in the \texttt{wasm} reference
+interpreter \citep*{rossberg-wasm}. Gabriel Scherer proposed to delay
+the resolution of ambiguous constraints and advised Olivier Martinot
+as an intern on this topic in Summer
 2020~\citep*{https://inria.hal.science/hal-03510890}. Together they
 identified the implementation and specification difficulties; their
 implementation would only handle simple cases where no incremental
 generalization is necessary (in particular it did not support
 back-propagation), and they did not have a precise declarative
-specification. Gabriel Scherer kept working on this infrequently until 2024,
-identified the need for incremental generalization and instantiation, but
-its implementations and declarative specifications remained incomplete.
+specification. Gabriel Scherer kept working on this infrequently until
+2024, identified the need for incremental generalization and
+instantiation, but its implementations and declarative specifications
+remained incomplete.
 
+Alistair O'Brien started working on suspended constraints in Fall
+2024, coming from work on constraint-based presentations of GADT
+checking -- suspended constraints could delay the checking of GADT
+patterns until the equalities to be introduced are known to be between
+rigid types. He proposed an alternative declarative implementation,
+and implemented a working prototype of incremental generalization
+instantiation, described in the present paper. Gabriel Scherer and
+Alistair O'Brien converged to a semantics using unicity conditions as
+presented here.
+
+Didier Remy started working on suspended constraints in Winter
+2024-2025, coming from questions of principal type inference in
+presence of modular implicits, in collaboration with Samuel
+Vivien. Didier Remy implemented a second prototype of delayed
+constraint based on semi-unification, which is fairly different from
+the prototype described in the present paper.
+
+All co-authors contributed to the writing, with Alistair O'Brien doing
+the majority of the writing, and also most of the proofs of the
+meta-theory.
+
+We wish to thank anonymous reviewers for their feedback and questions,
+as well as Simon Peyton-Jones whose questions, we hope, helped us make
+this work more approachable.
 
 %% \bibliographystyle{ACM-Reference-Format}
 \begin{local}
