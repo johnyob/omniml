@@ -4496,7 +4496,7 @@ For instance, the projection \code{ex_1} from
 ex_1 :: HasField a "x" b => a -> b °\ghcflags 01°
 ex_1 r = getField @"x" r
 \end{program}
-
+\Xgabriel{This example shows that this is doing dynamic overloading rather than static overloading. We could discuss this, and mention that it is \emph{possible} to restrict this to static overloading, but having declarative semantics for this requires our unicity conditions.}
 
 This \texttt{HasField} approach, however, does not extend to record fields with
 polymorphic types,%
