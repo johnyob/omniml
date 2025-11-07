@@ -48,8 +48,6 @@
   \country{France}
 }
 
-\usepackage{marginnote}
-
 \title{Omnidirectional type inference for \ML: principality any way}
 
 \begin{document}
@@ -4173,67 +4171,11 @@ update is expensive.  Instead we generalize on demand. We mark regions as
 we re-generalize the stale descendants of the region in the region tree.
 
 \XDR{This suggest an optimal strategy, while I think we have none at the
-moment. We should not hide this.}
+moment. @Alistair, perhaps reformulate or add a sentence to avoid that
+misunderstandind.}
 
-\Xalistair{I don't see how lazy generalization implies optimality? To me,
-it suggests that there is a degenerate case \ie one where you force the
-re-generalization of a region multiple times.}
+\XDR{Move the rest of the discussion to our pad}
 
-\XDR{It does not imply it. I said it sugested it. Eeager generalization is
-innefficient (for those you know). Lazy generalization is better. So it is
-about efficiency.}
-
-\XDR{This section talk about the efficiency of the implementation. I think
-we should first remind that the worse case complexity is exponential (not
-double exponential if we print types as graphs). That ins practice, \ML is
-almost linear when the size of types and embedding of lets is bounded.
-That to reach this complexity, we need to be careful: use union-find (treat
-types as dags rather than trees). Keep maximal sharing. An by contrast with
-\ML we should minimize copying/instantiation. Hence perform instantiation
-last, as a guideline, except that monomorphization (which you call
-re-generalization) may also cost a lost, as it requires a recursive visit
-and may produce no monomorphization at the end. Hence, re-generalization
-should also be minimized, delayed, amortized. And we have not found any
-optimal.
-}
-
-\Xalistair{Re-reading this has got me thinking a bit. I think there is an
-optimal implementation (not that we've implemented it yet) that precisely
-follows our pen and paper solver. My idea: we don't propagate constraints
-eagerly on generalization, but only when we need to access the type (\eg for
-unification and generalization). When we take an instance, instead of
-generalizing the region to take the instance, we just create a variable with a
-back pointer (just as we do in the pen and paper solver!)}
-
-\XDR{There might be good strategies, at least that do not introduce
-inefficiencies. But I do not undestant what you mean by a ``backpointer''.
-I do not either know what is \emph{the pen and paper solver}: is it drawing
-graphs on a board, or following our rewritting rules? Our rewritting rules
-cheat as they use auxiliary predicates  without telling how to implement
-them efficiently.
-
-My worry is how to arbitrate between too competing expensive operations:
-(1) instantiation and (2) monomorphization, which is I think what you call
-re-generalization. Doing (2) may avoid doing (1), which would then be
-followed by unification later on (perhaps much later on). But doing (2) may
-cost reviviting a lot of the generic structure and perphaps monomorphize
-nothing. Perhaps, we can amortized the cost of monomorphization.
-
-In the worst case, delayed constraints may require many instantiation and
-copy a lot of structure and at the very end force monomorphization that will
-unifies all the copies...
-}
-
-\Xalistair{By pen and paper solver I mean our rewriting rules. At the moment
-our implementations 'push' constraints 'forwards' from the generalization
-region to instances on updates. I'm suggesting something more lazy, where the
-instances only read the updated structure when needed (\ie during unification
-or generalization). This requires the instances to keep a 'backwards' pointer
-from the instance to the generalized type (aka a 'backpointer').
-
-This is much harder to implement---since when lazily reading the generalized
-type from an instance, we need to generalize enough of the region that the type
-has the correct level.}
 
 \section{Related work}
 \label{sec:related-work}
@@ -4488,6 +4430,8 @@ the type of fields, yes we do. But that's not a big deal.}
 
 \Xalistair{I'm practically certain we can. I can prototype this next week to
 prove us correct.}
+
+\subsection{Semiunifitcaion}
 
 \section{Conclusions}
 \label{sec:discussion}
