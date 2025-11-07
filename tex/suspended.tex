@@ -307,6 +307,11 @@ within \OCaml.
 
 \XDR{We never say nor show that we do not use field types for
 disambiguation, which the reader could expect}
+%
+\Xalistair{Here probably isn't the place to mention that. We could mention this
+in limitations. It, however, isn't much of a limitation since all other
+implementations of record disambiguation (\eg OCaml, Haskell) do not
+disambiguate on the field type.}
 
 \parcomment{What do we mean by static overloading?}
 
@@ -1259,6 +1264,8 @@ bidirectional or $\Geninst$-directional type inference.
   paragraph. In response to your comment, I reformulated the
   Contributions to mention the relation between the formalisation of
   incremental instantiation and the implementation.}
+
+\Xalistair{I like this reformulation :)}
 
 \XDR [Independently]
   {Semi-unification implementation of type inference, which according to
@@ -3416,6 +3423,8 @@ also mean false, which is rather unusual: then we'd better be explicit.}
 
 \Xgabriel{I reformulated as ``either a solved constraint or unsatisfiable'' -- it was sort of tautologic to say that a constraint that does not reduce is either a value or stuck. I agree that we should be clear if we consider $\cfalse$ as a stuck constraint (where is the definition of stuck constraints?), but this technical point should not be clarified here, which is an informal introductory paragraph, but later on.}
 
+\Xalistair{Also good with this fix}
+
 \subsection{Unification}
 
 Our constraints ultimately reduce to equations between types, which we solve
@@ -3532,9 +3541,9 @@ commutativity of conjunction. Rewriting takes place under an arbitrary
 one-hole constraint context $\C$.
 %
 % Solved forms
-A constraint $\c$ is satisfiable if it rewrites to a solved form
-$\hat\up$ (\cref{def:solved-form}); otherwise it gets
-stuck -- we consider $\cfalse$ a stuck constraint.
+A constraint $\c$ is satisfiable if it rewrites to a solved form $\hat\up$
+(\cref{def:solved-form}); otherwise it gets stuck---in particular, $\cfalse$ is
+considered a stuck constraint.
 
 \paragraph{Basic rules}
 
@@ -3630,6 +3639,14 @@ containing suspended constraints.
 
 
  (this is interesting and worth pointing out, but I don't know that it is required to explain incremental generalization; it could be said separately, maybe first). We can also point out that we are stuck during generalization }
+%
+\Xalistair{You raise several good points here! There is one that you missed,
+(F) that making let bindings monomoprhic is incomplete. I can add (C) to the
+current version. Order would be: E, A, B, C, F. I'm not too sure D with worth
+talking about (since back-propagation makes it clear that this approach doesn't
+work). If we didn't have back-propagation, then perhaps? Back-propagation isn't
+an emergent property of the solver's design, but a consequence of the design of
+our unicity conditions.}
 
 \begin{local}
 \def \xgetx{{\ttlab {getx}}}
@@ -3870,9 +3887,12 @@ domains of any partial instantiation constraints, written as the
 substitution $\where{\x.\tvb \is
 \tvc}$.
 
-Conceptually, \Rule{S-Compress} acts a variable-level analogue of \Rule{S-Inst-Copy}:
-it propagates equalities between variables from the abstraction into its instantiation
-constraints, thereby enabling subsequent applications of \Rule{S-Inst-Unify}.
+Conceptually, \Rule{S-Compress} acts a variable-level analogue of
+\Rule{S-Inst-Copy}: both rules copy solved constraints $\ueq$ from an
+abstraction to its instantiation constraints. While \Rule{S-Inst-Copy}
+propagates the head shape of a multi-equation, \Rule{S-Compress} propagates
+equalities between variables within a multi-equation, thereby enabling
+subsequent applications of \Rule{S-Inst-Unify}.
 
 \XDR{I don't know what a \emph{copy rule} means. Besides, this is not
 any copying/unsharing, but the oppposite...}
@@ -3882,6 +3902,11 @@ is explicit. I still do not think it helps understand what S-Compress
 does. S-Inst-Copy propagate some structure and allocate some structure while
 S-Compress propayages and equality and its effect will be to share some
 structure}
+\Xalistair{I would spin it slightly different. Both are rules that are used to 
+copy solved constraints $\ueq$ from an abstraction. \Rule{S-Inst-Copy} and \Rule{S-Compress} 
+do this, the latter copies the head shape of a multi-equation and the former copies 
+the equalities between variables within a multi-equation. I've updated the text to reflect 
+my understanding, what do you think?}
 
 \parcomment{Lowering}
 
@@ -3948,9 +3973,6 @@ these variables are determined by monomorphic ones, lowering allows the solver
 to apply \Rule{S-Inst-Mono} directly at instantiation sites, rather than
 duplicating equivalent constraints that ultimately express the same semantic
 fact---that the variable is monomorphic and shared across instances.
-
-\Xalistair{Didier, I rewrote this. What do you think?}\XDR{Perfect!}
-
 
 \paragraph{Suspended match constraints}
 
@@ -4079,7 +4101,9 @@ responsible for eventually solving them.
 % whose rank remains equal to that of the region.
 
 Efficient \ML implementations, for example \Inferno\XDR{This was already
-present in my implementation of \citep*{Remy/mleth}}, represent the solver
+present in my implementation of \citep*{Remy/mleth}}\Xalistair{We can attribute both. I think 
+Inferno is a prime example of what a good implementation of rank-based generalization looks like, 
+and is often what I point people towards when they're interested in my work}, represent the solver
 state as a linear \emph{stack} of inference regions, from the outermost
 variable scope to the current region. Unification associates an integer
 \emph{rank} (or \emph{level}) for each variable, that indexes the region in
@@ -4112,7 +4136,17 @@ integers wile scopes do not carry this imnplicit restriction. So when we
 replace levels by a nodes of a tree, we just keep the same notionof scopes,
 but cannot just represent them by the length of their path from the root.}
 
-\Xgabriel{I call \emph{regions} the nodes of the generalization tree (or stack). I am not in favor of calling them \emph{scopes} which means something else to me. Ranks/levels are heights so they do not identify regions uniquely anymore, and this is the point. Ranks/levels are not primitive notions in my mind (I wrote the paragraph that we are discussing here), but they are what people who know about efficient type inference are familiar with, so it is worth explaining why they are harder to use now. I don't see a reason to change the writing above.}
+\Xgabriel{I call \emph{regions} the nodes of the generalization tree (or
+stack). I am not in favor of calling them \emph{scopes} which means something
+else to me. Ranks/levels are heights so they do not identify regions uniquely
+anymore, and this is the point. Ranks/levels are not primitive notions in my
+mind (I wrote the paragraph that we are discussing here), but they are what
+people who know about efficient type inference are familiar with, so it is
+worth explaining why they are harder to use now. I don't see a reason to change
+the writing above.}
+
+\Xalistair{I agree with Gabriel here. Ranks/levels are already familiar to the 
+reader and it is important to explain why they no-longer really work.}
 
 We must instead use a \emph{tree} of nested \Let-regions. Under this scheme,
 ranks no longer uniquely determine a variable's region.  Instead, we
@@ -4129,6 +4163,12 @@ comparisons of generalization.
 \XDR{I am not confused and I can follow myself. But I think it is lacking
 details for someone else to reproduce it. Before we were short in
 space. Now, we have more space, so maybe you could detail it more.}
+\Xalistair{I agree that it is a little too abstract. To make it concrete, I
+would suggest code snippets (I rarely understand implementation mechanisms
+without code). But at the same time, this feels out of place for the paper.
+Additionally, the final version will link the URL of the open source
+implementation, which when combined with this description ought to be
+sufficient to reproduce our approach}
 
 Generalization is the process of determing which type variables are
 polymoprhic and which are monomorphic (\ie implementing \Rule{S-Exists-Lower}).
@@ -4160,7 +4200,7 @@ be updated in the future using \emph{guards}. A guard is a mark on a
 variable that indicates the variable is captured by some suspended
 constraint that has not yet been solved. Guarded variables are generalized
 as partial generics (\textbf{PG}); unguarded ones are fully generalized
-(\textbf{G}).
+(\textbf{G}).'
 
 When an instance is taken from a partial generic, we retain a forward reference
 from the partial generic (\textbf{PG}) to the instance. This enables the
@@ -4232,6 +4272,16 @@ copy a lot of structure and at the very end force monomorphization that will
 unifies all the copies...
 }
 
+\Xalistair{By pen and paper solver I mean our rewriting rules. At the moment
+our implementations 'push' constraints 'forwards' from the generalization
+region to instances on updates. I'm suggesting something more lazy, where the
+instances only read the updated structure when needed (\ie during unification
+or generalization). This requires the instances to keep a 'backwards' pointer
+from the instance to the generalized type (aka a 'backpointer').
+
+This is much harder to implement---since when lazily reading the generalized
+type from an instance, we need to generalize enough of the region that the type
+has the correct level.} 
 
 \section{Related work}
 \label{sec:related-work}
@@ -4443,7 +4493,7 @@ constraints of the form \code{HasField a "foo" b} (\texttt{OverloadedRecordDot},
 For instance, the projection \code{ex_1} from
 \cref{sec/overview/overloading} would be written as:
 \begin{program}[input]
-ex_1 :: HasField a "x" b => a -> b
+ex_1 :: HasField a "x" b => a -> b °\ghcflags 01°
 ex_1 r = getField @"x" r
 \end{program}
 
@@ -4465,10 +4515,16 @@ p[ro
 the field to disambiguate, but trying examples it apparently does not
 (neither do we).}
 
+\Xalistair{Haskell only uses the record type \eg to solve \code{HasField a "x"
+b}, it waits until \code{a} has some type constructor $\Tapp \tys$ and then
+reduces the constraint.}
 
 \XDR{Are we sure that we can can ourselves do disambiguation
 with polymorphic record fields? Well, sine we do not use
 the type of fields, yes we do. But that's not a big deal.}
+
+\Xalistair{I'm practically certain we can. I can prototype this next week to
+prove us correct.}
 
 \section{Conclusions}
 \label{sec:discussion}
