@@ -3854,10 +3854,10 @@ is explicit. I still do not think it helps understand what S-Compress
 does. S-Inst-Copy propagate some structure and allocate some structure while
 S-Compress propayages and equality and its effect will be to share some
 structure}
-\Xalistair{I would spin it slightly different. Both are rules that are used to 
-copy solved constraints $\ueq$ from an abstraction. \Rule{S-Inst-Copy} and \Rule{S-Compress} 
-do this, the latter copies the head shape of a multi-equation and the former copies 
-the equalities between variables within a multi-equation. I've updated the text to reflect 
+\Xalistair{I would spin it slightly different. Both are rules that are used to
+copy solved constraints $\ueq$ from an abstraction. \Rule{S-Inst-Copy} and \Rule{S-Compress}
+do this, the latter copies the head shape of a multi-equation and the former copies
+the equalities between variables within a multi-equation. I've updated the text to reflect
 my understanding, what do you think?}
 
 \parcomment{Lowering}
@@ -4053,8 +4053,8 @@ responsible for eventually solving them.
 % whose rank remains equal to that of the region.
 
 Some efficient \ML implementations, for example \Inferno\XDR{This was already
-present in my implementation of \citep*{Remy/mleth}}\Xalistair{We can attribute both. I think 
-Inferno is a prime example of what a good implementation of rank-based generalization looks like, 
+present in my implementation of \citep*{Remy/mleth}}\Xalistair{We can attribute both. I think
+Inferno is a prime example of what a good implementation of rank-based generalization looks like,
 and is often what I point people towards when they're interested in my work}, represent the solver
 state as a linear \emph{stack} of inference regions, from the outermost
 variable scope to the current region. Unification associates an integer
@@ -4097,7 +4097,7 @@ people who know about efficient type inference are familiar with, so it is
 worth explaining why they are harder to use now. I don't see a reason to change
 the writing above.}
 
-\Xalistair{I agree with Gabriel here. Ranks/levels are already familiar to the 
+\Xalistair{I agree with Gabriel here. Ranks/levels are already familiar to the
 reader and it is important to explain why they no-longer really work.}
 
 We must instead use a \emph{tree} of nested \Let-regions. Under this scheme,
@@ -4233,7 +4233,7 @@ from the instance to the generalized type (aka a 'backpointer').
 
 This is much harder to implement---since when lazily reading the generalized
 type from an instance, we need to generalize enough of the region that the type
-has the correct level.} 
+has the correct level.}
 
 \section{Related work}
 \label{sec:related-work}
@@ -4440,10 +4440,12 @@ record labels,%
 and \GHC 8.0.1 (2016) added \texttt{DuplicateRecordFields}, allowing distinct
 record types with overlapping field names in the same module.
 
-However, the \GHC developers found that type-based disambiguation using bidirectional type inference is not
-sufficiently predictible enough in practice for users. As a result, \GHC is gradually moving away from
+However, the \GHC developers found that type-based disambiguation using
+bidirectional type inference is not sufficiently predictible enough in
+practice for users. As a result, \GHC is gradually moving away from
 type-based disambiguation towards an approach based on qualified types
-constraints of the form \code{HasField a "foo" b} (\texttt{OverloadedRecordDot}, 2017).%
+constraints of the form \code{HasField a "foo" b}
+(\texttt{OverloadedRecordDot}, 2017).%
 %
 \footnote{
   \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html}
@@ -4454,7 +4456,10 @@ For instance, the projection \code{ex_1} from
 ex_1 :: HasField a "x" b => a -> b °\ghcflags 01°
 ex_1 r = getField @"x" r
 \end{program}
-\Xgabriel{This example shows that this is doing dynamic overloading rather than static overloading. We could discuss this, and mention that it is \emph{possible} to restrict this to static overloading, but having declarative semantics for this requires our unicity conditions.}
+\Xgabriel{This example shows that this is doing dynamic overloading rather
+than static overloading. We could discuss this, and mention that it is
+\emph{possible} to restrict this to static overloading, but having
+declarative semantics for this requires our unicity conditions.}
 
 This \texttt{HasField} approach, however, does not extend to record fields with
 polymorphic types,%
@@ -4508,9 +4513,26 @@ field names.
 
 \section*{Acknowledgments}
 
-\Xgabriel{I am pushing a draft below to help the discussion this afternoon, but I will not have the time to put it in fully-written form before the meeting.}
+\Xgabriel{I am pushing a draft below to help the discussion this afternoon,
+but I will not have the time to put it in fully-written form before the
+meeting.}
 
-The insatisfactory situation of type-directed propagation in OCaml has been on our mind for years; a first concrete step to which this work can be traced to a specific example of inconvenient order of propagation (between pattern and expression in a let-binding) presented by Andreas Rossberg as part of general feedback on the use of OCaml in the \texttt{wasm} reference interpreter \citep*{rossberg-wasm}\TODO{ref: bugtracker issue}. Gabriel Scherer proposed to delay the resolution of ambiguous constraints and advised Olivier Martinot as an intern on this topic in Summer 2020~\citep*{https://inria.hal.science/hal-03510890}. Together they identified the implementation and specification difficulties; their implementation would only handle simple cases where no incremental generalization is necessary (in particular it did not support back-propagation), and they did not have a precise declarative specification. Gabriel Scherer kept working on this infrequently until 2024, identified the need for incremental generalization and instantiation, but its implementations and declarative specifications remained incomplete.
+The insatisfactory situation of type-directed propagation in OCaml has been
+on our mind for years; a first concrete step to which this work can be
+traced to a specific example of inconvenient order of propagation (between
+pattern and expression in a let-binding) presented by Andreas Rossberg as
+part of general feedback on the use of OCaml in the \texttt{wasm} reference
+interpreter \citep*{rossberg-wasm}\TODO{ref: bugtracker issue}. Gabriel
+Scherer proposed to delay the resolution of ambiguous constraints and
+advised Olivier Martinot as an intern on this topic in Summer
+2020~\citep*{https://inria.hal.science/hal-03510890}. Together they
+identified the implementation and specification difficulties; their
+implementation would only handle simple cases where no incremental
+generalization is necessary (in particular it did not support
+back-propagation), and they did not have a precise declarative
+specification. Gabriel Scherer kept working on this infrequently until 2024,
+identified the need for incremental generalization and instantiation, but
+its implementations and declarative specifications remained incomplete.
 
 
 %% \bibliographystyle{ACM-Reference-Format}
