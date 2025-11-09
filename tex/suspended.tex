@@ -3455,27 +3455,23 @@ $\tv \prec_\up^+ \tv$ for some $\tv$.
 \end{enumerate*}\relax
 \end{definition}
 
-\XDR[Alternative notations]{
+\XDR[Alternative notation]{
   $\cpinst \inst \tv \t$ could be written
   $\tv \leadsto^i \t$ or
   $\tv \mathop{\smash\leadsto\vphantom-}\limits^i \t$
 }
-
+%
 \Xalistair{
-  Dislike the first one --- $\tvs$ are technically bound after $\tv$ ( since
-  regions are $\exists \tvs. $ prefixes in $\Let$ constraints).  Also, for
-  \texttt{let and}, we can just generate normal let constraints.  Perhaps
-  you mean \texttt{let} patterns? If so, then we would still typically
-  generate a single constraint for the entire pattern. So multiple
-  abstractions doesn't really help us. We would want something like $\Let
-  \overline{(\x : \tv)} \; \where\tvbs = \ca \In \cb$.
-
-  The second one is okay, but I'm not a huge fan of the subscript.
+  This is okay, but I'm not a huge fan of the subscript.
 }
+%
 \XDR
   {I was not pushing for making any change, just some thought I had when
-  reading. For let-and, the $\tvs$ should contain $\tv$ and be unordered,
-  and then have one or several explicit entry points.}
+  reading.}
+%
+\Xgabriel{I also find
+  $\tv \mathop{\smash\leadsto\vphantom-}\limits^i \t$
+natural, and I am receptive to Didier's argument that this notation already exists in previous works (I was not aware of it). Another potential choice would have been $\tv \leqslant^\inst \t$.}
 
 \subsection{Solving rules}
 
