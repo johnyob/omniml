@@ -3472,74 +3472,27 @@ $\tv \prec_\up^+ \tv$ for some $\tv$.
   $\tv \mathop{\smash\leadsto\vphantom-}\limits^i \t$
 natural, and I am receptive to Didier's argument that this notation already exists in previous works (I was not aware of it). Another potential choice would have been $\tv \leqslant^\inst \t$.}
 
-\subsection{Solving rules}
+\subsection{Constraints for incremental generalization and instantiation}
 
-% What we do (introduce / explain the solver)
+\cref{sec:constraints} introduced the constraint language that is necessary for constraint generation, to express inference problems for the surface language. We now introduce two additional constraint-formers that are introduced during constraint solving, to better express intermediate states of the solving process.
 
-We now gradually introduce the rules of the constraint solver itself
-(\cref {fig:solver-basic,fig:solver-schemes,fig:solver-susp}).
-These rules define a non-deterministic rewriting
-system, operating modulo $\alpha$-equivalence, and the associativity and
-commutativity of conjunction. Rewriting takes place under an arbitrary
-one-hole constraint context $\C$.
-%
-% Solved forms
-A constraint $\c$ is satisfiable if it rewrites to a solved form $\hat\up$
-(\cref{def:solved-form}); otherwise it gets stuck---in particular, $\cfalse$ is
-considered a stuck constraint.
+\paragraph{Regional \texttt{let}-constraints} As is standard in constraints-based formulations of ML type inference, generalization-related rules operate on constraints of the form $(\clet \x \tv {\exi \tvs \c} \dots)$: the outermost existal variables of the constraint abstraction correspond to potentially-generalizable variables; we call a \emph{region} this existential prefix $\exists \tvs$.
 
-\paragraph{Basic rules}
-
-\parcomment{Unification}
-
-\Rule{S-Unif} (\cref{fig:solver-basic}) invokes the unification algorithm on the
-current unification problem. The unification algorithm itself is treated as a
-black box by the solver, so the system could be extended with any
-equational theory of types implemented by the unification algorithm.
-
-\parcomment{Regional let constraints}
-
-In general, existential quantifiers $\cexists \tv \c$ are lifted to the nearest
-enclosing $\Let$, if one exists, or otherwise to the top of the constraint. The
-resulting existential prefix $\exists \tvs$ is called a \emph{region}. To make
+To make
 regions explicit, we introduce the syntax $\cletr \x \tv \tvs \ca \cb$, where
 $\tv$ is the \emph{root} of the region and $\tvs$ are auxiliary existential
 variables. The order of $\tvs$ is immaterial; regions are considered equal up
 to permutation of these variables.
-
-Satisfiability of regional \Let-constraints is defined in
-\cref{fig:constraint-let-regions}. The semantics of an
-abstraction with a region, written $\semenv(\cabsr \tv \tvs \c)$, is a set $\gabsr$ of
-\emph{ground regions} that satisfy $\c$. A ground region $\gr$ is a pair $\greg \gt \semenv$; it satisfies the constraint abstraction $\cabsr \tv \tvs \c$ if $\semenv$ satisfies $\c$, and $\gt$ is $\semenv(\tv)$.
 Regional \Let-constraints strictly
 generalize ordinary let constraints, as captured by the equivalence:
 \begin{mathpar}
-  \clet \x \tv \ca \cb \Wide\cequiv \cletr \x \tv \eset \ca \cb
+  \clet \x \tv {\exi \tvs \ca} \cb \Wide\cequiv \cletr \x \tv \tvs \ca \cb
 \end{mathpar}
-%
-\parcomment{Explanation of rules}
-%
-In \cref{fig:solver-basic}, \Rule{S-Let} rewrites let constraints into regional
-form.
-%
-\Rule{S-Exists-Conj} lifts existentials across conjunctions;
-\Rule{S-Let-ExistsLeft} and \Rule{S-Let-ExistsRight} lift existentials across
-let-binders; \Rule{S-Let-ConjLeft}, \Rule{S-Let-ConjRight} hoist constraints
-out of let-binders when they are independent of the local variables.
-%
-Collectively, these lifting rules normalize the structure of each region into a
-block of existentially bound variables, whose body consists of a conjunction of
-solved multi-equations followed by a residual constraint---typically an
-instantiation, let-binding, or suspended constraint.
 
-
-\parcomment{\OML constraints do not need dedicated rules}
-
-\OML-specific constraints, such as the label and polytype instantiation
-constraints ($\labfrom \elab \ct \leq \ta \to \tb$, $\cleq \cscm \t$,
-\etc), require no special treatment in our solver. Once their pattern variables
-are substituted---after solving a match constraint---they are desugared into
-constraints already handled by the solver.
+The semantics of regional \Let-constraints is defined in
+\cref{fig:constraint-let-regions}. The semantics of an
+abstraction with a region, written $\semenv(\cabsr \tv \tvs \c)$, is a set $\gabsr$ of
+\emph{ground regions} that satisfy $\c$. A ground region $\gr$ is a pair $\greg \gt \semenv$; it satisfies the constraint abstraction $\cabsr \tv \tvs \c$ if $\semenv$ satisfies $\c$, and $\gt$ is $\semenv(\tv)$.
 
 \paragraph{The trouble with lets}
 
@@ -3714,7 +3667,7 @@ $\tvp_2$ with $\trcd \tgpoint \tvb_2$ and $\tvgetxret_2$ with $\tvb_2$.
 
 \parcomment {Intro partial instantiations}
 
-To support partial type schemes, we extend the constraint language with
+To support partial type schemes, we also extend the constraint language with
 \emph{incremental instantiation constraints}
 (\cref{fig:constraint-let-regions}).
 We introduce two new constraint formers:
@@ -3766,6 +3719,53 @@ $\cb$, where they may appear in incremental instantiations of $\x$ in the
 domain of renamings---and only there. Hence, they cannot appear in $\cb$ when
 the corresponding variable $\x$ does not itself appear in $\cb$.
 
+\subsection{Solving rules}
+
+% What we do (introduce / explain the solver)
+
+We now gradually introduce the rules of the constraint solver itself
+(\cref {fig:solver-basic,fig:solver-schemes,fig:solver-susp}).
+These rules define a non-deterministic rewriting
+system, operating modulo $\alpha$-equivalence, and the associativity and
+commutativity of conjunction. Rewriting takes place under an arbitrary
+one-hole constraint context $\C$.
+%
+% Solved forms
+A constraint $\c$ is satisfiable if it rewrites to a solved form $\hat\up$
+(\cref{def:solved-form}); otherwise it gets stuck---in particular, $\cfalse$ is
+considered a stuck constraint.
+
+\paragraph{Basic rules}
+
+\parcomment{Unification}
+
+\Rule{S-Unif} (\cref{fig:solver-basic}) invokes the unification algorithm on the
+current unification problem. The unification algorithm itself is treated as a
+black box by the solver, so the system could be extended with any
+equational theory of types implemented by the unification algorithm.
+%
+\parcomment{Explanation of rules}
+%
+In \cref{fig:solver-basic}, \Rule{S-Let} rewrites let constraints into regional
+form.
+%
+\Rule{S-Exists-Conj} lifts existentials across conjunctions;
+\Rule{S-Let-ExistsLeft} and \Rule{S-Let-ExistsRight} lift existentials across
+let-binders; \Rule{S-Let-ConjLeft}, \Rule{S-Let-ConjRight} hoist constraints
+out of let-binders when they are independent of the local variables.
+%
+Collectively, these lifting rules normalize the structure of each region into a
+block of existentially bound variables, whose body consists of a conjunction of
+solved multi-equations followed by a residual constraint---typically an
+instantiation, let-binding, or suspended constraint.
+
+\parcomment{\OML constraints do not need dedicated rules}
+
+\OML-specific constraints, such as the label and polytype instantiation
+constraints ($\labfrom \elab \ct \leq \ta \to \tb$, $\cleq \cscm \t$,
+\etc), require no special treatment in our solver. Once their pattern variables
+are substituted---after solving a match constraint---they are desugared into
+constraints already handled by the solver.
 
 \parcomment{Solving incremental instantiations}
 
