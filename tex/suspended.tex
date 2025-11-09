@@ -4040,37 +4040,38 @@ responsible for eventually solving them.
 % generalization at a given region consists precisely of those
 % whose rank remains equal to that of the region.
 
-The efficient implementations of \ML type inference, introduced by \citet
-{Remy/mleth} and reused in \Inferno, represents the solver state as a linear
-\emph{stack} of inference regions, from the outermost variable scope to the
-current region.
+Some efficient implementations of \ML type inference, starting with
+\citet {Remy/mleth}, represent the solver state as a linear
+\emph{stack} of inference regions, from the outermost variable scope
+to the current region.
 %
 Each let-binding and, more generally, each generalization location,
 introduces a new scope, hence a new region.
 %
 Since the solver visits the source terms, hence introduces local regions in
 a depth-first manner, these variable scopes may be represented by an integer
-\emph{rank} (or \emph{level}) attached to each variable---actually to each
-type node.  Unification maintains these ranks to their minimum value when
-merging types, which amounts to compute the least common ancestor of the
-region types should belong to.  When leaving a region,
+\emph{rank} or \emph{level}\footnote{Ranks or levels in fact correspond to
+  De Bruijn levels.} attached to each inference variable or type node.
+Unification maintains these levels to their minimum value when merging
+types, which amounts to compute the least common ancestor of the region
+types should belong to.
 %
 The use of integer levels to represent regions, which is quite efficient and
 simple to implement, does not suffice for partial generalization.
 If generalization at some region contain a variable appearing in a suspended
 match constraint, the region must be kept alive while we continue inference
 in other regions. Hence, later parts of the constraint may introduce a new
-\Let-region at the same rank that is unrelated to the suspended one---neither its
+\Let-region at the same level that is unrelated to the suspended one---neither its
 ancestor nor its descendant---breaking the linear assumption that allowed
-the representation of variable scopes by integer ranks.
+the representation of variable scopes by integer levels.
 
 We must instead use a \emph{tree} of nested \Let-regions to represent
-scopes. Under this scheme, ranks no longer uniquely determine a variable's
-region.  Instead, we interpret a rank relative to a path in the region tree
+scopes. Under this scheme, levels no longer uniquely determine a variable's
+region.  Instead, we interpret a level relative to a path in the region tree
 from the root. When two variables are unified, they must always lie on some
-shared path---by scoping invariants---so computing their minimum rank (along
+shared path---by scoping invariants---so computing their minimum leve (along
 this path) still suffices to determine the least common ancestor: we keep
-the efficient integer comparisons of generalization.
+the efficient integer comparisons.
 
 \paragraph{Partial generalization}
 
