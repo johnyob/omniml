@@ -6936,10 +6936,7 @@ generally in our system.
 
 
       \proofcase{\Rule{S-Let}, \Rule{S-True}, \Rule{S-False},
-      \Rule{S-Let-ExistsLeft},
-      \XDR[No longer exists]{Rule{S-Let-Exists-InstLeft},}
       \Rule{S-Let-ExistsRight},
-      \XDR[No longer exists]{Rule{S-Let-Exists-InstRight},}
       \Rule{S-Let-ConjLeft},
       \Rule{S-Let-ConjRight}, \Rule{S-Inst-Name}, \Rule{S-Exists-Exists-Inst},
       \Rule{S-Exists-Inst-Conj}, \Rule{S-Exists-Inst-Let}, \Rule{S-Exists-Inst-Solve},
@@ -6948,6 +6945,28 @@ generally in our system.
       \begin{llproof}
 	Similar argument to the \Rule{S-Exists-Conj} case.
       \end{llproof}
+
+    \proofcaserewrite
+      {S-Let-ExistsLeft}
+      {\cletr \x \tv \tvs {\cexists \tvb \ca} \cb \\ {
+       \tvb \disjoint \tv, \tvs, \cb}}
+      {\cletr \x \tv {\tvs, \tvb} \ca \cb}
+
+      % Note: \semenv'_\inst displays the prime better than \semenvp_\inst
+
+      If we have
+      $\semenv \th \cletr \x \tv \tvs {\cexists \tvb \ca} \cb$,
+      then for each instance $(\inst^\x \is \semenv'_\inst) \in \semenv$
+      we have $\semenv'_\inst \th \cexists \tvb \ca$.
+      %
+      By simple inversion, we have $\semenv'_\inst \th \cexists \tvb \ca$
+      if and only if $\semenv'_\inst \where {\tvb \is \gt_\inst} \th \ca$
+      for some $\gt_\inst$, and so our derivation
+      $$\semenv \where {\overline{\inst^x \is \semenv'_\inst}}
+       \th \cletr \x \tv \tvs {\cexists \tvb \ca} \cb$$
+      corresponds to exactly one derivation
+      $$\semenv \where {\overline{\inst^x \is {\semenv'_\inst \where {\tvb \is \gt_\inst}}}}
+       \th \cletr \x \tv {\tvs,\tvb} {\ca} \cb$$
 
     \proofcaserewrite
       {S-Match-Ctx}
