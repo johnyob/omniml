@@ -1,0 +1,241 @@
+\section {Further study}
+
+\subsection {Defaulting}
+\label {app/default-rules}
+
+Default rules, which does not fit well with \geninst-inference are still
+often used in practice, and therefore would deserve further investigation.
+
+\paragraph {Default shapes}
+
+In this section we study a particular form of defaulting where, rather than
+general default rules that could fire any constraint, we restrict to default
+shapes. That is, we may attach a default shape $\sh$ to a match constraints
+$\cmatch \t \cbrs$, which is then written $\cmatch \t \cbrs \cdefault
+\sh$. The default shape $\sh$ can then be used to force the shape of
+$\t$ when it could not be determined from context.
+
+%% We show that under some conditions for well-behaved defaulting there is
+%% actually an optimal strategy.
+
+Restricting to default shapes has several benefits.  First, a strategy $\S$
+can be reduced to the choice of a mapping from constrains $\c$ to of a
+subset $\Sfire \S \c$ of suspended constraints of $\suspc$ that should be
+defaulted, simultaneously.  The behavior is then entirely determined,
+reusing the same logic that runs when the shape is determined by the context
+instead of been forced by the default clause.  In particular, this ensures
+that the same behavior could have been obtained by an explicit shape
+constraint in the source.
+
+\paragraph {Strategies}
+
+We write $\Sempty$ for the empty strategy that never defaults (and thus fails
+on all constraints with leftover suspensions) and $\Sfull$ the full strategy
+that defaults all suspended constraints, simultaneously.
+%% We can formulate some good properties that defaulting strategies should
+%% satisfy.
+A strategy $\S$ is \emph{reasonable} if for all constraints
+$\c$, $\S (\c)$ succeeds more often than the empty strategy on C.
+%
+This criterion rules out weird strategies that would default a suspension
+before solving the other constraints that could discharge this suspension,
+possibly with another shape, hence a different output.
+
+A strategy $\S$ applied to a constraint $\c$, either allows to solve $\c$,
+hence with a principal solution written $\Ssol \S$ or ends in error ($\Ssol
+\S$ is equal to $\bot$).  Let use write $\Sols$ for the union of
+all $\Ssol \S$ for all successful reasonable strategies $\S$.
+%
+We say that $\S$ is non-ambiguous if, for any $\c$, $\Ssol \S$ is $\bot$
+whenever $\Sols$ has more than two elements.  This condition forces a
+non-ambiguous strategy to fail instead of picking an arbitrary solution when
+different defaulting strategies would give incompatible solutions.
+
+A \emph{good} strategy as one that is both \emph{reasonable} and
+\emph{non-ambiguous}. A good strategy should not fail more often that
+$\Sempty$ nor succeed when there are more than one possible solution.
+%
+We claim that there is an optimal \emph{good} strategy $\Sopt$ that explores all
+possible default subsets, succeeds when there is exactly one principal
+solution, then following a successful strategy, and fails otherwise.
+
+Unfortunately, $\Sopt$ is inefficient: as described , it runs in time
+exponential in the number of remaining suspended constraints.  Therefore, we
+should seek for sub-optimal, but more efficient good strategies.
+
+\paragraph {Dependencies}
+
+Given a stuck constraint $\c$, we may look at the dependency order between
+its suspended constraints.
+\begin{version}{}
+
+Intuitively, a suspended constraint  $\suspcb$
+%% of the form $(\cmatch \tvab \cbrbs \cdefault \shb)$
+depends on another suspended constraint $\suspca$
+%% of the form $(\cmatch \tvaa \cbras \cdefault \sha)$,
+%% and we write $\suspca \cprec \suspcb$,
+if defaulting  $\suspca$ allows to solve $\suspcb$---without further
+defaulting.  Unfortunately, this is too strong as a suspended constraint may
+help resolve another one without solving it. For instance, defaulting two
+suspended constraints could be needed to allow solving a third one.
+
+\end{version}
+A suspended constraint $\suspcb$ depends on another suspended
+constraint~$\suspca$ if there exists a strategy $\S$ that can solve
+$\suspcb$ only after defaulting $\suspca$.  That is, if successively
+defaulting $\suspca, \bar \suspcs$ solves $\suspcb$ while $\bar \suspcs$
+does not.
+%
+This defines a partial ordering~$\cprec^s$ on suspended constraints of~$\c$,
+which is however expensive to compute.
+
+Therefore, we define a syntactical over approximation of $\cprec$ that is
+easier to compute. We assume that $\c$ is partially solved. That is, it is
+stuck, but excluding cases (\ref{item/progress/scope/x}) and
+(\ref{item/progress/scope/i}) which cannot occur with well-formed
+constraints.  The solved part of $\cerase {\c}$ defines a partial
+(structural domination) ordering $\cprec$ on variables.
+
+$\cerase {\c}$ may also contains incremental instantiations
+\emath{\cpapp \x \tv \tvc  \inst}, which implies that
+knowing shape of $\tv$ will also determine the shape of $\tvc$.  We thus
+extend the $\cprec$ ordering with $\tv \cprec \tvc$ for each partial
+instantiation \emath{\cpapp \x \tv \tvc \inst}.
+
+Notice that \emath{\cpapp \x \tv \tvc \inst} has also the potential to force
+the unification of $\tv$ and $\tvc$, which will happen whenever the scope of
+$\tv$ is lowered, \eg by instantiation of $\tv$ without necessarily
+determining the shape of $\tv$.  Hence, one may be tempted to add a reverse
+edge from $\tvc$ to $\tv$. However, this may only happen if $\tv$ has been
+reached, hence $\tvc$ is already considered as reached, hence determined,
+even if its shape is not yet known.
+
+Finally,   for each suspended constraints $\cmatch \tvi {\cbrs_i} \cdefault
+\shi$ of $\c$, let $\bar\tvbs_i$ be the set of free variables of $\cbrs_i$
+and add $\tvi \cprec \tvci$ for each $\tvci$ in $\tvbs_i$.  Indeed, whenever
+the shape of $\tvi$ is determined, the constraint $\suspci$ will be
+released, and since it is being treated opaquely, it could do anything with
+its free variables, hence fully determined they shapes.  This may release
+unification constraints between variables of $\tvbs_i$. Hence, we may be
+tempted to claim equivalences between them. However, this may only happened
+if $\tvi$ has been reached, and thus all variables of $\tvbs_i$ are
+considered as reached as well, hence potentially determined.
+
+The partial ordering between variables induces a partial ordering between
+suspended constrains: $\suspca \cprec \suspcb$ whenever $\tvaa \cprec \tvab$
+and $\suspci$'s are of the form $(\cmatch \tvai {\bar\cbri} \cdefault
+\shi)$.
+
+The syntactic dependency ordering $\cprec$ is an over approximation of the
+semantic dependency ordering $\cprec^s$.  Hence, a suspended constraint that
+is minimal for the syntactic ordering is also minimal for the semantics
+ordering---it depends on no other suspended constraints.
+
+A strategy that always defaults a minimal constraint is
+\begin{enumerate*}
+\item reasonable;
+\item non-ambiguous; and\goodbreak
+\item \emph{complete}, \ie it preserves the set of solutions $\Sols$.
+\end{enumerate*}
+Indeed, either a strategy does not discharge this minimal constraint, and it
+fails on $\c$, or it discharges this constraint and this must be via
+defaulting, given minimality, and for minimal constraints the defaulting
+order does not affect the result.  In fact, all constraints that are minimal
+can also be defaulted simultaneously.
+
+However, such a strategy may be stuck if there is no minimal element, but
+only a minimal cycle of constraints (there is always one). \XDR{Can we still
+say that the strategy is complete? Is then the empty strategy complete? We
+should distinguish being stuck from returning a failure.}
+
+If there is a cycle of constraints that are minimal, then defaulting them
+altogether, which we call the \emph{whole-cycle} strategy, is reasonable and
+non-ambiguous, but not complete.  For example, consider the constraint:
+\begin{mathpar}
+\Wedges {
+\cmatch \tv {
+    \cbranch \wild {\cunif \tvb \tint}
+    } \cdefault \tint
+\\
+\cmatch \tvb {
+    \cbranch\wild {\cunif \tva \tbool}
+    } \cdefault \tbool
+}
+\end{mathpar}
+that are clearly interdependent.  Defaulting $\set \tva$ succeeds while
+defaulting $\set \tvb$ or $\set {\tva, \tvb}$ fails.  The whole-cycle
+strategy $\set{\tva, \tvb}$ fails here, so it is not complete.
+
+\paragraph {Opaque suspended constraints}
+
+Notice however, that if we treat the suspended constraints as opaque, we
+cannot distinguish this example from the following where defaulting only
+$\set
+\tva$ would incorrectly succeed in an ambiguous situation. Hence, it would
+not be a non-ambiguous strategy:
+\begin{mathpar}
+\Wedges{
+\cmatch \tv {
+    \cbranch \tint  {\cunif \tvb \tint} \mid
+    \cbranch \tbool {\cunif \tvb \tint}
+    } \cdefault \tint
+\\
+\cmatch \tvb {
+    \cbranch \tint  {\cunif \tva \tint} \mid
+    \cbranch \tbool {\cunif \tva \tbool}
+    } \cdefault \tbool
+}
+\end{mathpar}
+Indeed, defaulting $\set{\tva}$ gives
+\relax $\wedges {\cunif \tva \tint \\ \cunif \tvb \tint}$,
+whereas defaulting $\set \tvb$ gives
+\relax $\wedges {\cunif \tva \tint \\ \cunif \tvb \tbool}$;
+and defaulting $\set {\tva,\tvb}$ fails. This constraint is ambiguous.
+Hence, the whole-cycle strategy \emph{correctly} fails.
+
+Intuitively, treating suspended constraints as opaque is a way to compensate
+for the over-approxi\-mation of syntactic dependencies by allowing allow to
+choose for opaque constraints concrete constraints that actually create
+all the dependencies used in the approximation.
+
+We call a strategy \emph{opaque} when it only depends on the syntactic
+dependency relation and not on the actual branches of the suspended
+constraints.
+%
+For example, the optimal strategy is \emph{not} opaque, as it behaves
+differently on the two examples above whereas they have the same syntactic
+dependencies.
+
+\begin{property}
+The whole-cycle strategy is optimal among opaque strategies.
+\end{property}
+\begin{proof}[Proof hint]{}
+We may reduce the general case to a specific cycle of size $n$
+(one minimal element of the topological sort of the dependency order).
+On this cycle, all opaque strategies are characterized by which subset of
+the cycle they default.
+
+To show that defaulting all together is optimal:
+\begin{enumerate*}
+
+\item
+  We show that it is not worse than defaulting less.
+\item
+  Conversely, we may build a specific example with an $n$-cycle of
+  suspended constraints where defaulting all at once succeeds, and
+  defaulting strictly less fails.
+
+\end{enumerate*}
+The opacity of suspended constraints also leaves us enough freedom to
+enforce all the worse case dependencies in the definition of $\cprec$.
+\end{proof}
+
+\begin{version}{\Draft}
+Computing the syntactic dependencies $\cprec$ is in $O(n \log n)$ where $n$
+is the size of the constraint (not just of suspended constraints).  However,
+it is not stable by defaulting. Indeed, this may remove (and add) some
+syntactic dependencies, which requires the re-computation of $\prec$.
+Incremental computation of dependencies with both edge removal and insertion
+may be needed. In any case, experimentation will be needed to
+understand whether this is a critical issue.
+\end{version}
