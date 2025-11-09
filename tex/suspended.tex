@@ -3474,25 +3474,19 @@ natural, and I am receptive to Didier's argument that this notation already exis
 
 \subsection{Constraints for incremental generalization and instantiation}
 
-\cref{sec:constraints} introduced the constraint language that is necessary for constraint generation, to express inference problems for the surface language. We now introduce two additional constraint-formers that are introduced during constraint solving, to better express intermediate states of the solving process.
+\cref{sec:constraints} introduced the constraint language that is necessary for constraint generation, to express inference problems for the surface language. We now introduce two additional constraint-formers that are only used during constraint solving, to better express intermediate solver states.
 
-\paragraph{Regional \texttt{let}-constraints} As is standard in constraints-based formulations of ML type inference, generalization-related rules operate on constraints of the form $(\clet \x \tv {\exi \tvs \c} \dots)$: the outermost existal variables of the constraint abstraction correspond to potentially-generalizable variables; we call a \emph{region} this existential prefix $\exists \tvs$.
+\paragraph{Regional \texttt{let}-constraints} As is standard in constraints-based formulations of ML type inference, generalization-related rules operate on constraints of the form $(\clet \x \tv {\exi \tvs \c} \dots)$: the outermost existential variables $\tvs$ of the constraint abstraction $\exi \tvs \c$ correspond to potentially-generalizable variables; we call a \emph{region} this existential prefix $\exists \tvs$.
 
-To make
-regions explicit, we introduce the syntax $\cletr \x \tv \tvs \ca \cb$, where
-$\tv$ is the \emph{root} of the region and $\tvs$ are auxiliary existential
-variables. The order of $\tvs$ is immaterial; regions are considered equal up
-to permutation of these variables.
-Regional \Let-constraints strictly
-generalize ordinary let constraints, as captured by the equivalence:
+To make regions explicit, we introduce the syntax
+$\cletr \x \tv \tvs \ca \cb$, where $\tv$ is the \emph{root} of the region
+and $\tvs$ are auxiliary existential variables. The order of $\tvs$ is
+immaterial; regions are considered equal up to permutation of these
+variables. Regional \Let-constraints strictly generalize ordinary let
+constraints, as captured by the equivalence:
 \begin{mathpar}
   \clet \x \tv {\exi \tvs \ca} \cb \Wide\cequiv \cletr \x \tv \tvs \ca \cb
 \end{mathpar}
-
-The semantics of regional \Let-constraints is defined in
-\cref{fig:constraint-let-regions}. The semantics of an
-abstraction with a region, written $\semenv(\cabsr \tv \tvs \c)$, is a set $\gabsr$ of
-\emph{ground regions} that satisfy $\c$. A ground region $\gr$ is a pair $\greg \gt \semenv$; it satisfies the constraint abstraction $\cabsr \tv \tvs \c$ if $\semenv$ satisfies $\c$, and $\gt$ is $\semenv(\tv)$.
 
 \paragraph{The trouble with lets}
 
@@ -3516,8 +3510,8 @@ copying constraints:
 {\DefTirName{S-Let-App-Beta}}
 \end{mathpar}
 %
-This rule, due to \citet*{Pottier-Remy/emlti}, resembles $\beta$-reduction,
-except that the original let-constraint is retained. While this rule is sound
+This rule, due to \citet*{Pottier-Remy/emlti}, resembles $\beta$-reduction in
+some presentations of explicit substitutions. While this rule is sound
 when $\ca$ is a \emph{simple} constraint, it becomes unsound for abstractions
 containing suspended constraints.
 
@@ -3682,42 +3676,51 @@ We introduce two new constraint formers:
 \end{enumerate}
 The instantiation variable $\inst$ is required to ensure all incremental
 instantiations $\cpinst \inst \tv \t$ are solved uniformly.
-
+%
 % I wanted to put this before the syntax introduction, but I think this order
 % works better since it is hard to conceptually understand incremental instantiations
 % without the syntax
-
+%
 \parcomment {Conceptual model}
-
+%
 Within the solver, we view incremental instantiations as markers indicating
 which parts of the abstraction still need to be copied, and abstractions
 themselves are treated as partial type schemes.
-
+%
 This mechanism enables efficient handling of constraint
 instantiations: solved parts are reused immediately, while suspended
 constraints can be solved later, further refining the abstraction and
 propagating new equations to all instantiation sites.
 
-\parcomment{Semantics of incremental instantiations}
+When a region abstraction $\cletr \x \tv \tvs \ca \cb$ contains an
+incremental instantiation constraint $\cpinst \inst \tvb \t$ and $\inst$ is
+an instantion of $\x$, then $\tvb$ can be any free inference variable of
+$\ca$, including $\tv$ and the $\tvs$. In other words, the region
+abstraction $\cletr \x \tv \tvs \ca \cb$ uses non-obvious scoping rules
+where the $\tv, \tvs$ are also bound in $\cb$, where they can only appear in
+incremental instantiations of $\x$. (This is particular justifies the having
+a specific syntax for regional \texttt{let}s instead of writing
+$\clet \x \tv {\exi \tvs \ca} \cb$.)
 
-We now turn to the semantics of incremental instantiations (\cref{fig:constraint-let-regions}).
+\paragraph{Semantics}
+
+The semantics of an abstraction with a region, written
+$\semenv(\cabsr \tv \tvs \c)$, is a set $\gabsr$ of \emph{ground regions}
+that satisfy $\c$. A ground region $\gr$ is a pair $\greg \gt \semenv$; it
+satisfies the constraint abstraction $\cabsr \tv \tvs \c$ if $\semenv$
+satisfies $\c$, and $\gt$ is $\semenv(\tv)$. Intuitively, the region
+environment $\semenv$ carries a ground type for each inference variable
+$\tvb$ occurring in $\c$; in particular, a ground instance for $\tv$ and
+$\tvs$. It is used to check each incremental instantiation
+$\cpinst \inst \tvb \t$.
 %
 The existential constraint $\cexistsi \inst \x \c$ is satisfiable
 (\Rule{Exists-Inst}) if $\c$ is satisfiable with $\inst$ bound to one
-of the regions $\semenvp$ that belong to the interpretation of $\x$.
-
-Incremental instantiations (\Rule{Incr-Inst}) equate the copy of $\tv$ in
-$\inst$ with $\t$. Intuitively, $\inst$ represents a distinct instantiation of
-$\x$'s abstraction, and each $\cpinst \inst \tv \t$ links the corresponding
-copy of $\tv$ to its instantiated type $\t$.
+of the region environments $\semenvp$ in the interpretation of $\x$.
 %
-The domain of incremental instantiation constraints must lie within the closure
-of the abstraction or among the regional variables of $\x$. Consequently, the
-variables $\tv, \tvs$ bound by the \Let-constraint $\cletr \x \tv \tvs \ca \cb$
-are bound not only in the abstraction body $\ca$, but also in the constraint
-$\cb$, where they may appear in incremental instantiations of $\x$ in the
-domain of renamings---and only there. Hence, they cannot appear in $\cb$ when
-the corresponding variable $\x$ does not itself appear in $\cb$.
+An incremental instantiations $\cpinst \inst \tvb \t$ is satisfiable
+(\Rule{Incr-Inst}) exactly when the instance of $\tvb$ in the region
+environment $\inst$ is equal to $\t$.
 
 \subsection{Solving rules}
 
