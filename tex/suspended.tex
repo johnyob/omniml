@@ -1547,7 +1547,7 @@ type, \ie type schemes of the form $\all \tvs \trcd \T \tvs \to \t$. A label
 $\elab$ may belong to multiple record types, but is unique within each record
 type $\T$. We write $\Labenv$ for the set of labels belonging to the record type $\T$:
 %
-${\Labenv} \eqdef \set {\elab \mid \labfrom \elab \T : \all \tvs \trcd \T \tvs \to \t \in \labenv}$.
+${\Labenv} \eqdef \set {\elab : \labfrom \elab \T : \all \tvs \trcd \T \tvs \to \t \in \labenv}$.
 %
 We write $\labenv (\labfrom \elab \T)$ for the unique scheme
 $\tfor \tvs {\trcd \T \tvs} \to \t$ associated with $\elab$ in $\T$ (if defined).
@@ -2145,8 +2145,9 @@ any $\gt$.
     {\semenv \th \tfor \tv \c}
 
   \infer[Let]
-    {\semenv \th \exists \tv. \ca \\
-     \semenv\where{\x \is \semenv(\cabs \tv \ca)} \th \cb}
+    {\gabs = \semenv(\cabs \tv \ca) \\
+     \gabs \neq \eset \\\\
+     \semenv\where{\x \is \gabs} \th \cb}
     {\semenv \th \clet \x \tv \ca \cb}
 
   \infer[App]
@@ -2161,7 +2162,7 @@ any $\gt$.
   \ca \centails \cb \eqdef
     \forall \semenv,\ \semenv \th \ca \implies \semenv \th \cb
   \\
-  \ca \cequiv \cb   \eqdef
+  \ca \cequiv \cb \eqdef
     (\ca \centails \cb) \wide\wedge   (\ca \centails \cb)
   \end{tabular}}
 \par
@@ -3646,7 +3647,7 @@ considered a stuck constraint.
   {\cpinst \inst \tvb \tvca \cand \cunif \tvca \tvcb}
 
 \rewrite[S-Let-AppR]
-  {\cletr \x \tv \tvs \c {\C\where{\capp \x \t}} \\ }
+  {\cletr \x \tv \tvs \c {\C\where{\capp \x \t}} \\}
   {\tvc \disjoint \t \\
    \x \disjoint \bvs \C}
   {{\begin{array}{l}\cletr \x \tv \tvs \c \\
@@ -4721,8 +4722,9 @@ definition in full, or when studying the meta-theory of the system.
     {\semenv \th \cunif \ta \tb}
 
   \infer[Let]
-    {\semenv \th \exists \tv. \ca \\
-     \semenv\where{\x \is \semenv(\cabs \tv \ca)} \th \cb}
+    {\gabs = \semenv(\cabs \tv \ca) \\
+     \gabs \neq \eset \\\\
+     \semenv\where{\x \is \gabs} \th \cb}
     {\semenv \th \clet \x \tv \ca \cb}
 
   \infer[App]
@@ -4738,10 +4740,11 @@ definition in full, or when studying the meta-theory of the system.
   \infer[Multi-Unif]
     {\forall \t \in \ueq,~ \semenv(\t) = \gt}
     {\semenv \th \ueq}
-
+\\
   \infer[LetR]
-    {\semenv \th \cexists {\tv, \tvs} \ca \\
-     \semenv\where{\x \is \semenv(\cabsr \tv \tvs \ca)} \th \cb}
+    {\gabsr = \semenv(\cabsr \tv \tvs \ca) \\
+     \gabsr \neq \emptyset \\\\
+     \semenv\where{\x \is \gabsr} \th \cb}
     {\semenv \th \cletr \x \tv \tvs \ca \cb}
 
   \infer[AppR]
@@ -4791,11 +4794,11 @@ definition in full, or when studying the meta-theory of the system.
       {\cmatches \cpati \sh \tvs \theta}
   \end{tabular}
 \\
-  \semenv(\cabsr \tv \tvs \c) \uad\eqdef\uad \set{\greg \tv {\semenv\where{\tv \is \gt, \tvs \is \gts}} \in \GroundRegion :
-    \semenv\where{\tv \is \gt, \tvs \is \gts} \th \c}
-\\
 \semenv(\cabs \tv \c) \Wide\eqdef \
   \set {\gt \in \Ground : \semenv\where{\tv \is \gt} \th \c}
+\\
+  \semenv(\cabsr \tv \tvs \c) \uad\eqdef\uad \set{\greg \gt {\semenv\where{\tv \is \gt, \tvs \is \gts}} \in \GroundRegion :
+    \semenv\where{\tv \is \gt, \tvs \is \gts} \th \c}
 \\
 \Cshape \C \t \sh \Wide\eqdef \
   \forall \semenv, \gt. \uad
@@ -6187,67 +6190,36 @@ composability property.
 
 	\proofcasederivation
 	  {Let}
-	  {\semenv \th \cexists \tv \ca \\ \semenv\where{\x \is \semenv(\cabs \tv \ca)} \th \cb}
-	  {\semenv \th \clet \x \tv \ca \cb}
+    {\gabs = \semenv(\cabs \tv \ca) \\
+     \gabs \neq \eset \\\\
+     \semenv\where{\x \is \gabs} \th \cb}
+    {\semenv \th \clet \x \tv \ca \cb}
 
-	  \begin{llproof}
-	    \vdashPf{\semenv}{\cexists \tv \ca}{Premise}
-	    \VdashPf{\semenv}{\cexists \tv \ca}{By \ih}
-	    \vdashPf{\semenv\where{\x \is \semenv(\cabs \tv \ca)}}{\cb}{Premise}
-	    \VdashPf{\semenv\where{\x \is \semenv(\cabs \tv \ca)}}{\cb}{By \ih}
-	    \decolumnizePf
-	    \casesPf{\semenv \Th \cexists \tv \ca, \semenv\where{\x \is \semenv(\cabs \tv \ca)} \Th \cb}
-	  \end{llproof}
+    \begin{llproof}
+      \VdashPf{\semenv\where{\x \is \gabs}}{\cb}{By \ih}
+      \casesPf{\semenv\where{\x \is \gabs} \Th \cb}
+    \end{llproof}
 
-	  \begin{proofcases}
-	    \proofcasederivationdouble
-	      {Can-Base}
-	      {\semenv \th \cexists \tv \ca \\ \cexists \tv \ca \simple}
-	      {\semenv \Th \cexists \tv \ca}
-	      {Can-Base}
-	      {\semenv\where{\x \is \semenv(\cabs \tv \ca)} \th \cb \\ \cb \simple}
-	      {\semenv\where{\x \is \semenv(\cabs \tv \ca)} \Th \cb}
+          \begin{proofcases}
+            \proofcasederivation
+              {Can-Base}
+              {\semenv\where{\x \is \gabs} \th \cb \\ \cb \simple}
+              {\semenv\where{\x \is \gabs} \Th \cb}
 
-	      \begin{llproof}
-\Hand		\VdashPf{\semenv}{\clet \x \tv \ca \cb}{Immediate by \Rule{Can-Base}}
-	      \end{llproof}
+              \begin{llproof}
+\Hand                \VdashPf{\semenv}{\clet \x \tv \ca \cb}{Immediate by \Rule{Can-Base}}
+              \end{llproof}
 
-	    \proofcasederivationdouble
-	      {Can-Match-Ctx}
-	      {\Cshape {\parens {\cexists \tv \ca}} \t \sh \\ \semenv \Th \cexists \tv \C\where{\cmatched \t \sh \cbrs}}
-	      {\semenv \Th \cexists \tv \underbrace{\C\where{\cmatch \t \cbrs}}_\ca}
-	      {}
-	      {}
-	      {\semenv\where{\x \is \semenv(\cabs \tv \ca)} \Th \cb}
-
-	      \begin{llproof}
-		\shapePf{\parens {\cexists \tv \C}}{\t}{\sh}{Premise}
-		\shapePf{\C}{\t}{\sh}{\cref{lem:unicity-inversion}}
-		\VdashPf{\semenv}{\cexists \tv \C\where{\cmatched \t \sh \cbrs}}{Premise}
-		\vdashPf{\semenv}{\cexists \tv \C\where{\cmatched \t \sh \cbrs}}{\cref{lem:decanonicalization}}
-	    \decolumnizePf
-		\eqPf{\semenv(\cabs \tv \ca)}
-		  {\semenv(\cabs \tv \C\where{\cmatched \t \sh \cbrs})}
-		  {\cref{corollary:matched-abstractions}}
-		\vdashPf{\semenv}{\clet \x \tv {\C\where{\cmatched \t \sh \cbrs}} \cb}{By \Rule{Let}}
-		\VdashPf{\semenv}{\clet \x \tv {\C\where{\cmatched \t \sh \cbrs}} \cb}{By \ih}
-		\shapePf{\parens{\clet \x \tv \C \cb}}{\t}{\sh}{\cref{lem:compose-unicity}}
-\Hand 		\VdashPf{\semenv}{\clet \x \tv {\C\where{\cmatch \t \cbrs}} \cb}{By \Rule{Can-Match-Ctx}}
-	      \end{llproof}
-
-	    \proofcasederivationdouble
-		{}
-		{}
-		{\semenv \Th \cexists \tv \ca}
+	    \proofcasederivation
 		{Can-Match-Ctx}
-		{\Cshape \C \t \sh \\ \semenv\where{\x \is \semenv(\cabs \tv \ca)} \Th \C\where{\cmatched \t \sh \cbrs}}
-		{\semenv\where{\x \is \semenv(\cabs \tv \ca)} \Th \underbrace{\C\where{\cmatch \t \cbrs}}_\cb}
+		{\Cshape \C \t \sh \\ \semenv\where{\x \is \gabs} \Th \C\where{\cmatched \t \sh \cbrs}}
+		{\semenv\where{\x \is \gabs} \Th \underbrace{\C\where{\cmatch \t \cbrs}}_\cb}
 
 		\begin{llproof}
 		  \shapePf{\C}{\t}{\sh}{Premise}
 		  \shapePf{\parens{\clet \x \tv \ca \C}}{\t}{\sh}{\cref{lem:compose-unicity}}
-		  \VdashPf{\semenv\where{\x \is \semenv(\cabs \tv \ca)}}{\C\where{\cmatched \t \sh \cbrs}}{Premise}
-		  \vdashPf{\semenv\where{\x \is \semenv(\cabs \tv \ca)}}{\C\where{\cmatched \t \sh \cbrs}}{\cref{lem:decanonicalization}}
+		  \VdashPf{\semenv\where{\x \is \gabs}}{\C\where{\cmatched \t \sh \cbrs}}{Premise}
+		  \vdashPf{\semenv\where{\x \is \gabs}}{\C\where{\cmatched \t \sh \cbrs}}{\cref{lem:decanonicalization}}
 		  \vdashPf{\semenv}{\clet \x \tv \ca {\C\where{\cmatched \t \sh \cbrs}}}{By \Rule{Let}}
 		  \VdashPf{\semenv}{\clet \x \tv \ca {\C\where{\cmatched \t \sh \cbrs}}}{By \ih}
 \Hand 		  \VdashPf{\semenv}{\clet \x \tv \ca {\C\where{\cmatch \t \sh}}}{By \Rule{Can-Match-Ctx}}
@@ -6265,9 +6237,10 @@ composability property.
 
       \proofcasederivation
 	{LetR}
-	{\semenv \th \cexists {\tv, \tvs} \ca \\
-	 \semenv\where{\x \is \semenv(\cabsr \tv \tvs \ca)} \th \cb}
-	{\semenv \th \cletr \x \tv \tvs \ca \cb}
+        {\gabsr = \semenv(\cabsr \tv \tvs \ca) \\
+         \gabsr \neq \emptyset \\\\
+         \semenv\where{\x \is \gabsr} \th \cb}
+        {\semenv \th \cletr \x \tv \tvs \ca \cb}
 
       \begin{llproof}
 	Similar to the \Rule{Let} case.
@@ -6652,10 +6625,10 @@ generally in our system.
   for any match-closed guard $P$ on the holes.
 
   \begin{proof}
-    Let us assume ($\dagger$):
+    Let us pose $\gabsr = \semenv(\cabsr \tv \tvs {\C\where\cs})$ and let us assume ($\dagger$):
     \begin{mathpar}
       \forall \semenv, \semenvp, \cs. \uad
-	\semenvp(\x) = \semenv(\cabsr \tv \tvs {\C\where\cs}) \implies
+	\semenvp(\x) = \gabsr \implies
 	  \semenvp \th \ca \iff \semenvp \th \cb
     \end{mathpar}
 
@@ -6672,7 +6645,7 @@ generally in our system.
 	We proceed by induction on the structure of $\Cp$ with the statement ($\ddagger$):
 	\begin{mathpar}
 	\forall \semenv, \semenvp. \uad
-	  \semenvp(\x) = \semenv(\cabsr \tv \tvs {\C\where\cs}) \implies
+	  \semenvp(\x) = \gabsr \implies
 	    \semenvp \th \Cp\where{\ca} \iff \semenvp \th \Cp\where{\cb}
 	\end{mathpar}
 	This holds due to the compositionality of simple equivalence using $\dagger$ as a base case.
@@ -6682,9 +6655,8 @@ generally in our system.
 
 	\begin{llproof}
 	  \vdashPf{\semenv}{\cletr \x \tv \tvs {\C\where{\cs}} {\Cp\where{\ca}}}{Premise}
-	  \vdashPf{\semenv}{\cexists {\tv, \tvs} \C\where{\cs}}{Simple inversion}
-	  \vdashPf{\semenv\where{\x \is \semenv(\cabsr \tv \tvs \C\where{\cs})}}{\Cp\where{\ca}}{\ditto}
-	  \vdashPf{\semenv\where{\x \is \semenv(\cabsr \tv \tvs \C\where{\cs})}}{\Cp\where{\cb}}{$\ddagger$}
+	  \vdashPf{\semenv\where{\x \is \gabsr}}{\Cp\where{\ca}}{\ditto}
+	  \vdashPf{\semenv\where{\x \is \gabsr}}{\Cp\where{\cb}}{$\ddagger$}
 	  \vdashPf{\semenv}{\cletr \x \tv \tvs {\C\where{\cs}} {\Cp\where{\cb}}}{By \Rule{LetR}}
 	\end{llproof}
 	  \proofcase{$\impliedby$}
@@ -6753,6 +6725,8 @@ generally in our system.
          \x \disjoint \bvs \Cb \\
          \tvp \disjoint \bvs \Ca}
         {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{-}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}} \tvp \sh}
+
+        \TODO{Update argument below to new definition of ground regions.}
 
         \begin{llproof}
           \inPf{\tvp}{\tv,\tvs}{Premise}
@@ -6982,6 +6956,7 @@ generally in our system.
       {\cletr \x \tv \tvs \ca {\C\where{\capp \x \t}} \\ \tvc \disjoint \t \\ \x \disjoint \bvs \C}
       {\cletr \x \tv \tvs \ca {\C\where{\cexistsi {\tvc, \inst} \x \cunif \tvc \t \cand \cpinst \inst \tv \tvc }}}
 
+        \TODO{Update argument below to new definition of ground regions.}
 
 	\begin{llproof}
 	  \disjointPf{\tvc}{\t}{Premise}
@@ -7021,6 +6996,7 @@ generally in our system.
       {\cletr \x \tv \tvs {\c}
 	\C\where{\cexists {\tvbs'} \cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst}}
 
+        \TODO{Update argument below to new definition of ground regions.}
 
 	\begin{llproof}
 	  \disjointPf{\x}{\bvs \C}{Premise}
@@ -7097,7 +7073,7 @@ generally in our system.
        \inst.\tvp \disjoint \insts \C \\
        \x \disjoint \bvs \C}
       {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where\ctrue}}
-
+        \TODO{Update argument below to new definition of ground regions.}
 
 	\begin{llproof}
 	  \equivPf{\cfor \tvp \cexists {\tv, \tvs} \ueqs}{\ctrue}{Premise}
@@ -7161,6 +7137,8 @@ generally in our system.
        \tvb \notin \reg \tv \tvs \\
        \x, \tvb \disjoint \bvs \C}
       {\cletr \x \tv \tvs \c {\C\where{\cunif \tvb \tvc}}}
+
+        \TODO{Update argument below to new definition of ground regions.}
 
 	\begin{llproof}
 	  \disjointPf{\tvb}{\tv, \tvs}{Premise}
