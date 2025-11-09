@@ -27,11 +27,7 @@ all: $(addsuffix .pdf,${PRJ})
 	@$(MAKE) $*.log | grep -E '(Warning:|pdfTeX warning)' 
 
 %.werr: %.pdf
-	@$(MAKE) $*.wlog | \
-	grep -v 'destination with the same identifier' | \
-	grep -v 'Foreign command \\atop' | \
-	grep -v 'Package metavar' | \
-	cat
+	@$(MAKE) $*.wlog | grep -v -f warnings.ok
 
 %.ok: %.pdf Makefile
 	if $(MAKE) $*.werr | grep -v Font | grep -i 'warning'; then false; fi

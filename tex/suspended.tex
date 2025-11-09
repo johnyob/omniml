@@ -409,22 +409,20 @@ If local type information and closed-world reasoning are insufficient, \OCaml
 falls back to a syntactic default: it selects the most recently defined
 compatible type. For example, \OCaml accepts the following expression, when
 \smashcolorbox{warning}{\strut warnings} are not turned into
-\smashcolorbox{illtyped}{\strut errors}:%
+\smashcolorbox{illtyped}{\strut errors}%
+% This prevents the color boxes of `warnings` and `errors` from touching
+% the code block by increasing the depth of the current line.
+\lower 4pt \hbox{\strut}:%
 % A manual link to the fn/principal footnote. \cref prints something that
 % looks like a section reference (not a footnote).
 \hyperref[fn/principal]{\textsuperscript{\ref*{fn/principal}}}
-
-% This prevents the color boxes of `warnings` and `errors` from touching
-% the code block
-\vskip 2.5pt
-
 \begin{program}[input,checkocaml=true]
 let getx r = r.x                                      °\ocamlflags 21°
 \end{program}
 %
-The expression is compatible with both \code{point} and \code{gray_point}, since each
-defines a field \code{x}. But \code{gray_point} is chosen simply because it appears
-later in the source.
+The expression is compatible with both \code{point} and \code{gray_point},
+since each defines a field \code{x}. But \code{gray_point} is chosen simply
+because it appears later in the source.
 
 \parcomment {Default rules are inherently non-principal}
 
@@ -438,11 +436,9 @@ formal account of such ``default rules''.
 Defaulting also interacts poorly with \OCaml's directional inference. Once
 the compiler selects a type, it commits to it---even if that choice causes
 errors downstream. Consider:
-%
 \begin{program}[input,checkocaml=true]
-let ex_4 r = let x = r.x in x + (r : point).y          °\ocamlflags 10°
+let ex_4 r = let x = r.x in x + (r : point).y    °\ocamlflags 10°
 \end{program}
-%
 Here, \OCaml defaults to \code{gray_point} for \code{r} when typing \code{r.x},
 and subsequently fails on \code{(r : point).y}. \OML succeeds by suspending the
 resolution of \code{r.x} until it learns from \code{(r : point).y} that \code{r}
@@ -530,8 +526,8 @@ Concretely, the polymorphic method of
 \ocaml{object method id : 'a. 'a -> 'a = fun x -> x end}
 %
 is translated to \ocaml{object method id = [ fun x -> x : 'a. 'a -> 'a ] end}.
-Method invocation implicitly unboxes the polytype \eg $\ttlab \x \esend \ttlab {id}$ becomes
-$\einst {\ttlab \x \esend \ttlab {id}}$.
+Method invocation implicitly unboxes the polytype \eg $\ttlab \x \esend
+\ttlab {id}$ becomesn $\einst {\ttlab \x \esend \ttlab {id}}$.
 
 \parcomment{Why bother?}
 
@@ -760,7 +756,8 @@ but the opposite, mode-correct choice (\Rule{Chk-App}) is also possible:
 
 \parcomment{Known type information}
 
-Within the bidirectional framework, a type $\t$ is \emph{known} when it is either:
+Within the bidirectional framework, a type $\t$ is \emph{known} when it is
+either:
 \begin{enumerate*}
   \item part of an annotation,
   \item supplied as input to a checking judgment in the conclusion
@@ -4396,10 +4393,14 @@ prototype and formalize their meta-theory in Appendix
 We also remark that \PolySML~\citep*{sml-polyml} goes further than other \SML
 implementations on this front, supporting examples that even rely on
 back-propagation
-\begin{program}[input][deletekeywords={true,false}]
-> let fun fst r = #1 r in (fst (1, 2), fst (true, false)) end; °\polysmlflags 00°
-val it = (1, true): int * bool
+\begin{program}[input,deletekeywords={true,false}]
+let fun fst r = #1 r in (fst (1, 2), fst (true, false)) end; °\polysmlflags 00°
 \end{program}
+%% We never show the return types. The green flag is enough.
+%% \programjoin
+%% \begin{program}[output,deletekeywords={true,false}]]
+%% val it = (1, true): int * bool
+%% \end{program}
 
 \paragraph{Record field overloading in \GHC}
 
