@@ -4143,17 +4143,68 @@ by \Rule{S-Exists-Lower}), it must be unified with all its instances.
 
 \paragraph{Lazy generalization} Repeatedly generalizing a region after every
 update is expensive.  Instead we generalize on demand. We mark regions as
-``stale'' when they may require re-generalization. When an instance is taken,
-we re-generalize the stale descendants of the region in the region tree.
+``stale'' when they may require re-generalization. When an instance is
+taken, we re-generalize the stale descendants of the region in the region
+tree. Although this avoids performing re-generalization too early before
+instantiation, there are still scenarios in which re-generalization of a
+region before instantiation from this region may require significantly more
+work that instantiation before re-generalization, because instantiation may
+unlock suspended constraints that will in turn induce considerable
+simplification in that region.
 
-\XDR{This suggest an optimal strategy, while I think we have none at the
-moment. @Alistair, perhaps reformulate or add a sentence to avoid that
-misunderstandind.}
 
-\XDR{Move the rest of the discussion to our pad}
+\XDR{@Allistair: I added two sentences above, but feel free to modify or
+delete if you disagree.}
+
+\XDR{I move the discussion on efficient re-generalization to our pad.}
+
 
 \paragraph {Semi-unification.}
 
+Our second prototype is based on semi-unification.  Semi-unification,
+introduced in the late 80's in the context of term rewriting, has also been
+used for type inference with polymorphic recursion in \Miranda and \ML~\cite
+{Henglein/phd,Henglein/tiasu@toplas93}.
+%
+Widely studied in the early 90's, it has soon been proved undecidable~\cite
+{Kfoury-Tiuryn-Urzyczyn/ic1993} and almost abandoned for type inference
+purposes---even though \citeauthor{Henglein/phd} observed that he was unable
+to find an example of type inference for which his semi-algorithm would
+actually loop\footnote {Although, we knew from the undecidability of
+semi-unification that such example existed, it is only much later that the
+class of examples for which the semi-algorithm would loop could be
+characterized~\cite {Figueiredo-Camarao/semiunif-ptm@unpub2024}: these
+patterns are extremely complex, which suggests that they are quite unlikely
+to appear in practice, unless crafted especially.}.  Besides, in the absence
+of polymorphic recursion, semi-unification problems are acyclic and thus
+guaranteed to terminate.
+
+Quite interestingly, semi-unification generalizes unification constraints to
+instantiation constraints, which can both be solved incrementally in any
+order. Therefore, semi-unification based type inference is a good basis
+candidate for performing omnidirectional type inference in \ML.  We first
+enriched semi-unification edges which a notion of scopes that forms the same
+tree-like structure as the one presented above: this simultaneous allows for
+a more direct encoding of type inference problems into semi-unification
+constraints and for a more efficient treatment of monomorphization,
+\ie. instantiation edges that must be turned into unification edges.
+%
+In the absence of fragile constructs (and of polymorphic recursion), there
+was no real benefit to use semi-unification for \ML type inference, yet
+\citeauthor{Henglein/phd}'s algorithm was omnidirectionality-ready,
+just waiting for fragile constructs, to find a new application and be
+resurrected.
+
+Although started from a different point of view, the implementation issues
+and their solutions are unsurprisingly similar to the previous approach.  In
+fact, this close correspondence is also an invitation to generalize
+typing constraints with partial type scheme and incremental instantiation to
+also cope for polymorphic recursion.
+
+\XDR{I wonder whether semi-unification fits better in the implementation or
+related-work section.  The goal is to explain that semi-unification was
+omnidirectionality-ready but also to mention extensions and say that
+implementation details meet the other implementation.}
 
 
 \section{Related work}
@@ -4410,7 +4461,8 @@ the type of fields, yes we do. But that's not a big deal.}
 \Xalistair{I'm practically certain we can. I can prototype this next week to
 prove us correct.}
 
-\subsection{Semiunifitcaion}
+
+
 
 \section{Conclusions}
 \label{sec:discussion}
@@ -8355,7 +8407,7 @@ understand whether this is a critical issue.
 % LocalWords:  monomorphization desugars Forall satisfiability formers iff
 % LocalWords:  equirecursive principalShapes subterms Susp Ctx foundedness
 % LocalWords:  unsatisfiability getx olymorphic nstances ive typings LetR
-% LocalWords:  metavariable subterm Metatheory  monotypes Rcd
+% LocalWords:  metavariable subterm Metatheory  monotypes Rcd Henglein phd
 % LocalWords:  ExistsLeft ExistsRight ConjLeft ConjRight equational AppR Wf
 % LocalWords:  existentials instantiations desugared susp ively renamings
 % LocalWords:  quantifications subcomponents BackProp Tarjan's invariants
@@ -8377,4 +8429,4 @@ understand whether this is a critical issue.
 % LocalWords:  Variational ifdef variational benevs goldilocks
 % LocalWords:  Pottier's unsuspended sep Det Esc macroify ConRight cie Incr
 % LocalWords:  explicits mathescape annotability QuickLook Zp
-% LocalWords:  inferrable destructor
+% LocalWords:  inferrable destructor undecidability
