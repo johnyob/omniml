@@ -23,21 +23,29 @@ mkdir arxiv || { echo "error, you need to (rmdir arxiv)"; exit 1; }
 rm -f arxiv.zip
 
 cp $MAIN.tex arxiv/
-cp $MAIN.final.cfg arxiv/$MAIN.cfg
-# HACK above: to avoid issues with arxiv's detection and processing,
+
+# HACK below: to avoid issues with arxiv's detection and processing,
 # of .tex files, we do not want to submit suspended.final.tex that
 # inputs suspended.tex, so we only submit suspended.tex, but with the
 # .final.cfg configuration -- and we use $MAIN.final.bbl below.
 
+cp $MAIN.final.cfg arxiv/$MAIN.cfg
+
 # The arxiv convention is that the submitter runs 'bibtex'
 # (or whatever), and they just build from the '.bbl' files
-# themselves. I still include the .bib file in the archive for
-# reference.
-cp $BIB.bib ACM-Reference-Format.bst arxiv/ # (unused) source .bib, for reference
-stat _build/$MAIN.final.bbl > /dev/null || { echo "you need to run bibtex first"; exit 1; }
-cp _build/$MAIN.final.bbl arxiv/
+# themselves.
+
+stat _build/$MAIN.final.bbl > /dev/null \
+    || { echo "you need to run bibtex first"; exit 1; }
+cp _build/$MAIN.final.bbl arxiv/$MAIN.bbl
+
+# I still include the .bib file in the archive for
+# reference. Hence, (unused) source .bib:
+
+cp $BIB.bib ACM-Reference-Format.bst arxiv/ 
 
 # Copy all local packages, class files, etc. that are necessary to build.
+
 cp *.sty arxiv/
 cp acmart.cls arxiv/
 
@@ -45,6 +53,7 @@ cp acmart.cls arxiv/
 # so that (cd arxiv; sh build.sh) should always
 # work and produce a PDF. This is useful to check
 # that I didn't forget some build dependencies.
+
 (
     echo "pdflatex $MAIN.tex"
     echo "pdflatex $MAIN.tex"

@@ -1,7 +1,19 @@
-%% Fixing useless warning
+%% Fixing useless warning in acm mode
 \AtBeginDocument
  {\let \@vspace@acm \@vspace@orig
-  \let \@vspacer@acm \@vspacer@orig}
+  \let \@vspacer@acm \@vspacer@orig
+  \let \@Description@presentfalse \relax
+  }
+
+%% These could be defaults, but we actually  enforce their
+%% explicit definition in  \jobname.cfg
+
+%% \providecommand \Draft {\False}
+%% \providecommand \Final {\True}
+%% \providecommand \Long {\True}
+%% \providecommand \Anonymous {\False}
+
+%% These are derived flags:
 
 \newcommand{\Not}{\BNot}
 \newcommand \Short {\Not\Long}

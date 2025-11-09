@@ -21,11 +21,21 @@ wits-submit: wits.submit.pdf
 all: $(addsuffix .pdf,${PRJ})
 
 %.log: %.pdf
-	cat $(BUILD)/$@ | grep -v '\vspace'
+	@cat $(BUILD)/$@ 
 
 %.wlog: %.pdf
-	$(MAKE) $*.log | grep -E '(Warning:|pdfTeX warning)' 
+	@$(MAKE) $*.log | grep -E '(Warning:|pdfTeX warning)' 
 
+%.werr: %.pdf
+	@$(MAKE) $*.wlog | \
+	grep -v 'destination with the same identifier' | \
+	grep -v 'Foreign command \\atop' | \
+	grep -v 'Package metavar' | \
+	cat
+
+%.ok: %.pdf Makefile
+	if $(MAKE) $*.werr | grep -v Font | grep -i 'warning'; then false; fi
+	touch $@
 
 .PRECIOUS: %.pdf
 
@@ -40,18 +50,26 @@ all: $(addsuffix .pdf,${PRJ})
 %.view: %.pdf
 	open $< &
 
+arxiv.zip: suspended.final.ok
+	sh arxiv.sh
+
+arxiv.zip.force: arxiv.clean arxiv.zip
+
+arxiv.clean:
+	rm -rf arxiv arxiv.zip
+
 check: ocaml-examples/suspended.ok suspended.tex
 	make -C ocaml-examples suspended.ok
 
 clean:
 	rm -rf $(BUILD)
 
-cleaner vacuum: clean
+cleaner vacuum: clean arxiv.clean
 	rm -f suspended.pdf
+	rm -f suspended.ok
 	rm -f suspended.*.pdf
 	rm -f wits.pdf
 	rm -f wits.final.pdf
 
 clean-alistair: vacuum
-	rm -rf arxiv/
 	rm -rf *.toc *.aux $(addsuffix .bbl,${PRJ}) *.blg *.log *~* *.bak *.out cut.sh .latexrun.db* *.fls *.rel _region_.* *.synctex.gz *.fdb_latexmk *.ist *.glo
