@@ -3221,7 +3221,7 @@ preserve typability in its operational semantics.
        \and \cpinst \inst \tv \t
     }\\[1ex]
     \entry[Ground regions]{\gr}{
-      \greg \tv \semenv \qquad\qquad\! \parens{\gr \in \GroundRegion}
+      \greg \gt \semenv \qquad\qquad\! \parens{\gr \in \GroundRegion}
     }\\
     \entrysubseteq[Sets of ground regions]{\gabsr}
       {\GroundRegion}\\
@@ -3233,22 +3233,22 @@ preserve typability in its operational semantics.
   \end{bnfgrammar}
   \par
   \semenv(\cabsr \tv \tvs \c) \uad\eqdef\uad
-    \set {\greg \tv {\semenv\where{\tv \is \gt, \tvs \is \gts}} \in \GroundRegion
+    \set {\greg \gt {\semenv\where{\tv \is \gt, \tvs \is \gts}} \in \GroundRegion
          : \semenv\where{\tv \is \gt, \tvs \is \gts} \th \c
          }
   \par
   \infer[LetR]
-    {\semenv \th \cexists {\tv, \tvs} \ca \\\\
-     \semenv\where{\x \is \semenv(\cabsr \tv \tvs \ca)} \th \cb}
+    {\gabsr = \semenv(\cabsr \tv \tvs \ca) \\
+     \gabsr \neq \emptyset \\\\
+     \semenv\where{\x \is \gabsr} \th \cb}
     {\semenv \th \cletr \x \tv \tvs \ca \cb}
 
   \infer[AppR]
-    {\greg \tv \semenvp \in \semenv(\x) \\\\
-     \semenv(\t) = \semenvp(\tv) }
+    {\greg {\semenv(\t)} \wild \in \semenv(\x)  }
     {\semenv \th \capp \x \t}
 
   \infer[Exists-Inst]
-    {\greg \tv\semenvp \in \semenv(\x) \\\\
+    {\greg \wild \semenvp \in \semenv(\x) \\\\
      \semenv\where{\inst \is \semenvp} \th \c}
     {\semenv \th \cexistsi \inst \x \c}
 
@@ -3514,13 +3514,8 @@ to permutation of these variables.
 
 Satisfiability of regional \Let-constraints is defined in
 \cref{fig:constraint-let-regions}. The semantics of an
-abstraction with a region, written $\semenv(\cabsr \tv \tvs \c)$, is a set of
-\emph{ground regions} that satisfy $\c$. A ground region $\gr$ is a satisfying
-interpretation $\semenvp$ for the region with a designated \emph{root} variable
-$\tv$, written $\greg \tv \semenvp$.
-\Xgabriel{I would consider changing $(\alpha, \phi)$
-into $(\tau, \phi)$ where $\tau$ is $\phi(\alpha)$.
-Alistair is okay.}
+abstraction with a region, written $\semenv(\cabsr \tv \tvs \c)$, is a set $\gabsr$ of
+\emph{ground regions} that satisfy $\c$. A ground region $\gr$ is a pair $\greg \gt \semenv$; it satisfies the constraint abstraction $\cabsr \tv \tvs \c$ if $\semenv$ satisfies $\c$, and $\gt$ is $\semenv(\tv)$.
 Regional \Let-constraints strictly
 generalize ordinary let constraints, as captured by the equivalence:
 \begin{mathpar}
@@ -3758,11 +3753,10 @@ propagating new equations to all instantiation sites.
 \parcomment{Semantics of incremental instantiations}
 
 We now turn to the semantics of incremental instantiations (\cref{fig:constraint-let-regions}).
+%
 The existential constraint $\cexistsi \inst \x \c$ is satisfiable
-(\Rule{Exists-Inst}) if
-there exists a region $\semenvp$ that
-satisfies the regional constraint abstraction bound to $\x$, and the body $\c$ is satisfied
-with $\inst$ mapped to $\semenvp$.
+(\Rule{Exists-Inst}) if $\c$ is satisfiable with $\inst$ bound to one
+of the regions $\semenvp$ that belong to the interpretation of $\x$.
 
 Incremental instantiations (\Rule{Incr-Inst}) equate the copy of $\tv$ in
 $\inst$ with $\t$. Intuitively, $\inst$ represents a distinct instantiation of
@@ -4601,7 +4595,7 @@ definition in full, or when studying the meta-theory of the system.
     \all \tv \ts
 }\\[1ex]
 \entry[Ground types]{\gt}{}{}\\
-\entry[Ground region]{\gr}{\greg \tv \semenv}\\
+\entry[Ground region]{\gr}{\greg \gt \semenv}\\
 \entrysubseteq[Sets of ground types]{\gabs}{\Ground}{}{}\\
 \entrysubseteq[Sets of ground regions]{\gabsr}{\GroundRegion}{}\\
 \entry[Constraints]{\c}{
@@ -4766,12 +4760,11 @@ definition in full, or when studying the meta-theory of the system.
     {\semenv \th \cletr \x \tv \tvs \ca \cb}
 
   \infer[AppR]
-    {\greg \tv \semenvp \in \semenv(\x) \\
-     \semenv(\t) = \semenvp(\tv) }
+    {\greg {\semenv(\t)} \wild \in \semenv(\x)  }
     {\semenv \th \capp \x \t}
 
   \infer[Exists-Inst]
-    {\greg \tv\semenvp \in \semenv(\x) \\
+    {\greg \wild \semenvp \in \semenv(\x) \\\\
      \semenv\where{\inst \is \semenvp} \th \c}
     {\semenv \th \cexistsi \inst \x \c}
 
@@ -6297,9 +6290,8 @@ composability property.
 
       \proofcasederivation
 	{AppR}
-	{\greg \tv \semenvp \in \semenv(\x) \\
-	 \semenv(\t) = \semenvp(\tv)}
-	{\semenv \th \capp \x \t}
+        {\greg {\semenv(\t)} \wild \in \semenv(\x)  }
+        {\semenv \th \capp \x \t}
 
       \begin{llproof}
 	Similar to the \Rule{App} case.
@@ -6307,7 +6299,8 @@ composability property.
 
     \proofcasederivation
       {Exists-Inst}
-      {\greg \tv \semenvp \in \semenv(\x) \\ \semenv\where{\inst \is \semenvp} \th \c}
+      {\greg \wild \semenvp \in \semenv(\x) \\\\
+       \semenv\where{\inst \is \semenvp} \th \c}
       {\semenv \th \cexistsi \inst \x \c}
 
       \begin{llproof}
