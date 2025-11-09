@@ -3058,20 +3058,17 @@ preserve typability in its operational semantics.
 \section{Solving constraints}
 \label{sec:solving}
 
+\parcomment{Intro}
 
-% DEMONS BE HIDDEN HERE: This figure must begin at the top. The collection of
-% subfigures is carefully crafted to span ~1 1/2 pages. There is some hacking
-% to avoid LaTeX's float queue getting stuck (and postponing the figures till
-% the very end). We rely on \clearpage to flush the float queue. To avoid this
-% being fragile, we use \afterpage (which executes it contents after a
-% pagebreak)
+We now present a machine for solving constraints in our language. The solver
+operates as a rewriting system on constraints $\c \csolve \cp$. Once no
+further transitions are applicable, \ie $\c \cnsolve$, the constraint $\c$
+is either a solved form---from which we can read off a most general
+solution---or unsatisfiable (if the constraint
+$\c$ is closed).
 
-%% We can fit more on the first page: switch flags to undo.
+\subsection{Unification}
 
-\let \More \False
-
-\afterpage{
-\clearpage
 \begin{figure}[!tp]
 \begin{mathparsubfig}
   {fig:unification-syntax-and-semantics}
@@ -3158,230 +3155,9 @@ preserve typability in its operational semantics.
       {|\ueq| \leq 1}
       {\ctrue}
 \end{mathparsubfig}
-
-\medskip
-
-\begin{mathparsubfig}
-  {fig:solver-basic}
-  {Basic rewriting rules $\ca \csolve \cb$.}
-  \rewrite[S-Unif]
-    {\upa}
-    {\upa \unif \upb}
-    {\upb}
-
-  \rewrite[S-False]
-    {\C\where\cfalse}
-    {\C \neq \hole}
-    {\cfalse}
-
-  \rewrite[S-Let]
-    {\clet \x \tv \ca \cb}
-    {}
-    {\cletr \x \tv \eset \ca \cb}
-
-  \rewrite[S-Exists-Conj]
-    {(\cexists \alpha \ca) \cand \cb}
-    {\tv \disjoint \cb}
-    {\cexists \tv {\ca \cand \cb}}
-
-  \rewrite[S-Let-ExistsLeft]
-    {\cletr \x \tv \tvs {\cexists \tvb \ca} \cb}
-    {\tvb \disjoint \tv, \tvs, \cb}
-    {\cletr \x \tv {\tvs, \tvb} \ca \cb}
-
-  \rewrite[S-Let-ExistsRight]
-    {\cletr \x \tv \tvs \ca {\cexists \tvb \cb}}
-    {\tvb \disjoint \tv, \tvs, \ca}
-    {\cexists \tvb {\cletr \x \tv \tvs \ca \cb}}
-
-  \rewrite[S-Let-ConjLeft]
-    {\cletr \x \tv \tvs {\ca \cand \cb} \cc}
-    {\ca \disjoint \tv, \tvs}
-    {\ca \cand \cletr \x \tv \tvs \cb \cc}
-
-  \rewrite[S-Let-ConjRight]
-    {\cletr \x \tv \tvs \ca (\cb \cand \cc)}
-    {\x \disjoint \cb}
-    {\cb \cand \cletr \x \tv \tvs \ca \cc}
-\end{mathparsubfig}
-
-\medskip
-
-\begin{mathparsubfig}
-  {fig:constraint-let-regions}
-  {Syntax and semantics of region-based $\Let$ and
-   incremental instantiation constraints.}
-  \begin{bnfgrammar}
-    \entry[Instantiation variables]{\inst}{}\\
-    \entry[Constraints]{\c}{
-       \dots \let \and \wand
-       \and \cletr \x \tv \tvs \ca \cb
-       \and \cexistsi \inst \x \c
-       \and \cpinst \inst \tv \t
-    }\\[1ex]
-    \entry[Ground regions]{\gr}{
-      \greg \gt \semenv \qquad\qquad\! \parens{\gr \in \GroundRegion}
-    }\\
-    \entrysubseteq[Sets of ground regions]{\gabsr}
-      {\GroundRegion}\\
-    \entry[Semantic environments]{\semenv}{
-      \dots \let \and \wand
-      \and \semenv\where{\x \is \gabsr}
-      \and \semenv\where{\inst \is \semenvp}
-    }
-  \end{bnfgrammar}
-  \par
-  \semenv(\cabsr \tv \tvs \c) \uad\eqdef\uad
-    \set {\greg \gt {\semenv\where{\tv \is \gt, \tvs \is \gts}} \in \GroundRegion
-         : \semenv\where{\tv \is \gt, \tvs \is \gts} \th \c
-         }
-  \par
-  \infer[LetR]
-    {\gabsr = \semenv(\cabsr \tv \tvs \ca) \\
-     \gabsr \neq \emptyset \\\\
-     \semenv\where{\x \is \gabsr} \th \cb}
-    {\semenv \th \cletr \x \tv \tvs \ca \cb}
-
-  \infer[AppR]
-    {\greg {\semenv(\t)} \wild \in \semenv(\x)  }
-    {\semenv \th \capp \x \t}
-
-  \infer[Exists-Inst]
-    {\greg \wild \semenvp \in \semenv(\x) \\\\
-     \semenv\where{\inst \is \semenvp} \th \c}
-    {\semenv \th \cexistsi \inst \x \c}
-
-  \infer[Incr-Inst]
-    {\semenv(\inst)(\tv) = \semenv(\t) }
-    {\semenv \th \cpinst \inst \tv \t}
-\end{mathparsubfig}
-%% This figure is too high for the page.
-%% This is to say that 1pt is ok and prevent a warning.
-\vskip -1pt
+\caption{Unification}
+\label{fig:unification}
 \end{figure}
-
-% This is the start of the next subfigure, but it is placed
-% in a separate figure to span multiple pages
-
-\clearpage
-\begin{figure}[!t]\ContinuedFloat
-\begin{mathparsubfig}
-  {fig:solver-schemes}
-  {Solving rules for let-bindings and instantiations.}
-
-\rewrite[S-Inst-Copy]
-  {\cletr \x \tv \tvs {\c} \C\where{\cpapp \x \tvb \tvc \inst}}
-   {\acyclic {\c} \\\\
-    \x \disjoint \bvs \C \\
-    \c = \cp \cand \cunif \tvb {\cunif {\shapp \tvbs} \ueq}\\
-    \tvb \in \reg \tv \tvs \\
-    \tvbs' \disjoint \tvb, \tvc, \tvbs}
-  {\cletr \x \tv \tvs {\c}
-    \C\where{\cexists {\tvbs'}
-        \cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst}}
-
-\rewrite[S-Inst-Unify]
-  {\cpinst \inst \tvb \tvca \cand \cpinst \inst \tvb \tvcb}
-  {}
-  {\cpinst \inst \tvb \tvca \cand \cunif \tvca \tvcb}
-
-\rewrite[S-Inst-Poly]
-  {\cletr \x \tv {\tvs} {\ueqs \cand \c}
-      {\C\where{\cpapp \x \tvp \tvc \inst}}}
-  {\cfor \tvp \cexists {\tv} {\ueqs} \cequiv \ctrue \\\\
-   \tvp \in \reg \tv \tvs \\
-   \tvp \disjoint \c \\
-   \inst.\tvp \disjoint \insts \C \\
-   \x \disjoint \bvs \C}
-  {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where\ctrue}}
-
-\rewrite[S-Inst-Mono]
-  {\cletr \x \tv \tvs \c {\C\where{\cpapp \x \tvb \tvc \inst}}}
-  {\tvb \notin \reg \tv \tvs \\ \x, \tvb \disjoint \bvs \C}
-  {\cletr \x \tv \tvs \c {\C\where{\cunif \tvb \tvc}}}
-
-\rewrite[S-Let-AppR]
-  {\cletr \x \tv \tvs \c {\C\where{\capp \x \t}}}
-  {\tvc \disjoint \t \\
-   \x \disjoint \bvs \C}
-  {\cletr \x \tv \tvs \c
-     {\C\where{\cexistsi {\tvc, \inst} \x
-              {\cpinst \inst \tv \tvc \cand \cunif \tvc \t}}}}
-
-\rewrite[S-Let-Solve]
-  {\cletr \x \tv \tvs \ueqs \c\\}
-  {\cexists {\tv, \tvs} \ueqs \cequiv \ctrue \\
-   \x \disjoint \c}
-  {\c}
-
-\rewrite[S-Compress]
-  {\cletr \x \tv {\tvs, \tvb} {\ca \cand \cunif \tvb {\cunif \tvc \ueq}} {\cb}}
-  {\tvb \neq \tvc}
-  {\cletr \x \tv {\tvs}
-     {\ca\where{\tvb \is \tvc}
-      \cand \cunif \tvc {\ueq\where{\tvb \is \tvc}}}
-     {\cb\where{\x.\tvb \is \tvc}}}
-
-\rewrite[S-Exists-Lower]
-  {\cletr \x \tv {\tvas, \tvbs} \ca \cb\\}
-  {\th \cdetermines {\cexists {\tv, \tvas} \ca} \tvbs}
-  {\cexists \tvbs \cletr \x \tv \tvas \ca \cb}
-
-\inferrule
-  [Det-Dom]
-  {\tvc \disjoint \tvbs, \tvas \\ \tvs \subseteq \fvs \ueq}
-  {\th \cdetermines {\cexists \tvbs \c \cand \cunif \tvc \ueq} \tvs}
-
-\inferrule
-  [Det-Esc]
-  {\fvs \t \disjoint \tvs, \tvbs}
-  {\th \cdetermines {\cexists \tvbs \c \cand \cunif \tvs {\cunif \t \ueq}} \tvs}
-\end{mathparsubfig}
-
-\medskip
-
-\begin{mathparsubfig}
-  {fig:solver-susp}
-  {Rewriting rules for suspended match constraints.}
-\rewrite[S-Match-Ctx]
-  {\C\where{\cmatch \t \cbrs}}
-  {\th \Cshape \C \t \sh}
-  {\C\where{\cmatched \t {\sh} \cbrs}}
-
-\infer[Uni-Var]
-  {\color{gray}\tv \disjoint \bvs \Cb}
-  {\th \Cshape {\Ca\where{\cunif \tv
-     {\cunif \t \ueq} \cand \Cb\where{\hole}}} \tv {\shape \t}}
-
-\infer[Uni-Type]
-  {{\color{gray}\t \notin \TyVars}}
-  {\th \Cshape \C \t {\shape \t}}
-
-\infer[Uni-BackProp]
-  {\th \Cshape{\parens{\cletr \x \tv \tvs {\Ca\where{\ctrue}}
-  {\Cb\where{\cpapp \x \tvp \tvc \inst \cand \hole}}}} \tvc \sh \\
-   \color{gray}\tvp \in \tv, \tvs \\
-   \color{gray}\x \disjoint \bvs \Cb \\
-   \color{gray}\tvp \disjoint \bvs \Ca}
-  {\th \Cshape
-     {\parens{\cletr \x \tv \tvs {\Ca\where{\hole}}
-                  {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}
-     \tvp \sh}
-\end{mathparsubfig}
-\end{figure}
-}
-% ends \afterpage
-
-\parcomment{Intro}
-
-We now present a machine for solving constraints in our language. The solver
-operates as a rewriting system on constraints $\c \csolve \cp$. Once no
-further transitions are applicable, \ie $\c \cnsolve$, the constraint $\c$
-is either a solved form---from which we can read off a most general
-solution---or unsatisfiable (if the constraint
-$\c$ is closed).
-
-\subsection{Unification}
 
 Our constraints ultimately reduce to equations between types, which we solve
 using first-order unification. Like our solver, we specify unification as a
@@ -3475,6 +3251,55 @@ natural, and I am receptive to Didier's argument that this notation already exis
 \subsection{Constraints for incremental generalization and instantiation}
 
 \cref{sec:constraints} introduced the constraint language that is necessary for constraint generation, to express inference problems for the surface language. We now introduce two additional constraint-formers that are only used during constraint solving, to better express intermediate solver states.
+
+\begin{mathparfig}[!tp]
+  {fig:constraint-let-regions}
+  {Syntax and semantics of region-based $\Let$ and
+   incremental instantiation constraints.}
+  \begin{bnfgrammar}
+    \entry[Instantiation variables]{\inst}{}\\
+    \entry[Constraints]{\c}{
+       \dots \let \and \wand
+       \and \cletr \x \tv \tvs \ca \cb
+       \and \cexistsi \inst \x \c
+       \and \cpinst \inst \tv \t
+    }\\[1ex]
+    \entry[Ground regions]{\gr}{
+      \greg \gt \semenv \qquad\qquad\! \parens{\gr \in \GroundRegion}
+    }\\
+    \entrysubseteq[Sets of ground regions]{\gabsr}
+      {\GroundRegion}\\
+    \entry[Semantic environments]{\semenv}{
+      \dots \let \and \wand
+      \and \semenv\where{\x \is \gabsr}
+      \and \semenv\where{\inst \is \semenvp}
+    }
+  \end{bnfgrammar}
+  \par
+  \semenv(\cabsr \tv \tvs \c) \uad\eqdef\uad
+    \set {\greg \gt {\semenv\where{\tv \is \gt, \tvs \is \gts}} \in \GroundRegion
+         : \semenv\where{\tv \is \gt, \tvs \is \gts} \th \c
+         }
+  \par
+  \infer[LetR]
+    {\gabsr = \semenv(\cabsr \tv \tvs \ca) \\
+     \gabsr \neq \emptyset \\\\
+     \semenv\where{\x \is \gabsr} \th \cb}
+    {\semenv \th \cletr \x \tv \tvs \ca \cb}
+
+  \infer[AppR]
+    {\greg {\semenv(\t)} \wild \in \semenv(\x)  }
+    {\semenv \th \capp \x \t}
+
+  \infer[Exists-Inst]
+    {\greg \wild \semenvp \in \semenv(\x) \\\\
+     \semenv\where{\inst \is \semenvp} \th \c}
+    {\semenv \th \cexistsi \inst \x \c}
+
+  \infer[Incr-Inst]
+    {\semenv(\inst)(\tv) = \semenv(\t) }
+    {\semenv \th \cpinst \inst \tv \t}
+\end{mathparfig}
 
 \paragraph{Regional \texttt{let}-constraints} As is standard in constraints-based formulations of ML type inference, generalization-related rules operate on constraints of the form $(\clet \x \tv {\exi \tvs \c} \dots)$: the outermost existential variables $\tvs$ of the constraint abstraction $\exi \tvs \c$ correspond to potentially-generalizable variables; we call a \emph{region} this existential prefix $\exists \tvs$.
 
@@ -3737,6 +3562,160 @@ one-hole constraint context $\C$.
 A constraint $\c$ is satisfiable if it rewrites to a solved form $\hat\up$
 (\cref{def:solved-form}); otherwise it gets stuck---in particular, $\cfalse$ is
 considered a stuck constraint.
+
+
+\begin{figure}[!tp]
+\begin{mathparsubfig}
+  {fig:solver-basic}
+  {Basic rewriting rules $\ca \csolve \cb$.}
+  \rewrite[S-Unif]
+    {\upa}
+    {\upa \unif \upb}
+    {\upb}
+
+  \rewrite[S-False]
+    {\C\where\cfalse}
+    {\C \neq \hole}
+    {\cfalse}
+
+  \rewrite[S-Let]
+    {\clet \x \tv \ca \cb}
+    {}
+    {\cletr \x \tv \eset \ca \cb}
+
+  \rewrite[S-Exists-Conj]
+    {(\cexists \alpha \ca) \cand \cb}
+    {\tv \disjoint \cb}
+    {\cexists \tv {\ca \cand \cb}}
+
+  \rewrite[S-Let-ExistsLeft]
+    {\cletr \x \tv \tvs {\cexists \tvb \ca} \cb}
+    {\tvb \disjoint \tv, \tvs, \cb}
+    {\cletr \x \tv {\tvs, \tvb} \ca \cb}
+
+  \rewrite[S-Let-ExistsRight]
+    {\cletr \x \tv \tvs \ca {\cexists \tvb \cb}}
+    {\tvb \disjoint \tv, \tvs, \ca}
+    {\cexists \tvb {\cletr \x \tv \tvs \ca \cb}}
+
+  \rewrite[S-Let-ConjLeft]
+    {\cletr \x \tv \tvs {\ca \cand \cb} \cc}
+    {\ca \disjoint \tv, \tvs}
+    {\ca \cand \cletr \x \tv \tvs \cb \cc}
+
+  \rewrite[S-Let-ConjRight]
+    {\cletr \x \tv \tvs \ca (\cb \cand \cc)}
+    {\x \disjoint \cb}
+    {\cb \cand \cletr \x \tv \tvs \ca \cc}
+\end{mathparsubfig}
+
+\medskip
+
+\begin{mathparsubfig}
+  {fig:solver-schemes}
+  {Solving rules for let-bindings and instantiations.}
+\rewrite[S-Inst-Copy]
+  {\cletr \x \tv \tvs {\c} \C\where{\cpapp \x \tvb \tvc \inst} \\}
+   {\acyclic {\c} \\
+    \x \disjoint \bvs \C \\\\
+    \c = \cp \cand \cunif \tvb {\cunif {\shapp \tvbs} \ueq}\\
+    \tvb \in \reg \tv \tvs \\
+    \tvbs' \disjoint \tvb, \tvc, \tvbs}
+  {{\begin{array}{l}\cletr \x \tv \tvs {\c}
+    \\ \uad \C\where{\cexists {\tvbs'}
+        \cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst}\end{array}}}
+
+\rewrite[S-Inst-Poly]
+  {\cletr \x \tv {\tvs} {\ueqs \cand \c}
+      {\C\where{\cpapp \x \tvp \tvc \inst}} \\}
+  {\cfor \tvp \cexists {\tv} {\ueqs} \cequiv \ctrue \\
+   \tvp \in \reg \tv \tvs \\
+   \tvp \disjoint \c \\\\
+   \inst.\tvp \disjoint \insts \C \\
+   \x \disjoint \bvs \C}
+  {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where\ctrue}}
+
+\rewrite[S-Inst-Mono]
+  {\cletr \x \tv \tvs \c {\C\where{\cpapp \x \tvb \tvc \inst}} \\}
+  {\tvb \notin \reg \tv \tvs \\ \x, \tvb \disjoint \bvs \C}
+  {\cletr \x \tv \tvs \c {\C\where{\cunif \tvb \tvc}}}
+
+\rewrite[S-Inst-Unify]
+  {\cpinst \inst \tvb \tvca \cand \cpinst \inst \tvb \tvcb}
+  {}
+  {\cpinst \inst \tvb \tvca \cand \cunif \tvca \tvcb}
+
+\rewrite[S-Let-AppR]
+  {\cletr \x \tv \tvs \c {\C\where{\capp \x \t}} \\ }
+  {\tvc \disjoint \t \\
+   \x \disjoint \bvs \C}
+  {{\begin{array}{l}\cletr \x \tv \tvs \c \\
+     {\C\where{\cexistsi {\tvc, \inst} \x
+              {\cpinst \inst \tv \tvc \cand \cunif \tvc \t}}}\end{array}}}
+
+\rewrite[S-Let-Solve]
+  {\cletr \x \tv \tvs \ueqs \c\\}
+  {\cexists {\tv, \tvs} \ueqs \cequiv \ctrue \\
+   \x \disjoint \c}
+  {\c}
+
+\rewrite[S-Compress]
+  {\cletr \x \tv {\tvs, \tvb} {\ca \cand \cunif \tvb {\cunif \tvc \ueq}} {\cb}}
+  {\tvb \neq \tvc}
+  {\cletr \x \tv {\tvs}
+     {\ca\where{\tvb \is \tvc}
+      \cand \cunif \tvc {\ueq\where{\tvb \is \tvc}}}
+     {\cb\where{\x.\tvb \is \tvc}}}
+
+\rewrite[S-Exists-Lower]
+  {\cletr \x \tv {\tvas, \tvbs} \ca \cb\\}
+  {\th \cdetermines {\cexists {\tv, \tvas} \ca} \tvbs}
+  {\cexists \tvbs \cletr \x \tv \tvas \ca \cb}
+
+\inferrule
+  [Det-Dom]
+  {\tvc \disjoint \tvbs, \tvas \\ \tvs \subseteq \fvs \ueq}
+  {\th \cdetermines {\cexists \tvbs \c \cand \cunif \tvc \ueq} \tvs}
+
+\inferrule
+  [Det-Esc]
+  {\fvs \t \disjoint \tvs, \tvbs}
+  {\th \cdetermines {\cexists \tvbs \c \cand \cunif \tvs {\cunif \t \ueq}} \tvs}
+\end{mathparsubfig}
+
+\medskip
+
+\begin{mathparsubfig}
+  {fig:solver-susp}
+  {Rewriting rules for suspended match constraints.}
+\rewrite[S-Match-Ctx]
+  {\C\where{\cmatch \t \cbrs}}
+  {\th \Cshape \C \t \sh}
+  {\C\where{\cmatched \t {\sh} \cbrs}}
+
+\infer[Uni-Var]
+  {\color{gray}\tv \disjoint \bvs \Cb}
+  {\th \Cshape {\Ca\where{\cunif \tv
+     {\cunif \t \ueq} \cand \Cb\where{\hole}}} \tv {\shape \t}}
+
+\infer[Uni-Type]
+  {{\color{gray}\t \notin \TyVars}}
+  {\th \Cshape \C \t {\shape \t}}
+
+\infer[Uni-BackProp]
+  {\th \Cshape{\parens{\cletr \x \tv \tvs {\Ca\where{\ctrue}}
+  {\Cb\where{\cpapp \x \tvp \tvc \inst \cand \hole}}}} \tvc \sh \\
+   \color{gray}\tvp \in \tv, \tvs \\
+   \color{gray}\x \disjoint \bvs \Cb \\
+   \color{gray}\tvp \disjoint \bvs \Ca}
+  {\th \Cshape
+     {\parens{\cletr \x \tv \tvs {\Ca\where{\hole}}
+                  {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}
+     \tvp \sh}
+\end{mathparsubfig}
+\caption{Constraint solving rules}
+\label{fig:solving-rules}
+\end{figure}
 
 \paragraph{Basic rules}
 
