@@ -4409,39 +4409,42 @@ record labels,%
 and \GHC 8.0.1 (2016) added \texttt{DuplicateRecordFields}, allowing distinct
 record types with overlapping field names in the same module.
 
-However, the \GHC developers found that type-based disambiguation using
-bidirectional type inference is not sufficiently predictible enough in
-practice for users. As a result, \GHC is gradually moving away from
-type-based disambiguation towards an approach based on qualified types
+However, the \GHC developers found that type-based disambiguation
+using bidirectional type inference is not sufficiently predictible
+enough in practice for
+users~\citep*{RFC-overloaded-record-fields}. (The use of projection
+functions rather than a dedicated projection syntax also increases
+implementation complexity, by making all function calls potentially
+ambiguous.) As a result, \GHC is gradually moving away from type-based
+disambiguation towards an approach based on qualified types
 constraints of the form \code{HasField a "foo" b}
 (\texttt{OverloadedRecordDot}, 2017).%
 %
 \footnote{
   \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html}
 }
-For instance, the projection \code{ex_1} from
+
+This solution based on type-classes, that is, qualified types,
+provides dynamic overloading rather than static overloading as we
+want. This has performance implications (efficient code generation is
+not guaranteed, but GHC is good at optimizing typeclass programs). One
+advantage is that it naturally supports field-polymorphic programs;
+for instance, the projection \code{ex_1} from
 \cref{sec/overview/overloading} would be written as:
 \begin{program}[input]
 ex_1 :: HasField a "x" b => a -> b °\ghcflags 01°
 ex_1 r = getField @"x" r
 \end{program}
-\Xgabriel{This example shows that this is doing dynamic overloading rather
-than static overloading. We could discuss this, and mention that it is
-\emph{possible} to restrict this to static overloading, but having
-declarative semantics for this requires our unicity conditions.}
 
-This \texttt{HasField} approach, however, does not extend to record fields with
-polymorphic types,%
-%
-\footnote{
-  \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html\#solving-hasfield-constraints}
-}
-%
-revealing difficulties in scaling it to features where the typing rule
-itself depends on disambiguation---such as polymorphic records and GADT
-patterns in \OCaml.  In contrast, omnidirectional inference naturally
-accommodates such non-uniformity in typing rules.
-p[ro
+On the other hand, qualified types naturally express constraints
+between types, but they cannot easily delay the type-checking of whole
+subterms. They work well for simple field types with a homogeneous
+typing rule, but do not support cases where the typing rule to use
+depends on the disambiguation choice. In particular, GHC's
+\texttt{HasField} constraints do not support record fields with
+polymorphic types, or field types mentioning GADT existential
+types. In contrast, suspended match constraints naturally accommodate
+such non-uniformity in typing rules.
 
 \XDR{Reading the Haskell doc, I thought that HasField was using the type of
 the field to disambiguate, but trying examples it apparently does not
@@ -4528,7 +4531,8 @@ meta-theory.
 
 We wish to thank anonymous reviewers for their feedback and questions,
 as well as Simon Peyton-Jones whose questions, we hope, helped us make
-this work more approachable.
+this work more approachable, and Adam Gundry who insightfully answered
+our questions on record fields disambiguation in GHC.
 
 %% \bibliographystyle{ACM-Reference-Format}
 \begin{local}
