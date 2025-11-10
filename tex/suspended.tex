@@ -1175,7 +1175,7 @@ Omnidirectional inference is powerful, but not omnipotent:
     compromise;
 
   \item our current formalization cannot disambiguate based on the \emph{return
-    type} of overloaded projections; 
+    type} of overloaded projections;
 
   \item it presently omits a formalization of \emph{default rules}
     (\cref{sec/default-rules}); and
@@ -1266,9 +1266,10 @@ bidirectional or $\Geninst$-directional type inference.
   complex than local rules.
 
 \item[(\cref{sec:implementation})]
-
-  Implementing incremental instantiation efficiently is comparably non-trivial
-  compared standard \ML-style instantiation: it requires triggering
+  Implementing incremental instantiation efficiently is non-trivial
+  \XDR{Thanks for the change, which I like very much, indeed, but the English
+  seemed broken}compared
+  to standard \ML-style instantiation: it requires triggering
   re-instantiations upon refinements of partial type schemes, while avoiding
   redundant constraint solving across instantiations.
 
@@ -4272,7 +4273,7 @@ static overloading. By enforcing resolution using \emph{known} type information
 information, our approach remains tractable. Our experience suggests that this
 is a ``goldilocks'' solution: expressive enough for most applications, yet
 tractable, and (crucially) compatible with \ML's \emph{local
-let-generalization}. 
+let-generalization}.
 %
 However, we have not yet extended our approach to capture \emph{generalized
 static overloading}; developing a full omnidirectional account of that setting
