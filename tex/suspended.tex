@@ -4021,21 +4021,24 @@ If $\ca \csolve \cb$, then $\fvs \ca \supseteq \fvs \cb$.
 \section{Implementation}
 \label{sec:implementation}
 
-We have two working prototypes implementing the \OML language with suspended
-match constraints and partial type schemes, in which we have reproduced the
-various type-system features and examples presented in this work.  One
-closely follows the constraint-based presentation described
-here\footnote{The other prototype is a direct implementation of type
-inference based on semi-unification. We mention it here only it indicate
-that we have explored multiple implementation strategies leading to the same
-results.}. It is public and open-source\footnote {Link omitted for
-anonymity.}. Its implementation is inspired by previous work such as
-\Inferno~\citep {Pottier/inferno@icfp2014, Pottier/inferno@opam}.  It uses
-state-of-the-art implementation techniques for efficiency, such as a
-Tarjan's union-find data structure for unification
-\citep*{journals/jacm/Tarjan75} and \emph{ranks} (or \emph{levels}) for
-efficient generalization \citep*{Remy/mleth}. Let us discuss a few salient
-points.
+We have two working prototypes implementing the \OML language with
+suspended match constraints and partial type schemes, in which we have
+reproduced the various type-system features and examples presented in
+this work. One closely follows the constraint-based presentation
+described here, the other uses a different approach based on
+semi-unification.
+
+\subsection{Incremental generalization and instantiation}
+
+Our first prototype is public and open-source, available at
+\url{https://github.com/johnyob/mlsus/}. Its implementation is
+inspired by previous work such as \Inferno~\citep
+{Pottier/inferno@icfp2014, Pottier/inferno@opam}. It uses
+state-of-the-art ML type inference implementation techniques for
+efficiency, such as a Tarjan's union-find data structure for
+unification \citep*{journals/jacm/Tarjan75} and \emph{ranks}
+(or \emph{levels}) for efficient generalization
+\citep*{Remy/mleth}. Let us discuss a few salient points.
 
 \paragraph{Unification and scheduling}
 
@@ -4170,32 +4173,32 @@ delete if you disagree.}
 \XDR{I move the discussion on efficient re-generalization to our pad.}
 
 
-\paragraph {Semi-unification.}
+\subsection{Semi-unification.}
 
 Our second prototype is based on semi-unification.  Semi-unification,
 introduced in the late 80's in the context of term rewriting, has also been
-used for type inference with polymorphic recursion in \Miranda and \ML~\cite
-{Henglein/phd,Henglein/tiasu@toplas93}.
+used for type inference with polymorphic recursion in \Miranda and
+\ML~\citet*{Henglein/phd,Henglein/tiasu@toplas93}.
 %
-Widely studied in the early 90's, it has soon been proved undecidable~\cite
-{Kfoury-Tiuryn-Urzyczyn/ic1993} and almost abandoned for type inference
+Widely studied in the early 90's, it was soon proved undecidable~\citep*{%
+Kfoury-Tiuryn-Urzyczyn/ic1993} and almost abandoned for type inference
 purposes---even though \citeauthor{Henglein/phd} observed that he was unable
 to find an example of type inference for which his semi-algorithm would
 actually loop\footnote {Although, we knew from the undecidability of
 semi-unification that such example existed, it is only much later that the
 class of examples for which the semi-algorithm would loop could be
-characterized~\cite {Figueiredo-Camarao/semiunif-ptm@unpub2024}: these
+characterized~\citep*{Figueiredo-Camarao/semiunif-ptm@unpub2024}: these
 patterns are extremely complex, which suggests that they are quite unlikely
 to appear in practice, unless crafted especially.}.  Besides, in the absence
 of polymorphic recursion, semi-unification problems are acyclic and thus
 guaranteed to terminate.
 
-Quite interestingly, semi-unification generalizes unification constraints to
-instantiation constraints, which can both be solved incrementally in any
-order. Therefore, semi-unification based type inference is a good basis
-candidate for performing omnidirectional type inference in \ML.  We first
-enriched semi-unification edges which a notion of scopes that forms the same
-tree-like structure as the one presented above, This generalizes the
+Semi-unification generalizes unification constraints to
+instantiation constraints, which can be solved incrementally in any
+order. Therefore, semi-unification based type inference is a good candidate
+basis for performing omnidirectional type inference in \ML. We first
+enriched semi-unification edges which a notion of scopes that form the same
+tree-like structure as regions in the generalization tree. This generalizes the
 extension of semi-unification with unknowns, proposed by~\citet
 {Lushman-Cormack/subti@tr2008}, which allows for a direct encoding of type
 inference problems into semi-unification constraints, and simultaneously
@@ -4208,17 +4211,19 @@ was no real benefit to use semi-unification for \ML type inference, yet
 just waiting for fragile constructs, to find a new application and be
 resurrected.
 
-Although started from a different point of view, the implementation issues
-and their solutions are unsurprisingly similar to the previous approach.  In
-fact, this close correspondence is also an invitation to generalize
-typing constraints with partial type scheme and incremental instantiation to
-also cope for polymorphic recursion.
+Although started from a different point of view, the implementation
+issues and their solutions are unsurprisingly similar to the first
+prototype.  In fact, this close correspondence is also an invitation
+to generalize typing constraints with partial type scheme and
+incremental instantiation to also cope for polymorphic recursion.
 
 \XDR{I wonder whether semi-unification fits better in the implementation or
 related-work section.  The goal is to explain that semi-unification was
 omnidirectionality-ready but also to mention extensions and say that
 implementation details meet the other implementation.}
-
+%
+\Xgabriel{I'm happy with the current placement -- we always said
+that it would be nice to mention both implementations in the section.}
 
 \section{Related work}
 \label{sec:related-work}
