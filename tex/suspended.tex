@@ -177,7 +177,7 @@ their robust counterpart if sufficient type information is already available
 from the context. Thus, typing fragile constructs ultimately amounts to
 identifying when type information is \emph{known}.
 
-\parcomment {The hard part of the problem -- defining known type information.}
+\parcomment {The hard part of the problem---defining known type information.}
 
 
 Intuitively, by known information, we mean typing constraints that
@@ -904,7 +904,7 @@ disambiguating \ocaml[angles]{<p>}.
 %  1. A characterization of 'known' type information that relies on a _dynamic_
 %  order
 %
-%  2. Suspended match constraints -- suspension is the primitive used to wait
+%  2. Suspended match constraints---suspension is the primitive used to wait
 %  for known type information when we cannot progres
 %
 %  3. ML generalization previously had a fixed order of solving, this doesn't
@@ -1160,7 +1160,7 @@ justify rejecting programs with unresolved disambiguation choices.
 \subsection{Limitations}
 \label{sec/overview/limitations}
 
-% 1. Our framework is complex --- as a result, everything is hard ://
+% 1. Our framework is complex---as a result, everything is hard ://
 % 2. Some programs are ill-typed even though they have a principal type.
 % 3. We do not provide a formalization of default rules.
 
@@ -3238,16 +3238,22 @@ $\tv \prec_\up^+ \tv$ for some $\tv$.
 }
 %
 \Xalistair{
-  This is okay, but I'm not a huge fan of the subscript.
+  This is okay, but I'm not a huge fan of the subscript[DR: superscript].
 }
-%
-\XDR
-  {I was not pushing for making any change, just some thought I had when
-  reading.}
-%
 \Xgabriel{I also find
   $\tv \mathop{\smash\leadsto\vphantom-}\limits^i \t$
-natural, and I am receptive to Didier's argument that this notation already exists in previous works (I was not aware of it). Other potential choices would have been $\tv \leqslant^\inst \t$ or $\inst(\tv) \leqslant \tau$.}
+natural, and I am receptive to Didier's argument that this notation already
+exists in previous works (I was not aware of it). Other potential choices
+would have been $\tv \leqslant^\inst \t$ or $\inst(\tv) \leqslant \tau$.}
+\XDR{There are two points of views, whether $\tv$ commes first of $i$ comes
+first.
+For me, $\tv$ comes first, which $\tv \leadsto^\inst \t$ or
+$\tv \leqslant^\inst \t$ emphasizes.  The reason it comes first, is that
+$i$, in our framework or in semi-unification is an instrumentation added
+for the incremental solving of instantiation edges. I prefer this view, but
+I guess that one could also view $\inst$ as a particular instantiation,
+computed incrementation that maps variables to types.
+}
 
 \subsection{Constraints for incremental generalization and instantiation}
 
@@ -3324,8 +3330,8 @@ constraints, as captured by the equivalence:
 % 'Generalization constraints ...'
 
 Solving $\Let$ constraints is deceptively difficult.
-Naively, let constraints (or \emph{generalization} constraints) could be solved by
-copying constraints:
+Naively, let constraints (or \emph{generalization} constraints) could be
+solved by copying constraints:
 \begin{mathpar}
 \hfil
 \rewrite
@@ -3349,10 +3355,32 @@ containing suspended constraints.
   convey: we cannot make $\Let$ monomorphic, we cannot apply $\beta$-reduction.
   The previous example demonstrates the former but not the latter.}
 %
-\Xgabriel{I am fine with the new writing and I propose to leave it at that, but for the record I feel that there are several points to be made, I don't know if we should try to handle them together or separately, and it is not obvious that everything is covered. A first point worth making is that (A) the constraint-duplication rule is inefficient, so ML engines generalize eagerly. Then one can point (as you do here) that (B) duplication in fact becomes incorrect in our setting. One can also point out independently that (C) it is not obvious how to generalize 'eagerly' in presence of suspended constraints. I also tried to say that (D) when we encounter a use of the term variable later on, suspended the instantiation completely would be incomplete (note: this does not require back-propagation, as I already observed this with Olivier before we introduced the idea of back-propagation), and finally (E) back-propagation can occur. The previous structure talked about (A) first and then (C, D) (and (E) in passing but it was not the focus). The new structure talks about (B) first, then (A), and then (E) (reading (D) between the lines). My favorite treatment of this discussion would be to explain (A) first (it corresponds to previous work), then (B) as a remark, then (C) and (D) together which I think are the key take-aways. Then we could remark (E) that we obtain back-propagation as an emergent property of the design (with the same example or a different example, depending on what we find that is simple and natural).
+\Xgabriel{I am fine with the new writing and I propose to leave it at that,
+but for the record I feel that there are several points to be made, I don't
+know if we should try to handle them together or separately, and it is not
+obvious that everything is covered. A first point worth making is that (A)
+the constraint-duplication rule is inefficient, so ML engines generalize
+eagerly. Then one can point (as you do here) that (B) duplication in fact
+becomes incorrect in our setting. One can also point out independently that
+(C) it is not obvious how to generalize 'eagerly' in presence of suspended
+constraints. I also tried to say that (D) when we encounter a use of the
+term variable later on, suspended the instantiation completely would be
+incomplete (note: this does not require back-propagation, as I already
+observed this with Olivier before we introduced the idea of
+back-propagation), and finally (E) back-propagation can occur. The previous
+structure talked about (A) first and then (C, D) (and (E) in passing but it
+was not the focus). The new structure talks about (B) first, then (A), and
+then (E) (reading (D) between the lines). My favorite treatment of this
+discussion would be to explain (A) first (it corresponds to previous work),
+then (B) as a remark, then (C) and (D) together which I think are the key
+take-aways. Then we could remark (E) that we obtain back-propagation as an
+emergent property of the design (with the same example or a different
+example, depending on what we find that is simple and natural).
 
-
- (this is interesting and worth pointing out, but I don't know that it is required to explain incremental generalization; it could be said separately, maybe first). We can also point out that we are stuck during generalization }
+(this is interesting and worth pointing out, but I don't know that it is
+required to explain incremental generalization; it could be said
+separately, maybe first). We can also point out that we are stuck during
+generalization}
 %
 \Xalistair{You raise several good points here! There is one that you missed,
 (F) that making let bindings monomoprhic is incomplete. I can add (C) to the
@@ -3524,9 +3552,9 @@ an instantion of $\x$, then $\tvb$ can be any free inference variable of
 $\ca$, including $\tv$ and the $\tvs$. In other words, the region
 abstraction $\cletr \x \tv \tvs \ca \cb$ uses non-obvious scoping rules
 where the $\tv, \tvs$ are also bound in $\cb$, where they can only appear in
-incremental instantiations of $\x$. (This is particular justifies the having
-a specific syntax for regional \texttt{let}s instead of writing
-$\clet \x \tv {\exi \tvs \ca} \cb$.)
+incremental instantiations of $\x$. (This in particular justifies having a
+specific syntax for regional \texttt{let}s instead of writing $\clet \x \tv
+{\exi \tvs \ca} \cb$.)
 
 \paragraph{Semantics}
 
@@ -3545,8 +3573,8 @@ The existential constraint $\cexistsi \inst \x \c$ is satisfiable
 of the region environments $\semenvp$ in the interpretation of $\x$.
 %
 An incremental instantiations $\cpinst \inst \tvb \t$ is satisfiable
-(\Rule{Incr-Inst}) exactly when the instance of $\tvb$ in the region
-environment $\inst$ is equal to $\t$.
+(\Rule{Incr-Inst}) exactly when the instance $\semenvp(\inst)(\tvb)$ of
+$\tvb$ in the region environment $\inst$ is equal to $\t$.
 
 \subsection{Solving rules}
 
@@ -3817,20 +3845,6 @@ propagates the head shape of a multi-equation, \Rule{S-Compress} propagates
 equalities between variables within a multi-equation, thereby enabling
 subsequent applications of \Rule{S-Inst-Unify}.
 
-\XDR{I don't know what a \emph{copy rule} means. Besides, this is not
-any copying/unsharing, but the oppposite...}
-\Xalistair{Does the updated text help you?}
-\XDR{I now understand what you meant. It is better, as the rule you refer to
-is explicit. I still do not think it helps understand what S-Compress
-does. S-Inst-Copy propagate some structure and allocate some structure while
-S-Compress propayages and equality and its effect will be to share some
-structure}
-\Xalistair{I would spin it slightly different. Both are rules that are used to
-copy solved constraints $\ueq$ from an abstraction. \Rule{S-Inst-Copy} and \Rule{S-Compress}
-do this, the latter copies the head shape of a multi-equation and the former copies
-the equalities between variables within a multi-equation. I've updated the text to reflect
-my understanding, what do you think?}
-
 \parcomment{Lowering}
 
 \Rule{S-Exists-Lower} implements the non-trivial case of lowering
@@ -4052,7 +4066,7 @@ We must instead use a \emph{tree} of nested \Let-regions to represent
 scopes. Under this scheme, levels no longer uniquely determine a variable's
 region.  Instead, we interpret a level relative to a path in the region tree
 from the root. When two variables are unified, they must always lie on some
-shared path---by scoping invariants---so computing their minimum leve (along
+shared path---by scoping invariants---so computing their minimum level (along
 this path) still suffices to determine the least common ancestor: we keep
 the efficient integer comparisons.
 
@@ -4427,24 +4441,8 @@ typing rule, but do not support cases where the typing rule to use
 depends on the disambiguation choice. In particular, GHC's
 \texttt{HasField} constraints do not support record fields with
 polymorphic types, or field types mentioning GADT existential
-types. In contrast, suspended match constraints naturally accommodate
+types.  In contrast, suspended match constraints naturally accommodate
 such non-uniformity in typing rules.
-
-\XDR{Reading the Haskell doc, I thought that HasField was using the type of
-the field to disambiguate, but trying examples it apparently does not
-(neither do we).}
-
-\Xalistair{Haskell only uses the record type \eg to solve \code{HasField a "x"
-b}, it waits until \code{a} has some type constructor $\Tapp \tys$ and then
-reduces the constraint.}
-
-\XDR{Are we sure that we can can ourselves do disambiguation
-with polymorphic record fields? Well, sine we do not use
-the type of fields, yes we do. But that's not a big deal.}
-
-\Xalistair{I'm practically certain we can. I can prototype this next week to
-prove us correct.}
-
 
 
 
@@ -4494,7 +4492,7 @@ remained incomplete.
 
 Alistair O'Brien started working on suspended constraints in Fall
 2024, coming from work on constraint-based presentations of GADT
-checking -- suspended constraints could delay the checking of GADT
+checking---suspended constraints could delay the checking of GADT
 patterns until the equalities to be introduced are known to be between
 rigid types. He proposed an alternative declarative implementation,
 and implemented a working prototype of incremental generalization
@@ -5048,7 +5046,7 @@ $\c$. \\
 %%     {\G \th \emagic \e : \tp}
 %% }
 
-%% \Subparabox[fig/ref/typing/core]{Typing rules --- Structural tuples}{}
+%% \Subparabox[fig/ref/typing/core]{Typing rules---Structural tuples}{}
   \inferrule[Tuple]
     {\parens{\G \th \ei : \ti}\iton}
     {\G \th (\ea, \ldots, \en) : \Pi\iton \ti}
