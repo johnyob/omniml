@@ -4194,10 +4194,12 @@ instantiation constraints, which can both be solved incrementally in any
 order. Therefore, semi-unification based type inference is a good basis
 candidate for performing omnidirectional type inference in \ML.  We first
 enriched semi-unification edges which a notion of scopes that forms the same
-tree-like structure as the one presented above: this simultaneous allows for
-a more direct encoding of type inference problems into semi-unification
-constraints and for a more efficient treatment of monomorphization,
-\ie. instantiation edges that must be turned into unification edges.
+tree-like structure as the one presented above, This generalizes the
+extension of semi-unification with unknowns, proposed by~\citet
+{Lushman-Cormack/subti@tr2008}, which simultaneously allows for a direct
+encoding of type inference problems into semi-unification constraints and
+enables an efficient treatment of monomorphization,
+\ie instantiation edges that must be turned into unification edges.
 %
 In the absence of fragile constructs (and of polymorphic recursion), there
 was no real benefit to use semi-unification for \ML type inference, yet
