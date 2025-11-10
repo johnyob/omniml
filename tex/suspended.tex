@@ -1161,18 +1161,28 @@ justify rejecting programs with unresolved disambiguation choices.
 \label{sec/overview/limitations}
 
 % 1. Our framework is complex---as a result, everything is hard ://
-% 2. Some programs are ill-typed even though they have a principal type.
-% 3. We do not provide a formalization of default rules.
+% 2. Cannot disambiguate on return type
+% 3. Some programs are ill-typed even though they have a principal type.
+% 4. We do not provide a formalization of default rules.
 
 \parcomment{Some programs even though they have a principal type are ill-typed}
 
 Omnidirectional inference is powerful, but not omnipotent:
 \begin{enumerate*}
+
   \item some programs are still rejected as ambiguous, even though a unique
-  elaboration could
-    in principle be chosen---a deliberate ``Goldilocks'' compromise;
-  \item the current formalization omits a treatment of default rules; and
-  \item the conceptual and implementation complexity of our framework.
+    elaboration could in principle be chosen---a deliberate ``Goldilocks''
+    compromise;
+
+  \item our current formalization cannot disambiguate based on the \emph{return
+    type} of overloaded projections; 
+
+  \item it presently omits a formalization of \emph{default rules}
+    (\cref{sec/default-rules}); and
+
+  \item our framework entails a higher conceptual and implementation complexity
+    than static directional approaches (\eg bidirectional typechecking).
+
 \end{enumerate*}
 
 \paragraph{Not too hot, not too cold} Some expressions
@@ -1188,7 +1198,12 @@ disambiguated. However, if one were allowed to combine the constraints, they
 would jointly determine that \code{r} must have type \code{cie_point}: in
 \code{gray_point}, the field \code{color} has type \code{int}, and hence
 cannot itself be projected, leaving a unique consistent elaboration:
-\code{r.cie_point/color.cie_color/x}.
+\code{r.cie_point.color.cie_color.x}.%
+%
+\footnote{
+The syntax $\exfield \e \T \elab$ qualifies the label $\elab$ to unambiguously
+belong to the type $\T$ in the projection.
+}
 
 Our framework nonetheless rejects \code{ex_1_0}. This is intentional:
 overloaded projections must be elaborated \emph{sequentially}, each in isolation,
@@ -1197,6 +1212,19 @@ rather than jointly with others. We view this restriction as a
 the intractability of full general overloading which is NP-hard, even
 without let-polymorphism, as shown by a reduction from 3-SAT~\citep*
 {Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}.
+
+\paragraph{No returns accepted}
+% We also don't take the return type into account
+At present, our system also resolves overloaded projections without taking their
+\emph{return type} into account.
+%
+\begin{program}[input,checkocaml]
+let ex_1_1 r = (r.x : cie_color) °\ocamlflags 11°
+\end{program}
+%
+Under the rules defined in this work, programs such as \code{ex_1_1} are
+rejected. However, we believe that omnidirectionality provides the right
+foundation to support them, and we leave this refinement to future work.
 
 
 \paragraph{No defaults, by default}
@@ -1238,10 +1266,12 @@ bidirectional or $\Geninst$-directional type inference.
   complex than local rules.
 
 \item[(\cref{sec:implementation})]
-  Implementing incremental instantiation efficiently is also tricky: it
-  requires triggering re-instantiations upon refinements of partial type
-  schemes, while avoiding redundant constraint solving across
-  instantiations.
+
+  Implementing incremental instantiation efficiently is comparably non-trivial
+  compared standard \ML-style instantiation: it requires triggering
+  re-instantiations upon refinements of partial type schemes, while avoiding
+  redundant constraint solving across instantiations.
+
 \end{enumerate}
 We hope to pay off some of this complexity in future work; in particular, we
 believe omnidirectionality is the missing piece to unlock modular
@@ -1447,10 +1477,6 @@ parameters.%
   shape patterns easier to understand.
 }
 %
-\Xalistair{For the record, I really don't see the readability benefit of $\trcd
-\T \tys$ over $\Tapp \tys$. This would be like writing $\textsf{pair } \ta \;
-\tb$ instead of $\ta \times \tb$.}
-%
 Type schemes $\ts$ are of the form $\all \tvs \t$, they are equal up to the
 reordering of binders and removal of useless variables. Standard notions such
 as the set of free variables $\fvs \ts$ and capture-avoiding substitutions
@@ -1468,10 +1494,12 @@ lambda-abstractions $\efun \x \e$, applications $\eapp \ea \eb$, annotations
 $\eannot \e \tvs \t$, and let-bindings $\elet x \ea \eb$, extended with the
 following expressions:
 \begin{itemize}
+
 \item
   For polytypes, we introduce implicit and explicit boxing and unboxing
   forms: $\epoly \e$, $\expoly \e \tvs \ts$, and $\einst \e$, $\exinst \e
   \tvs \ts$ respectively.
+
 \item
   Overloaded record labels include record literals $\erecord { \elaba = \ea;
   \ldots; \elab_n = \en }$ and field projections $\efield \e \elab$. Both
@@ -1479,13 +1507,7 @@ following expressions:
   \ldots; \elab_n = \en }$ and $\exfield \e \T \elab$, where the explicit
     record annotation $\labfrom {\_} \T$ indicates that the labels unambiguously
   belong to the record type $\T$.
-\TODO{Decide on an ultimate syntax for explicit projections and explicit records.
-Didier proposes $\e.\T/\elab$, Alistair proposes $\e.\T.\elab$, Gabriel proposes $\e.\elab^\T$ and $e.\elab@\T$.
-For records we have $\T / \erecord { \elab = \e }$,
-or $\T.\erecord { \elab = \e }$,
-or $\erecord { \elab = \e }^\T$,
-or $\erecord { \elab = \e }@\T$.
-}
+
 \end{itemize}
 All annotations in \OML are closed \ie their quantified variables $\tvs$ are
 exactly the free variables of the type $\t$ or type scheme $\ts$.
@@ -4248,8 +4270,11 @@ static overloading. By enforcing resolution using \emph{known} type information
 information, our approach remains tractable. Our experience suggests that this
 is a ``goldilocks'' solution: expressive enough for most applications, yet
 tractable, and (crucially) compatible with \ML's \emph{local
-let-generalization}.
-
+let-generalization}. 
+%
+However, we have not yet extended our approach to capture \emph{generalized
+static overloading}; developing a full omnidirectional account of that setting
+is left to future work.
 
 \paragraph{Suspended constraints}
 
