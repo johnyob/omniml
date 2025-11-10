@@ -6993,8 +6993,6 @@ generally in our system.
       {\cletr \x \tv \tvs {\c}
 	\C\where{\cexists {\tvbs'} \cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst}}
 
-        \TODO{Update argument below to new definition of ground regions.}
-
 	\begin{llproof}
 	  \disjointPf{\x}{\bvs \C}{Premise}
 	  \disjointPf{\tvbs'}{\tvp, \tvc, \tvbs}{Premise}
@@ -7007,7 +7005,7 @@ generally in our system.
 
 	    \begin{llproof}
 	      \vdashPf{\semenvp} {\cpapp \x \tvp \tvc \inst}{Premise}
-	      \inPf{\greg \tv \semenva}{\semenv(\x)}{$\cexistsi \inst \x \in \C$}
+	      \inPf{\greg \gt \semenva}{\semenvp(\x)}{$\cexistsi \inst \x \in \C$}
 	      \eqPf{\semenvp(\inst)}{\semenva}{\ditto}
 	      \eqPf{\semenvp(\tvc)}{\semenv(\inst)(\tvp)}{Simple inversion}
 	      \continueeqPf{\semenva(\tvp)}{Above}
@@ -7070,7 +7068,6 @@ generally in our system.
        \inst.\tvp \disjoint \insts \C \\
        \x \disjoint \bvs \C}
       {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where\ctrue}}
-        \TODO{Update argument below to new definition of ground regions.}
 
 	\begin{llproof}
 	  \equivPf{\cfor \tvp \cexists {\tv, \tvs} \ueqs}{\ctrue}{Premise}
@@ -7095,7 +7092,7 @@ generally in our system.
 
 	    \begin{llproof}
 	      \vdashPf{\semenvp}{\ctrue}{Premise}
-	      \inPf{\greg \tv {\semenva}}{\semenvp(\x)}{$\C = \Ca\where{\cexistsi \inst \x \Cb}$}
+	      \inPf{\greg \gt {\semenva}}{\semenvp(\x)}{$\C = \Ca\where{\cexistsi \inst \x \Cb}$}
 	      \eqPf{\semenvp(\inst)}{\semenva}{\ditto}
 	      \casesPf{\semenva(\tvp)}
 	    \end{llproof}
@@ -7117,7 +7114,7 @@ generally in our system.
 		  \vdashPf{\semenvb}{\ueqs}{$\tvp$ is polymorphic}
 		  \vdashPf{\semenvb}{\c}{$\tvp \disjoint \c$}
 		  \vdashPf{\semenvb}{\ueqs \cand \c}{By \Rule{Conj}}
-		  \inPf{\greg \tv \semenvb}{\semenv(\x)}{By definition}
+		  \inPf{\greg \gt \semenvb}{\semenv(\x)}{By definition}
 		  \supposePf{\semenvc \th \Cb\where\ctrue}{Considering entailment on $\cexistsi \inst \x$}
 		  \eqPf{\semenvc(\inst)}{\semenva}{\ditto}
 		  \vdashPf{\semenvc\where{\inst \is \semenvb}}{\Cb\where\ctrue}{$\inst.\tvp \disjoint \insts \Cb$}
@@ -7135,8 +7132,6 @@ generally in our system.
        \x, \tvb \disjoint \bvs \C}
       {\cletr \x \tv \tvs \c {\C\where{\cunif \tvb \tvc}}}
 
-        \TODO{Update argument below to new definition of ground regions.}
-
 	\begin{llproof}
 	  \disjointPf{\tvb}{\tv, \tvs}{Premise}
 	  \disjointPf{\x, \tvb}{\bvs \C}{Premise}
@@ -7152,7 +7147,7 @@ generally in our system.
 
 	  \begin{llproof}
 	    \vdashPf{\semenvp}{\cpapp \x \tvb \tvc \inst}{Premise}
-	    \inPf{\greg \tv \semenva}{\semenv(\c)}{$\cexistsi \inst \x \in \C$}
+	    \inPf{\greg \wild \semenva}{\semenv(\c)}{$\cexistsi \inst \x \in \C$}
 	    \eqPf{\semenvp(\inst)}{\semenva}{\ditto}
 	    \eqPf{\semenvp(\tvc)}{\semenva(\tvb)}{Simple inversion}
 	    \eqPf{\semenva(\tvb)}{\semenv(\tvb)}{$\tvb \disjoint \tv, \tvs$}
