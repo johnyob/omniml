@@ -1,0 +1,93 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{metropolis}
+
+% Temporary premble
+\usepackage{fontspec}
+\usepackage{xcolor}
+
+\usepackage{tcolorbox}
+\tcbuselibrary{hooks, listings, minted, breakable, skins}
+\usepackage{minted}
+
+\tcbset{
+  common/.style={
+    enhanced,
+    left=5pt,
+    listing only,
+    colframe=white
+  }
+}
+
+
+\definecolor{ocamlBackground}{HTML}{FFF8F2}
+\definecolor{ocamlHighlight}{HTML}{E9712C}
+
+\newtcblisting{ocaml}{
+  common,
+  minted language=ocaml,
+  colback=ocamlBackground,
+  listing engine=minted,
+  minted options = {fontsize=\footnotesize, numbersep=15pt, baselinestretch=1.1, escapeinside=``},
+  overlay={\node[fill=ocamlHighlight,yshift=-9pt,xshift=-10pt,left,text=white,
+         anchor=east,font=\footnotesize\ttfamily\bfseries] at (frame.north east){OCaml};}
+}
+
+\setmainfont{LinLibertine_}[
+  Extension=.otf,
+  UprightFont=*DR,
+  ItalicFont=*RI,
+  BoldFont=*RB,
+  BoldItalicFont=*RBI,
+]
+
+\definecolor{mPink}{HTML}{DC2680}
+\definecolor{mPurple}{HTML}{785EF0}
+\definecolor{mBlue}{HTML}{648FFF}
+
+% Title page
+
+\title{\textcolor{mPink}{Omnidirectional} Type Inference for \textcolor{mBlue}{ML}: \textcolor{mPurple}{Principality} Any Way}
+\date{November 10, 2025}
+\author{Alistair O'Brien (with Didier R\'emy \& Gabriel Scherer)}
+\setbeamertemplate{title separator}{}
+
+\begin{document}
+\maketitle
+\begin{frame}[fragile]
+\frametitle{Type-based Disambiguation}
+
+\begin{ocaml}
+type point = { x : int; y : int }
+`\pause`
+type grayscale_point = { x : int; y : int; color : int }
+`\pause`
+let getx p = p.x
+`\pause`
+(*           ^^^
+  Error 41 [ambiguous-name]: 
+  x belongs to several types: grayscale_point point
+ *)
+\end{ocaml}
+\vfill
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Type-based Disambiguation}
+
+\begin{ocaml}
+type point = { x : int; y : int }
+
+type grayscale_point = { x : int; y : int; color : int }
+
+let getx (p : point) = p.x
+
+(* val getx : point -> int *)
+
+
+
+\end{ocaml}
+
+\end{frame}
+
+\end{document}
