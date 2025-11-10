@@ -6726,8 +6726,6 @@ generally in our system.
          \tvp \disjoint \bvs \Ca}
         {\th \Cshape{\cletr \x \tv \tvs {\Ca\where{-}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}} \tvp \sh}
 
-        \TODO{Update argument below to new definition of ground regions.}
-
         \begin{llproof}
           \inPf{\tvp}{\tv,\tvs}{Premise}
           \disjointPf{\x}{\bvs \Cb}{\ditto}
@@ -6736,8 +6734,9 @@ generally in our system.
           \shapePf{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand -}}}{\tvc}{\sh}{By \ih}
           \ForallPf{\semenv, \gt}{}{Defn. of $\Cshape \ldots \tv {~\shape \t}$}
           \vdashPf{\semenv}{\cerase{\cletr \x \tv \tvs {\Ca\where{\cunif \tvp \gt}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}{Premise}
-          \LetPf{\semenva}{\semenv[\x \is \semenv(\cabsr \tv \tvs {\cerase {\Ca\where{\cunif \tvp \gt}}})]}{}
-          \eqPf{\semenvp(\tvp)}{\gt}{For any $\greg \tv \semenvp \in \semenva(\x)$}
+          \LetPf{\gabsr}{\semenv(\cabsr \tv \tvs {\cerase {\Ca\where{\cunif \tvp \gt}}})}{}
+          \LetPf{\semenva}{\semenv[\x \is \gabsr]}{}
+          \eqPf{\semenvp(\tvp)}{\gt}{For any $\greg \wild \semenvp \in \semenva(\x)$}
           \vdashPf{\semenvb}{\cpapp \x \tvp \tvc \inst}{Inversion of $\cerase \Cb$}
           \eqPf{\semenvb(\inst^\x)(\tvp)}{\semenvb(\tvc)}{Simple inversion}
           \inPf{\semenvb(\inst^\x)}{\semenvb(\x)}{Since $\cexistsi \inst \x \in \Cb$, $\semenvb$ extends $\semenva$}
@@ -6953,25 +6952,23 @@ generally in our system.
 
     \proofcaserewrite
       {S-Let-AppR}
-      {\cletr \x \tv \tvs \ca {\C\where{\capp \x \t}} \\ \tvc \disjoint \t \\ \x \disjoint \bvs \C}
-      {\cletr \x \tv \tvs \ca {\C\where{\cexistsi {\tvc, \inst} \x \cunif \tvc \t \cand \cpinst \inst \tv \tvc }}}
-
-        \TODO{Update argument below to new definition of ground regions.}
+      {\cletr \x \tv \tvs \c {\C\where{\capp \x \t}} \\ \tvc \disjoint \t \\ \x \disjoint \bvs \C}
+      {\cletr \x \tv \tvs \c {\C\where{\cexistsi {\tvc, \inst} \x \cunif \tvc \t \cand \cpinst \inst \tv \tvc }}}
 
 	\begin{llproof}
 	  \disjointPf{\tvc}{\t}{Premise}
 	  \disjointPf{\x}{\bvs \C}{Premise}
 	  \decolumnizePf
-	  \sufficientPf{equivalence between}{\capp \x \t \text{ and } \cexistsi {\tvc, \inst} \x \cunif \tvc \t \cand \cpinst \inst \tv \tvc}{\cref{lem:simple-let-equiv}}
-	  \supposePf{\semenvp(\x) = \semenv(\cabsr \tv \tvs \ca)}{Premise}
+	  \sufficientPf{a simple equivalence between}{\capp \x \t \text{ and } \cexistsi {\tvc, \inst} \x \cunif \tvc \t \cand \cpinst \inst \tv \tvc}{\cref{lem:simple-let-equiv}}
+	  \supposePf{\semenvp(\x) = \semenv(\cabsr \tv \tvs \c)}{Premise}
 	\end{llproof}
 	\begin{proofcases}
 	  \proofcase{$\implies$}
 
 	    \begin{llproof}
 	      \vdashPf{\semenvp}{\capp \x \t}{Premise}
-	      \inPf{\greg \tv {\semenva}}{\semenv(\x)}{Simple inversion}
-	      \eqPf{\semenva(\tv)}{\semenvp(\t)}{\ditto}
+	      \inPf{\greg {\semenvp(\t)} {\semenva}}{\semenvp(\x)}{Simple inversion}
+              \eqPf{\semenvp(\t)}{\semenva(\tv)}{Defn. of $\semenv(\cabsr \tv \tvs \c)$}
 	      \vdashPf{\semenvp\where{\tvc \is \semenvp(\t), \inst \is \semenva}}{\cpinst \inst \tv \tvc}{By \Rule{Incr-Inst}}
 	      \vdashPf{\semenvp\where{\tvc \is \semenvp(\t), \inst \is \semenva}}{\cunif \tvc \t}{By \Rule{Unif}}
 \Hand	      \vdashPf{\semenvp}{\cexistsi {\tvc, \inst} \x {\cunif \tvc \t \cand \cpinst \inst \tv \tvc}}{By \Rule{Exists}, \Rule{Exists-Inst} and \Rule{Conj}}
