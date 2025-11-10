@@ -305,14 +305,6 @@ within \OCaml.
 \subsection{Static overloading of constructors and record labels}
 \label{sec/overview/overloading}
 
-\XDR{We never say nor show that we do not use field types for
-disambiguation, which the reader could expect}
-%
-\Xalistair{Here probably isn't the place to mention that. We could mention this
-in limitations. It, however, isn't much of a limitation since all other
-implementations of record disambiguation (\eg OCaml, Haskell) do not
-disambiguate on the field type.}
-
 \parcomment{What do we mean by static overloading?}
 
 \emph{Static overloading} denotes a form of overloading in which resolution is
@@ -1223,8 +1215,12 @@ let ex_1_1 r = (r.x : cie_color) °\ocamlflags 11°
 \end{program}
 %
 Under the rules defined in this work, programs such as \code{ex_1_1} are
-rejected. However, we believe that omnidirectionality provides the right
-foundation to support them, and we leave this refinement to future work.
+rejected. This limitation is shared with existing languages such as \OCaml,
+\Haskell, and \SML, none of which use the return type of a projection to guide
+disambiguation. Our framework already goes beyond these systems, but we believe
+that omnidirectionality provides the right foundation to go
+further---incorporating return type disambiguation. We leave this refinement to
+future work.
 
 
 \paragraph{No defaults, by default}
