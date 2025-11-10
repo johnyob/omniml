@@ -1218,9 +1218,8 @@ Under the rules defined in this work, programs such as \code{ex_1_1} are
 rejected. This limitation is shared with existing languages such as \OCaml,
 \Haskell, and \SML, none of which use the return type of a projection to guide
 disambiguation. Our framework already goes beyond these systems, but we believe
-that omnidirectionality provides the right foundation to go
-further---incorporating return type disambiguation. We leave this refinement to
-future work.
+that omnidirectionality provides the right foundation to incorporate return
+type disambiguation. We leave this refinement to future work.
 
 
 \paragraph{No defaults, by default}
@@ -1262,12 +1261,13 @@ bidirectional or $\Geninst$-directional type inference.
   complex than local rules.
 
 \item[(\cref{sec:implementation})]
-  Implementing incremental instantiation efficiently is non-trivial
-  \XDR{Thanks for the change, which I like very much, indeed, but the English
-  seemed broken}compared
-  to standard \ML-style instantiation: it requires triggering
-  re-instantiations upon refinements of partial type schemes, while avoiding
-  redundant constraint solving across instantiations.
+
+  Implementing efficient incremental instantiation is non-trivial in comparison
+  to oridinary \ML instantiation, as refinements of partial type schemes must
+  trigger re-instantiations without introducing redundant constraint solving
+  across successive instantiations of the same scheme. 
+
+  \Xalistair{Didier, how about now?}
 
 \end{enumerate}
 We hope to pay off some of this complexity in future work; in particular, we
