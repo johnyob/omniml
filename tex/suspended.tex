@@ -4458,6 +4458,10 @@ extension for type-directed disambiguation of record labels,%
 and \GHC 8.0.1 (2016) added \texttt{DuplicateRecordFields}, allowing distinct
 record types with overlapping field names in the same module.
 
+\XDR
+  {\emph{not sufficiently predictable enough in practice} look really odd to
+  me. Even sufficiently or enough should be removed}
+
 However, the \GHC developers found that type-based disambiguation using
 bidirectional type inference is not sufficiently predictible enough in practice
 for users~\citep*{RFC-overloaded-record-fields}, and that the reliance on
@@ -4471,7 +4475,7 @@ form \code{HasField "x" a b} (\texttt{OverloadedRecordDot}, 2017).%
   \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html}
 }
 
-For instance, the projection \code{ex_1} from \cref{sec/overview/overloading} 
+For instance, the projection \code{ex_1} from \cref{sec/overview/overloading}
 would be written as:
 %
 \begin{program}[input]
@@ -4493,7 +4497,7 @@ type-class programs effectively).
 % We also don't delay typchecking entire subterms
 % On the other hand, qualified types naturally express constraints
 % between types, but they cannot easily delay the type-checking of whole
-% subterms. 
+% subterms.
 
 Beyond efficiency, the \texttt{HasField} approach is also limited in
 expressiveness. It works well for records with `simple' field types (\ie field
