@@ -4422,31 +4422,54 @@ such non-uniformity in typing rules.
 
 \parcomment{What is semi-unification? And it's relation to \ML}
 
+\XDR{What you described as semi-unification is \emph{uniform}
+semi-unification, which is a decidable subcase}
+
 Semi-unification \citep*{Henglein/phd,Henglein/tiasu@toplas93}, introduced in
 the late 1980's, is a generalization of unification that solves
-\emph{instantiation inequalities} of the form $\ta \leq \tb$, meaning that
-$\rho(\theta(\ta)) = \theta(\tb)$ for two substitutions $\rho$ and $\theta$.
+a collection $\wedge_{i \in I} (\ti \leq \tip)$ of
+\emph{instantiation inequalities}, meaning that there exist a unification
+$\theta$ and a collection of matching substitutions
+$\rho_i^{i \in I}$ such that $\rho_i(\theta(\ti)) =
+\theta(\tip)$.
 %
-Although widely studied, it was later proven undecidable in
-general~\citep*{Kfoury-Tiuryn-Urzyczyn/ic1993} and largely abandoned for type
-inference purposes. Still, \citeauthor{Henglein/phd} observed that his
-semi-algorithm always appeared to terminate for \ML inference
-problems---indeed, all semi-unification constraints arising from \ML type
-inference are acyclic as characterized by ?? and therefore guaranteed to
-terminate. 
+Unfortunately, semi-unification was soon proved undecidable~\citep*{%
+Kfoury-Tiuryn-Urzyczyn/ic1993} and almost abandoned for type inference
+purposes---even though \citeauthor{Henglein/phd} observed that his
+semi-algorithm appeared to always terminate on type \ML inference problems
+with polymorphic recursion.\footnote{Although, we knew from the
+undecidability of semi-unification that such example existed, it is only
+later that the class of examples for which the semi-algorithm algorithm does
+not terminate could be characterized
+\citep*{Figueiredo-Camarao/semiunif-ptm@unpub2024}: these patterns are
+extremely complex, which suggests that they are quite unlikely to appear in
+practice, unless crafted especially.}\XDR{Be careful, you had changed the
+meaning of my text}\XDR{I was to keep this citation because it is unknown
+and I hope I would have found it earlier}
+%
+Moreover, in the absence of polymorphic recursion, semi-unification
+constraints arising from \ML type inference are acyclic\XDR[as characterized
+by ??]{I do not know if/where this has been stated, but the argument is
+obvious (by looking at the algorithm that builds minimal types) and it was
+the basis of ASUP (acyclic unification); it might be stated somewhere but I
+would have to search for it in all papers that use semi-unification for type
+inference.}  and therefore guaranteed to terminate.
 
 \parcomment{Semi-unification is omnidirectionally-ready}
 
 Semi-unification constraints can be solved \emph{incrementally}, in any order,
-making them a natural foundation for omnidirectional type inference in \ML. 
-Although it offered little advantage for traditional \ML inference, 
+making them a natural foundation for omnidirectional type inference in \ML.
+Although it offered little advantage for traditional \ML inference,
 \citeauthor{Henglein/phd}'s algorithm was \emph{omnidirectionality-ready},
 merely waiting for fragile constructs to give it new life!
 
 \parcomment{What we did}
 
 Motivated by this observation, we explored a second prototype that implements
-\ML-style let-generalization via semi-unification. For efficiency, we enrich
+\ML-style let-generalization via semi-unification.
+\XDR{You omitted, the other half, as important}For both a more direct
+encoding of type inference problems into
+semi-unification and for efficiency their resolution, we enriched
 semi-unification constraints with a notion of \emph{scope}, forming the same
 tree-like structure as regions in our \emph{generalization tree}
 (\cref{sec:implementation}). This extends the formalization of semi-unification
@@ -4458,12 +4481,12 @@ unification constraints (akin to \Rule{S-Inst-Mono} in our constraint solver).
 
 \parcomment{The solutions coincide}
 
-Although this prototype began from a different prespective, the implementation
-problems and their solutions turned out to be strikingly similar to those in
-our first prototype (described in \cref{sec:implementation}). This close
-correspondence naturally raises the question of whether partial type schemes
-and incremental instantiation could be enriched to cope with polymorphic
-recursion.
+Although this prototype began from a different perspective, the
+implementation problems and their solutions turned out to be strikingly
+similar to those in our first prototype (described in
+\cref{sec:implementation}). This close correspondence naturally raises the
+question of whether partial type schemes and incremental instantiation from
+our first prototype could be enriched to cope with polymorphic recursion.
 
 \XDR{I wonder whether semi-unification fits better in the implementation or
 related-work section.  The goal is to explain that semi-unification was
@@ -8232,4 +8255,4 @@ Let $\e$ be an arbitrary closed well-typed term; that is, there exists a type
 % LocalWords:  Figueiredo Camarao Lushman Henglein's Walkingshaw HasField
 % LocalWords:  DisambiguateRecordField DuplicateRecordFields typeclass emy
 % LocalWords:  OverloadedRecordDot Andreas Scherer Martinot Vivien Gundry
-% LocalWords:  Gooding ois homomorphic homomorphism
+% LocalWords:  Gooding ois homomorphic homomorphism ASUP omnidirectionally
