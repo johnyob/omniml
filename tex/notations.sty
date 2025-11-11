@@ -71,8 +71,8 @@
 \defmetavar{\inst}{i}
 \newcommand{\insts}[1]{\mathsf{insts}(#1)}
 \newcommand{\cexistsi}[3]{\cexists {#1^{#2}} #3}
-\newcommand{\cpinst}[3]{{#1} \where{{#2} \rightsquigarrow{#3}}}
-\newcommand{\cpapp}[4]{{#4}^{#1} \where{{#2} \rightsquigarrow {#3}}}
+\newcommand{\cpinst}[3]{{#1}({#2}) \leadsto {#3}}
+\newcommand{\cpapp}[4]{\cpinst{{#4}^{#1}}{#2}{#3}}
 \defmetavar{\ren}{\rho}
 \newcommand{\renroot}[1]{\mathprefix{root}(#1)}
 \newcommand{\renreg}[1]{\mathprefix{reg}(#1)}

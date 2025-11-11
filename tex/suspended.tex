@@ -3075,7 +3075,7 @@ preserve typability in its operational semantics.
 
 \end{version}
 
-\section{Solving constraints}
+\section{Constraint solving}
 \label{sec:solving}
 
 \parcomment{Intro}
@@ -3273,10 +3273,28 @@ for the incremental solving of instantiation edges. I prefer this view, but
 I guess that one could also view $\inst$ as a particular instantiation,
 computed incrementation that maps variables to types.
 }
+%
+\Xalistair{I went for $\inst(\tv) \leadsto \t$ in the end. I think this is both
+in the spirit of your suggestions and correctly conveys the scoping invariant I
+wanted from the original notation}
 
-\subsection{Constraints for incremental generalization and instantiation}
+\subsection{Administrative constraints}
 
-\cref{sec:constraints} introduced the constraint language that is necessary for constraint generation, to express inference problems for the surface language. We now introduce two additional constraint-formers that are only used during constraint solving, to better express intermediate solver states.
+\parcomment {Intro: new administrative constraint formers!}
+
+Section \cref{sec:constraints} introduced the constraint language used for
+constraint generation (\cref{sec/oml/constraints}). In this section we extend
+the language with a small set of \emph{administrative constraints}: auxillary
+constructs that never appear in generated constraints, but are introduced
+internally by the solver to manage generalization and incremental
+instantiation. 
+
+\parcomment {Point: What for?}
+
+These administrative constraints enable the solver to represent and refine
+\emph{partial type schemes} as solving progresses, capturing intermediate
+generalization states and tracking how instantiations evolve as suspended
+constraints are discharged. 
 
 \begin{mathparfig}[!tp]
   {fig:constraint-let-regions}
@@ -3327,17 +3345,55 @@ computed incrementation that maps variables to types.
     {\semenv \th \cpinst \inst \tv \t}
 \end{mathparfig}
 
-\paragraph{Regional \texttt{let}-constraints} As is standard in constraints-based formulations of ML type inference, generalization-related rules operate on constraints of the form $(\clet \x \tv {\exi \tvs \c} \dots)$: the outermost existential variables $\tvs$ of the constraint abstraction $\exi \tvs \c$ correspond to potentially-generalizable variables; we call a \emph{region} this existential prefix $\exists \tvs$.
+\paragraph{Regional let-constraints} 
 
-To make regions explicit, we introduce the syntax
-$\cletr \x \tv \tvs \ca \cb$, where $\tv$ is the \emph{root} of the region
-and $\tvs$ are auxiliary existential variables. The order of $\tvs$ is
-immaterial; regions are considered equal up to permutation of these
-variables. Regional \Let-constraints strictly generalize ordinary let
-constraints, as captured by the equivalence:
+\parcomment{Recall the standard solving form for let-constraints}
+
+As is standard in constraint-based formulations of \ML type inference
+\citep{Pottier-Remy/emlti}, generalization-related rules operate on constraints
+of the form $\clet \x \tv {\exi \tvs \ca} \cb$. The outermost existentially
+quantified variables $\tvs$ correspond to the \emph{potentially generalizable}
+variables. 
+
+\parcomment{What is a region?}
+
+We refer to this existential prefix $\exists \tvs$ as a \emph{region}.
+Intuitively, a region delimits the scope of variables that may be generalized
+once the abstraction has been fully solved. 
+
+\parcomment{Explicit regions}
+
+To make regions explicit, we introduce the syntax $\cletr \x \tv \tvs \ca \cb$
+(\cref{fig:constraint-let-regions}), where $\tv$ is the \emph{root} of the
+region and $\tvs$ are auxiliary existential variables. The order of $\tvs$ is
+immaterial; regions are considered equal up to permutation of these variables. 
+
+\parcomment{Semantics}
+
+Satisfiability of regional let-constraints is defined
+\cref{fig:constraint-let-regions}. The semantics of an abstraction with a
+region, written $\semenv(\cabsr \tv \tvs \c)$, is a set $\gabsr$ of
+\emph{ground regions} that satisfy $\c$. A ground region $\gr$ is a pair $\greg
+\gt \semenv$; it satisfies the constraint abstraction $\cabsr \tv \tvs \c$ if
+$\semenv$ satisfies $\c$, and $\gt$ is $\semenv(\tv)$. Intuitively, the region
+environment $\semenv$ carries a ground type for each inference variable $\tvb$
+occurring in $\c$; in particular, a ground instance for $\tv$ and $\tvs$. 
+
+The rules \Rule{LetR} and \Rule{AppR} are the \emph{regional counterparts} of
+the \Rule{Let} and \Rule{App} rules introduced in \cref{sec:constraints}. They
+are semantically equivalent to their non-regional forms, except that each
+operates over sets of ground regions ($\gabsr$) rather than sets of ground
+types ($\gabs$). The additional environment $\semenv$ carried by these ground
+regions $\greg \gt \semenv$ is semantically inert for \Rule{LetR} and
+\Rule{AppR} themselves, but will become important later, in the semantics of
+\emph{incremental instantiation} constraints (\cref{sec/solver/incr-inst}). 
+
+Regional \Let-constraints strictly generalize ordinary let constraints, as
+captured by the equivalence:
 \begin{mathpar}
   \clet \x \tv {\exi \tvs \ca} \cb \Wide\cequiv \cletr \x \tv \tvs \ca \cb
 \end{mathpar}
+
 
 \paragraph{The trouble with lets}
 
@@ -3435,16 +3491,19 @@ from the first application of \code{getx} (\code{getx (diag 42)}).
 %
 The (simplified) generated constraint for \code{ex_8} contains:
 \begin{mathpar}
+  \begin{array}{rl}
   \cexists {\tvgp, \tvd}
-  \clet \xgetx \tvgetx
+    &\Let \xgetx = \cabs \tvgetx
   {\cexists {\tvp, \tvgetxret}
     {\bigwedge \PARENS {
       \cunif \tvgetx {\tvp \to \tvgetxret} \\
       \cmatch \tvp {\cbranch {(\cpatrcd \ct)}
          {\labfrom {\ttlab \x} \ct \leq \tvp \to \tvgetxret}}
-    }}}
-  {\\ \capp \xgetx \parens{\trcd \tgpoint \tint \to \tvd}
+       }}}
+  \\[2ex] 
+    & \In {\capp \xgetx \parens{\trcd \tgpoint \tint \to \tvd}
       \cand \capp \xgetx \parens{\tvgp \to \tfloat}}
+  \end{array}
 \end{mathpar}
   If we now apply \Rule{S-Let-App-Beta} to both applications of $\xgetx$
   (removing the $\Let$ constraint for concision), we obtain:
@@ -3489,16 +3548,16 @@ gpoint}, respectively.
 
 \parcomment{Generalization in the context of constraint solving}
 
-Even setting soundness aside, \Rule{S-Let-App-Beta} is inefficient.
-Each application duplicates constraint solving work for the same abstraction.
+Even setting soundness aside, \Rule{S-Let-App-Beta} is inefficient. Each
+application duplicates constraint solving work for the same abstraction.
 %
-A more efficient approach first solves the abstraction once---\eg reducing it
-to $\cabsr \tv \tvs \ueqs$, where $\tvs$ are generalizable variables---and then
-reuses the result at each instantiation site by only copying the solved
-constraint $\ueq$. This mirrors the generalization and instantiation steps of
-\ML inference algorithms such as $\mathcal{W}$: $\cabsr \tv \tvs \ueqs$
-corresponds to the type scheme $\tfor \tvs {\sub(\tv)}$, where $\sub$ is the
-most general unifier of $\ueqs$.
+A more efficient approach is to \emph{solve once and reuse}: first solve the
+abstraction once---\eg reducing it to $\cabsr \tv \tvs \ueqs$, where $\tvs$ are
+generalizable variables---and then reuse the result at each instantiation site
+by only copying the solved constraint $\ueq$. This mirrors the generalization
+and instantiation steps of \ML inference algorithms such as $\mathcal{W}$:
+$\cabsr \tv \tvs \ueqs$ corresponds to the type scheme $\tfor \tvs
+{\sub(\tv)}$, where $\sub$ is the most general unifier of $\ueqs$.
 %
 \citet*{Pottier-Remy/emlti} formalize this connection, and the optimized
 treatment is naturally expressed as a strategy on top of their
@@ -3531,6 +3590,7 @@ $\tvp_2$ with $\trcd \tgpoint \tvb_2$ and $\tvgetxret_2$ with $\tvb_2$.
 
 
 \paragraph{Incremental instantiation}
+\label{sec/solver/incr-inst}
 
 \parcomment {Intro partial instantiations}
 
@@ -3549,51 +3609,47 @@ We introduce two new constraint formers:
 \end{enumerate}
 The instantiation variable $\inst$ is required to ensure all incremental
 instantiations $\cpinst \inst \tv \t$ are solved uniformly.
-%
+
 % I wanted to put this before the syntax introduction, but I think this order
 % works better since it is hard to conceptually understand incremental instantiations
 % without the syntax
-%
+
 \parcomment {Conceptual model}
 %
 Within the solver, we view incremental instantiations as markers indicating
 which parts of the abstraction still need to be copied, and abstractions
 themselves are treated as partial type schemes.
-%
-This mechanism enables efficient handling of constraint
-instantiations: solved parts are reused immediately, while suspended
-constraints can be solved later, further refining the abstraction and
-propagating new equations to all instantiation sites.
 
-When a region abstraction $\cletr \x \tv \tvs \ca \cb$ contains an
-incremental instantiation constraint $\cpinst \inst \tvb \t$ and $\inst$ is
-an instantion of $\x$, then $\tvb$ can be any free inference variable of
-$\ca$, including $\tv$ and the $\tvs$. In other words, the region
-abstraction $\cletr \x \tv \tvs \ca \cb$ uses non-obvious scoping rules
-where the $\tv, \tvs$ are also bound in $\cb$, where they can only appear in
-incremental instantiations of $\x$. (This in particular justifies having a
-specific syntax for regional \texttt{let}s instead of writing $\clet \x \tv
-{\exi \tvs \ca} \cb$.)
+\parcomment{Remind why we need this}
 
-\paragraph{Semantics}
+This mechanism enables efficient handling of constraint instantiations: solved
+parts are reused immediately, while suspended constraints can be solved later,
+further refining the abstraction and propagating new equations to all
+instantiation sites.
 
-The semantics of an abstraction with a region, written
-$\semenv(\cabsr \tv \tvs \c)$, is a set $\gabsr$ of \emph{ground regions}
-that satisfy $\c$. A ground region $\gr$ is a pair $\greg \gt \semenv$; it
-satisfies the constraint abstraction $\cabsr \tv \tvs \c$ if $\semenv$
-satisfies $\c$, and $\gt$ is $\semenv(\tv)$. Intuitively, the region
-environment $\semenv$ carries a ground type for each inference variable
-$\tvb$ occurring in $\c$; in particular, a ground instance for $\tv$ and
-$\tvs$. It is used to check each incremental instantiation
-$\cpinst \inst \tvb \t$.
+\parcomment{Semantics}
+
+We now turn to the semantics of incremental instantiations
+(\cref{fig:constraint-let-regions}). The existential constraint $\cexistsi
+\inst \x \c$ is satisfiable (\Rule{Exists-Inst}) if $\c$ is satisfiable with
+$\inst$ bound to one of the region environments $\semenvp$ in the
+interpretation of $\x$.
 %
-The existential constraint $\cexistsi \inst \x \c$ is satisfiable
-(\Rule{Exists-Inst}) if $\c$ is satisfiable with $\inst$ bound to one
-of the region environments $\semenvp$ in the interpretation of $\x$.
-%
-An incremental instantiations $\cpinst \inst \tvb \t$ is satisfiable
-(\Rule{Incr-Inst}) exactly when the instance $\semenvp(\inst)(\tvb)$ of
-$\tvb$ in the region environment $\inst$ is equal to $\t$.
+An incremental instantiation $\cpinst \inst \tv \t$ is satisfiable
+(\Rule{Incr-Inst}) exactly when $\inst$'s instance of $\tv$
+(\ie $\semenv(\inst)(\tv)$) is equal to $\t$.
+
+\parcomment {Scoping}
+
+When a regional abstraction $\cletr \x \tv \tvs \ca \cb$ contains an
+incremental instantiation constraint $\cpinst \inst \tvb \t$, and $\inst$ is an
+instantion of $\x$, the variable $\tvb$ may range over any free variable of
+$\ca$---including $\tv$ and the regional variables $\tvs$. In other words, the
+regional let-constraint $\cletr \x \tv \tvs \ca \cb$ provides an non-obvious
+scoping rule: the variables $\tv, \tvs$ are also bound in $\cb$, byt may occur
+there only within incremental instantiations of $\x$. This subtley justifies
+introducing an explicit syntax for regional let-constraints, rather than
+encoding them as $\clet \x \tv {\exi \tvs \ca} \cb$.
 
 \subsection{Solving rules}
 
@@ -3679,7 +3735,7 @@ considered a stuck constraint.
   {\cfor \tvp \cexists {\tv} {\ueqs} \cequiv \ctrue \\
    \tvp \in \reg \tv \tvs \\
    \tvp \disjoint \c \\\\
-   \inst.\tvp \disjoint \insts \C \\
+   \inst(\tvp) \disjoint \insts \C \\
    \x \disjoint \bvs \C}
   {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where\ctrue}}
 
@@ -3761,7 +3817,7 @@ considered a stuck constraint.
                   {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}
      \tvp \sh}
 \end{mathparsubfig}
-\caption{Constraint solving rules}
+\caption{Selected constraint solving rules}
 \label{fig:solving-rules}
 \end{figure}
 
@@ -3964,7 +4020,10 @@ in the premise.
 For a solved context $\hat\C$, this syntactic is moreover sound and
 complete with respect to the semantic definition of unicity:
 $\Cshape \C \tau \sh$ holds if and only if $\th \Cshape \C \tau \sh$ is
-derivable.\Xgabriel{Is this proved somewhere?}
+derivable.
+%
+\Xgabriel{Is this proved somewhere?}
+\Xalistair{Yes, Lemma C.11}
 
 \subsection{Metatheory}
 
@@ -4162,13 +4221,6 @@ work that instantiation before re-generalization, because instantiation may
 unlock suspended constraints that will in turn induce considerable
 simplification in that region.
 
-
-\XDR{@Allistair: I added two sentences above, but feel free to modify or
-delete if you disagree.}
-
-\XDR{I move the discussion on efficient re-generalization to our pad.}
-
-
 \subsection{Semi-unification.}
 
 Our second prototype is based on semi-unification.  Semi-unification,
@@ -4220,6 +4272,18 @@ implementation details meet the other implementation.}
 %
 \Xgabriel{I'm happy with the current placement -- we always said
 that it would be nice to mention both implementations in the section.}
+%
+\Xalistair{Personally I prefer it as related work. We agreed that the goal of
+the implementation section is to provide enough information, together with the
+open-source release, for someone to faithfully reconstruct our implementation.
+Given this, I'm not convinced this material belongs here. The discussion of
+semi-unification seems more like contextual commentary on (another valid)
+approach. I like that we're mentioning it (we always wanted to do this) and to
+clarify the connection to our approach, but it feels better suited in related
+work. More broadly, I'm a little concerned our paper is growing beyond the page
+limit one would consider a reasonable length (we're currently at ~40 pages),
+and that describing both implementations risks muddying the narrative rather
+than sharpening it}
 
 \section{Related work}
 \label{sec:related-work}
