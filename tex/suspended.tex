@@ -4131,7 +4131,7 @@ be updated in the future using \emph{guards}. A guard is a mark on a
 variable that indicates the variable is captured by some suspended
 constraint that has not yet been solved. Guarded variables are generalized
 as partial generics (\textbf{PG}); unguarded ones are fully generalized
-(\textbf{G}).'
+(\textbf{G}).
 
 When an instance is taken from a partial generic, we retain a forward reference
 from the partial generic (\textbf{PG}) to the instance. This enables the
@@ -4266,8 +4266,11 @@ typically for \emph{dynamic overloading} \citep{conf/popl/WadlerB89}. But they
 are insufficient when we require a unique resolution of the constraint across
 all instances---as in \emph{static overloading}.
 %
-It is possible to emulate static overloading for qualified types by applying implementation-defined tweaks to certain
-builtin qualified types, to enforce that resolution is global fails when under-determined. But these tweaks do not have a clear declarative semantics: to the best of our knowledge, specifying failure on missing information requires our unicity conditions.
+Static overloading can be emulated using qualified types by applying
+implementation-defined tweaks to specific built-in type-classes, enforcing that
+resolution is global and failing when it is under-determined. However, suc
+mechanisms lack a clear declarative semantics: to our knowledge, capture
+failure due to missig information requires our unicity conditions.
 
 \citet{Leijen-Ye/prefix@pldi2025} recently proposed a bidirectional account of
 generalized static overloading within \ML. However, their approach is limited by
