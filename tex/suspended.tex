@@ -1265,7 +1265,7 @@ bidirectional or $\Geninst$-directional type inference.
   Implementing efficient incremental instantiation is non-trivial in comparison
   to oridinary \ML instantiation, as refinements of partial type schemes must
   trigger re-instantiations without introducing redundant constraint solving
-  across successive instantiations of the same scheme. 
+  across successive instantiations of the same scheme.
 
   \Xalistair{Didier, how about now?}
 
@@ -3225,7 +3225,8 @@ type variable does not occur in the type it is being unified with. This is a
 necessary condition for unification, as it would otherwise lead to infinite
 types.
 This is formalized by the relation $\tv \prec_\up \tvb$ indicating that
-$\tv$ occurs in a type equated to $\tvb$ in $\up$, that is, when $\up = \Up\where{\cunif \tvb {\cunif \t \ueq}}$,
+$\tv$ occurs in a type equated to $\tvb$ in $\up$, that is, when $\up =
+\Up\where{\cunif \tvb {\cunif \t \ueq}}$,
 $\tv \in \fvs \t$ and $\tv, \tvb \disjoint \bvs \Up$.
 %
 A unification problem $\up$ is said to be cyclic, written $\cyclic \up$, if
@@ -3250,33 +3251,6 @@ $\tv \prec_\up^+ \tv$ for some $\tv$.
 \end{enumerate*}\relax
 \end{definition}
 
-\XDR[Alternative notation]{
-  $\cpinst \inst \tv \t$ could be written
-  $\tv \leadsto^i \t$ or
-  $\tv \mathop{\smash\leadsto\vphantom-}\limits^i \t$
-}
-%
-\Xalistair{
-  This is okay, but I'm not a huge fan of the subscript[DR: superscript].
-}
-\Xgabriel{I also find
-  $\tv \mathop{\smash\leadsto\vphantom-}\limits^i \t$
-natural, and I am receptive to Didier's argument that this notation already
-exists in previous works (I was not aware of it). Other potential choices
-would have been $\tv \leqslant^\inst \t$ or $\inst(\tv) \leqslant \tau$.}
-\XDR{There are two points of views, whether $\tv$ commes first of $i$ comes
-first.
-For me, $\tv$ comes first, which $\tv \leadsto^\inst \t$ or
-$\tv \leqslant^\inst \t$ emphasizes.  The reason it comes first, is that
-$i$, in our framework or in semi-unification is an instrumentation added
-for the incremental solving of instantiation edges. I prefer this view, but
-I guess that one could also view $\inst$ as a particular instantiation,
-computed incrementation that maps variables to types.
-}
-%
-\Xalistair{I went for $\inst(\tv) \leadsto \t$ in the end. I think this is both
-in the spirit of your suggestions and correctly conveys the scoping invariant I
-wanted from the original notation}
 
 \subsection{Administrative constraints}
 
@@ -3287,14 +3261,14 @@ constraint generation (\cref{sec/oml/constraints}). In this section we extend
 the language with a small set of \emph{administrative constraints}: auxillary
 constructs that never appear in generated constraints, but are introduced
 internally by the solver to manage generalization and incremental
-instantiation. 
+instantiation.
 
 \parcomment {Point: What for?}
 
 These administrative constraints enable the solver to represent and refine
 \emph{partial type schemes} as solving progresses, capturing intermediate
 generalization states and tracking how instantiations evolve as suspended
-constraints are discharged. 
+constraints are discharged.
 
 \begin{mathparfig}[!tp]
   {fig:constraint-let-regions}
@@ -3345,7 +3319,7 @@ constraints are discharged.
     {\semenv \th \cpinst \inst \tv \t}
 \end{mathparfig}
 
-\paragraph{Regional let-constraints} 
+\paragraph{Regional let-constraints}
 
 \parcomment{Recall the standard solving form for let-constraints}
 
@@ -3353,31 +3327,29 @@ As is standard in constraint-based formulations of \ML type inference
 \citep{Pottier-Remy/emlti}, generalization-related rules operate on constraints
 of the form $\clet \x \tv {\exi \tvs \ca} \cb$. The outermost existentially
 quantified variables $\tvs$ correspond to the \emph{potentially generalizable}
-variables. 
-
-\parcomment{What is a region?}
-
+variables.
+\parcomment{What is a region?}\XDR{Too many paragraphs, I think.}%
 We refer to this existential prefix $\exists \tvs$ as a \emph{region}.
 Intuitively, a region delimits the scope of variables that may be generalized
-once the abstraction has been fully solved. 
+once the abstraction has been fully solved.
 
-\parcomment{Explicit regions}
-
-To make regions explicit, we introduce the syntax $\cletr \x \tv \tvs \ca \cb$
-(\cref{fig:constraint-let-regions}), where $\tv$ is the \emph{root} of the
-region and $\tvs$ are auxiliary existential variables. The order of $\tvs$ is
-immaterial; regions are considered equal up to permutation of these variables. 
+\parcomment{Explicit regions}%
+To make regions explicit, we introduce regional let-constraints $\cletr \x
+\tv \tvs \ca \cb$ (\cref{fig:constraint-let-regions}), where $\tv$ is the
+\emph{root} of the region and $\tvs$ are auxiliary existential variables.
+The order of $\tvs$ is immaterial; regions are considered equal
+up to permutation of these variables.
 
 \parcomment{Semantics}
 
-Satisfiability of regional let-constraints is defined
+Satisfiability of regional let-constraints is defined in
 \cref{fig:constraint-let-regions}. The semantics of an abstraction with a
 region, written $\semenv(\cabsr \tv \tvs \c)$, is a set $\gabsr$ of
 \emph{ground regions} that satisfy $\c$. A ground region $\gr$ is a pair $\greg
 \gt \semenv$; it satisfies the constraint abstraction $\cabsr \tv \tvs \c$ if
 $\semenv$ satisfies $\c$, and $\gt$ is $\semenv(\tv)$. Intuitively, the region
 environment $\semenv$ carries a ground type for each inference variable $\tvb$
-occurring in $\c$; in particular, a ground instance for $\tv$ and $\tvs$. 
+occurring in $\c$; in particular, a ground instance for $\tv$ and $\tvs$.
 
 The rules \Rule{LetR} and \Rule{AppR} are the \emph{regional counterparts} of
 the \Rule{Let} and \Rule{App} rules introduced in \cref{sec:constraints}. They
@@ -3386,7 +3358,12 @@ operates over sets of ground regions ($\gabsr$) rather than sets of ground
 types ($\gabs$). The additional environment $\semenv$ carried by these ground
 regions $\greg \gt \semenv$ is semantically inert for \Rule{LetR} and
 \Rule{AppR} themselves, but will become important later, in the semantics of
-\emph{incremental instantiation} constraints (\cref{sec/solver/incr-inst}). 
+\emph{incremental instantiation} constraints (\cref{sec/solver/incr-inst}).
+
+\XDR[grammar question]{I think we need not a dash in Regional
+\Let-constraints, since this is the default parenthezising rule. Unless we
+wish to make \Let-constraint a concept itself, but then, we should also
+put a dash when \Let-constraint apperas alone as in the second occureence}
 
 Regional \Let-constraints strictly generalize ordinary let constraints, as
 captured by the equivalence:
@@ -3421,49 +3398,6 @@ This rule, due to \citet*{Pottier-Remy/emlti}, resembles $\beta$-reduction in
 some presentations of explicit substitutions. While this rule is sound
 when $\ca$ is a \emph{simple} constraint, it becomes unsound for abstractions
 containing suspended constraints.
-
-%
-\Xgabriel{I had to change the example below and tried to reformulate the
-  following discussion to match.}
-%
-\Xalistair{I changed the example again. There are two points that we want to
-  convey: we cannot make $\Let$ monomorphic, we cannot apply $\beta$-reduction.
-  The previous example demonstrates the former but not the latter.}
-%
-\Xgabriel{I am fine with the new writing and I propose to leave it at that,
-but for the record I feel that there are several points to be made, I don't
-know if we should try to handle them together or separately, and it is not
-obvious that everything is covered. A first point worth making is that (A)
-the constraint-duplication rule is inefficient, so ML engines generalize
-eagerly. Then one can point (as you do here) that (B) duplication in fact
-becomes incorrect in our setting. One can also point out independently that
-(C) it is not obvious how to generalize 'eagerly' in presence of suspended
-constraints. I also tried to say that (D) when we encounter a use of the
-term variable later on, suspended the instantiation completely would be
-incomplete (note: this does not require back-propagation, as I already
-observed this with Olivier before we introduced the idea of
-back-propagation), and finally (E) back-propagation can occur. The previous
-structure talked about (A) first and then (C, D) (and (E) in passing but it
-was not the focus). The new structure talks about (B) first, then (A), and
-then (E) (reading (D) between the lines). My favorite treatment of this
-discussion would be to explain (A) first (it corresponds to previous work),
-then (B) as a remark, then (C) and (D) together which I think are the key
-take-aways. Then we could remark (E) that we obtain back-propagation as an
-emergent property of the design (with the same example or a different
-example, depending on what we find that is simple and natural).
-
-(this is interesting and worth pointing out, but I don't know that it is
-required to explain incremental generalization; it could be said
-separately, maybe first). We can also point out that we are stuck during
-generalization}
-%
-\Xalistair{You raise several good points here! There is one that you missed,
-(F) that making let bindings monomoprhic is incomplete. I can add (C) to the
-current version. Order would be: E, A, B, C, F. I'm not too sure D with worth
-talking about (since back-propagation makes it clear that this approach doesn't
-work). If we didn't have back-propagation, then perhaps? Back-propagation isn't
-an emergent property of the solver's design, but a consequence of the design of
-our unicity conditions.}
 
 \begin{local}
 \def \xgetx{{\ttlab {getx}}}
@@ -3500,7 +3434,7 @@ The (simplified) generated constraint for \code{ex_8} contains:
       \cmatch \tvp {\cbranch {(\cpatrcd \ct)}
          {\labfrom {\ttlab \x} \ct \leq \tvp \to \tvgetxret}}
        }}}
-  \\[2ex] 
+  \\[2ex]
     & \In {\capp \xgetx \parens{\trcd \tgpoint \tint \to \tvd}
       \cand \capp \xgetx \parens{\tvgp \to \tfloat}}
   \end{array}
@@ -3526,15 +3460,16 @@ The (simplified) generated constraint for \code{ex_8} contains:
     }
   \end{array}
 \end{mathpar}
-The first conjuct is satisfiable, since $\tvp_1$ is unified with $\trcd \tgpoint \tint$, thereby discharging
-the match constraint on $\tvp_1$.
-The second, however, is not: $\tvp_2$ remains underdetermined, leaving its match
+The first conjuct is satisfiable, since $\tvp_1$ is unified with $\trcd
+\tgpoint \tint$, thereby discharging the match constraint on $\tvp_1$.  The
+second, however, is not: $\tvp_2$ remains underdetermined, leaving its match
 constraint unsatisfiable. Thus, although the original constraint was
-satisfiable, the application of \Rule{S-Let-App-Beta} makes it unsatisfiable.
-By copying the abstraction, we lose the essential \emph{sharing} between both
-instantiations---namely, that both copies of $\tvp$ ($\tvp_1$ and $\tvp_2$) must
-have the same shape $\any \tvc \trcd \tgpoint \tvc$. This loss of sharing is precisely
-why \Rule{S-Let-App-Beta} is unsound in the presence of suspended constraints.
+satisfiable, the application of \Rule{S-Let-App-Beta} makes it
+unsatisfiable.  By copying the abstraction, we lose the essential
+\emph{sharing} between both instantiations---namely, that both copies of
+$\tvp$ ($\tvp_1$ and $\tvp_2$) must have the same shape $\any \tvc \trcd
+\tgpoint \tvc$. This loss of sharing is precisely why \Rule{S-Let-App-Beta}
+is unsound in the presence of suspended constraints.
 
 \parcomment{What about treating let constraints monomorphically?}
 
@@ -3642,14 +3577,15 @@ An incremental instantiation $\cpinst \inst \tv \t$ is satisfiable
 \parcomment {Scoping}
 
 When a regional abstraction $\cletr \x \tv \tvs \ca \cb$ contains an
-incremental instantiation constraint $\cpinst \inst \tvb \t$, and $\inst$ is an
-instantion of $\x$, the variable $\tvb$ may range over any free variable of
-$\ca$---including $\tv$ and the regional variables $\tvs$. In other words, the
-regional let-constraint $\cletr \x \tv \tvs \ca \cb$ provides an non-obvious
-scoping rule: the variables $\tv, \tvs$ are also bound in $\cb$, byt may occur
-there only within incremental instantiations of $\x$. This subtley justifies
-introducing an explicit syntax for regional let-constraints, rather than
-encoding them as $\clet \x \tv {\exi \tvs \ca} \cb$.
+incremental instantiation constraint $\cpinst \inst \tvb \t$, and $\inst$ is
+an instantion of $\x$, the variable $\tvb$ may range over any free variable
+of $\ca$---including $\tv$ and the regional variables $\tvs$. In other
+words, the regional let-constraint ${\cletr \x \tv \tvs \ca \cb}$ provides a
+non-obvious scoping rule: the variables $\tv$ and $\tvs$ are also bound in
+$\cb$, but may occur there only within incremental instantiations of
+$\x$. This subtlety justifies introducing an explicit syntax for regional
+let-constraints, rather than encoding them as $\clet \x \tv {\exi \tvs \ca}
+\cb$.
 
 \subsection{Solving rules}
 
@@ -4294,6 +4230,16 @@ than sharpening it}
   together; so I think we should make an effort to mention it if we
   have the opportunity, and I hope the journal form gives us that
   opportunity.}
+%
+\XDR{I let you decdice where to put it.  The text may be change. We may say
+less about the implementation if you wish, but I think we have to mention
+that semi-unification constraints were \emph{omnidirectionality-ready}. I am
+sure this would be one of Henglein's first reaction, and he would be write.
+Of course, Henglein never thought about this and this note is of course not
+at all enough for doing suspended constrains, but the incremental
+instantiation was already there---and we should not ignoe it.
+}
+
 
 \section{Related work}
 \label{sec:related-work}
