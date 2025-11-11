@@ -4446,11 +4446,10 @@ let fun fst r = #1 r in (fst (1, 2), fst (true, false)) end; 째\polysmlflags 00�
 
 \paragraph{Record field overloading in \GHC}
 
-\Haskell 98 defines derives selector functions for each record field, an
-approach that precludes declaring two record types with the same field names
-within a single module. \GHC 6.8.1 (2007) introduced the
-\texttt{DisambiguateRecordField} extension for type-directed disambiguation of
-record labels,%
+\Haskell 98 derives selector functions for each record field, an approach that
+precludes declaring two record types with the same field names within a single
+module. \GHC 6.8.1 (2007) introduced the \texttt{DisambiguateRecordField}
+extension for type-directed disambiguation of record labels,%
 %
 \footnote{
   \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/disambiguate_record_fields.html}
@@ -4459,41 +4458,49 @@ record labels,%
 and \GHC 8.0.1 (2016) added \texttt{DuplicateRecordFields}, allowing distinct
 record types with overlapping field names in the same module.
 
-However, the \GHC developers found that type-based disambiguation
-using bidirectional type inference is not sufficiently predictable
-enough in practice for
-users~\citep*{RFC-overloaded-record-fields}. (The use of projection
-functions rather than a dedicated projection syntax also increases
-implementation complexity, by making all function calls potentially
-ambiguous.) As a result, \GHC is gradually moving away from type-based
-disambiguation towards an approach based on qualified types
-constraints of the form \code{HasField a "foo" b}
-(\texttt{OverloadedRecordDot}, 2017).%
+However, the \GHC developers found that type-based disambiguation using
+bidirectional type inference is not sufficiently predictible enough in practice
+for users~\citep*{RFC-overloaded-record-fields}, and that the reliance on
+projection functions, rather than a dedicated projection syntax, further
+complicated the implementation by making all function calls potentially
+ambiguous. As a result, \GHC is gradually moving away from type-based
+disambiguation towards an approach based on qualified types constraints of the
+form \code{HasField "x" a b} (\texttt{OverloadedRecordDot}, 2017).%
 %
 \footnote{
   \url{https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/hasfield.html}
 }
 
-This solution based on type-classes, that is, qualified types,
-provides dynamic overloading rather than static overloading as we
-want. This has performance implications (efficient code generation is
-not guaranteed, but \GHC is good at optimizing typeclass programs). One
-advantage is that it naturally supports field-polymorphic programs;
-for instance, the projection \code{ex_1} from
-\cref{sec/overview/overloading} would be written as:
+For instance, the projection \code{ex_1} from \cref{sec/overview/overloading} 
+would be written as:
+%
 \begin{program}[input]
-ex_1 :: HasField a "x" b => a -> b 째\ghcflags 01째
+ex_1 :: HasField "x" a b => a -> b 째\ghcflags 01째
 ex_1 r = getField @"x" r
 \end{program}
+%
+It is worth emphasizing that \OML rejects this program. Since \OML implements
+\emph{static} overloading, it requires a unique resolution for each overloaded
+occurrence; as a result, programs such as \code{ex_1}, whose projection is
+ambiguous, are ill-tyepd. In constrast, a type-class-based solution---\ie one
+using qualified types---implements \emph{dynamic} rather than \emph{static}
+overloading, allowing each instantiation to resolve the field independently.
+This distinction has practical consequences: dynamic overloading is able to
+naturally support field-polymorphic programs such as \code{ex_1}, but it does
+not guarantee efficient code generation (though \GHC is often able to optimize
+type-class programs effectively).
 
-On the other hand, qualified types naturally express constraints
-between types, but they cannot easily delay the type-checking of whole
-subterms. They work well for simple field types with a homogeneous
-typing rule, but do not support cases where the typing rule to use
-depends on the disambiguation choice. In particular, \GHC's
-\texttt{HasField} constraints do not support record fields with
-polymorphic types, or field types mentioning GADT existential
-types.  In contrast, suspended match constraints naturally accommodate
+% We also don't delay typchecking entire subterms
+% On the other hand, qualified types naturally express constraints
+% between types, but they cannot easily delay the type-checking of whole
+% subterms. 
+
+Beyond efficiency, the \texttt{HasField} approach is also limited in
+expressiveness. It works well for records with `simple' field types (\ie field
+types with \emph{uniform} typing rules for projections), but it does not scale
+to field types where the typing rule itself depends on type-directed
+disambiguation---such as fields containing polymorphic types or GADT
+existentials. In contrast, suspended match constraints naturally accommodate
 such non-uniformity in typing rules.
 
 
