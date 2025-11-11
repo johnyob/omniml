@@ -4012,24 +4012,25 @@ If $\ca \csolve \cb$, then $\fvs \ca \supseteq \fvs \cb$.
 \section{Implementation}
 \label{sec:implementation}
 
-We have two working prototypes implementing the \OML language with
-suspended match constraints and partial type schemes, in which we have
-reproduced the various type-system features and examples presented in
-this work. One closely follows the constraint-based presentation
-described here, the other uses a different approach based on
-semi-unification.
-
-\subsection{Incremental generalization and instantiation}
-
-Our first prototype is public and open-source, available at
-\url{https://github.com/johnyob/mlsus/}. Its implementation is
-inspired by previous work such as \Inferno~\citep
-{Pottier/inferno@icfp2014, Pottier/inferno@opam}. It uses
-state-of-the-art ML type inference implementation techniques for
-efficiency, such as a Tarjan's union-find data structure for
-unification \citep*{journals/jacm/Tarjan75} and \emph{ranks}
-(or \emph{levels}) for efficient generalization
-\citep*{Remy/mleth}. Let us discuss a few salient points.
+We have two working prototypes implementing the \OML language with suspended
+match constraints and partial type schemes, in which we have reproduced the
+various type-system features and examples presented in this work.  One
+closely follows the constraint-based presentation described
+here.%
+%
+\footnote{
+  The other prototype is a direct implementation of type inference based on
+  semi-unification which we discuss in \cref{sec:related-work}.
+}
+%
+It is public and open-source, available at
+\url{https://github.com/johnyob/omniml}. Its implementation is inspired by
+previous work such as \Inferno~\citep {Pottier/inferno@icfp2014,
+Pottier/inferno@opam}. It uses state-of-the-art ML type inference
+implementation techniques for efficiency, such as a Tarjan's union-find data
+structure for unification \citep*{journals/jacm/Tarjan75} and \emph{ranks} (or
+\emph{levels}) for efficient generalization \citep*{Remy/mleth}. Let us discuss
+a few salient points.
 
 \paragraph{Unification and scheduling}
 
@@ -4157,98 +4158,8 @@ work that instantiation before re-generalization, because instantiation may
 unlock suspended constraints that will in turn induce considerable
 simplification in that region.
 
-\subsection{Semi-unification.}
-
-Our second prototype is based on semi-unification.  Semi-unification,
-introduced in the late 80's in the context of term rewriting, has also been
-used for type inference with polymorphic recursion in \Miranda and
-\ML~\citet*{Henglein/phd,Henglein/tiasu@toplas93}.
-%
-Widely studied in the early 90's, it was soon proved undecidable~\citep*{%
-Kfoury-Tiuryn-Urzyczyn/ic1993} and almost abandoned for type inference
-purposes---even though \citeauthor{Henglein/phd} observed that he was unable
-to find an example of type inference for which his semi-algorithm would
-actually loop\footnote {Although, we knew from the undecidability of
-semi-unification that such example existed, it is only much later that the
-class of examples for which the semi-algorithm would loop could be
-characterized~\citep*{Figueiredo-Camarao/semiunif-ptm@unpub2024}: these
-patterns are extremely complex, which suggests that they are quite unlikely
-to appear in practice, unless crafted especially.}.  Besides, in the absence
-of polymorphic recursion, semi-unification problems are acyclic and thus
-guaranteed to terminate.
-
-Semi-unification generalizes unification constraints to
-instantiation constraints, which can be solved incrementally in any
-order. Therefore, semi-unification based type inference is a good candidate
-basis for performing omnidirectional type inference in \ML. We first
-enriched semi-unification edges which a notion of scopes that form the same
-tree-like structure as regions in the generalization tree. This generalizes the
-extension of semi-unification with unknowns, proposed by~\citet
-{Lushman-Cormack/subti@tr2008}, which allows for a direct encoding of type
-inference problems into semi-unification constraints, and simultaneously
-leads to a more efficient treatment of monomorphization,
-\ie instantiation edges that must be turned into unification edges.
-%
-In the absence of fragile constructs (and of polymorphic recursion), there
-was no real benefit to use semi-unification for \ML type inference, yet
-\citeauthor{Henglein/phd}'s algorithm was omnidirectionality-ready,
-just waiting for fragile constructs, to find a new application and be
-resurrected.
-
-Although started from a different point of view, the implementation
-issues and their solutions are unsurprisingly similar to the first
-prototype.  In fact, this close correspondence is also an invitation
-to generalize typing constraints with partial type scheme and
-incremental instantiation to also cope for polymorphic recursion.
-
-\XDR{I wonder whether semi-unification fits better in the implementation or
-related-work section.  The goal is to explain that semi-unification was
-omnidirectionality-ready but also to mention extensions and say that
-implementation details meet the other implementation.}
-%
-\Xgabriel{I'm happy with the current placement -- we always said
-that it would be nice to mention both implementations in the section.}
-%
-\Xalistair{Personally I prefer it as related work. We agreed that the goal of
-the implementation section is to provide enough information, together with the
-open-source release, for someone to faithfully reconstruct our implementation.
-Given this, I'm not convinced this material belongs here. The discussion of
-semi-unification seems more like contextual commentary on (another valid)
-approach. I like that we're mentioning it (we always wanted to do this) and to
-clarify the connection to our approach, but it feels better suited in related
-work. More broadly, I'm a little concerned our paper is growing beyond the page
-limit one would consider a reasonable length (we're currently at ~40 pages),
-and that describing both implementations risks muddying the narrative rather
-than sharpening it}
-%
-\Xgabriel{I disagree for two reasons. One is technical: this
-  discussion from Didier mixes Related Work but also his own
-  (otherwise unpublished) research, so I don't think we could easily
-  present it as Related work. The other is social: I see this
-  implementation work of Didier, when he realized that he also wanted
-  suspended constraints, as the reason why we are working on this
-  together; so I think we should make an effort to mention it if we
-  have the opportunity, and I hope the journal form gives us that
-  opportunity.}
-%
-\XDR{I let you decide where to put it. The text may be changed. We may say
-less about the implementation if you wish, but I think we have to mention
-that semi-unification constraints were \emph{omnidirectionality-ready}. I am
-sure this would be one of Henglein's first reactions, and he would be right.
-Of course, Henglein never thought about this and this note is of course not
-at all enough for doing suspended constraints, but the incremental
-instantiation was already there---and we should not ignore it.
-}
-
-
 \section{Related work}
 \label{sec:related-work}
-
-\XDR
-  {Semi-unification implementation of type inference, which according to
-  Henglein has been implemented for \SML, does implement incremental
-  instantiation efficiently.}%
-\TODO{Include a paragraph of Related Work to mention this.}
 
 \paragraph{Overloading}
 
@@ -4507,6 +4418,97 @@ disambiguation---such as fields containing polymorphic types or GADT
 existentials. In contrast, suspended match constraints naturally accommodate
 such non-uniformity in typing rules.
 
+\paragraph{Semi-unification}
+
+\parcomment{What is semi-unification? And it's relation to \ML}
+
+Semi-unification \citep*{Henglein/phd,Henglein/tiasu@toplas93}, introduced in
+the late 1980's, is a generalization of unification that solves
+\emph{instantiation inequalities} of the form $\ta \leq \tb$, meaning that
+$\rho(\theta(\ta)) = \theta(\tb)$ for two substitutions $\rho$ and $\theta$.
+%
+Although widely studied, it was later proven undecidable in
+general~\citep*{Kfoury-Tiuryn-Urzyczyn/ic1993} and largely abandoned for type
+inference purposes. Still, \citeauthor{Henglein/phd} observed that his
+semi-algorithm always appeared to terminate for \ML inference
+problems---indeed, all semi-unification constraints arising from \ML type
+inference are acyclic as characterized by ?? and therefore guaranteed to
+terminate. 
+
+\parcomment{Semi-unification is omnidirectionally-ready}
+
+Semi-unification constraints can be solved \emph{incrementally}, in any order,
+making them a natural foundation for omnidirectional type inference in \ML. 
+Although it offered little advantage for traditional \ML inference, 
+\citeauthor{Henglein/phd}'s algorithm was \emph{omnidirectionality-ready},
+merely waiting for fragile constructs to give it new life!
+
+\parcomment{What we did}
+
+Motivated by this observation, we explored a second prototype that implements
+\ML-style let-generalization via semi-unification. For efficiency, we enrich
+semi-unification constraints with a notion of \emph{scope}, forming the same
+tree-like structure as regions in our \emph{generalization tree}
+(\cref{sec:implementation}). This extends the formalization of semi-unification
+with \emph{unknowns} proposed by~\citet {Lushman-Cormack/subti@tr2008},
+allowing for a more direct encoding of \ML type inference problems as
+semi-unification constraints and enables more efficient handling of
+\emph{monomorphization}---that is, instantiation constraints that collapse into
+unification constraints (akin to \Rule{S-Inst-Mono} in our constraint solver).
+
+\parcomment{The solutions coincide}
+
+Although this prototype began from a different prespective, the implementation
+problems and their solutions turned out to be strikingly similar to those in
+our first prototype (described in \cref{sec:implementation}). This close
+correspondence naturally raises the question of whether partial type schemes
+and incremental instantiation could be enriched to cope with polymorphic
+recursion.
+
+\XDR{I wonder whether semi-unification fits better in the implementation or
+related-work section.  The goal is to explain that semi-unification was
+omnidirectionality-ready but also to mention extensions and say that
+implementation details meet the other implementation.}
+%
+\Xgabriel{I'm happy with the current placement -- we always said
+that it would be nice to mention both implementations in the section.}
+%
+\Xalistair{Personally I prefer it as related work. We agreed that the goal of
+the implementation section is to provide enough information, together with the
+open-source release, for someone to faithfully reconstruct our implementation.
+Given this, I'm not convinced this material belongs here. The discussion of
+semi-unification seems more like contextual commentary on (another valid)
+approach. I like that we're mentioning it (we always wanted to do this) and to
+clarify the connection to our approach, but it feels better suited in related
+work. More broadly, I'm a little concerned our paper is growing beyond the page
+limit one would consider a reasonable length (we're currently at ~40 pages),
+and that describing both implementations risks muddying the narrative rather
+than sharpening it}
+%
+\Xgabriel{I disagree for two reasons. One is technical: this
+  discussion from Didier mixes Related Work but also his own
+  (otherwise unpublished) research, so I don't think we could easily
+  present it as Related work. The other is social: I see this
+  implementation work of Didier, when he realized that he also wanted
+  suspended constraints, as the reason why we are working on this
+  together; so I think we should make an effort to mention it if we
+  have the opportunity, and I hope the journal form gives us that
+  opportunity.}
+%
+\XDR{I let you decide where to put it. The text may be changed. We may say
+less about the implementation if you wish, but I think we have to mention
+that semi-unification constraints were \emph{omnidirectionality-ready}. I am
+sure this would be one of Henglein's first reactions, and he would be right.
+Of course, Henglein never thought about this and this note is of course not
+at all enough for doing suspended constraints, but the incremental
+instantiation was already there---and we should not ignore it.
+}
+
+\XDR
+  {Semi-unification implementation of type inference, which according to
+  Henglein has been implemented for \SML, does implement incremental
+  instantiation efficiently.}%
+\TODO{Include a paragraph of Related Work to mention this.}
 
 
 \section{Conclusions}
