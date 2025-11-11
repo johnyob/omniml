@@ -418,7 +418,7 @@ because it appears later in the source.
 
 \parcomment {Default rules are inherently non-principal}
 
-Such fallback behaviour is inherently \emph{non-principal}: it reflects the
+Such fallback behavior is inherently \emph{non-principal}: it reflects the
 typechecker's decision to abandon principal inference and arbitrarily select a
 syntactic default when no unique type can be inferred. We therefore give no
 formal account of such ``default rules''.
@@ -518,7 +518,7 @@ Concretely, the polymorphic method of
 %
 is translated to \ocaml{object method id = [ fun x -> x : 'a. 'a -> 'a ] end}.
 Method invocation implicitly unboxes the polytype \eg $\ttlab \x \esend
-\ttlab {id}$ becomesn $\einst {\ttlab \x \esend \ttlab {id}}$.
+\ttlab {id}$ becomes $\einst {\ttlab \x \esend \ttlab {id}}$.
 
 \parcomment{Why bother?}
 
@@ -1263,7 +1263,7 @@ bidirectional or $\Geninst$-directional type inference.
 \item[(\cref{sec:implementation})]
 
   Implementing efficient incremental instantiation is non-trivial in comparison
-  to oridinary \ML instantiation, as refinements of partial type schemes must
+  to ordinary \ML instantiation, as refinements of partial type schemes must
   trigger re-instantiations without introducing redundant constraint solving
   across successive instantiations of the same scheme.
 
@@ -1588,7 +1588,7 @@ $\elabs$ appearing in the record expression exactly match the labels of $\T$
 
 \parcomment {Closed world reasoning}
 
-Following OCaml, our explicit system also supports \emph{closed-world}
+Following \OCaml, our explicit system also supports \emph{closed-world}
 reasoning, which exploits the absence of ambiguity in the label context
 $\labenv$ to infer record annotations.
 %
@@ -1702,7 +1702,7 @@ Any non-variable type $\t$ has a non-trivial principal shape $\Sh$.
 A principal shape $\any \tvcs \t$ is \emph{canonical} if its free variables
 appear in the sequence $\tvcs$ in the order in which they occur in $\t$. Canonical
 principal shapes are written $\sh$, and we write $\CanonicalShapes$ for the set of
-all such chapes.
+all such shapes.
 %
 Each non-variable type $\t$ has a unique canonical principal shape,
 written $\shape \t$. For example, $\shape {\trcd \T \tys}$ is
@@ -1844,7 +1844,7 @@ To make sense of these definitions, we rely on a few auxiliary notions:
 
 \begin{mathparfig}
   {fig/oml/erasure}
-  {Selected cases of the erasure of $\e$. All other cases are homomorphic.}
+  {Selected cases of the erasure of $\e$. All other cases are monomorphic.}
 \newcommand{\Erule}[2]{\eerase {#1} &\eqdef& {#2}}
   \begin{tabular}{RCL}
   \Erule{\epoly \e}{\emagic {\eerase \e}}\\
@@ -1891,8 +1891,8 @@ negative occurrences of the typing judgment. At first glance, this seems
 problematic for well-foundedness. However, the issue is easily resolved by
 noting that these occurrences arise only as typing assumptions on erased
 terms, which do not themselves involve any implicit rules. Formally one
-could make this explicit by introducing a restricted typing judgement $\G
-\throbust \e : \t$ that exlcudes the implicit rules (\NoRule{*-I}), and by
+could make this explicit by introducing a restricted typing judgment $\G
+\throbust \e : \t$ that excludes the implicit rules (\NoRule{*-I}), and by
 using this strictly simpler judgment in the antecedent of unicity
 conditions. We omit this distinction for simplicity.
 
@@ -3258,7 +3258,7 @@ $\tv \prec_\up^+ \tv$ for some $\tv$.
 
 Section \cref{sec:constraints} introduced the constraint language used for
 constraint generation (\cref{sec/oml/constraints}). In this section we extend
-the language with a small set of \emph{administrative constraints}: auxillary
+the language with a small set of \emph{administrative constraints}: auxiliary
 constructs that never appear in generated constraints, but are introduced
 internally by the solver to manage generalization and incremental
 instantiation.
@@ -3361,9 +3361,9 @@ regions $\greg \gt \semenv$ is semantically inert for \Rule{LetR} and
 \emph{incremental instantiation} constraints (\cref{sec/solver/incr-inst}).
 
 \XDR[grammar question]{I think we need not a dash in Regional
-\Let-constraints, since this is the default parenthezising rule. Unless we
+\Let-constraints, since this is the default parenthesizing rule. Unless we
 wish to make \Let-constraint a concept itself, but then, we should also
-put a dash when \Let-constraint apperas alone as in the second occureence}
+put a dash when \Let-constraint appears alone as in the second occurrence}
 
 Regional \Let-constraints strictly generalize ordinary let constraints, as
 captured by the equivalence:
@@ -3460,7 +3460,7 @@ The (simplified) generated constraint for \code{ex_8} contains:
     }
   \end{array}
 \end{mathpar}
-The first conjuct is satisfiable, since $\tvp_1$ is unified with $\trcd
+The first conjunct is satisfiable, since $\tvp_1$ is unified with $\trcd
 \tgpoint \tint$, thereby discharging the match constraint on $\tvp_1$.  The
 second, however, is not: $\tvp_2$ remains underdetermined, leaving its match
 constraint unsatisfiable. Thus, although the original constraint was
@@ -3578,7 +3578,7 @@ An incremental instantiation $\cpinst \inst \tv \t$ is satisfiable
 
 When a regional abstraction $\cletr \x \tv \tvs \ca \cb$ contains an
 incremental instantiation constraint $\cpinst \inst \tvb \t$, and $\inst$ is
-an instantion of $\x$, the variable $\tvb$ may range over any free variable
+an instantiation of $\x$, the variable $\tvb$ may range over any free variable
 of $\ca$---including $\tv$ and the regional variables $\tvs$. In other
 words, the regional let-constraint ${\cletr \x \tv \tvs \ca \cb}$ provides a
 non-obvious scoping rule: the variables $\tv$ and $\tvs$ are also bound in
@@ -4101,8 +4101,8 @@ the efficient integer comparisons.
   source implementation, which when combined with this description ought to
   be sufficient to reproduce our approach}
 
-Generalization is the process of determing which type variables are
-polymoprhic and which are monomorphic (\ie implementing
+Generalization is the process of determining which type variables are
+polymorphic and which are monomorphic (\ie implementing
 \Rule{S-Exists-Lower}).  \emph{Partial generalization} arises when a region
 cannot be fully generalized due to suspended constraints that may still
 update its variables. To manage this, we classify type variables into four
@@ -4246,7 +4246,7 @@ instantiation was already there---and we should not ignore it.
 
 \XDR
   {Semi-unification implementation of type inference, which according to
-  Henglein has been implemented for SML, does implement incremental
+  Henglein has been implemented for \SML, does implement incremental
   instantiation efficiently.}%
 \TODO{Include a paragraph of Related Work to mention this.}
 
@@ -4419,7 +4419,7 @@ poorly with \texttt{let}-polymorphism and therefore not supported in practice:
   determine the exact type of flexible records, but it does not
   specify any bounds on the size of this context. Unlimited context is
   clearly infeasible since it is incompatible with let polymorphism:
-  at the point of generalisation the structure of a type must be
+  at the point of generalization the structure of a type must be
   determined precisely enough to know what we have to quantify
   over. We thus restrict the context for resolving flexible records to
   the innermost surrounding value declaration, as most other SML
@@ -4460,7 +4460,7 @@ and \GHC 8.0.1 (2016) added \texttt{DuplicateRecordFields}, allowing distinct
 record types with overlapping field names in the same module.
 
 However, the \GHC developers found that type-based disambiguation
-using bidirectional type inference is not sufficiently predictible
+using bidirectional type inference is not sufficiently predictable
 enough in practice for
 users~\citep*{RFC-overloaded-record-fields}. (The use of projection
 functions rather than a dedicated projection syntax also increases
@@ -4477,7 +4477,7 @@ constraints of the form \code{HasField a "foo" b}
 This solution based on type-classes, that is, qualified types,
 provides dynamic overloading rather than static overloading as we
 want. This has performance implications (efficient code generation is
-not guaranteed, but GHC is good at optimizing typeclass programs). One
+not guaranteed, but \GHC is good at optimizing typeclass programs). One
 advantage is that it naturally supports field-polymorphic programs;
 for instance, the projection \code{ex_1} from
 \cref{sec/overview/overloading} would be written as:
@@ -4490,7 +4490,7 @@ On the other hand, qualified types naturally express constraints
 between types, but they cannot easily delay the type-checking of whole
 subterms. They work well for simple field types with a homogeneous
 typing rule, but do not support cases where the typing rule to use
-depends on the disambiguation choice. In particular, GHC's
+depends on the disambiguation choice. In particular, \GHC's
 \texttt{HasField} constraints do not support record fields with
 polymorphic types, or field types mentioning GADT existential
 types.  In contrast, suspended match constraints naturally accommodate
@@ -4522,13 +4522,13 @@ field names.
 
 \section*{Acknowledgments}
 
-The insatisfactory situation of type-directed propagation in OCaml has
+The unsatisfactory situation of type-directed propagation in \OCaml has
 been on our mind for years; a first concrete step to which this work
 can be traced to a specific
 example\footnote{\url{https://github.com/ocaml/ocaml/issues/7388}} of
 inconvenient order of propagation (between pattern and expression in
 a let-binding) presented by Andreas Rossberg as part of general
-feedback on the use of OCaml in the \texttt{wasm} reference
+feedback on the use of \OCaml in the \texttt{wasm} reference
 interpreter \citep*{rossberg-wasm}. Gabriel Scherer proposed to delay
 the resolution of ambiguous constraints and advised Olivier Martinot
 as an intern on this topic in Summer
@@ -8200,7 +8200,7 @@ Let $\e$ be an arbitrary closed well-typed term; that is, there exists a type
 % LocalWords:  disambiguating namespace implicits Bour Yallop Didier Annot
 % LocalWords:  acyclicity canonicalization aaa formedness unannotated inX
 % LocalWords:  casted inHole inAnnot unsubstituted oml RCLL Scm LCL Decomp
-% LocalWords:  cheatsheet inI ProjX PolyX UseX unifier Gc Defn sw iw
+% LocalWords:  cheatsheet inI ProjX PolyX UseX unifier Gc Defn sw iw gpoint
 % LocalWords:  InstLeft InstRight mergable tw uw RRCL eqs priori multiset
 % LocalWords:  reflexitivity metatheoretic lexicographically Unifiers TODO
 % LocalWords:  rcl env Pcd illtyped inHole Ui unfoldings welltyped mprset
@@ -8208,9 +8208,15 @@ Let $\e$ be an arbitrary closed well-typed term; that is, there exists a type
 % LocalWords:  determinacy subcases unifications annotatability approxi Rcx
 % LocalWords:  mation macroified cpoint concretize Dom omnidirectionality
 % LocalWords:  hindley popl garrigue monomorphically polyparams polyml Chk
-% LocalWords:  impredicativity PolyML knownness mathpar nihilo fn
+% LocalWords:  impredicativity PolyML knownness mathpar nihilo fn diag gp
 % LocalWords:  Bidirectionalized destructors unparsable metalevel Erwig CPP
-% LocalWords:  Variational ifdef variational benevs goldilocks
+% LocalWords:  Variational ifdef variational benevs goldilocks Fraktur rl
 % LocalWords:  Pottier's unsuspended sep Det Esc macroify ConRight cie Incr
-% LocalWords:  explicits mathescape annotability QuickLook Zp
-% LocalWords:  inferrable destructor undecidability
+% LocalWords:  explicits mathescape annotability QuickLook Zp typechecker's
+% LocalWords:  inferrable destructor undecidability principalShapesBIS De
+% LocalWords:  expressivity dually principalTypesBIS underdetermined Bruijn
+% LocalWords:  terminationBIS preservationBIS Kfoury Tiuryn Urzyczyn ic sml
+% LocalWords:  Figueiredo Camarao Lushman Henglein's Walkingshaw HasField
+% LocalWords:  DisambiguateRecordField DuplicateRecordFields typeclass emy
+% LocalWords:  OverloadedRecordDot Andreas Scherer Martinot Vivien Gundry
+% LocalWords:  Gooding ois
