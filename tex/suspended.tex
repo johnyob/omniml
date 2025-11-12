@@ -78,7 +78,7 @@
   once it becomes available, using \emph{suspended match constraints}. This
   approach is straightforward for simply typed systems, but extending it to \ML
   is challenging due to \emph{let-generalization}. Existing \ML inference
-  algorithms type \Let-bindings $\elet \x \ea \eb$ in a fixed order---type
+  algorithms type let-bindings $\elet \x \ea \eb$ in a fixed order---type
   $\ea$, generalize its type, and then type $\eb$. To overcome this, we
   introduce \emph{incremental instantiation}, allowing partially solved type
   schemes containing suspended constraints to be instantiated, with a mechanism
@@ -678,7 +678,7 @@ let ex_6 = (fun p -> <p>) pid °\ocamlflags 10°
 \end{program}
 At first glance, \code{ex_5} and \code{ex_6} appear equivalent: both simply
 instantiate the polytype bound to \code{p}. Yet, \OCaml accepts \code{ex_5} and
-rejects \code{ex_6}. This is because the \Let-binding in \code{ex_5}
+rejects \code{ex_6}. This is because the let-binding in \code{ex_5}
 allows \code{p} to have type scheme $\tfor \av {\tapoly {\tfor \tv \tv \to
 \tv} \av}$, and thus its type is considered \emph{known}---permitting unboxing
 (\Rule{PolyML-Inst}).
@@ -700,7 +700,7 @@ While these terms are semantically equivalent, they highlight a potential
 hazard: their typability may vary under a directionally biased inference
 algorithm, depending on whether the function or argument is typed first.  To
 limit such implementation-dependent behavior, \OCaml infers all
-subexpressions in an \emph{order-independent} manner until they are \Let-bound.
+subexpressions in an \emph{order-independent} manner until they are let-bound.
 Consequently, \OCaml does not make any distinction between
 \ocaml[indices]{ex_6}, \ocaml[indices]{ex_6_2}, and \ocaml[indices]{ex_6_3}.
 
@@ -1114,7 +1114,7 @@ the body first, where the call \code{getx (diag 42)} reveals that \code{p} has
 type \code{'a gpoint}.
 %
 Failing to do so would make inference incomplete, since the program is clearly
-well-typed. Nor can we treat the \Let-binding as monomorphic, since both calls
+well-typed. Nor can we treat the let-binding as monomorphic, since both calls
 to \code{getx} use different instantiations of \code{'a}: $\tv \is \tint$ in \code{getx (diag
 42)} and $\tv \is \tfloat$ in \code{(getx gp : float)}.
 
@@ -1124,7 +1124,7 @@ We solve this by introducing \emph{incremental instantiation}, \ie the ability
 to instantiate type schemes that are not yet fully determined (so-called
 \emph{partial type schemes}) and consequently revisit their instances when they
 are being refined, \emph{incrementally}. This allows inferring parts of a
-\Let-body to disambiguate its definition, without duplicating
+let-body to disambiguate its definition, without duplicating
 constraint-solving work.
 
 % Something to tie everything back together / also serve as a lookup
@@ -2270,7 +2270,7 @@ instantiation $\labfrom \elab \ct \leq \ta \to \tb$
 
 Polymorphism in the constraint language is expressed through
 \emph{generalization} and \emph{instantiation} constraints. In a generalization
-constraint (or \emph{let} constraint) $\clet \x \tv \ca \cb$, the definition of
+constraint (or \emph{let}-constraint) $\clet \x \tv \ca \cb$, the definition of
 $\x$ is a constraint abstraction $\cabs \tv \ca$, a function that, when applied
 to a type $\t$, returns $\ca \where {\tv \is \t}$. The binding of $\x$ is then
 available in $\cb$ and refers to this abstraction. Semantically, the
@@ -2867,17 +2867,17 @@ traditional \ML constructs.
 Unsurprisingly, variables $\x$ generate an instantiation constraint $\capp \x
 \t$. The unit term $\eunit$ requires $\t$ to be the unit type $\tunit$. A
 function generates a constraint that binds two fresh flexible type variables
-for the parameter and return types.  We use a $\Let$ constraint to bind the
-parameter in the constraint generated for the body of the function. The $\Let$
-constraint is monomorphic since $\tvp$ is fully constrained by type variables
-defined outside the abstraction's scope and therefore cannot be generalized.
-Applications introduce two fresh flexible type variables, one for the argument
-type and one for the type of the function, typing each subterm with these,
-ensuring $\t$ is the expected return type. Let-bindings generate a polymorphic
-let constraint; $\cabs \tv {\cinfer \e \tv}$ is a principal constraint
-abstraction for $\e$: its intended interpretation is the set of all types that
-$\e$ admits. Annotations bind their flexible type variables and enforce the
-equality of the annotated type $\tp$ and the expected type $\t$.
+for the parameter and return types.  We use a let-constraint to bind the
+parameter in the constraint generated for the body of the function. The
+let-constraint is monomorphic since $\tvp$ is fully constrained by type
+variables defined outside the abstraction's scope and therefore cannot be
+generalized. Applications introduce two fresh flexible type variables, one for
+the argument type and one for the type of the function, typing each subterm
+with these, ensuring $\t$ is the expected return type. Let-bindings generate a
+polymorphic let-constraint; $\cabs \tv {\cinfer \e \tv}$ is a principal
+constraint abstraction for $\e$: its intended interpretation is the set of all
+types that $\e$ admits. Annotations bind their flexible type variables and
+enforce the equality of the annotated type $\tp$ and the expected type $\t$.
 
 
 \parcomment{Polytypes}
@@ -2896,7 +2896,7 @@ $\t$ to be an instance of $\cscm$ (\ie $\ts \leq \t$); otherwise, the match
 fails and the term is ill-typed.
 
 Implicit boxing behaves dually: we infer the principal type for $\e$ using a
-$\Let$ constraint and suspend until the expected type of the entire term
+let-constraint and suspend until the expected type of the entire term
 resolves to some type $\tz$. If $\tz$ matches the same pattern $\cpatpoly
 \cscm$ (\ie $\tz = \tpoly \ts$), we assert that the principal type of $\e$ is
 at least as general as $\cscm$, via the constraint $\x \leq \cscm$ (\ie $\x
@@ -2948,13 +2948,13 @@ $\C$ equal to
   \clet \x \tvb \hole \capp \x \tint \cand
   \cunif \tv \ttpoint
 \end{mathpar}.
-Although the context includes a \Let-binding---which in practice
-involves \Let-generalization---we can still deduce $\Cshape \C \tv
+Although the context includes a let-binding---which in practice
+involves let-generalization---we can still deduce $\Cshape \C \tv
   {\ttpoint}$, since the erased context $\cerase
 \C$ contains the unification constraint $\cunif \tv \ttpoint$.
 
 This example illustrates that our formulation of suspended constraints
-interacts nicely with \Let-polymorphism. Although the two features are
+interacts nicely with let-polymorphism. Although the two features are
 specified in a modular fashion, they are carefully crafted to work together,
 as we further show in our next example.
 \end{example}
@@ -2967,15 +2967,15 @@ let ex_1_1 = let getx r = r.x in getx one  °\ocamlflags 10°
 \end{program}
 
 As in the previous example, the type of \code{r} cannot be disambiguated from
-the \Let-definition alone. There, the ambiguity was resolved when the type
-($\tv$) was unified to a known type ($\ttpoint$) in the \Let-body. Here, the
+the let-definition alone. There, the ambiguity was resolved when the type
+($\tv$) was unified to a known type ($\ttpoint$) in the let-body. Here, the
 situation is more subtle: an \emph{instance} of \code{getx}'s type scheme is
 taken, which only satisfies the application (\ocaml!getx one!) if \code{r}
 has either a variable type or the record type \ocaml{point}.  However, the
 projection \code{r.x} would be ill-typed if \code{r} had a variable type
 (unicity would fail), so \code{point} is the unique consistent solution. This
-information therefore flows back from the instances in the \Let-body to the
-\Let-definition, a phenomenon we call \emph{backpropagation}.
+information therefore flows back from the instances in the let-body to the
+let-definition, a phenomenon we call \emph{backpropagation}.
 
 The constraint generated when typing
 \code{ex_1_1} is:
@@ -3066,7 +3066,7 @@ $\e_0$, and if they are incompatible the factored form may not typecheck.
 
 \paragraph{Inlining does not hold} If $\G \th \elet \x \ez \e : \t$, we do
 not necessarily have $\G \th \e \where {\x \is {\e_0}} : \t$. This is
-specific to our support for \emph{backpropagation}: the \Let-form will use
+specific to our support for \emph{backpropagation}: the let-form will use
 information from all occurrences of $\x$ in $\e$ to resolve fragile
 constructs in $e_0$, but in the inlined form each copy of $\e$ must resolve
 its implicit constructs independently, and it has access to less information
@@ -3367,8 +3367,9 @@ regions $\greg \gt \semenv$ is semantically inert for \Rule{LetR} and
 \Let-constraints, since this is the default parenthesizing rule. Unless we
 wish to make \Let-constraint a concept itself, but then, we should also
 put a dash when \Let-constraint appears alone as in the second occurrence}
+\Xalistair{I've gone ahead and made let-constraints a concept}
 
-Regional \Let-constraints strictly generalize ordinary let constraints, as
+Regional let-constraints strictly generalize ordinary let-constraints, as
 captured by the equivalence:
 \begin{mathpar}
   \clet \x \tv {\exi \tvs \ca} \cb \Wide\cequiv \cletr \x \tv \tvs \ca \cb
@@ -3384,8 +3385,8 @@ captured by the equivalence:
 % This paragraph is titled Let constraints (seems odd to start off with
 % 'Generalization constraints ...'
 
-Solving $\Let$ constraints is deceptively difficult.
-Naively, let constraints (or \emph{generalization} constraints) could be
+Solving let-constraints is deceptively difficult.
+Naively, let-constraints (or \emph{generalization} constraints) could be
 solved by copying constraints:
 \begin{mathpar}
 \hfil
@@ -3443,7 +3444,7 @@ The (simplified) generated constraint for \code{ex_8} contains:
   \end{array}
 \end{mathpar}
   If we now apply \Rule{S-Let-App-Beta} to both applications of $\xgetx$
-  (removing the $\Let$ constraint for concision), we obtain:
+  (removing the let-constraint for concision), we obtain:
 \begin{mathpar}
   \begin{array}{rl}
     \cexists {\tvgp, \tvd} {} &
@@ -3474,11 +3475,11 @@ $\tvp$ ($\tvp_1$ and $\tvp_2$) must have the same shape $\any \tvc \trcd
 \tgpoint \tvc$. This loss of sharing is precisely why \Rule{S-Let-App-Beta}
 is unsound in the presence of suspended constraints.
 
-\parcomment{What about treating let constraints monomorphically?}
+\parcomment{What about treating let-constraints monomorphically?}
 
 A tempting alternative, used in
 \citet*{Vytiniotis-Peyton-Jones-Schrijvers-Sulzmann/outsidein@jfp2011} and
-\citet*{benevs2025simple}, is to treat the $\Let$-bindings
+\citet*{benevs2025simple}, is to treat the let-bindings
 \emph{monomorphically}, sharing $\tvp$ directly between both applications.
 However, this is incomplete: in \code{ex_8}, the two calls to \code{getx}
 require different instantiations of $\tvp$---\code{int gpoint} and \code{float
@@ -3517,7 +3518,7 @@ be incrementally refined in future as suspended constraints are discharged.
 Returning to our running example, we begin with the partial type scheme $\all
 {\tvp, \tvgetxret} \tvp \to \tvgetxret$ for \code{getx}, since the suspended
 match constraint in its abstraction cannot yet be solved. We continue solving
-the body of the $\Let$-constraint, tracking every instances of this partial
+the body of the let-constraint, tracking every instances of this partial
 scheme. As type information flows back---\eg when the shape of $\tvp$ becomes
 known via back-propagation from the first application of \code{getx}---the
 scheme is refined to $\all {\tvb} \trcd \tgpoint \tvb \to \tvb$. The second
@@ -3771,7 +3772,7 @@ equational theory of types implemented by the unification algorithm.
 %
 \parcomment{Explanation of rules}
 %
-In \cref{fig:solver-basic}, \Rule{S-Let} rewrites let constraints into regional
+In \cref{fig:solver-basic}, \Rule{S-Let} rewrites let-constraints into regional
 form.
 %
 \Rule{S-Exists-Conj} lifts existentials across conjunctions;
@@ -3842,9 +3843,9 @@ type is a variable rather than an arbitrary type.
 
 \paragraph{Let constraints}
 
-\parcomment{Cleaning up partial instantiations and let constraints}
+\parcomment{Cleaning up partial instantiations and let-constraints}
 
-\Rule{S-Let-Solve} removes a $\Let$ constraint when the bound term
+\Rule{S-Let-Solve} removes a let-constraint when the bound term
 variable is unused and the abstraction is satisfiable. \Rule{S-Compress}
 determines that a regional variable $\tvb$ is an an alias for $\tvc$. We
 replace every free occurrence of $\tvb$ with $\tvc$---\emph{including} the
@@ -3862,8 +3863,8 @@ subsequent applications of \Rule{S-Inst-Unify}.
 \parcomment{Lowering}
 
 \Rule{S-Exists-Lower} implements the non-trivial case of lowering
-existentials across \Let-binders. It identifies a subset of variables in
-the region of a $\Let$ constraint that are unified with variables from
+existentials across let-binders. It identifies a subset of variables in
+the region of a let-constraint that are unified with variables from
 outside the region. Such variables are considered monomorphic and thus
 cannot be generalized; they can instead be safely lowered to the outer
 scope.
@@ -4079,11 +4080,11 @@ simple to implement, does not suffice for partial generalization.
 If generalization at some region contain a variable appearing in a suspended
 match constraint, the region must be kept alive while we continue inference
 in other regions. Hence, later parts of the constraint may introduce a new
-\Let-region at the same level that is unrelated to the suspended one---neither its
+let-region at the same level that is unrelated to the suspended one---neither its
 ancestor nor its descendant---breaking the linear assumption that allowed
 the representation of variable scopes by integer levels.
 
-We must instead use a \emph{tree} of nested \Let-regions to represent
+We must instead use a \emph{tree} of nested let-regions to represent
 scopes. Under this scheme, levels no longer uniquely determine a variable's
 region.  Instead, we interpret a level relative to a path in the region tree
 from the root. When two variables are unified, they must always lie on some
@@ -4299,7 +4300,7 @@ higher-rank functions. This permits \emph{argument reordering}, by allowing
 later arguments to influence the type of earlier ones within the same
 application spine. It mitigates the order-dependence of fixed directionality
 (\cref{sec/overview/directional}) but still enforces a global direction of
-type propagation between surrounding constructs (\eg \Let-bindings). In this
+type propagation between surrounding constructs (\eg let-bindings). In this
 sense, \QuickLook is \emph{locally omnidirectional} but \emph{globally
 directional}: they reduce order sensitivity within applications, but do not
 provide a declarative account of type flow between arbitrary constructs, as
@@ -4342,7 +4343,7 @@ poorly with \texttt{let}-polymorphism and therefore not supported in practice:
 \end{quotation}
 %
 We have solved this difficult interaction between disambiguation and
-\texttt{let}-polymorphism. In particular, we implemented tuples in our
+let-polymorphism. In particular, we implemented tuples in our
 prototype and formalize their meta-theory in Appendix
 \cref{app:full-reference}; the system behaves as expected.
 
@@ -6734,7 +6735,7 @@ generally in our system.
     \begin{proofcases}
       \proofcase{$n$ is 0}
 
-	Thus $\Cpp, \Cp, \cs$ are simple. It suffices to show the equivalence on the \Let-constraint directly and use congruence
+	Thus $\Cpp, \Cp, \cs$ are simple. It suffices to show the equivalence on the let-constraint directly and use congruence
 	of equivalence for simple constraints (\cref{lem:ctxt-equiv-simple}) to establish the result.
 
 	We proceed by induction on the structure of $\Cp$ with the statement ($\ddagger$):
@@ -7703,7 +7704,7 @@ rules that are not inherently destructive.
   then prove termination of the incremental instantiations of $\x$ in
   $\cb$. (The notion of structural size used here is preserved by
   non-discharging rewrite rules, as they do not affect the
-  \Let-structure of the constraint.)
+  let-structure of the constraint.)
 
   Assuming that $\ca$ has no infinite rewriting sequence, it suffices
   to prove that only finitely many rewrites in the rest of the
@@ -7872,7 +7873,7 @@ Throughout this section, we restrict our attention to \emph{closed
 terms}. This is because the typing context $\G$ can contain bindings to
 terms whose type is ``guessed''. When we generate constraints for a term
 $\e$ under a context $\G$, we encode the type schemes in $\G$ as part of the
-constraint itself using \Let-constraints. However, these schemes are
+constraint itself using let-constraints. However, these schemes are
 treated as known within the constraint! As a result, we assume terms are
 closed from the outside to avoid $\G$ leaking any guessed type information.
 
