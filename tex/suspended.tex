@@ -3709,7 +3709,7 @@ considered a stuck constraint.
   {\cletr \x \tv {\tvs}
      {\ca\where{\tvb \is \tvc}
       \cand \cunif \tvc {\ueq\where{\tvb \is \tvc}}}
-     {\cb\where{\x.\tvb \is \tvc}}}
+     {\cb\where{\x(\tvb) \is \tvc}}}
 
 \rewrite[S-Exists-Lower]
   {\cletr \x \tv {\tvas, \tvbs} \ca \cb\\}
@@ -3849,9 +3849,8 @@ type is a variable rather than an arbitrary type.
 variable is unused and the abstraction is satisfiable. \Rule{S-Compress}
 determines that a regional variable $\tvb$ is an an alias for $\tvc$. We
 replace every free occurrence of $\tvb$ with $\tvc$---\emph{including} the
-domains of any partial instantiation constraints, written as the
-substitution $\where{\x.\tvb \is
-\tvc}$.
+domains of any incremental instantiation constraints, written as the
+substitution $\where{\x(\tvb) \is \tvc}$.
 
 Conceptually, \Rule{S-Compress} acts a variable-level analogue of
 \Rule{S-Inst-Copy}: both rules copy solved constraints $\ueq$ from an
@@ -4981,6 +4980,10 @@ $\t$. $\shape \t$ is the canonical principal shape of $\t$.
     { }
     {\capp \x \t \simple}
 
+  \inferrule[Simple-Multi-unif]
+    { }
+    {\ueq \simple}
+
   \inferrule[Simple-LetR]
     {\ca \simple \\ \cb \simple}
     {\cletr \x \tv \tvs \ca \cb \simple}
@@ -5050,6 +5053,7 @@ $\c$. \\
   \Erule{\clet \x \tv \ca \cb}{\clet \x \tv {\cerase \ca} {\cerase \cb}} \\
   \Erule{\capp \x \t}{\capp \x \t} \\
     \Erule{\cmatch \t {\cbranch {\bar \cpat} {\bar \c}}}{\ctrue} \\
+  \Erule{\ueq}{\ueq} \\
   \Erule{\cletr \x \tv \tvs \ca \cb}{\cletr \x \tv \tvs {\cerase \ca} {\cerase \cb}} \\
   \Erule{\cexistsi \inst \x \c}{\cexistsi \inst \x \cerase \c}\\
   \Erule{\cpinst \inst \tv \t}{\cpinst \inst \tv \t}
@@ -5412,7 +5416,7 @@ $\c$. \\
 
   \inferrule[Simple-Hole]
     {\parens{\ei \simple}\iton}
-    {\emagic \es \simple}
+    {(\emagic \es) \simple}
 \end{judgboxmathpar}
 
 \label {app/ref/eerase}
@@ -5648,7 +5652,7 @@ $\c$. \\
     {\cfor \tvp \cexists {\tv} {\ueqs} \cequiv \ctrue \\\\
      \tvp \in \reg \tv \tvs \\
      \tvp \disjoint \c \\
-     \inst.\tvp \disjoint \insts \C \\
+     \inst(\tvp) \disjoint \insts \C \\
      \x \disjoint \bvs \C}
     {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where\ctrue}}
 
@@ -5663,7 +5667,7 @@ $\c$. \\
     {\tvb \neq \tvc}
     {\cletr \x \tv {\tvs}
        {\ca\where{\tvb \is \tvc} \cand \cunif \tvc {\ueq\where{\tvb \is \tvc}}}
-       {\cb\where{\x.\tvb \is \tvc}}}
+       {\cb\where{\x(\tvb) \is \tvc}}}
 
   \rewrite[S-Gc]
     {\cletr \x \tv {\tvs, \tvb} {\ca \cand \cunif \tvb \ueq} \cb}
@@ -5789,7 +5793,7 @@ $\c$. \\
     \Srule{\insts {\ueq}}{\eset}\\
     \Srule{\insts {\cletr \x \tv \tvs \ca \cb}}{\insts \ca \cup \insts \cb}\\
     \Srule{\insts {\cexistsi \inst \x \c}}{\insts \c}\\
-    \Srule{\insts {\cpapp \x \tv \tvc \inst}}{\set {\inst.\tv}}
+    \Srule{\insts {\cpinst \inst \tv \t}}{\set {\inst(\tv)}}
   \end{tabular}
 \end{judgboxmathpar}
 
@@ -5813,13 +5817,18 @@ $\c$. \\
   \end{enumerate}
 \end{definition}
 
-\begin{judgboxmathpar}
+\judgbox
   {\ctxinfer \E \tp \t}
   {$\ctxinfer \E \tp \t$ is a satisfiable context iff the context $\E$ has \\ the expected type $\t$ given the hole has the type $\tp$.}
+
+% alistair: Use longtable to avoid wierd spacing issues due to lack of page break. 
+% alistair: Use \small to avoid the figure overflowing
+{
 \newcommand {\Crule}[2]{#1 &\eqdef& #2}
 \def \arraystretch{1.4}%4
-  \scalebox{0.9}{
-\begin{tabular}{LCL}
+\small
+\begin{longtable}{LCL}
+  \\
   \Crule{\ctxinfer \hole \t \t}{\hole}\\
   \Crule{\ctxinfer {\parens{\eapp \E \e}} \tp \t}{\cexists {\tva, \tvb} \cunif \tva {\tvb \to \t} \cand \ctxinfer \E \tp \tva \cand \cinfer \e \tvb}\\
   \Crule{\ctxinfer {\parens{\eapp \e \E}} \tp \t}{\cexists {\tva, \tvb} \cunif \tva {\tvb \to \t} \cand \cinfer \e \tva \cand \ctxinfer \E \tp \tvb}\\
@@ -5867,10 +5876,9 @@ $\c$. \\
   {\ctxinfer \E \tp {\tfor \tvs \t}}
   {\cfor \tvs \ctxinfer \E \tp \t}
 \\\\
-\end{tabular}
-  }
-\end{judgboxmathpar}
-
+\end{longtable}
+  
+}
 
 
 \section{Properties of the constraint language}
@@ -6209,6 +6217,7 @@ composability property.
 
 	    \VdashPf{\semenv}{\C\where{\cmatched \t \sh \cbrs}} {Premise}
 	    \vdashPf{\semenv}{\C\where{\cmatched \t \sh \cbrs}} {\cref{lem:decanonicalization}}
+	\decolumnizePf
 	    \vdashPf{\semenv}{\C\where{\cmatched \t \sh \cbrs} \cand \cb}{By \Rule{Conj}}
  	    \VdashPf{\semenv}{\C\where{\cmatched \t \sh \cbrs} \cand \cb}{By \ih}
 	    \Pf{}{}{\Cshape \C \tv \sh}{Premise}
@@ -6779,6 +6788,7 @@ generally in our system.
 
       \begin{llproof}
         \notinPf{\t}{\TyVars}{Premise}
+        \decolumnizePf
         \eqPf{\t}{\shapp[\shape \t] \tys}{For some $\tys$}
         \ForallPf{\semenv, \gt}{}{Defn. of $\Cshape \C \t {~\shape \t}$}
         \vdashPf{\semenv}{\cerase{\C\where{\cunif \t \gt}}}{Premise}
@@ -6829,6 +6839,7 @@ generally in our system.
           \eqPf{\semenvp(\tvp)}{\gt}{For any $\greg \wild \semenvp \in \semenva(\x)$}
           \vdashPf{\semenvb}{\cpapp \x \tvp \tvc \inst}{Inversion of $\cerase \Cb$}
           \eqPf{\semenvb(\inst^\x)(\tvp)}{\semenvb(\tvc)}{Simple inversion}
+          \decolumnizePf
           \inPf{\semenvb(\inst^\x)}{\semenvb(\x)}{Since $\cexistsi \inst \x \in \Cb$, $\semenvb$ extends $\semenva$}
           \eqPf{\semenvb(\inst^\x)(\tvp)}{\gt}{Above}
           \continueeqPf{\semenvb(\tvc)}{\ditto}
@@ -6837,7 +6848,6 @@ generally in our system.
           \vdashPf{\semenv}{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand \cunif \tvc \gt}}}{Simple congruence}
 \Hand     \eqPf{\shape \gt}{\sh}{$\implies E$ on $\Cshape \ldots \tvc \sh$}
         \end{llproof}
-
     \end{proofcases}
   \end{proof}
 \end{lemma}
@@ -6980,7 +6990,7 @@ generally in our system.
       \proofcase{\Rule{S-Let}, \Rule{S-True}, \Rule{S-False},
       \Rule{S-Let-ExistsRight},
       \Rule{S-Let-ConjLeft},
-      \Rule{S-Let-ConjRight}, \Rule{S-Inst-Name}, \Rule{S-Exists-Exists-Inst},
+      \Rule{S-Let-ConjRight}, \Rule{S-Inst-Name}, \\\Rule{S-Exists-Exists-Inst},
       \Rule{S-Exists-Inst-Conj}, \Rule{S-Exists-Inst-Let}, \Rule{S-Exists-Inst-Solve},
       \Rule{S-All-Conj}}
 
@@ -7155,14 +7165,14 @@ generally in our system.
        \cfor \tvp \cexists {\tv, \tvs} {\ueqs} \cequiv \ctrue \\
        \tvp \in \reg \tv \tvs \\
        \tvp \disjoint \c \\
-       \inst.\tvp \disjoint \insts \C \\
+       \inst(\tvp) \disjoint \insts \C \\
        \x \disjoint \bvs \C}
       {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where\ctrue}}
 
 	\begin{llproof}
 	  \equivPf{\cfor \tvp \cexists {\tv, \tvs} \ueqs}{\ctrue}{Premise}
 	  \disjointPf{\tvp}{\c}{Premise}
-	  \disjointPf{\inst.\tvp}{\insts \C}{Premise}
+    \disjointPf{\inst(\tvp)}{\insts \C}{Premise}
 	  \disjointPf{\x}{\bvs \C}{Premise}
 	  \decolumnizePf
 	  \sufficientPf{equivalence between}
@@ -7207,7 +7217,7 @@ generally in our system.
 		  \inPf{\greg \gt \semenvb}{\semenv(\x)}{By definition}
 		  \supposePf{\semenvc \th \Cb\where\ctrue}{Considering entailment on $\cexistsi \inst \x$}
 		  \eqPf{\semenvc(\inst)}{\semenva}{\ditto}
-		  \vdashPf{\semenvc\where{\inst \is \semenvb}}{\Cb\where\ctrue}{$\inst.\tvp \disjoint \insts \Cb$}
+      \vdashPf{\semenvc\where{\inst \is \semenvb}}{\Cb\where\ctrue}{$\inst(\tvp) \disjoint \insts \Cb$}
 		  \vdashPf{\deriv :: \semenvc}{\Cb\where\ctrue}{By \Rule{Exists-Inst}}
 		  \commentPf{$\deriv$ is a derivation that satisfies $\semenva(\tvp) = \semenvp(\tvc)$.}{}
 \Hand		  \commentPf{So this case degenerates to the former case.}{}
@@ -7379,7 +7389,7 @@ generally in our system.
       \item
         \label {item/progress/scope/i}
         $\hat\C\where{\cpapp \x \tv \tvc \inst}$ where
-        $\x \disjoint \hat\C$ and $\inst.\tv \disjoint \insts {\hat\C}$;
+          $\x \disjoint \hat\C$ and $\inst(\tv) \disjoint \insts {\hat\C}$;
       \item
         \label {item/progress/suspended}
         for every match constraint $\hat\C\where{\cmatch \tv \cbrs}$ in
@@ -7433,9 +7443,9 @@ generally in our system.
 
 	    $\hat\Ca\where{\capp \x \t} \cand \cb$ is stuck as we do not bind $\x$ in $\hat\Ca \cand \cb$.
 	  \proofcase{$\hat\Ca\where{\cpapp \x \tv \tvc \inst}$}
-	    We have $\x \disjoint \bvs {\hat \Ca}$ and $\inst.\tv \disjoint \insts {\hat \Ca}$.
+      We have $\x \disjoint \bvs {\hat \Ca}$ and $\inst(\tv) \disjoint \insts {\hat \Ca}$.
 
-	    If $\inst.\tv \in \insts \cb$ and $\inst \disjoint \bvs {\hat\ca}$, then apply \Rule{S-Inst-Unify}.
+      If $\inst(\tv) \in \insts \cb$ and $\inst \disjoint \bvs {\hat\ca}$, then apply \Rule{S-Inst-Unify}.
 	    It must be the case that we can apply \Rule{S-Inst-Unify}, otherwise, we could lift these instantiation
 	    constraints using \Rule{S-Exists-Lower} and \Rule{S-Let-ConjLeft}, contradicting that $\hat\Ca$ is stuck.
 
@@ -7494,7 +7504,7 @@ generally in our system.
 
 	  Apply \Rule{S-Let-AppR}.
 
-	  \proofcase{$\hat\C\where{\cpapp \x \tvp \tvc \inst}$} We have $\x \disjoint \bvs {\hat\C}$ or $\inst.\tvp \disjoint \insts {\hat\C}$.
+    \proofcase{$\hat\C\where{\cpapp \x \tvp \tvc \inst}$} We have $\x \disjoint \bvs {\hat\C}$ or $\inst(\tvp) \disjoint \insts {\hat\C}$.
 	    \begin{itemize}
 		\proofcase{$\tvp \in \reg \tv \tvs$}
 
@@ -7725,7 +7735,7 @@ rules that are not inherently destructive.
       \right.
     \end{tabular}
   \end{mathpar}
-  The weight of a partial instantiation $\cw {\cpapp \x \tv \t \inst}$ is
+  The weight of a incremental instantiation $\cw {\cpapp \x \tv \t \inst}$ is
   defined as  the sum of $\stw \t$ and ${\stw \tv}$.
   The weight of other constraints is given using the measure
   $\mathprefix{uw}$ defined in the the
@@ -8142,6 +8152,7 @@ and $\sub(\tvs) = \tys$.
 
 	      \begin{llproof}
 		\eqPf{\csem {\e : \t}}{\cletG \cinfer {\E\where{\eproj \e j}} \tv}{Premise}
+    \decolumnizePf
 		\eqPf{\C}{\cletG \ctxinfer \E \tvb \tv\where{\cexists \tv \cinfer \e \tv \cand \hole}}{Premise}
 		\UnifierPf{\sub}{\C\where{\cmatched \tvaa {\any \tvcs \Pi\iton \tvcs} {\ldots}}}{Premise}
 		\UnifierPf{\sub}{\csem {\E\where{\exproj \e j n} : \tv}}{Above (See $\implies$ direction)}
