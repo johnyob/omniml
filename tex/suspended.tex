@@ -4377,12 +4377,8 @@ extension for type-directed disambiguation of record labels,%
 and \GHC 8.0.1 (2016) added \texttt{DuplicateRecordFields}, allowing distinct
 record types with overlapping field names in the same module.
 
-\XDR
-  {\emph{not sufficiently predictable enough in practice} look really odd to
-  me. Even sufficiently or enough should be removed}
-
 However, the \GHC developers found that type-based disambiguation using
-bidirectional type inference is not sufficiently predictible enough in practice
+bidirectional type inference is not sufficiently predictible in practice
 for users~\citep*{RFC-overloaded-record-fields}, and that the reliance on
 projection functions, rather than a dedicated projection syntax, further
 complicated the implementation by making all function calls potentially
