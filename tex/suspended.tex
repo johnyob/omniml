@@ -3424,7 +3424,7 @@ let ex_8 gp = let getx p = p.x in getx (diag 42), (getx gp : float) °\ocamlflag
 \end{program}
 %
 As explained earlier, this program is clearly well-typed: the type of \code{p}
-is unambiguously determined as \code{'b gpoint} through \emph{back-propagation}
+is unambiguously determined as \code{'b gpoint} through \emph{backpropagation}
 from the first application of \code{getx} (\code{getx (diag 42)}).
 %
 The (simplified) generated constraint for \code{ex_8} contains:
@@ -3520,7 +3520,7 @@ Returning to our running example, we begin with the partial type scheme $\all
 match constraint in its abstraction cannot yet be solved. We continue solving
 the body of the let-constraint, tracking every instances of this partial
 scheme. As type information flows back---\eg when the shape of $\tvp$ becomes
-known via back-propagation from the first application of \code{getx}---the
+known via backpropagation from the first application of \code{getx}---the
 scheme is refined to $\all {\tvb} \trcd \tgpoint \tvb \to \tvb$. The second
 application of \code{getx} then updates its instantiation accordingly, unifying
 $\tvp_2$ with $\trcd \tgpoint \tvb_2$ and $\tvgetxret_2$ with $\tvb_2$.
@@ -4349,7 +4349,7 @@ prototype and formalize their meta-theory in Appendix
 
 We also remark that \PolySML~\citep*{sml-polyml} goes further than other \SML
 implementations on this front, supporting examples that even rely on
-back-propagation
+backpropagation
 \begin{program}[input,deletekeywords={true,false}]
 let fun fst r = #1 r in (fst (1, 2), fst (true, false)) end; °\polysmlflags 00°
 \end{program}
@@ -4576,7 +4576,7 @@ as an intern on this topic in Summer
 identified the implementation and specification difficulties; their
 implementation would only handle simple cases where no incremental
 generalization is necessary (in particular it did not support
-back-propagation), and they did not have a precise declarative
+backpropagation), and they did not have a precise declarative
 specification. Gabriel Scherer kept working on this infrequently until
 2024, identified the need for incremental generalization and
 instantiation, but its implementations and declarative specifications
