@@ -4151,16 +4151,20 @@ introduced. This may enable previously partial generics to become fully
 generalizable. Conversely, if a partially generalized variable is lowered (\eg
 by \Rule{S-Exists-Lower}), it must be unified with all its instances.
 
-\paragraph{Lazy generalization} Repeatedly generalizing a region after every
-update is expensive.  Instead we generalize on demand. We mark regions as
-``stale'' when they may require re-generalization. When an instance is
-taken, we re-generalize the stale descendants of the region in the region
-tree. Although this avoids performing re-generalization too early before
-instantiation, there are still scenarios in which re-generalization of a
-region before instantiation from this region may require significantly more
-work that instantiation before re-generalization, because instantiation may
-unlock suspended constraints that will in turn induce considerable
-simplification in that region.
+\paragraph{Lazy generalization} 
+
+Repeatedly generalizing a region after every update is expensive.  Instead we
+generalize on demand. We mark regions as ``stale'' when they may require
+re-generalization. When an instance is taken, we re-generalize the stale
+descendants of the region in the region tree. 
+
+\parcomment{Lazy generalization is an optimization for a common case, it is not optimal}
+
+Although this technique prevents premature re-generalization before
+instantiation, it only optimizes for a common case. In some situations,
+re-generalization before instantiation can still be more costly than
+instantiating first, since the instantiation may discharge suspended
+constraints that further refine the region's partial type scheme. 
 
 \section{Related work}
 \label{sec:related-work}
