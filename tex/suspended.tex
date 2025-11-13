@@ -1267,8 +1267,6 @@ bidirectional or $\Geninst$-directional type inference.
   trigger re-instantiations without introducing redundant constraint solving
   across successive instantiations of the same scheme.
 
-  \Xalistair{Didier, how about now?}
-
 \end{enumerate}
 We hope to pay off some of this complexity in future work; in particular, we
 believe omnidirectionality is the missing piece to unlock modular
@@ -3046,12 +3044,6 @@ equitypable where $\eswap$ is
 $\efun f {\efun \xa {\efun \xb {\eappp f \xb \ea}}}$. We also have
 that $\eapp f \e$ and $\eappp {\mathsf{app}} f \e$ and
 $\eappp {\mathsf{rev\_app}} \e f$ are equitypable.
-\begin{version}{}
-\XDR{Definition already made in the intro as a footnote.}
-, where $\mathsf{app}$ and $\mathsf{rev\_app}$ are the application function
-$\efun f \efun \x \eapp f \x$ and the reverse application function $\efun \x
-\efun f \eapp f \x$, respectively.
-\end{version}
 It is well-known that
 bidirectional types inference breaks application
 equitypability. Both \geninst-directional and omnidirectional
@@ -3363,12 +3355,6 @@ regions $\greg \gt \semenv$ is semantically inert for \Rule{LetR} and
 \Rule{AppR} themselves, but will become important later, in the semantics of
 \emph{incremental instantiation} constraints (\cref{sec/solver/incr-inst}).
 
-\XDR[grammar question]{I think we need not a dash in Regional
-\Let-constraints, since this is the default parenthesizing rule. Unless we
-wish to make \Let-constraint a concept itself, but then, we should also
-put a dash when \Let-constraint appears alone as in the second occurrence}
-\Xalistair{I've gone ahead and made let-constraints a concept}
-
 Regional let-constraints strictly generalize ordinary let-constraints, as
 captured by the equivalence:
 \begin{mathpar}
@@ -3656,10 +3642,10 @@ considered a stuck constraint.
 
 \parcomment{Unification}
 
-% alistair: These rules are not entirely standard (most other \ML solvers do not 
+% alistair: These rules are not entirely standard (most other \ML solvers do not
 % require them since they represent the solver state differently)
 
-\cref{fig:solver-basic} contains a selected set of basic solving rules, drawn 
+\cref{fig:solver-basic} contains a selected set of basic solving rules, drawn
 from the standard repertoire of small-step constraint solvers for \ML type inference.
 %
 \parcomment{Explanation of rules}
@@ -3700,7 +3686,7 @@ constraints already handled by the solver.
     \c = \cp \cand \cunif \tvb {\cunif {\shapp \tvbs} \ueq}\\
     \tvb \in \reg \tv \tvs \\
     \tvbs' \disjoint \tvb, \tvc, \tvbs}
-  {{\begin{array}{l}\cletr \x \tv \tvs {\c} 
+  {{\begin{array}{l}\cletr \x \tv \tvs {\c}
       \C\where{\cexists {\tvbs'}
         \cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst}\end{array}}}
 
@@ -3930,7 +3916,7 @@ fact---that the variable is monomorphic and shared across instances.
      \tvp \sh}
 \end{mathparfig}
 
-\cref{fig:solver-susp} describes the rules for discharging suspended 
+\cref{fig:solver-susp} describes the rules for discharging suspended
 constraints.
 %
 \parcomment{S-Match-Ctx}
@@ -4097,21 +4083,6 @@ the efficient integer comparisons.
 
 \paragraph{Partial generalization}
 
-% alistair: Commenting these comments out, since I consider them solved. This
-% also fixes the odd line break at the start of the paragraph block
-%
-% \noindent
-%\XDR
-%  {We agreed that this could be left as such, and perhaps improved
-%  later. Just kept as a reminder.}
-%\Xalistair
-%  {I agree that it is a little too abstract. To make it concrete, I would
-%  suggest code snippets (I rarely understand implementation mechanisms
-%  without code). But at the same time, this feels out of place for the
-%  paper.  Additionally, the final version will link the URL of the open
-%  source implementation, which when combined with this description ought to
-%  be sufficient to reproduce our approach}
-
 Generalization is the process of determining which type variables are
 polymorphic and which are monomorphic (\ie implementing
 \Rule{S-Exists-Lower}).  \emph{Partial generalization} arises when a region
@@ -4157,12 +4128,12 @@ introduced. This may enable previously partial generics to become fully
 generalizable. Conversely, if a partially generalized variable is lowered (\eg
 by \Rule{S-Exists-Lower}), it must be unified with all its instances.
 
-\paragraph{Lazy generalization} 
+\paragraph{Lazy generalization}
 
 Repeatedly generalizing a region after every update is expensive.  Instead we
 generalize on demand. We mark regions as ``stale'' when they may require
 re-generalization. When an instance is taken, we re-generalize the stale
-descendants of the region in the region tree. 
+descendants of the region in the region tree.
 
 \parcomment{Lazy generalization is an optimization for a common case, it is not optimal}
 
@@ -4170,7 +4141,7 @@ Although this technique prevents premature re-generalization before
 instantiation, it only optimizes for a common case. In some situations,
 re-generalization before instantiation can still be more costly than
 instantiating first, since the instantiation may discharge suspended
-constraints that further refine the region's partial type scheme. 
+constraints that further refine the region's partial type scheme.
 
 \section{Related work}
 \label{sec:related-work}
@@ -4435,7 +4406,7 @@ such non-uniformity in typing rules.
 Semi-unification \citep*{Henglein/phd,Henglein/tiasu@toplas93}, introduced in
 the late 1980's, is a generalization of unification that solves a collection
 $\bigwedge_{i \in I} \ti \leq \tip$ of \emph{instantiation inequalities},
-meaning that there exist a unifier $\theta$ and a collection of 
+meaning that there exist a unifier $\theta$ and a collection of
 substitutions $\bar\rho$ such that $\rho_i(\theta(\ti)) = \theta(\tip)$.
 %
 Unfortunately, semi-unification was soon proved undecidable~\citep*{%
@@ -4486,53 +4457,6 @@ our first prototype (described in \cref{sec:implementation}). This close
 correspondence naturally raises the question of whether partial type schemes
 could be enriched to cope with polymorphic recursion.
 
-\begin{version}{}
-\XDR{I wonder whether semi-unification fits better in the implementation or
-related-work section.  The goal is to explain that semi-unification was
-omnidirectionality-ready but also to mention extensions and say that
-implementation details meet the other implementation.}
-%
-\Xgabriel{I'm happy with the current placement -- we always said
-that it would be nice to mention both implementations in the section.}
-%
-\Xalistair{Personally I prefer it as related work. We agreed that the goal of
-the implementation section is to provide enough information, together with the
-open-source release, for someone to faithfully reconstruct our implementation.
-Given this, I'm not convinced this material belongs here. The discussion of
-semi-unification seems more like contextual commentary on (another valid)
-approach. I like that we're mentioning it (we always wanted to do this) and to
-clarify the connection to our approach, but it feels better suited in related
-work. More broadly, I'm a little concerned our paper is growing beyond the page
-limit one would consider a reasonable length (we're currently at ~40 pages),
-and that describing both implementations risks muddying the narrative rather
-than sharpening it}
-%
-\Xgabriel{I disagree for two reasons. One is technical: this
-  discussion from Didier mixes Related Work but also his own
-  (otherwise unpublished) research, so I don't think we could easily
-  present it as Related work. The other is social: I see this
-  implementation work of Didier, when he realized that he also wanted
-  suspended constraints, as the reason why we are working on this
-  together; so I think we should make an effort to mention it if we
-  have the opportunity, and I hope the journal form gives us that
-  opportunity.}
-%
-\XDR{I let you decide where to put it. The text may be changed. We may say
-less about the implementation if you wish, but I think we have to mention
-that semi-unification constraints were \emph{omnidirectionality-ready}. I am
-sure this would be one of Henglein's first reactions, and he would be right.
-Of course, Henglein never thought about this and this note is of course not
-at all enough for doing suspended constraints, but the incremental
-instantiation was already there---and we should not ignore it.
-}
-
-\XDR
-  {Semi-unification implementation of type inference, which according to
-  Henglein has been implemented for \SML, does implement incremental
-  instantiation efficiently.}%
-\TODO{Include a paragraph of Related Work to mention this.}
-\end{version}
-
 
 \section{Conclusions}
 \label{sec:discussion}
@@ -4557,53 +4481,6 @@ where ambiguity is resolved by falling back on a default, non-principal choice
 field names.
 
 \section*{Acknowledgments}
-
-\begin{version}{\Acknowledgments}
-
-The unsatisfactory situation of type-directed propagation in \OCaml has
-been on our mind for years; a first concrete step to which this work
-can be traced to a specific
-example\footnote{\url{https://github.com/ocaml/ocaml/issues/7388}} of
-inconvenient order of propagation (between pattern and expression in
-a let-binding) presented by Andreas Rossberg as part of general
-feedback on the use of \OCaml in the \texttt{wasm} reference
-interpreter \citep*{rossberg-wasm}. Gabriel Scherer proposed to delay
-the resolution of ambiguous constraints and advised Olivier Martinot
-as an intern on this topic in Summer
-2020~\citep*{frozen-constraints-2021}. Together they
-identified the implementation and specification difficulties; their
-implementation would only handle simple cases where no incremental
-generalization is necessary (in particular it did not support
-backpropagation), and they did not have a precise declarative
-specification. Gabriel Scherer kept working on this infrequently until
-2024, identified the need for incremental generalization and
-instantiation, but its implementations and declarative specifications
-remained incomplete.
-
-Alistair O'Brien started working on suspended constraints in Fall
-2024, coming from work on constraint-based presentations of GADT
-checking---suspended constraints could delay the checking of GADT
-patterns until the equalities to be introduced are known to be between
-rigid types. He proposed an alternative declarative implementation,
-and implemented a working prototype of incremental generalization
-instantiation, described in the present paper. Gabriel Scherer and
-Alistair O'Brien converged to a semantics using unicity conditions as
-presented here.
-
-Didier R\'emy started working on suspended constraints in Winter
-2024-2025, coming from questions of principal type inference in
-presence of modular implicits, in collaboration with Samuel
-Vivien. Didier R\'emy implemented a second prototype of delayed
-constraint based on semi-unification, which is fairly different from
-the prototype described in the present paper. He worked out the
-implementation and formal presentation of polytypes (semi-explicit
-first-class polymorphism) using our suspended constraints,
-which became one of our main examples.
-
-All co-authors contributed to the writing, with Alistair O'Brien doing
-the majority of the writing, and also most of the proofs of the
-meta-theory.
-\end{version}
 
 \Acknowledgments{}{This work builds on a work-in-progress presentation of
   suspended constraints by \citet*{frozen-constraints-2021}.}
@@ -5831,7 +5708,7 @@ $\c$. \\
   {\ctxinfer \E \tp \t}
   {$\ctxinfer \E \tp \t$ is a satisfiable context iff the context $\E$ has \\ the expected type $\t$ given the hole has the type $\tp$.}
 
-% alistair: Use longtable to avoid wierd spacing issues due to lack of page break. 
+% alistair: Use longtable to avoid wierd spacing issues due to lack of page break.
 % alistair: Use \small to avoid the figure overflowing
 {
 \newcommand {\Crule}[2]{#1 &\eqdef& #2}
@@ -5887,7 +5764,7 @@ $\c$. \\
   {\cfor \tvs \ctxinfer \E \tp \t}
 \\\\
 \end{longtable}
-  
+
 }
 
 
