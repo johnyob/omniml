@@ -3089,7 +3089,7 @@ $\c$ is closed).
 
 \subsection{Unification}
 
-\begin{figure}[!tp]
+\begin{figure}[tp]
 \begin{mathparsubfig}
   {fig:unification-syntax-and-semantics}
   {Syntax and semantics of unification problems.}
@@ -3270,7 +3270,7 @@ These administrative constraints enable the solver to represent and refine
 generalization states and tracking how instantiations evolve as suspended
 constraints are discharged.
 
-\begin{mathparfig}[!tp]
+\begin{mathparfig}[tp]
   {fig:constraint-let-regions}
   {Syntax and semantics of region-based $\Let$ and
    incremental instantiation constraints.}
@@ -3596,7 +3596,8 @@ let-constraints, rather than encoding them as $\clet \x \tv {\exi \tvs \ca}
 % What we do (introduce / explain the solver)
 
 We now gradually introduce the rules of the constraint solver itself
-(\cref {fig:solver-basic,fig:solver-schemes,fig:solver-susp}).
+(\cref {fig:solver-basic,fig:solver-schemes,fig:solver-susp};
+for a complete view with all rules placed together, see Appendix~\cref{app/ref/solver}).
 These rules define a non-deterministic rewriting
 system, operating modulo $\alpha$-equivalence, and the associativity and
 commutativity of conjunction. Rewriting takes place under an arbitrary
@@ -3607,9 +3608,9 @@ A constraint $\c$ is satisfiable if it rewrites to a solved form $\hat\up$
 (\cref{def:solved-form}); otherwise it gets stuck---in particular, $\cfalse$ is
 considered a stuck constraint.
 
+\paragraph{Basic rules}
 
-\begin{figure}[!tp]
-\begin{mathparsubfig}
+\begin{mathparfig}[tp]
   {fig:solver-basic}
   {Basic rewriting rules $\ca \csolve \cb$.}
   \rewrite[S-Unif]
@@ -3651,11 +3652,42 @@ considered a stuck constraint.
     {\cletr \x \tv \tvs \ca (\cb \cand \cc)}
     {\x \disjoint \cb}
     {\cb \cand \cletr \x \tv \tvs \ca \cc}
-\end{mathparsubfig}
+\end{mathparfig}
 
-\medskip
+\parcomment{Unification}
 
-\begin{mathparsubfig}
+\cref{fig:solver-basic} contains a selected set of basic solving rules that
+are standard in small-step constraint solvers for ML type inference.
+%
+\parcomment{Explanation of rules}
+%
+\Rule{S-Unif} invokes the unification algorithm on the
+current unification problem. The unification algorithm itself is treated as a
+black box by the solver, so the system could be extended with any
+equational theory of types implemented by the unification algorithm.
+%
+\Rule{S-Let} rewrites let-constraints into regional form.
+%
+\Rule{S-Exists-Conj} lifts existentials across conjunctions;
+\Rule{S-Let-ExistsLeft} and \Rule{S-Let-ExistsRight} lift existentials across
+let-binders; \Rule{S-Let-ConjLeft}, \Rule{S-Let-ConjRight} hoist constraints
+out of let-binders when they are independent of the local variables.
+%
+Collectively, these lifting rules normalize the structure of each region into a
+block of existentially bound variables, whose body consists of a conjunction of
+solved multi-equations followed by a residual constraint---typically an
+instantiation, let-binding, or suspended constraint.
+
+\parcomment{\OML constraints do not need dedicated rules}
+
+\OML-specific constraints, such as the label and polytype instantiation
+constraints ($\labfrom \elab \ct \leq \ta \to \tb$, $\cleq \cscm \t$,
+\etc), require no special treatment in our solver. Once their pattern variables
+are substituted---after solving a match constraint---they are desugared into
+constraints already handled by the solver.
+
+
+\begin{mathparfig}[tp]
   {fig:solver-schemes}
   {Solving rules for let-bindings and instantiations.}
 \rewrite[S-Inst-Copy]
@@ -3725,78 +3757,14 @@ considered a stuck constraint.
   [Det-Esc]
   {\fvs \t \disjoint \tvs, \tvbs}
   {\th \cdetermines {\cexists \tvbs \c \cand \cunif \tvs {\cunif \t \ueq}} \tvs}
-\end{mathparsubfig}
-
-\medskip
-
-\begin{mathparsubfig}
-  {fig:solver-susp}
-  {Rewriting rules for suspended match constraints.}
-\rewrite[S-Match-Ctx]
-  {\C\where{\cmatch \t \cbrs}}
-  {\th \Cshape \C \t \sh}
-  {\C\where{\cmatched \t {\sh} \cbrs}}
-
-\infer[Uni-Var]
-  {\color{gray}\tv \disjoint \bvs \Cb}
-  {\th \Cshape {\Ca\where{\cunif \tv
-     {\cunif \t \ueq} \cand \Cb\where{\hole}}} \tv {\shape \t}}
-
-\infer[Uni-Type]
-  {{\color{gray}\t \notin \TyVars}}
-  {\th \Cshape \C \t {\shape \t}}
-
-\infer[Uni-BackProp]
-  {\th \Cshape{\parens{\cletr \x \tv \tvs {\Ca\where{\ctrue}}
-  {\Cb\where{\cpapp \x \tvp \tvc \inst \cand \hole}}}} \tvc \sh \\
-   \color{gray}\tvp \in \tv, \tvs \\
-   \color{gray}\x \disjoint \bvs \Cb \\
-   \color{gray}\tvp \disjoint \bvs \Ca}
-  {\th \Cshape
-     {\parens{\cletr \x \tv \tvs {\Ca\where{\hole}}
-                  {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}
-     \tvp \sh}
-\end{mathparsubfig}
-\caption{Selected constraint solving rules}
-\label{fig:solving-rules}
-\end{figure}
-
-\paragraph{Basic rules}
-
-\parcomment{Unification}
-
-\Rule{S-Unif} (\cref{fig:solver-basic}) invokes the unification algorithm on the
-current unification problem. The unification algorithm itself is treated as a
-black box by the solver, so the system could be extended with any
-equational theory of types implemented by the unification algorithm.
-%
-\parcomment{Explanation of rules}
-%
-In \cref{fig:solver-basic}, \Rule{S-Let} rewrites let-constraints into regional
-form.
-%
-\Rule{S-Exists-Conj} lifts existentials across conjunctions;
-\Rule{S-Let-ExistsLeft} and \Rule{S-Let-ExistsRight} lift existentials across
-let-binders; \Rule{S-Let-ConjLeft}, \Rule{S-Let-ConjRight} hoist constraints
-out of let-binders when they are independent of the local variables.
-%
-Collectively, these lifting rules normalize the structure of each region into a
-block of existentially bound variables, whose body consists of a conjunction of
-solved multi-equations followed by a residual constraint---typically an
-instantiation, let-binding, or suspended constraint.
-
-\parcomment{\OML constraints do not need dedicated rules}
-
-\OML-specific constraints, such as the label and polytype instantiation
-constraints ($\labfrom \elab \ct \leq \ta \to \tb$, $\cleq \cscm \t$,
-\etc), require no special treatment in our solver. Once their pattern variables
-are substituted---after solving a match constraint---they are desugared into
-constraints already handled by the solver.
+\end{mathparfig}
 
 \parcomment{Solving incremental instantiations}
 
-Incremental instantiation constraints are reduced using the following rules, summarized in
-\cref{fig:solver-schemes}:
+\cref{fig:solver-schemes} describes the solving rules in charge of incremental
+instantiation.
+%
+Incremental instantiation constraints are reduced using the following rules:
 \begin{enumerate}
 
 \item
@@ -3842,6 +3810,8 @@ type is a variable rather than an arbitrary type.
 %% \let \rewrite \hrewrite
 
 \paragraph{Let-constraints}
+
+\cref{fig:solver-schemes} also describes the generalization rules.
 
 \parcomment{Cleaning up partial instantiations and let-constraints}
 
@@ -3927,6 +3897,38 @@ fact---that the variable is monomorphic and shared across instances.
 
 \paragraph{Suspended match constraints}
 
+\begin{mathparfig}[tp]
+  {fig:solver-susp}
+  {Rewriting rules for suspended match constraints.}
+\rewrite[S-Match-Ctx]
+  {\C\where{\cmatch \t \cbrs}}
+  {\th \Cshape \C \t \sh}
+  {\C\where{\cmatched \t {\sh} \cbrs}}
+
+\infer[Uni-Var]
+  {\color{gray}\tv \disjoint \bvs \Cb}
+  {\th \Cshape {\Ca\where{\cunif \tv
+     {\cunif \t \ueq} \cand \Cb\where{\hole}}} \tv {\shape \t}}
+
+\infer[Uni-Type]
+  {{\color{gray}\t \notin \TyVars}}
+  {\th \Cshape \C \t {\shape \t}}
+
+\infer[Uni-BackProp]
+  {\th \Cshape{\parens{\cletr \x \tv \tvs {\Ca\where{\ctrue}}
+  {\Cb\where{\cpapp \x \tvp \tvc \inst \cand \hole}}}} \tvc \sh \\
+   \color{gray}\tvp \in \tv, \tvs \\
+   \color{gray}\x \disjoint \bvs \Cb \\
+   \color{gray}\tvp \disjoint \bvs \Ca}
+  {\th \Cshape
+     {\parens{\cletr \x \tv \tvs {\Ca\where{\hole}}
+                  {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}
+     \tvp \sh}
+\end{mathparfig}
+
+\cref{fig:solver-susp} describes the rules for discharging match
+constraints.
+
 \parcomment{S-Match-Ctx}
 
 \Rule{S-Match-Ctx} (\cref{fig:solver-susp}) solves suspended match
@@ -3959,10 +3961,9 @@ in the premise.
 For a solved context $\hat\C$, this syntactic is moreover sound and
 complete with respect to the semantic definition of unicity:
 $\Cshape \C \tau \sh$ holds if and only if $\th \Cshape \C \tau \sh$ is
-derivable.
-%
-\Xgabriel{Is this proved somewhere?}
-\Xalistair{Yes, Lemma C.11}
+derivable (Appendix~\cref{lem:unicity-completeness}).
+
+
 
 \subsection{Metatheory}
 
@@ -5565,6 +5566,7 @@ $\c$. \\
 \end{judgboxmathpar}
 
 
+\label {app/ref/solver}
 \begin{judgboxmathpar}
   {\c \csolve \cp}
   {The constraint solver rewrites $\c$ to $\cp$.}
