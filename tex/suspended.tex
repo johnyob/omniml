@@ -3936,13 +3936,12 @@ constraints.
 \parcomment{S-Match-Ctx}
 %
 % alistair: break used to avoid overflow of S-Match-Ctx into margin
-\break \Rule{S-Match-Ctx} (\cref{fig:solver-susp}) solves suspended
+\break \Rule{S-Match-Ctx} solves suspended
 match constraints. It would not be effective to allow rewriting whenever the
 unicity condition $\Cshape \C \t \sh$ holds, because it is not a-priori
 feasible to check or decide this semantic condition which quantifies over all
-solutions. Instead we introduce a restricted, decidable approximation, which we
-describe as three syntactic ``unicity rules'' that form the judgment $\th
-\Cshape \C \t \sh$.
+solutions. Instead we introduce a restricted, decidable approximation via
+ three syntactic ``unicity rules'' that form the judgment $\th \Cshape \C \t \sh$.
 
 The unicity rule \Rule{Uni-Type} applies when $\t$ is a non-variable type $\t$,
 in which case the shape is simply $\shape \t$. \Rule{Uni-Var} applies when the
