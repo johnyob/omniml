@@ -3701,6 +3701,11 @@ constraints already handled by the solver.
     \\ \uad \C\where{\cexists {\tvbs'}
         \cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst}\end{array}}}
 
+\rewrite[S-Inst-Unify]
+  {\cpinst \inst \tvb \tvca \cand \cpinst \inst \tvb \tvcb}
+  {}
+  {\cpinst \inst \tvb \tvca \cand \cunif \tvca \tvcb}
+
 \rewrite[S-Inst-Poly]
   {\cletr \x \tv {\tvs} {\ueqs \cand \c}
       {\C\where{\cpapp \x \tvp \tvc \inst}} \\}
@@ -3715,12 +3720,7 @@ constraints already handled by the solver.
   {\cletr \x \tv \tvs \c {\C\where{\cpapp \x \tvb \tvc \inst}} \\}
   {\tvb \notin \reg \tv \tvs \\ \x, \tvb \disjoint \bvs \C}
   {\cletr \x \tv \tvs \c {\C\where{\cunif \tvb \tvc}}}
-
-\rewrite[S-Inst-Unify]
-  {\cpinst \inst \tvb \tvca \cand \cpinst \inst \tvb \tvcb}
-  {}
-  {\cpinst \inst \tvb \tvca \cand \cunif \tvca \tvcb}
-
+\\
 \rewrite[S-Let-AppR]
   {\cletr \x \tv \tvs \c {\C\where{\capp \x \t}} \\}
   {\tvc \disjoint \t \\
