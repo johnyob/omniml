@@ -3175,7 +3175,7 @@ $\c$ is closed).
       {|\ueq| \leq 1}
       {\ctrue}
 \end{mathparsubfig}
-\caption{Unification}
+\caption{Unification: syntax, semantics, and the rewriting-based solver $\upa \unif \upb$.}
 \label{fig:unification}
 \end{figure}
 
@@ -3656,8 +3656,11 @@ considered a stuck constraint.
 
 \parcomment{Unification}
 
-\cref{fig:solver-basic} contains a selected set of basic solving rules that
-are standard in small-step constraint solvers for ML type inference.
+% alistair: These rules are not entirely standard (most other \ML solvers do not 
+% require them since they represent the solver state differently)
+
+\cref{fig:solver-basic} contains a selected set of basic solving rules, drawn 
+from the standard repertoire of small-step constraint solvers for \ML type inference.
 %
 \parcomment{Explanation of rules}
 %
@@ -3689,7 +3692,7 @@ constraints already handled by the solver.
 
 \begin{mathparfig}[tp]
   {fig:solver-schemes}
-  {Solving rules for let-bindings and instantiations.}
+  {Solving rules for let-constraints and instantiations.}
 \rewrite[S-Inst-Copy]
   {\cletr \x \tv \tvs {\c} \C\where{\cpapp \x \tvb \tvc \inst} \\}
    {\acyclic {\c} \\
@@ -3697,8 +3700,8 @@ constraints already handled by the solver.
     \c = \cp \cand \cunif \tvb {\cunif {\shapp \tvbs} \ueq}\\
     \tvb \in \reg \tv \tvs \\
     \tvbs' \disjoint \tvb, \tvc, \tvbs}
-  {{\begin{array}{l}\cletr \x \tv \tvs {\c}
-    \\ \uad \C\where{\cexists {\tvbs'}
+  {{\begin{array}{l}\cletr \x \tv \tvs {\c} 
+      \C\where{\cexists {\tvbs'}
         \cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst}\end{array}}}
 
 \rewrite[S-Inst-Unify]
@@ -3725,7 +3728,7 @@ constraints already handled by the solver.
   {\cletr \x \tv \tvs \c {\C\where{\capp \x \t}} \\}
   {\tvc \disjoint \t \\
    \x \disjoint \bvs \C}
-  {{\begin{array}{l}\cletr \x \tv \tvs \c \\
+  {{\begin{array}{l}\cletr \x \tv \tvs \c
      {\C\where{\cexistsi {\tvc, \inst} \x
               {\cpinst \inst \tv \tvc \cand \cunif \tvc \t}}}\end{array}}}
 
@@ -3759,6 +3762,7 @@ constraints already handled by the solver.
   {\th \cdetermines {\cexists \tvbs \c \cand \cunif \tvs {\cunif \t \ueq}} \tvs}
 \end{mathparfig}
 
+\paragraph{Incremental instantiations}
 \parcomment{Solving incremental instantiations}
 
 \cref{fig:solver-schemes} describes the solving rules in charge of incremental
@@ -3811,10 +3815,10 @@ type is a variable rather than an arbitrary type.
 
 \paragraph{Let-constraints}
 
-\cref{fig:solver-schemes} also describes the generalization rules.
-
+\cref{fig:solver-schemes} also presents the rules governing generalization.
+%
 \parcomment{Cleaning up partial instantiations and let-constraints}
-
+%
 \Rule{S-Let-Solve} removes a let-constraint when the bound term
 variable is unused and the abstraction is satisfiable. \Rule{S-Compress}
 determines that a regional variable $\tvb$ is an an alias for $\tvc$. We
@@ -3926,28 +3930,28 @@ fact---that the variable is monomorphic and shared across instances.
      \tvp \sh}
 \end{mathparfig}
 
-\cref{fig:solver-susp} describes the rules for discharging match
+\cref{fig:solver-susp} describes the rules for discharging suspended 
 constraints.
-
+%
 \parcomment{S-Match-Ctx}
+%
+% alistair: break used to avoid overflow of S-Match-Ctx into margin
+\break \Rule{S-Match-Ctx} (\cref{fig:solver-susp}) solves suspended
+match constraints. It would not be effective to allow rewriting whenever the
+unicity condition $\Cshape \C \t \sh$ holds, because it is not a-priori
+feasible to check or decide this semantic condition which quantifies over all
+solutions. Instead we introduce a restricted, decidable approximation, which we
+describe as three syntactic ``unicity rules'' that form the judgment $\th
+\Cshape \C \t \sh$.
 
-\Rule{S-Match-Ctx} (\cref{fig:solver-susp}) solves suspended match
-constraints. It would not be effective to allow rewriting whenever the
-unicity condition $\Cshape \C \t \sh$ holds, because it is not
-a-priori feasible to check or decide this semantic condition which
-quantifies over all solutions. Instead we introduce a restricted,
-decidable subset of the unicity condition that relies on syntactic
-conditions, which we describe as three ``unicity rules'' for a judgment
-written $\th \Cshape \C \t \sh$.
+The unicity rule \Rule{Uni-Type} applies when $\t$ is a non-variable type $\t$,
+in which case the shape is simply $\shape \t$. \Rule{Uni-Var} applies when the
+scrutinee is a variable $\tv$ and the context establishes that $\tv$ is equal
+to some non-variable type $\t$ by exhibiting an equality $\cunif \tv {\cunif \t
+\ueq}$ and $\t$ is a non-variable type. In this case, the shape of $\tv$ is
+$\shape \t$.
 
-The unicity rule \Rule{Uni-Type} applies when $\t$ is a non-variable
-type $\t$, in which case the shape is simply $\shape \t$. The unicity
-rule \Rule{Uni-Var} applies when the scrutinee is a variable $\tv$ and
-the context establishes that $\tv$ is equal to some non-variable type
-$\t$ by exhibiting an equality $\cunif \tv {\cunif \t \ueq}$ and $\t$ is
-a non-variable type. In this case, the shape of $\tv$ is $\shape \t$.
-
-Finally, the unicity rule \Rule{Uni-BackProp} expresses
+Finally, \Rule{Uni-BackProp} expresses
 \emph{backpropagation}, previously illustrated in \cref{ex:backprop}. In
 particular, the shape of a regional variable can sometimes be determined
 from its instantiations. If an abstraction contains a regional variable
