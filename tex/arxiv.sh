@@ -27,20 +27,12 @@ cp $MAIN.tex arxiv/
 # HACK below: to avoid issues with arxiv's detection and processing,
 # of .tex files, we do not want to submit suspended.final.tex that
 # inputs suspended.tex, so we only submit suspended.tex, but with the
-# .final.cfg configuration -- and we use $MAIN.final.bbl below.
+# .final.cfg configuration, and we expand \jobname away.
 
 cp $MAIN.final.cfg arxiv/$MAIN.cfg
+sed "s/\\\\jobname.cfg/$MAIN.cfg/g" -i arxiv/$MAIN.tex
 
-# The arxiv convention is that the submitter runs 'bibtex'
-# (or whatever), and they just build from the '.bbl' files
-# themselves.
-
-stat _build/$MAIN.final.bbl > /dev/null \
-    || { echo "you need to run bibtex first"; exit 1; }
-cp _build/$MAIN.final.bbl arxiv/$MAIN.bbl
-
-# I still include the .bib file in the archive for
-# reference. Hence, (unused) source .bib:
+# arXiv can now build the bibliography from the .bib file:
 
 cp $BIB.bib ACM-Reference-Format.bst arxiv/ 
 
@@ -55,9 +47,7 @@ cp acmart.cls arxiv/
 # that I didn't forget some build dependencies.
 
 (
-    echo "pdflatex $MAIN.tex"
-    echo "pdflatex $MAIN.tex"
-    echo "pdflatex $MAIN.tex"
+    echo "latexmk -pdf $MAIN.tex"
 ) > arxiv/build.sh
 
 zip -r arxiv arxiv
