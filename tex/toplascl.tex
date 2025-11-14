@@ -1,10 +1,12 @@
 \documentclass[10pt]{cam-letter}
 
+\renewcommand{\includegraphics}[2][]{}
+
 \camname{Alistair O'Brien\\(on behalf of all authors)}
 \camdepartment{Department of Computer\\Science and Technology}
 \camaddress{%
-  William Gates Building,\\ 
-  15 JJ Thomson Ave,\\ 
+  William Gates Building,\\
+  15 JJ Thomson Ave,\\
   Cambridge CB3 0FD
 }
 \camphone{01223 763500}
@@ -34,28 +36,32 @@
 
 % Point: introduce work and us
 
-Please consider for publication in TOPLAS our paper entitled ``Omnidirectional
-type inference for \ML: principality any way'', authored by  myself, Gabriel
-Scherer, and Didier R\'emy.
+Please consider for publication in TOPLAS our paper entitled
+``\emph{Omnidirectional type inference for \ML: principality any way}'',
+authored by myself, Gabriel Scherer, and Didier R\'emy.
 
-% Point: confirming that the work hasn't been submitted elsewhere 
-% Aside: 
+\XDR{Wouldn't you like to either keep the paper author's order (which we may
+decide to change) or the alphabetical order, except for ``yourself'' that
+you would then put last?}
+
+% Point: confirming that the work hasn't been submitted elsewhere
+% Aside:
 % - Frozen constraints (Marinot)
 % - WITS 2026
 
 We confirm that this manuscript has not been published elsewhere and is not
 under consideration by any other journal or conference. Two short, preliminary
-abstracts related to this line of work exist: 
+abstracts related to this line of work exist:
 %
 \begin{enumerate*}
 
-  \item 
+  \item
 
   \citet*{frozen-constraints-2021}, and
 
   \item \citet*{omniml-wits-2026}, submitted to WITS 2026 and
   presently under review.
- 
+
 \end{enumerate*}
 %
 Both abstracts are brief summaries that omit the technical developments,
@@ -68,30 +74,33 @@ This work aligns well with TOPLAS's focus on programming language theory. It
 contributes the first concrete step in a broader program of
 \emph{omnidirectional} type inference, whose long-term aim is to support
 advanced \ML extensions such as static overloading, GADTs, and first-class
-polymorphism. 
+polymorphism.
 %
-A key difficulty in this space is preserving \emph{principality}: the existence
-of most general types that characterise all valid typings for a program.
-Principality is crucial for predictable and efficient inference, yet is easily
-lost in the presence of such features. 
+A key difficulty in this space is preserving \emph{principality}: the
+existence of most general types that characterise all valid typings for a
+program.  Principality is crucial for predictable and efficient inference,
+yet is easily lost in the presence of such features.
 
 Existing approaches preserve principality by propagating \emph{known} type
 information in a rigid syntactic order (\eg bidirectional typing), often
 forcing premature decisions and rejecting otherwise valid programs.
 Omnidirectionaly relaxes this by allowing information to flow in a flexible,
-demand-driven order. 
+demand-driven order.
+\XDR[add?]
+{Omnidirectionaly is particularly difficult to achieve in the presence of
+local let-generalization, as required in \OCaml.}
 
 In this manuscript, we introduce the meta-theoretical machinery needed to
-realise this idea and provide an \emph{omnidirectional recipe} for instantiating
-the framework to specific language features. 
+realise this idea and provide an \emph{omnidirectional recipe} for
+instantiating the framework to specific language features.
 %
 We demonstrate the approach on two \OCaml features: static overloading of
 record labels and datatype constructors, and semi-explicit first-class
 polymorphism. Both instantiations yield a principal type inference algorithm
-that is more expressive than \OCaml's current typechecker. 
+that is more expressive than \OCaml's current typechecker.
 
 % No conflicts of interest
-We have no conflicts of interest to disclose. 
+We have no conflicts of interest to disclose.
 
 % Thanks :)
 All authors have approved the manuscript and consent to its submission to
