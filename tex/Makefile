@@ -26,7 +26,7 @@ all: $(addsuffix .pdf,${PRJ})
 	@cat $(BUILD)/$@ 
 
 %.wlog: %.pdf
-	@$(MAKE) $*.log | grep -E '(Warning:|pdfTeX warning)' 
+	@$(MAKE) $*.log | grep -E '(Warning:|pdfTeX warning|Overfull)' 
 
 %.werr: %.pdf
 	@$(MAKE) $*.wlog | grep -v -f warnings.ok

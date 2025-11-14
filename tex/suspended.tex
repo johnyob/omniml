@@ -764,9 +764,9 @@ information, $\epoly \e$ requires no attached annotation; and because
 annotation variables are unnecessary. The resulting syntax and typing rules are
 as follows:
 \begin{mathpar}
-  \begin{minipage}[l]{15em}
+  \begin{minipage}[l]{16em}
   %% \scalebox{0.9}{
-  \begin{bnfgrammar}
+  \begin{bnfgrammar}[\def\bnfsep{\;}]
     \noalign{\vskip -1em}
     \entry[Terms]{\e}{
        \epoly \e
@@ -2700,7 +2700,7 @@ $\t$ is a type variable and $\C$ is satisfiable.
   {The constraint generation translation for \OML.}
 \newcommand {\Crule}[2]{#1 &\eqdef& #2}
 \def \arraystretch{1.1}%4
-\begin{tabular}{LCL}
+\begin{tabular}{.L;C;;L.}
 \Crule
    {\cinfer x \t}
    {\cinst x \t}
@@ -2755,13 +2755,14 @@ $\t$ is a type variable and $\C$ is satisfiable.
 \\
 \Crule
   {\cinfer {\efield \e \elab} \t}
-  {\begin{cases}
+  {\!\begin{cases}
     \cinfer {\exfield \e \T \elab} \t
     & \text{if } \labuni \elab \T
     \\
     \cexists \tv \cinfer \e \tv \cand
     \cmatch \tv
       {\cbranch {\cpatrcd \ct} {\labfrom \elab \ct \leq \tv \to \t}}
+      \hskip 6ex
     & \text{otherwise}
   \end{cases}}
 \\
@@ -2772,12 +2773,15 @@ $\t$ is a type variable and $\C$ is satisfiable.
 \\
 \Crule
   {\cinfer {\erecord {\overline{\elab = \e}}} \t}
-  {\begin{cases}
+  {\!\begin{cases}
     \cinfer {\exrecord \T {\overline{\elab = \e}}} \t
     & \text{if } \labsuni \elabs \T \\
-    \cexists \tvs \cAnd\iton \cinfer \ei \tvi & \text{otherwise} \\
+    \cexists \tvs \cAnd\iton \cinfer \ei \tvi
+    & \text{otherwise} \\
     \uad\cand\uad \cmatch \t {\cbranch {\cpatrcd \ct}
-      {\parens{\dom \ct = \elabs \cand \cAnd\iton \labfrom \elabi \ct \leq \t \to \tvi}}} &
+      {\parens{\dom \ct = \elabs \cand
+               \cAnd\iton \labfrom \elabi \ct \leq \t \to \tvi}}}
+      \hskip -2em
    \end{cases}}
 \\
 \Crule
@@ -4615,7 +4619,7 @@ definition in full, or when studying the meta-theory of the system.
   \any \tvcs \t
 }
 \\
-\entry[Canonical principal shapes] {\sh} {} {}\\
+\entry[\llap{Canonical} principal shapes] {\sh} {} {}\\
 \entry[Terms]{\e}{
   x \and
   () \and
@@ -5108,18 +5112,23 @@ $\c$. \\
 
 \judgbox
   {\cinfer {\G \th \e} \t}
-  {$\cinfer {\G \th \e} \t$ is satisfiable iff $\e$ has the expected \emph{known} type $\t$ under \emph{known} context $\G$.}
+  {$\cinfer {\G \th \e} \t$ is satisfiable iff
+   $\e$ has the expected \emph{known} type $\t$ under \emph{known} context $\G$}
 
+\smallskip
 \judgbox
   {\cinfer \e \ts}
-  {$\cinfer \e \ts$ is satisfiable iff $\e$ has the expected \emph{known} type scheme $\ts$.}
+  {$\cinfer \e \ts$ is satisfiable iff
+   $\e$ has the expected \emph{known} type scheme $\ts$.}
 
+\smallskip
 \begin{judgboxmathpar}
   {\cinfer \e \t}
-  {$\cinfer \e \t$ is satisfiable iff $\e$ has the expected \emph{known} type $\t$.}
+  {$\cinfer \e \t$ is satisfiable iff
+   $\e$ has the expected \emph{known} type $\t$.}
 \newcommand {\Crule}[2]{#1 &\eqdef& #2}
 \def \arraystretch{1.2}%4
-\begin{tabular}{LCL}
+\begin{tabular}{.L;CL.}
 \Crule
    {\cinfer x \t}
    {\cinst x \t}
@@ -5191,13 +5200,14 @@ $\c$. \\
 \\
 \Crule
   {\cinfer {\efield \e \elab} \t}
-  {\begin{cases}
+  {\!\begin{cases}
     \cinfer {\exfield \e \T \elab} \t
     & \text{if } \labuni \elab \T
     \\
     \cexists \tv \cinfer \e \tv \cand
     \cmatch \tv
       {\cbranch {\cpatrcd \ct} {\labfrom \elab \ct \leq \tv \to \t}}
+    \hskip 6ex
     & \text{otherwise}
   \end{cases}}
 \\
@@ -5208,12 +5218,14 @@ $\c$. \\
 \\
 \Crule
   {\cinfer {\erecord {\overline{\elab = \e}}} \t}
-  {\begin{cases}
+  {\!\begin{cases}
     \cinfer {\exrecord \T {\overline{\elab = \e}}} \t
     & \text{if } \labsuni \elabs \T \\
     \cexists \tvs \cAnd\iton \cinfer \ei \tvi & \text{otherwise} \\
     \uad\cand\uad \cmatch \t {\cbranch {\cpatrcd \ct}
-      {\parens{\dom \ct = \elabs \cand \cAnd\iton \labfrom \elabi \ct \leq \t \to \tvi}}} &
+      {\parens{\dom \ct = \elabs \cand
+               \cAnd\iton \labfrom \elabi \ct \leq \t \to \tvi}}}
+    \hskip -2em
    \end{cases}}
 \\
 \Crule

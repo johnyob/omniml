@@ -136,6 +136,7 @@
 \newif\ifbnf@leftfill \bnf@leftfilltrue
 \let \bnf@leftfill \fill
 
+\newcommand {\bnfsep}{\;\;}
 \newenvironment{bnfgrammar}[1][]
   {\let \entry \bnf@entry
    \let \entryset \bnf@entryset
@@ -147,10 +148,11 @@
    \let \And \bnf@andcr
    \let \nextline \bnf@nextline
    \let \noleftfill \bnf@leftfillfalse
+   \newcolumntype{/}{@{\bnfsep}}
    \newcolumntype{?}{@{\extracolsep{\bnf@leftfill}}}%
    #1\relax
    \ifbnf@leftfill \else \def \bnf@leftfill{0em}\fi
-   \begin{tabular*}{\linewidth}{.C?R=;;R;;LL~r.}}
+   \begin{tabular*}{\linewidth}{.C?R=/R/LL~r.}}
  {\end{tabular*}}
 
 \newcommand{\leftalign}[2][.L.]
@@ -171,7 +173,7 @@
 % Judgement boxes should precede a mathpar
 
 \newcommand{\judgbox}[2]{%
-  \fbox{\ensuremath{#1}}%
+  \noindent \fbox{\ensuremath{#1}}%
   {\begin{tabular}[c]{l} #2 \end{tabular}}%
   \\[-1.5ex]
 }
