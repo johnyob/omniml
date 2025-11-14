@@ -18,6 +18,8 @@ wits-final: wits.final.pdf
 
 wits-submit: wits.submit.pdf
 
+toplascl: toplascl.pdf
+
 all: $(addsuffix .pdf,${PRJ})
 
 %.log: %.pdf
@@ -66,6 +68,8 @@ cleaner vacuum: clean arxiv.clean
 	rm -f suspended.*.pdf
 	rm -f wits.pdf
 	rm -f wits.final.pdf
+	rm -f wits.submit.pdf
+	rm -f toplascl.pdf
 
 clean-alistair: vacuum
 	rm -rf *.toc *.aux $(addsuffix .bbl,${PRJ}) *.blg *.log *~* *.bak *.out cut.sh .latexrun.db* *.fls *.rel _region_.* *.synctex.gz *.fdb_latexmk *.ist *.glo
