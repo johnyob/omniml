@@ -5726,7 +5726,7 @@ $\c$. \\
 \newcommand {\Crule}[2]{#1 &\eqdef& #2}
 \def \arraystretch{1.4}%4
 \small
-\begin{longtable}{LCL}
+\begin{longtable}{.L;C;L.}
   \\
   \Crule{\ctxinfer \hole \t \t}{\hole}\\
   \Crule{\ctxinfer {\parens{\eapp \E \e}} \tp \t}{\cexists {\tva, \tvb} \cunif \tva {\tvb \to \t} \cand \ctxinfer \E \tp \tva \cand \cinfer \e \tvb}\\
@@ -5743,9 +5743,14 @@ $\c$. \\
   \Crule{\ctxinfer {\einst \E} \tp \t}{\cexists \tv {\ctxinfer \E \tp \tv \cand \cmatch \tv {\cbranch {\cpatpoly \cscm} {\cleq \cscm \t}}}}\\
 \Crule
   {\ctxinfer {\parens{\efield \E \elab}} \tp \t}
-  {\begin{cases}
-    \ctxinfer {\parens{\exfield \E \T \elab}} \tp \t & \text{if } \labuni \elab \T \\
-    \cexists \tv \ctxinfer \E \tp \tv \\ \cand ~ \cmatch \tv {\cbranch {\cpatrcd \ct} {\labfrom \elab \ct \leq \tv \to \t}} & \text{otherwise}
+  {\!\begin{cases}
+    \ctxinfer {\parens{\exfield \E \T \elab}} \tp \t
+    & \text{if } \labuni \elab \T
+    \\
+      \cexists \tv \ctxinfer \E \tp \tv
+    & \text{otherwise}
+    \\
+    \cand ~ \cmatch \tv {\cbranch {\cpatrcd \ct} {\labfrom \elab \ct \leq \tv \to \t}}
   \end{cases}}
 \\
 \Crule
@@ -5754,12 +5759,15 @@ $\c$. \\
 \\
 \Crule
   {\ctxinfer {\erecord {\elaba = \ea; \ldots; \elab_j = \E_j; \ldots; \elab_n = \en}} \tp \t}
-  {\begin{cases}
-    \ctxinfer {\exrecord \T { \ldots; \elab_j = \E_j; \ldots}} \tp \t & \text{if } \labsuni \elabs \T \\
-    \cexists \tvs \cAnd_{i \neq j} \cinfer \ei \tvi \cand \ctxinfer {\E_j} \tp \tvj & \text{otherwise} \\
+  {\!\begin{cases}
+    \ctxinfer {\exrecord \T { \ldots; \elab_j = \E_j; \ldots}} \tp \t
+    & \text{if } \labsuni \elabs \T
+    \\
+    \cexists \tvs \cAnd_{i \neq j} \cinfer \ei \tvi \cand \ctxinfer {\E_j} \tp \tvj
+    & \text{otherwise} \\
     \uad\cand~\cmatch \t {\cbranch {\cpatrcd \ct}
-      {\dom {\ct} = \elabs \\
-      \hspace{3cm}\cand \cAnd\iton \labfrom \elabi \ct \leq \t \to \tvi}}
+      {\\ \hspace{3em}
+       \dom {\ct} = \elabs \cand \cAnd\iton \labfrom \elabi \ct \leq \t \to \tvi}}
   \end{cases} }
 \\
 \Crule
@@ -6288,6 +6296,7 @@ composability property.
   \end{proof}
 \end{theorem}
 
+
 \begin{lemma}[Inversion of suspension]
   \label{lem:susp-inversion}
   If $\semenv \th \C\where{\cmatch \t \cbrs}$ and $\Cshape \C \t \sh$,
@@ -6298,6 +6307,7 @@ composability property.
     \C\where{\cmatch \t \cbrs}$ instead of $\semenv \th \C\where{\cmatch \t
     \cbrs}$.
 
+\begin{local}\sloppy
     This simplifies the proof, but introduces a circular dependency between
     \cref{thm:canonicalization} and \cref{lem:susp-inversion}.
     %
@@ -6305,6 +6315,8 @@ composability property.
     application of \cref{lem:susp-inversion} (via
     \cref{corollary:matched-abstractions}) within the proof of
     \cref{thm:canonicalization} is restricted to strictly smaller constraints.
+
+\end{local}
 
     \begin{proofcases}
       \proofcasederivation
@@ -6337,12 +6349,14 @@ composability property.
 
 	    \newcommand{\Ctwo}{\C_2}
 	    \begin{llproof}
-	      \eqPf{\Ctwo\where{\cmatch \t \cbrs, \cmatch \tp \cbrs'}}{\C\where{\cmatch \t \cbrs}}{For some 2-hole context $\Ctwo$}
+	      \Eqpf{\Ctwo\where{\cmatch \t \cbrs, \cmatch \tp \cbrs'}}
+                  {\C\where{\cmatch \t \cbrs}}
+                  {For some 2-hole context $\Ctwo$}
 	      \continueeqPf{\Cp\where{\cmatch \tp \cbrs'}}{}
 	      \decolumnizePf
 	      \VdashPf{\semenv}{\Ctwo\where{\cmatch \t \cbrs, \cmatched \tp \shp \cbrs'}}{Premise}
 	      \decolumnizePf
-	      \ForallPf{\semenvp, \gtp}{}{\hspace{32.5ex}Defn. of $\Cshape {\Ctwo\where{\hole, \cmatched \tp \shp \cbrs'}} \t \sh$}
+	      \ForallPf{\semenvp, \gtp}{}{\hspace{30.5ex}Defn. of $\Cshape {\Ctwo\where{\hole, \cmatched \tp \shp \cbrs'}} \t \sh$}
 	      \decolumnizePf
 	      \vdashPf{\semenvp}{\cerase {\Ctwo\where{\cunif \t \gtp, \cmatched \tp \shp \cbrs'}}}{$\implies$I}
 	      \vdashPf{\semenvp}{\cerase {\Ctwo\where{\cunif \t \gtp, \ctrue}}}{\cref{lem:cong-simple}}
@@ -6354,7 +6368,7 @@ composability property.
 	      \shapePf{\Ctwo\where{\hole, \cmatched \tp \shp \cbrs'}}{\t}{\sh}{Above}
 	      \VdashPf{\semenv}{\Ctwo\where{\cmatched \t \sh \cbrs, \cmatched \tp \shp \cbrs'}}{By \ih}
 	      \decolumnizePf
-	      \ForallPf{\semenvp, \gtp}{}{\hspace{32.5ex}Defn. of $\Cshape {\Ctwo\where{\cmatched \t \sh \cbrs, \hole}} \tp \shp$}
+	      \ForallPf{\semenvp, \gtp}{}{\hspace{30.5ex}Defn. of $\Cshape {\Ctwo\where{\cmatched \t \sh \cbrs, \hole}} \tp \shp$}
 	      \decolumnizePf
 	      \vdashPf{\semenvp}{\cerase {\Ctwo\where{\cmatched \t \sh \cbrs, \cunif \tp \gtp}}}{$\implies$I}
 	      \vdashPf{\semenvp}{\cerase {\Ctwo\where{\ctrue, \cunif \tp \gtp}}}{\cref{lem:cong-simple}}
@@ -6731,6 +6745,7 @@ generally in our system.
           \disjointPf{\tvp}{\bvs \Ca}{\ditto}
           \vdashPf{}{\Cshape{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand -}}} \tvc \sh}{\ditto}
           \shapePf{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand -}}}{\tvc}{\sh}{By \ih}
+          \decolumnizePf
           \ForallPf{\semenv, \gt}{}{Defn. of $\Cshape \ldots \tv {~\shape \t}$}
           \vdashPf{\semenv}{\cerase{\cletr \x \tv \tvs {\Ca\where{\cunif \tvp \gt}} {\Cb\where{\cpapp \x \tvp \tvc \inst}}}}{Premise}
           \LetPf{\gabsr}{\semenv(\cabsr \tv \tvs {\cerase {\Ca\where{\cunif \tvp \gt}}})}{}
@@ -6738,10 +6753,11 @@ generally in our system.
           \eqPf{\semenvp(\tvp)}{\gt}{For any $\greg \wild \semenvp \in \semenva(\x)$}
           \vdashPf{\semenvb}{\cpapp \x \tvp \tvc \inst}{Inversion of $\cerase \Cb$}
           \eqPf{\semenvb(\inst^\x)(\tvp)}{\semenvb(\tvc)}{Simple inversion}
-          \decolumnizePf
+          %\decolumnizePf
           \inPf{\semenvb(\inst^\x)}{\semenvb(\x)}{Since $\cexistsi \inst \x \in \Cb$, $\semenvb$ extends $\semenva$}
           \eqPf{\semenvb(\inst^\x)(\tvp)}{\gt}{Above}
           \continueeqPf{\semenvb(\tvc)}{\ditto}
+          \decolumnizePf
           \vdashPf{\semenva}{\cerase {\Cb\where{\cpapp \x \tvp \tvc \inst \cand \cunif \tvc \gt}}}{Entailment for $\cerase \Cb$}
           \vdashPf{\semenv}{\cerase {\cletr \x \tv \tvs {\Ca\where{\cunif \tvp \gt}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand \cunif \tvc \gt}}}}{By \Rule{LetR}}
           \vdashPf{\semenv}{\cletr \x \tv \tvs {\Ca\where{\ctrue}} {\Cb\where{\cpapp \x \tvp \tvc \inst \cand \cunif \tvc \gt}}}{Simple congruence}
@@ -6996,7 +7012,11 @@ generally in our system.
 	  \disjointPf{\x}{\bvs \C}{Premise}
 	  \disjointPf{\tvbs'}{\tvp, \tvc, \tvbs}{Premise}
 	  \decolumnizePf
-	  \sufficientPf{equivalence between}{\cpapp \x \tvp \tvc \inst \text{ and } \cexists {\tvbs'} \cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst}{\cref{lem:simple-let-equiv}}
+	  \Sufficientpf{equivalence between}{\cpapp \x \tvp \tvc \inst
+          \text{ and }
+          \hfil \penalty -50{}\hfill
+           \cexists {\tvbs'} \cunif \tvc {\shapp \tvbs'} \cand
+          \cpapp \x {\tvbs} {\tvbs'} \inst}{\cref{lem:simple-let-equiv}}
 	  \supposePf{\semenvp(\x) = \semenv(\cabsr \tv {\tvs} \c)}{Premise}
 	\end{llproof}
 	\begin{proofcases}
@@ -7031,9 +7051,12 @@ generally in our system.
 
       \begin{llproof}
 
-	\sufficientPf{equivalence between}{{\cpinst \inst \tv \tvca \cand
-	\cpinst \inst \tv \tvcb} \text{ and } {\cpinst \inst \tv \tvca \cand
-	\cunif \tvca \tvcb} }{\cref{lem:simple-ctxt-equiv}}
+	\Sufficientpf{equivalence between}
+        {\cpinst \inst \tv \tvca \cand \cpinst \inst \tv \tvcb
+         \text{ and }
+         \hfil \penalty -50{}\hfill
+         \cpinst \inst \tv \tvca \cand \cunif \tvca \tvcb}
+        {\cref{lem:simple-ctxt-equiv}}
 
       \end{llproof}
 
@@ -7252,8 +7275,10 @@ generally in our system.
   \proofcase{\Rule{S-Compress}, \Rule{S-Gc}, \Rule{S-Exists-All}, \Rule{S-All-Escape}, \Rule{S-All-Rigid}, \Rule{S-All-Solve}}
 
   \begin{llproof}
-    Similar argument. Use \cref{lem:simple-ctxt-equiv}.
+    \begin{tabular}{l}
+    Similar argument. Use \cref{lem:simple-ctxt-equiv}. \\
     The simple equivalences are standard, see \citet*{Pottier-Remy/emlti}.
+    \end{tabular}
   \end{llproof}
   \end{proofcases}
 \end{proof}
@@ -7463,10 +7488,10 @@ rules that are not inherently destructive.
   \label{lem:unification-termination}
   The unifier terminates on all inputs.
   \begin{proof}
-    \newcommand{\sw}[1]{\mathprefix{sw}{(#1)}}
-    \newcommand{\iw}[1]{\mathprefix{iw}{(#1)}}
-    \newcommand{\tw}[1]{\mathprefix{tw}{(#1)}}
-    \newcommand{\uw}[1]{\mathprefix{uw}{(#1)}}
+    \newcommand{\sw}[1]{\kwd{sw}{(#1)}}
+    \newcommand{\iw}[1]{\kwd{iw}{(#1)}}
+    \newcommand{\tw}[1]{\kwd{tw}{(#1)}}
+    \newcommand{\uw}[1]{\kwd{uw}{(#1)}}
 
     Let every shape $\sh$ have an integer \emph{weight}
     defined by $\sw \sh \eqdef 4 + 2 \times |\sh|$, where $|\sh|$ is the
@@ -7554,6 +7579,7 @@ rules that are not inherently destructive.
 
 \terminationBIS*
 \begin{proof}
+\begin{local}\sloppy
   The difficulty for termination comes from the ``suspended match discharge'' rule
   \Rule{S-Match-Ctx} which can make arbitrary
   sub-constraints appear in the non-suspended part of the constraint;
@@ -7561,6 +7587,7 @@ rules that are not inherently destructive.
   structure in another part of the constraint, increasing its total
   size.
 
+\end{local}
   As we argued before, the other rewrite rules are \emph{destructive},
   they strictly simplify the constraint towards a normal form and can
   only be applied finitely many times when taken together. The
@@ -8007,13 +8034,17 @@ and $\sub(\tvs) = \tys$.
 		\eqPf{\csem {\G \th \E\where{\exproj \e j n } : \tv}}{\cletG {\cinfer {\E\where{\exproj \e j n}} \tv}}{By definition}
 		\continueeqPf{\cletG {\ctxinfer \E \tvb \tv}\where{\cinfer {\exproj \e j n} \tvb}}{\cref{lem:ctxt-gen-correctness}}
 		\equivPf{\cinfer {\exproj \e j n} \tvb}{\cexists {\tvaa \tvcs} {\cinfer \e \tvaa \cand \cunif \tvaa {\Pi\iton \tvcs} \cand \cunif \tvb \tvc_j}}{By definition}
-		\continueequivPf{\cexists {\tvaa} \cinfer \e \tvaa \cand \cmatched \tvaa {\any \tvcs \Pi\iton \tvcs}{\cbranch {\cpatprod \tvc j} {\cunif \tvb \tvc}}}{\ditto}
+		\continueequivPf
+                  {\begin{tabular}[t]{L}\cexists {\tvaa} \cinfer \e \tvaa
+                  \\ \quad \cand \cmatched \tvaa {\any \tvcs \Pi\iton
+                \tvcs}{\cbranch {\cpatprod \tvc j} {\cunif \tvb \tvc}}
+                        \end{tabular}}{\ditto}
 		\UnifierPf{\sub}{\cletG \ctxinfer \E \tvb \tv \where{\cexists \tvaa \cinfer \e \tvaa \cand \ldots}}{Above}
 		\eshapePf{\E}{\e}{\any \tvcs \Pi\iton \tvcs}{Premise}
 		\LetPf{\C}{\cletG \ctxinfer\E \tvb \tv \where{\cexists \tvaa \cinfer \e \tvaa \cand \hole}}{}
 		\vdashPf{\semenv}{\cerase{\C\where{\cunif \tvaa \gt}}}{Premise}
 		\eqPf{\cexists \tvaa \cinfer \e \tvaa \cand \cunif \tvaa \gt}{\cexists \tvaa \cinfer {\eannot \e {} \gt} \tvaa}{By definition}
-		\decolumnizePf
+		%\decolumnizePf
 		\continueeqPf{\cinfer {\emagic {\eannot \e {} \gt}} \tvb}{\ditto}
 		\eqPf{\cerase {\C\where{\cunif \tvaa \gt}}}{\cerase {\cletG \ctxinfer \E \tvb \tv \where{\cinfer {\emagic {\eannot \e {} \gt}} \tvb}}}{\ditto}
 		\continueeqPf{\cerase {\cletG \cinfer {\E\where{\emagic {\eannot \e {} \gt}}} \tv}}{\cref{lem:ctxt-gen-correctness}}
@@ -8022,6 +8053,7 @@ and $\sub(\tvs) = \tys$.
 		\UnifierPf{\semenv}{\cletG \cinfer {\eerase {\E\where{\emagic {\eannot \e {} \gt}}}} \tv}{Above}
 		\ThTypPf{}{\eerase {\E\where{\emagic {\eannot \e {} \gt}}}}{\semenv(\tv)}{By \ih}
 		\thTypPf{\eset}{\eerase {\E\where{\emagic {\eannot \e {} \gt}}}}{\semenv(\tv)}{\cref{lem:decanonicalization-typing}}
+		\decolumnizePf
 		\eqPf{\shape \gt}{\any \tvcs \Pi\iton \tvcs}{$\implies$E}
 		\shapePf \C \tvaa {\any \tvcs \Pi\iton \tvcs}{Above}
 		\UnifierPf{\sub}{\C\where{\cmatch \tvaa {\cbranch {\cpatprod \tvc j} {\cunif \tvb \tvc}}}}{By \Rule{Match-Ctx}}

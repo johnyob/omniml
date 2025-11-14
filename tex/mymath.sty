@@ -188,9 +188,11 @@
 \newcommand{\proofcase}[2][Case]{\item \emph{#1 #2}.}
 \newcommand{\proofcasemath}[2][Case]{\proofcase[#1]{\ensuremath{#2}}}
 
+\def \proofcasewidth{85ex}
+
 \newcommand{\proofcasederivation}[4][Case]{%
   \item %
-    \parbox[t]{100ex}{%
+    \parbox[t]{\proofcasewidth}{%
       \emph{#1 } \\
       $~$\hspace*{5ex}
       \ensuremath{%
@@ -201,7 +203,7 @@
   }
 \newcommand{\proofcaserewrite}[4][Case]{%
   \item %
-    \parbox[t]{100ex}{%
+    \parbox[t]{\proofcasewidth}{%
       \emph{#1 } \\
       $~$\hspace*{5ex}
       \ensuremath{%
@@ -214,7 +216,7 @@
 
 \newcommand{\proofcasederivationdouble}[7][Case]{%
   \item
-    \parbox[t]{100ex}{%
+    \parbox[t]{\proofcasewidth}{%
       \emph{#1 } \\
       $~$\hspace*{5ex}
       \begin{tabular}[C]{L}
@@ -264,7 +266,7 @@
 \newcommand{\Proofcasederivation}[4][]{%
   \proofitem[#1]
     \indent \par\nopagebreak \vskip 1.2ex\nopagebreak
-    \indent \hbox to 100ex {%
+    \indent \hbox to \proofcasewidth {%
       \ensuremath{%
 	\inferrule*[Right=#2]{#3}{#4}%
       }\hfil}%
@@ -275,7 +277,7 @@
 \newcommand{\Proofcasederivationdouble}[7][]{%
   \proofitem[#1]
       \indent \par\nopagebreak \vskip .4ex\nopagebreak \indent
-      \begin{tabular*}{100ex}[t]{.L.}
+      \begin{tabular*}{\proofcasewidth}[t]{.L.}
 	\inferrule*[Right=#2]{#3}{#4}%
 	\\[1ex]
 	\inferrule*[Right=#5]{#6}{#7}%
@@ -286,7 +288,7 @@
 \newcommand{\Proofcaserewrite}[4][]{%
   \proofitem[#1] %
     \indent \par\nopagebreak \vskip 1.2ex\nopagebreak
-    \indent \hbox to 100ex {%
+    \indent \hbox to \proofcasewidth {%
       \ensuremath{%
 	{\inferrule*[fraction={{}{-}\to},Right=#2]{#3}{#4}}%
       }%

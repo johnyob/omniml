@@ -150,6 +150,7 @@
 \newcommand{\ForallPf}[3] {\Pf{\text{For all}\,~{#1}}{}{#2}{#3}}
 \newcommand{\vdashPf}[3] {\Pf{#1}{\th\,}{#2}{#3}}
 \newcommand{\eqPf}[3] {\Pf{#1}{=\,}{#2}{#3}}
+\newcommand{\Eqpf}[3] {\Pf{\rlap{$#1$}\qquad}{}{}{}\continueeqPf{#2}{#3}}
 \newcommand{\neqPf}[3] {\Pf{#1}{\neq\,}{#2}{#3}}
 \newcommand{\nvdashPf}[3] {\Pf{#1}{\nvdash\;}{#2}{#3}}
 \newcommand{\gtPf}[3] {\Pf{#1}{>\,}{#2}{#3}}
@@ -165,7 +166,14 @@
 
 \newcommand{\mkpf}[4] {\Pf{#2}{#1\,}{#3}{#4}}
 \newcommand{\supposePf}[2] {\Pf{\text{Suppose}\,~{#1}\text{.}}{}{}{#2}}
-\newcommand{\sufficientPf}[3] {&\multicolumn{2}{l}{\text{Sufficient to show #1}\ifempty{#2}{}{~${#2}$}\text{.}} & #3\\}
+\newcommand{\sufficientPf}[3]
+   {&\multicolumn{2}{.l.}
+     {\text{Sufficient to show #1}\ifempty{#2}{}{~${#2}$}\text{.}}
+     & #3\\}
+\newcommand{\Sufficientpf}[3]
+   {&\multicolumn{2}{p{70ex}}
+     {\sloppy Sufficient to show #1\ifempty{#2}{}{ $#2$}.}
+     & #3\\}
 
 
 \newcommand{\eqPfParen}[3] {\eqPf{(#1)}{(#2)}{#3}}
