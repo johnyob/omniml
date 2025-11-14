@@ -175,7 +175,7 @@
  \vspace{\parskip}%
  \stopbreaks\noindent%
  \parbox{1.\textwidth}{%
-   \raggedright\ignorespaces #1\\[4\medskipamount]%
+   \raggedright\ignorespaces #1\\[3\medskipamount]%
  }%
  \vfill%
  \fromname%
