@@ -3113,7 +3113,7 @@ $\c$ is closed).
   \hfill
   \vcenter{\hbox{
     \infer[Multi-Unif]
-      {\all {\t \in \ueq}\, \semenv(\t) = \gt}
+      {\forall {\t \in \ueq},\, \semenv(\t) = \gt}
       {\semenv \th \ueq}
   }}
 \end{mathparsubfig}
@@ -4678,7 +4678,6 @@ definition in full, or when studying the meta-theory of the system.
 \begin{judgboxmathpar}
   {\semenv \th \c}
   {Under the environment $\semenv$, the constraint $\c$ is satisfiable.}
-
   \infer[True]
     { }
     {\semenv \th \ctrue}
@@ -4701,9 +4700,9 @@ definition in full, or when studying the meta-theory of the system.
     {\semenv \th \cunif \ta \tb}
 
   \infer[Let]
-    {\gabs = \semenv(\cabs \tv \ca) \\
-     \gabs \neq \eset \\\\
-     \semenv\where{\x \is \gabs} \th \cb}
+    {\semenv\where{\x \is \gabs} \th \cb \\
+     \gabs = \semenv(\cabs \tv \ca) \\
+     \gabs \neq \eset}
     {\semenv \th \clet \x \tv \ca \cb}
 
   \infer[App]
@@ -4717,13 +4716,13 @@ definition in full, or when studying the meta-theory of the system.
     {\semenv \th \C\where{\cmatch \t \cbrs}}
 
   \infer[Multi-Unif]
-    {\forall \t \in \ueq,~ \semenv(\t) = \gt}
+    {\forall \t \in \ueq,\, \semenv(\t) = \gt}
     {\semenv \th \ueq}
 \\
   \infer[LetR]
-    {\gabsr = \semenv(\cabsr \tv \tvs \ca) \\
-     \gabsr \neq \emptyset \\\\
-     \semenv\where{\x \is \gabsr} \th \cb}
+    {\semenv\where{\x \is \gabsr} \th \cb\\
+     \gabsr = \semenv(\cabsr \tv \tvs \ca) \\
+     \gabsr \neq \emptyset}
     {\semenv \th \cletr \x \tv \tvs \ca \cb}
 
   \infer[AppR]
@@ -4731,8 +4730,8 @@ definition in full, or when studying the meta-theory of the system.
     {\semenv \th \capp \x \t}
 
   \infer[Exists-Inst]
-    {\greg \wild \semenvp \in \semenv(\x) \\\\
-     \semenv\where{\inst \is \semenvp} \th \c}
+    {\semenv\where{\inst \is \semenvp} \th \c\\
+     \greg \wild \semenvp \in \semenv(\x)}
     {\semenv \th \cexistsi \inst \x \c}
 
   \infer[Incr-Inst]
@@ -4980,12 +4979,12 @@ $\c$. \\
   {\labsuni \elabs \T}
   {The \emph{closed} set of labels $\elabs$ infer the unique record name $\T$.}
   \infer[Lab-Uni]
-    {\elab \in \Dom {\labenv(\T)} \\
+    {\elab \in \Dom {\labenv(\T)} \\\\
      \forall \Tp, \uad \elab \in \Dom {\labenv(\Tp)} \implies {\T} = \Tp}
     {\labuni \elab \T}
 
   \infer[Labs-Uni]
-    {\Dom {\labenv(\T)} = \elabs \\
+    {\elabs = \Dom {\labenv(\T)}  \\\\
      \forall \Tp, \uad \Dom{\labenv(\Tp)} = \elabs \implies {\T} = \Tp}
     {\labsuni \elabs \T}
 \end{judgboxmathpar}
@@ -5066,21 +5065,24 @@ $\c$. \\
     {\G \th \E\where{\einst \e} : \t}
 \\
   \inferrule[Rcd-X]
-    {\Dom {\labenv(\T)} = \elabs \\ \parens{{\labfrom \elabi \T} \leq \t \to \tyi}\iton \\ \parens{\G \th \ei : \tyi}\iton }
+    {\elabs = \Dom {\labenv(\T)} \\
+     \parens{{\labfrom \elabi \T} \leq \t \to \tyi}\iton \\
+     \parens{\G \th \ei : \tyi}\iton }
     {\G \th \exrecord \T {\elaba = \ea; \ldots; \elab_n = \en} : \t }
-\\
+
   \inferrule[Rcd-Closed]
     {\labsuni \elabs \T \\ \G \th \exrecord \T {\overline{\elab = \e}} : \t}
     {\G \th \erecord {\overline{\elab = \e}} : \t}
 
   \inferrule[Rcd-I]
-    {\Eshape \E \es {\any \tvcs \trcd \T \tvcs} \\ \G \th \E\where{\exrecord \T {\overline{\elab = \e}}} : \t }
+    {\Eshape \E \es {\any \tvcs \trcd \T \tvcs} \\
+     \G \th \E\where{\exrecord \T {\overline{\elab = \e}}} : \t }
     {\G \th \E\where{\erecord {\overline{\elab = \e}}} : \t}
-\\
+
   \inferrule[Rcd-Proj-X]
     {{\labfrom \elab \T} \leq \tya \to \tyb \\ \G \th \e : \tya }
     {\G \th \exfield \e \T \elab : \tyb}
-\\
+
   \inferrule[Rcd-Proj-Closed]
     {\labuni \elab \T \\ \G \th \exfield \e \T \elab : \t }
     {\G \th \efield \e \elab : \t}
@@ -5089,7 +5091,7 @@ $\c$. \\
     {\eshape \E \e {\any \tvcs \trcd \T \tvcs} \\
      \G \th \E\where{\exfield \e \T \elab} : \t}
     {\G \th \E\where{\efield \e \elab} : \t}
-\\
+
   \inferrule[Hole]
     {\parens{\G \th \ei : \ti}\iton}
     {\G \th \emagic {\bar \e} : \tp}
@@ -5235,11 +5237,11 @@ $\c$. \\
 \Crule
   {\cinfer {\emagic \es} \t}
   {\cexists \tvs \cAnd\iton \cinfer \ei \tvi}
-\\\\
+\\[1em]
 \Crule
   {\cinfer \e {\tfor \tvs \t}}
   {\cfor \tvs \cinfer \e \t}
-\\\\
+\\[1em]
 \Crule
   {\cinfer {\eset \th \e} \t}
   {\cinfer \e \t}
@@ -5531,8 +5533,8 @@ $\c$. \\
 
   \rewrite[S-Inst-Copy]
     {\cletr \x \tv \tvs {\c} \C\where{\cpapp \x \tvp \tvc \inst}}
-    {\c = \cp \cand \cunif \tvp {\cunif {\shapp \tvbs} \ueq}\\
-     \tvp \in \reg \tv \tvs \\\\
+    {\c = \cp \cand \cunif \tvp {\cunif {\shapp \tvbs} \ueq}\\\\
+     \tvp \in \reg \tv \tvs \\
      \neg \cyclic {\c} \\
      \tvbs' \disjoint \tvp, \tvc, \tvbs \\
      \x \disjoint \bvs \C}
@@ -5557,7 +5559,7 @@ $\c$. \\
 
   \rewrite[S-Inst-Mono]
     {\cletr \x \tv \tvs \c {\C\where{\cpapp \x \tvb \tvc \inst}}}
-    {\tvb \notin \reg \tv \tvs \\ \x, \tvb \disjoint \bvs \C}
+    {\\\tvb \notin \reg \tv \tvs \\ \x, \tvb \disjoint \bvs \C}
     {\cletr \x \tv \tvs \c {\C\where{\cunif \tvb \tvc}}}
 
   \rewrite[S-Compress]
@@ -6196,9 +6198,10 @@ composability property.
 
 	\proofcasederivation
 	  {Let}
-    {\gabs = \semenv(\cabs \tv \ca) \\
-     \gabs \neq \eset \\\\
-     \semenv\where{\x \is \gabs} \th \cb}
+    {\semenv\where{\x \is \gabs} \th \cb\\
+     \gabs = \semenv(\cabs \tv \ca) \\
+     \gabs \neq \eset
+     }
     {\semenv \th \clet \x \tv \ca \cb}
 
     \begin{llproof}
@@ -6243,9 +6246,10 @@ composability property.
 
       \proofcasederivation
 	{LetR}
-        {\gabsr = \semenv(\cabsr \tv \tvs \ca) \\
-         \gabsr \neq \emptyset \\\\
-         \semenv\where{\x \is \gabsr} \th \cb}
+        {\semenv\where{\x \is \gabsr} \th \cb \\
+         \gabsr = \semenv(\cabsr \tv \tvs \ca) \\
+         \gabsr \neq \emptyset
+         }
         {\semenv \th \cletr \x \tv \tvs \ca \cb}
 
       \begin{llproof}
@@ -6521,24 +6525,31 @@ generally in our system.
 
 
 \begin{definition}[Context equivalence]
-  Two contexts $\Ca$ and $\Cb$ are equivalent with guard $P$, written $\Ca \cctxequiv^P \Cb$ iff:
+  Two contexts $\Ca$ and $\Cb$ are equivalent with guard $P$, written $\Ca
+  \cctxequiv^P \Cb$ iff:
   \begin{mathpar}
-    \Ca \cctxequiv^P \Cb \uad\eqdef\uad \all \cs \uad P(\cs) \implies \Ca\where\cs \cequivctx \Cb\where\cs
+    \Ca \cctxequiv^P \Cb \uad\eqdef\uad \all \cs \uad P(\cs) \implies
+    \Ca\where\cs \cequivctx \Cb\where\c s
   \end{mathpar}
-\end{definition}
+  \end{definition}
 
 \begin{definition}[Match-closed]
-  A predicate $P$ on constraints is \emph{match-closed} if, for all constraints $\cs, \cs'$, contexts $\C$, matches $\cmatch \t \cbrs$ and shapes $\sh$,
+  A predicate $P$ on constraints is \emph{match-closed} if, for all
+  constraints $\cs, \cs'$, contexts $\C$, matches $\cmatch \t \cbrs$ and
+  shapes $\sh$,
   \begin{mathpar}
-    P(\cs, \C\where{\cmatch \t \cbrs}, \cs') \implies P(\cs, \C\where{\cmatched \t \sh \cbrs}, \cs')
+    P(\cs, \C\where{\cmatch \t \cbrs}, \cs') \implies
+    P(\cs, \C\where{\cmatched \t \sh \cbrs}, \cs')
   \end{mathpar}
 \end{definition}
 
 \begin{lemma}[Determines is match-closed]
   \label{lem:determines-is-match-closed}
-  $\cdetermines \c \tvbs$ is match-closed. Similarly, $\th \cdetermines \c \tvbs$ is matched closed.
+  $\cdetermines \c \tvbs$ is match-closed. Similarly, $\th \cdetermines \c
+  \tvbs$ is matched closed.
   \begin{proof}
-    Follows from the definitions of $\cdetermines \c \tvbs$, $\th \cdetermines \c \tvbs$, and \cref{lem:cong-simple}.
+    Follows from the definitions of $\cdetermines \c \tvbs$, $\th
+    \cdetermines \c \tvbs$, and \cref{lem:cong-simple}.
   \end{proof}
 \end{lemma}
 
@@ -6546,9 +6557,8 @@ generally in our system.
 \begin{lemma}[Simple context equivalence]
   \label{lem:simple-ctxt-equiv}
   For any two simple contexts $\Ca, \Cb$ and a match-closed guard $P$. If
-  the two contexts $\Ca$ and $\Cb$ are equivalent under any simple constraints satisfying $P$,
-  then $\Ca \cctxequiv^P \Cb$.
-
+  the two contexts $\Ca$ and $\Cb$ are equivalent under any simple
+  constraints satisfying $P$, then $\Ca \cctxequiv^P \Cb$.
   \begin{proof}
     Let us assume that ($\dagger$) holds:
     \begin{mathpar}
@@ -6637,7 +6647,8 @@ generally in our system.
   for any match-closed guard $P$ on the holes.
 
   \begin{proof}
-    Let us pose $\gabsr = \semenv(\cabsr \tv \tvs {\C\where\cs})$ and let us assume ($\dagger$):
+    Let us pose $\gabsr = \semenv(\cabsr \tv \tvs {\C\where\cs})$ and let us
+    assume ($\dagger$):
     \begin{mathpar}
       \forall \semenv, \semenvp, \cs. \uad
 	\semenvp(\x) = \gabsr \implies
