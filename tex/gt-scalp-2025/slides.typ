@@ -21,7 +21,7 @@
       )
     ],
     date: datetime.today(),
-    institution: [GT SCALP 2025],
+    institution: [IRIF],
   ),
 )
 
@@ -234,14 +234,15 @@ can be made polymorphic.][What if $t$ contains suspended constraints?]
 [
 *Easy* case (j.w.w. Olivier Martinot):
 
-no overlap between $overline(alpha)$ and $(matchwith(beta, sh, C))$
+$(matchwith(beta, sh, C))$ \
+does not overlap with $overline(alpha)$
 
 keep suspended
 ], [],
 [ #pause
 *Hard* case (this work):
 
-$(matchwith(beta, sh, C))$ mentions some $overline(alpha)$
+$(matchwith(beta, sh, C))$ \ mentions some $overline(alpha)$
 
 how to generalize?
 ]
@@ -387,6 +388,41 @@ Wanted: implicit inference rule.
 
 #v1
 
+== Problems with guessing semantic
+
+#v1
+
+```ocaml
+type weird = K of weird
+type other = K of int
+
+let f x = [x; K x]
+```
+
+#h1 $//
+  matchwith(alpha, sh, (alpha = "bool"))
+$
+#h1
+
+#v1
+
+```ocaml
+type  even = Zero | E of odd
+and    odd = O of even
+type other = S | E of int | O of bool
+
+let g x y = ([x; E y], [y; O x])
+```
+
+#h1 $//
+  (matchwith(alpha, sh, (beta = "bool")))
+  and
+  (matchwith(beta, sh, (alpha = "int")))
+$
+#h1
+
+#v1
+
 == Solution: contextual rules + unicity
 
 #v1
@@ -407,6 +443,32 @@ $unicityH(ctx, tycon(d, "_"), overline(t))$: a *unicity* condition \ The context
 #v1
 
 "Robustly known" := "uniquely determined".
+
+#v1
+
+== Contextual rules enforce causality
+
+#v1
+
+```ocaml
+let g x y = ([x; E y], [y; O x])
+```
+
+#v1
+
+#h1 $//
+  #prooftree(min-premise-spacing: 1.5em,
+    rule(
+      $Gamma der (ctx_1[app("E"^?, y)], ctx_2[app("O"^?, x)]) : "even" times "odd"$,
+      rule(
+       $unicityH((ctx_1[square], ctx_2[app("O"^?, x)]), "even", y) #h(2.5em) Gamma der (ctx_1[app("E"^"even", y)], ctx_2[app("O"^?, x)]) : "even" times "odd"$,
+       $unicityH((ctx_1[app("E"^"even", y)], ctx_2[square]), "odd", x)$,
+       $Gamma der (ctx_1[app("E"^"even", y)], ctx_2[app("O"^"odd", x)]) : "even" times "odd"$
+      )
+    )
+  )
+$
+#h1
 
 #v1
 
@@ -445,7 +507,7 @@ $
 unicityH(ctx, tycon(d, "_"), overline(t))
 \
 := \
-forall thin Gamma, C, ground(A), \
+forall thin Gamma, D, ground(A), \
   Gamma derinf
     erase(ctx [magic(square, overline(t)) : ground(A)]) : D
     quad==>quad
@@ -472,7 +534,7 @@ $
 
 Prototype: #link("https://github.com/johnyob/mlsus/")
 
-Draft: #link("https://www.ajo41.dev/papers/suspended-final.pdf")
+Preprint: #link("https://arxiv.org/abs/2511.10343")
 
 #v1
 
