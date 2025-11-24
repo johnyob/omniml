@@ -2,10 +2,10 @@
 
 (using menhir 2.1)
 
-(name mlsus)
+(name omniml)
 
 (source
- (github johnyob/mlsus))
+ (github johnyob/omniml))
 
 (authors "Alistair O'Brien")
 
@@ -16,5 +16,5 @@
 (generate_opam_files true)
 
 (package
- (name mlsus)
+ (name omniml)
  (depends ocaml dune core core_unix async ppx_jane fmt menhir grace ppx_quick_test base_quickcheck))

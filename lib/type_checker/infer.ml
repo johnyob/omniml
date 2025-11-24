@@ -7,7 +7,7 @@ module Convert = struct
   let type_name ~env (type_name : Type_name.With_range.t) : Adt.Type_ident.t * int =
     (* If the type name is shadowed, pick the closest one *)
     match Env.find_type_def env type_name.it |> List.hd with
-    | None -> Mlsus_error.(raise @@ unbound_type ~range:type_name.range type_name.it)
+    | None -> Omniml_error.(raise @@ unbound_type ~range:type_name.range type_name.it)
     | Some type_def -> type_def.type_ident, type_def.type_arity
   ;;
 
@@ -28,7 +28,7 @@ module Convert = struct
           (* For an empty args list, the correct range is the range of the type name *)
           constr_name.range
       in
-      Mlsus_error.(
+      Omniml_error.(
         raise
         @@ type_constructor_arity_mismatch
              ~args_range
@@ -73,7 +73,7 @@ module Convert = struct
     | Type_var v ->
       (match Env.find_type_var env v.it with
        | Some v -> Type.var v
-       | None -> Mlsus_error.(raise @@ unbound_type_variable ~range:v.range v.it))
+       | None -> Omniml_error.(raise @@ unbound_type_variable ~range:v.range v.it))
     | Type_arrow (type1, type2) ->
       let type1 = self type1
       and type2 = self type2 in
@@ -108,7 +108,7 @@ module Convert = struct
       (match Env.find_type_var env v with
        | Some v -> Type.var v
        | None ->
-         Mlsus_error.(
+         Omniml_error.(
            raise
            @@ bug_s
                 ~here:[%here]
@@ -181,7 +181,7 @@ let infer_constructor
     constr_def
   in
   let raise_constructor_arity_mismatch ~expected_arity ~actual_arity =
-    Mlsus_error.(
+    Omniml_error.(
       raise
       @@ constructor_arity_mismatch
            ~arg_range:constr_arg_range
@@ -234,7 +234,7 @@ module Make_adt_inst (X : sig
     type infer_ctx [@@deriving sexp_of]
 
     val find : Env.t -> name -> def list
-    val unbound : range:Range.t -> name -> Mlsus_error.t
+    val unbound : range:Range.t -> name -> Omniml_error.t
     val ident : def -> Type.Ident.t
 
     (** [def_ret_shape d] returns the shape of the return type of the definition [d]. *)
@@ -253,7 +253,7 @@ module Make_adt_inst (X : sig
 struct
   let inst ~env ~(name : X.name With_range.t) ~infer_ctx ~arg ~(ret : Type.Var.t) =
     match X.find env name.it with
-    | [] -> Mlsus_error.(raise @@ X.unbound ~range:name.range name.it)
+    | [] -> Omniml_error.(raise @@ X.unbound ~range:name.range name.it)
     | [ def ] ->
       (* The definition is unambiguous. Just infer immediately *)
       X.infer def ~id_source:(Env.id_source env) ~ctx:infer_ctx ~arg ~ret
@@ -266,7 +266,7 @@ struct
         match List.filter defs ~f:(fun def -> Type_ident.(X.ident def = type_ident)) with
         | [ def ] -> def
         | [] ->
-          Mlsus_error.(
+          Omniml_error.(
             raise
             @@ bug_s
                  ~here:[%here]
@@ -275,7 +275,7 @@ struct
                      (name : X.name With_range.t)
                      (type_ident : Type_ident.t)])
         | defs ->
-          Mlsus_error.(
+          Omniml_error.(
             raise
             @@ bug_s
                  ~here:[%here]
@@ -314,7 +314,7 @@ struct
               | Poly _ -> `Poly
               | _ -> assert false
             in
-            ff (Mlsus_error.disambiguation_mismatched_type ~range:name.range ~type_head)
+            ff (Omniml_error.disambiguation_mismatched_type ~range:name.range ~type_head)
           | Constr (_args, type_ident) -> disambiguate_and_infer type_ident)
         ~else_:(fun () ->
           let default_type_def = List.hd_exn defs in
@@ -329,7 +329,7 @@ module Constructor_inst = Make_adt_inst (struct
     type infer_ctx = Constructor_name.With_range.t * Range.t [@@deriving sexp_of]
 
     let find env name = Env.find_constr env name
-    let unbound ~range name = Mlsus_error.unbound_constructor ~range name
+    let unbound ~range name = Omniml_error.unbound_constructor ~range name
     let ident def = def.Adt.constructor_type_ident
     let def_ret_shape (def : def) = def.constructor_alphas, def.constructor_type
 
@@ -351,7 +351,7 @@ module Label_inst = Make_adt_inst (struct
     type infer_ctx = unit [@@deriving sexp_of]
 
     let find env name = Env.find_label env name
-    let unbound ~range name = Mlsus_error.unbound_label ~range name
+    let unbound ~range name = Omniml_error.unbound_label ~range name
     let ident def = def.Adt.label_type_ident
     let def_ret_shape (def : def) = def.label_alphas, def.label_type
 
@@ -458,7 +458,7 @@ module Pattern = struct
        | None, None -> k (Fragment.empty, tt)
        | _ ->
          (* Note that arity mismatches are caught by [infer_constructor] *)
-         Mlsus_error.(
+         Omniml_error.(
            raise
            @@ bug_s
                 ~here:[%here]
@@ -538,7 +538,7 @@ module Expression = struct
     | Exp_var var ->
       (match Env.find_var env var.it with
        | Some var -> inst var (Type.var exp_type)
-       | None -> Mlsus_error.(raise @@ unbound_variable ~range:var.range var.it))
+       | None -> Omniml_error.(raise @@ unbound_variable ~range:var.range var.it))
     | Exp_const const -> Type.(var exp_type =~ infer_constant const)
     | Exp_fun (pats, exp) ->
       exists_many' ~id_source (List.length pats)
@@ -603,7 +603,8 @@ module Expression = struct
                (match List.nth comp_types (index - 1) with
                 | None ->
                   let arity = List.length comp_types in
-                  ff (Mlsus_error.projection_out_of_bounds ~range:exp.range ~index ~arity)
+                  ff
+                    (Omniml_error.projection_out_of_bounds ~range:exp.range ~index ~arity)
                 | Some comp_type -> Type.(var exp_type =~ var comp_type))
              | (Arrow _ | Constr _ | Poly _) as matchee ->
                let type_head =
@@ -614,7 +615,7 @@ module Expression = struct
                  | _ -> assert false
                in
                ff
-                 (Mlsus_error.disambiguation_tuple_mismatched_type
+                 (Omniml_error.disambiguation_tuple_mismatched_type
                     ~range:exp.range
                     ~type_head))
            ~else_:(fun () ->
@@ -645,7 +646,7 @@ module Expression = struct
        | Some arg_exp, Some arg_type -> (), infer_exp ~env arg_exp arg_type
        | None, None -> (), tt
        | _ ->
-         Mlsus_error.(
+         Omniml_error.(
            raise
            @@ bug_s
                 ~here:[%here]
@@ -687,7 +688,7 @@ module Expression = struct
                  | Tuple _ -> `Tuple
                  | _ -> assert false
                in
-               ff (Mlsus_error.polytype_mismatched_type ~range:exp.range ~type_head))
+               ff (Omniml_error.polytype_mismatched_type ~range:exp.range ~type_head))
            ~else_:(fun () ->
              exists' ~id_source
              @@ fun mono -> Type.(var exp_type =~ poly (Type_scheme.create (var mono))))
@@ -715,7 +716,7 @@ module Expression = struct
                  | Tuple _ -> `Tuple
                  | _ -> assert false
                in
-               ff (Mlsus_error.polytype_mismatched_type ~range:exp.range ~type_head))
+               ff (Omniml_error.polytype_mismatched_type ~range:exp.range ~type_head))
            ~else_:(fun () ->
              exists' ~id_source
              @@ fun mono -> Type.(var poly_type =~ poly (Type_scheme.create (var mono))))

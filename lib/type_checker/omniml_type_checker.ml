@@ -20,24 +20,24 @@ let infer_str ?with_stdlib str =
 ;;
 
 let check cst =
-  match Mlsus_constraint_solver.solve cst with
+  match Omniml_constraint_solver.solve cst with
   | Ok () -> ()
   | Error { range; it } ->
     let get_range range =
       Option.value_or_thunk range ~default:(fun () ->
-        Mlsus_error.(
+        Omniml_error.(
           raise
           @@ bug_s
                ~here:[%here]
                [%message
                  "Expect range to be given"
-                   (it : Mlsus_constraint_solver.Error.desc)
+                   (it : Omniml_constraint_solver.Error.desc)
                    (cst : Constraint.t)]))
     in
     (match it with
-     | Unsatisfiable err -> Mlsus_error.raise err
+     | Unsatisfiable err -> Omniml_error.raise err
      | Unbound_type_var type_var ->
-       Mlsus_error.(
+       Omniml_error.(
          raise
          @@ bug_s
               ~here:[%here]
@@ -47,7 +47,7 @@ let check cst =
                   (range : Range.t option)
                   (cst : Constraint.t)])
      | Unbound_var var ->
-       Mlsus_error.(
+       Omniml_error.(
          raise
          @@ bug_s
               ~here:[%here]
@@ -57,13 +57,13 @@ let check cst =
                   (range : Range.t option)
                   (cst : Constraint.t)])
      | Cannot_unify (type1, type2) ->
-       Mlsus_error.(
+       Omniml_error.(
          raise
          @@ mismatched_type
               ~range:(get_range range)
-              ~pp_type:Mlsus_constraint_solver.Decoded_type.pp
+              ~pp_type:Omniml_constraint_solver.Decoded_type.pp
               type1
               type2)
      | Rigid_variable_escape ->
-       Mlsus_error.(raise @@ rigid_variable_escape ~range:(get_range range)))
+       Omniml_error.(raise @@ rigid_variable_escape ~range:(get_range range)))
 ;;

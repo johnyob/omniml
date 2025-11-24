@@ -1,6 +1,6 @@
 open Core
 open Grace
-open Mlsus_ast.Ast_types
+open Omniml_ast.Ast_types
 
 let is_in_expect_test = ref false
 

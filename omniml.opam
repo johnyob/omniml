@@ -3,8 +3,8 @@ opam-version: "2.0"
 maintainer: ["ajo41@cam.ac.uk"]
 authors: ["Alistair O'Brien"]
 license: "GPL-3.0-only"
-homepage: "https://github.com/johnyob/mlsus"
-bug-reports: "https://github.com/johnyob/mlsus/issues"
+homepage: "https://github.com/johnyob/omniml"
+bug-reports: "https://github.com/johnyob/omniml/issues"
 depends: [
   "ocaml"
   "dune" {>= "3.10"}
@@ -33,7 +33,7 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/johnyob/mlsus.git"
+dev-repo: "git+https://github.com/johnyob/omniml.git"
 # NOTE: To be kept in sync with ocamlPackages in nix/overlay.nix
 pin-depends: [
   [ "grace.0.2.0" "git+https://github.com/johnyob/grace.git#275adda398834612b804283fe9548708e570bfdf" ]

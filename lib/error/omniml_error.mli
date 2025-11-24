@@ -1,6 +1,6 @@
 open Core
 open Grace
-open Mlsus_ast.Ast_types
+open Omniml_ast.Ast_types
 
 type t [@@deriving sexp]
 
@@ -18,7 +18,7 @@ include Pretty_printer.S with type t := t
 val handle_uncaught : exit:bool -> (unit -> unit) -> unit
 
 (** [bug ~here msg] constructs an internal fatal error.
-    This error is only to be used to indicate a bug in Mlsus. *)
+    This error is only to be used to indicate a bug in Omniml. *)
 val bug : here:Source_code_position.t -> Diagnostic.Message.t -> t
 
 (** [bugf ~here fmt ...] formats a message and creates an internal fatal error. *)

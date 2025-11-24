@@ -3,9 +3,9 @@
  (libraries
   core
   async
-  mlsus.std
-  mlsus.constraint
-  mlsus.constraint_solver
+  omniml.std
+  omniml.constraint
+  omniml.constraint_solver
   base_quickcheck)
  (inline_tests)
  (preprocess

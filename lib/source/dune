@@ -1,6 +1,6 @@
 (library
- (name mlsus_source)
- (public_name mlsus.source)
- (libraries core grace mlsus.error)
+ (name omniml_source)
+ (public_name omniml.source)
+ (libraries core grace omniml.error)
  (preprocess
   (pps ppx_jane)))

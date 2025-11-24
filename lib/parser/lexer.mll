@@ -33,7 +33,7 @@ let find_keyword =
 ;;
 
 let range_of_lexbuf lexbuf = 
-  Range.of_lexbuf ?source:(Mlsus_source.get ()) lexbuf
+  Range.of_lexbuf ?source:(Omniml_source.get ()) lexbuf
 ;;
 }
 
@@ -146,7 +146,7 @@ rule read  =
   | eof
       { EOF }
   | _ as c                            
-      { Mlsus_error.(raise @@ unknown_start_of_token ~range:(range_of_lexbuf lexbuf) c) }
+      { Omniml_error.(raise @@ unknown_start_of_token ~range:(range_of_lexbuf lexbuf) c) }
 
 (** Read a comment delimited by (* ... *)
     Nesting is not permitted. *)
@@ -157,6 +157,6 @@ and read_comment  =
   | newline 
       { Lexing.new_line lexbuf; read_comment lexbuf }
   | eof
-      { Mlsus_error.(raise @@ unterminated_comment ~range:(range_of_lexbuf lexbuf)) }
+      { Omniml_error.(raise @@ unterminated_comment ~range:(range_of_lexbuf lexbuf)) }
   | _
       { read_comment lexbuf }

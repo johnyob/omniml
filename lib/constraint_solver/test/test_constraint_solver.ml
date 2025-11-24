@@ -1,6 +1,6 @@
 open Core
-open Mlsus_std
-open Mlsus_constraint
+open Omniml_std
+open Omniml_constraint
 module C = Constraint
 module T = C.Type
 
@@ -9,17 +9,17 @@ let () =
   For_testing.use_test_output ()
 ;;
 
-let unsat_err = Mlsus_error.bug_s ~here:[%here] [%message "Constraint is unsatisfiable"]
+let unsat_err = Omniml_error.bug_s ~here:[%here] [%message "Constraint is unsatisfiable"]
 
 let else_unsat_err =
   let open C in
   fun () ->
-    ff (Mlsus_error.bug_s ~here:[%here] [%message "Cannot resume due to generic/cycle"])
+    ff (Omniml_error.bug_s ~here:[%here] [%message "Cannot resume due to generic/cycle"])
 ;;
 
 let print_solve_result ?(log_level = `Info) cst =
   Async.Log.Global.set_level log_level;
-  let result = Mlsus_constraint_solver.solve cst in
+  let result = Omniml_constraint_solver.solve cst in
   match result with
   | Ok () -> print_s [%message "Constraint is satisfiable" (cst : Constraint.t)]
   | Error err ->
@@ -27,7 +27,7 @@ let print_solve_result ?(log_level = `Info) cst =
       [%message
         "Constraint is unsatisfiable"
           (cst : Constraint.t)
-          (err : Mlsus_constraint_solver.Error.t)]
+          (err : Omniml_constraint_solver.Error.t)]
 ;;
 
 let predef_ident =
@@ -60,7 +60,7 @@ let%expect_test "Cannot resume suspended generic" =
         (Unsatisfiable
          ((severity Bug)
           (message
-           "lib/constraint_solver/test/test_constraint_solver.ml:17:32: \"Cannot resume due to generic/cycle\"")
+           "lib/constraint_solver/test/test_constraint_solver.ml:17:33: \"Cannot resume due to generic/cycle\"")
           (code (Unknown)) (labels ()) (notes ()))))
        (range ()))))
     |}]
@@ -92,7 +92,7 @@ let%expect_test "Cannot unsuspend undetermined" =
         (Unsatisfiable
          ((severity Bug)
           (message
-           "lib/constraint_solver/test/test_constraint_solver.ml:17:32: \"Cannot resume due to generic/cycle\"")
+           "lib/constraint_solver/test/test_constraint_solver.ml:17:33: \"Cannot resume due to generic/cycle\"")
           (code (Unknown)) (labels ()) (notes ()))))
        (range ()))))
     |}]
@@ -191,7 +191,7 @@ let%expect_test "Cannot unsuspend circular dependencies" =
         (Unsatisfiable
          ((severity Bug)
           (message
-           "lib/constraint_solver/test/test_constraint_solver.ml:17:32: \"Cannot resume due to generic/cycle\"")
+           "lib/constraint_solver/test/test_constraint_solver.ml:17:33: \"Cannot resume due to generic/cycle\"")
           (code (Unknown)) (labels ()) (notes ()))))
        (range ()))))
     |}]
@@ -736,7 +736,7 @@ let%expect_test "Detect SCC cycle accross regions" =
         (Unsatisfiable
          ((severity Bug)
           (message
-           "lib/constraint_solver/test/test_constraint_solver.ml:17:32: \"Cannot resume due to generic/cycle\"")
+           "lib/constraint_solver/test/test_constraint_solver.ml:17:33: \"Cannot resume due to generic/cycle\"")
           (code (Unknown)) (labels ()) (notes ()))))
        (range ()))))
     |}]
@@ -744,7 +744,7 @@ let%expect_test "Detect SCC cycle accross regions" =
 
 let%expect_test "" =
   (*
-     Tests for a regression introduced here: https://github.com/johnyob/mlsus/pull/54
+     Tests for a regression introduced here: https://github.com/johnyob/omniml/pull/54
   
     1. Create partial generic ['a]
     2. Update the variable to ['a = 'b -> 'c] but the variables ['b, 'c] get generalized

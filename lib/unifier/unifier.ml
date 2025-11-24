@@ -1,5 +1,5 @@
 open Core
-open Mlsus_std
+open Omniml_std
 
 module type S = sig
   type 'a structure

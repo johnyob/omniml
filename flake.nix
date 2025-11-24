@@ -1,5 +1,5 @@
 {
-  description = "MLsus Nix Flake";
+  description = "OmniML Nix Flake";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs";
@@ -27,7 +27,7 @@
           ];
         };
 
-        mlsus = pkgs.callPackage ./nix/mlsus.nix {};
+        omniml = pkgs.callPackage ./nix/omniml.nix {};
 
         fmt = treefmt.lib.evalModule pkgs {
           projectRootFile = "flake.nix";
@@ -42,12 +42,12 @@
         };
       in {
         packages = {
-          inherit mlsus;
-          default = mlsus;
+          inherit omniml;
+          default = omniml;
         };
 
         checks = {
-          mlsus = self.packages.${system}.mlsus.overrideAttrs (old: {
+          omniml = self.packages.${system}.omniml.overrideAttrs (old: {
             name = "check-${old.name}";
             doCheck = true;
           });
@@ -56,9 +56,9 @@
         formatter = fmt.config.build.wrapper;
 
         devShells.default = pkgs.mkShell {
-          name = "mlsus-dev-shell";
+          name = "omniml-dev-shell";
 
-          inputsFrom = [mlsus];
+          inputsFrom = [omniml];
 
           buildInputs = with pkgs; [
             # Formatters

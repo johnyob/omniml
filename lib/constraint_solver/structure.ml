@@ -1,6 +1,6 @@
 open! Import
 
-module type S = Mlsus_unifier.Structure.S
+module type S = Omniml_unifier.Structure.S
 
 module Former = struct
   type 'a t =

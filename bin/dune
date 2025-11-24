@@ -1,6 +1,6 @@
 (executable
- (public_name mlsus)
- (name mlsus)
- (libraries core core_unix.command_unix async mlsus.main)
+ (public_name omniml)
+ (name omniml)
+ (libraries core core_unix.command_unix async omniml.main)
  (preprocess
   (pps ppx_jane)))

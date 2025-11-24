@@ -1,10 +1,10 @@
 open! Core
 open! Grace
-open Mlsus_main
+open Omniml_main
 
 let () =
   Async.Log.Global.For_testing.use_test_output ();
-  Mlsus_error.For_testing.use_expect_test_config ()
+  Omniml_error.For_testing.use_expect_test_config ()
 ;;
 
 let type_check_and_print
@@ -15,7 +15,7 @@ let type_check_and_print
       str
   =
   Async.Log.Global.set_level log_level;
-  let source = Mlsus_source.For_testing.expect_test_source str in
+  let source = Omniml_source.For_testing.expect_test_source str in
   type_check_and_print
     ~source
     ~dump_ast

@@ -1,11 +1,11 @@
 open! Import
 
-let () = Mlsus_error.For_testing.use_expect_test_config ()
+let () = Omniml_error.For_testing.use_expect_test_config ()
 
 let parse_and_print ~parser sexp_of input =
-  Mlsus_error.handle_uncaught ~exit:false
+  Omniml_error.handle_uncaught ~exit:false
   @@ fun () ->
-  let source = Mlsus_source.For_testing.expect_test_source input in
+  let source = Omniml_source.For_testing.expect_test_source input in
   let lexbuf = Lexing.from_string ~with_positions:true input in
   let x = parser ?source:(Some source) lexbuf in
   Fmt.(pr "@[<v>%a@]@." Sexp.pp_hum) (sexp_of x)

@@ -1,13 +1,13 @@
 (library
- (name mlsus_main)
- (public_name mlsus.main)
+ (name omniml_main)
+ (public_name omniml.main)
  (libraries
   core
   grace
-  mlsus.ast
-  mlsus.parser
-  mlsus.constraint
-  mlsus.type_checker
-  mlsus.constraint_solver)
+  omniml.ast
+  omniml.parser
+  omniml.constraint
+  omniml.type_checker
+  omniml.constraint_solver)
  (preprocess
   (pps ppx_jane)))

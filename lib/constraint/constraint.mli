@@ -1,5 +1,5 @@
 open Core
-open Mlsus_std
+open Omniml_std
 open Grace
 
 (** The module [Type] provides the concrete representation of types
@@ -87,7 +87,7 @@ end
 (** [t] is a constraint *)
 type t =
   | True (** [true] *)
-  | False of Mlsus_error.t (** [false] *)
+  | False of Omniml_error.t (** [false] *)
   | Conj of t * t (** [C1 /\ C2] *)
   | Eq of Type.t * Type.t (** [tau1 = tau2] *)
   | Exists of Type.Var.t * t (** [exists overline(a). C]*)
@@ -115,7 +115,7 @@ and flexibility =
 [@@deriving sexp]
 
 val tt : t
-val ff : Mlsus_error.t -> t
+val ff : Omniml_error.t -> t
 val ( &~ ) : t -> t -> t
 val all : t list -> t
 val ( =~ ) : Type.t -> Type.t -> t

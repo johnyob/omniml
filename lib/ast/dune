@@ -1,6 +1,6 @@
 (library
- (name mlsus_ast)
- (public_name mlsus.ast)
+ (name omniml_ast)
+ (public_name omniml.ast)
  (libraries core grace)
  (preprocess
   (pps ppx_jane)))

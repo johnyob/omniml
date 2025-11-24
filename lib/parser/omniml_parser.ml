@@ -73,11 +73,11 @@ module Lexer = struct
   let raw_read_token = Lexer.read
 
   let read_token ?source lexbuf =
-    Mlsus_source.with_optional_source ?source @@ fun () -> raw_read_token lexbuf
+    Omniml_source.with_optional_source ?source @@ fun () -> raw_read_token lexbuf
   ;;
 
   let read_tokens ?source ?(keep_eof = false) lexbuf =
-    Mlsus_source.with_optional_source ?source
+    Omniml_source.with_optional_source ?source
     @@ fun () ->
     let rec loop acc =
       let tok = raw_read_token lexbuf in
@@ -91,11 +91,11 @@ module Parser = struct
   type 'a t = ?source:Source.t -> Lexing.lexbuf -> 'a
 
   let parse ~f ?source lexbuf =
-    Mlsus_source.with_optional_source ?source
+    Omniml_source.with_optional_source ?source
     @@ fun () ->
     try f Lexer.raw_read_token lexbuf with
     | Parser.Error ->
-      Mlsus_error.(raise @@ syntax_error ~range:(Range.of_lexbuf ?source lexbuf))
+      Omniml_error.(raise @@ syntax_error ~range:(Range.of_lexbuf ?source lexbuf))
   ;;
 
   let parse_core_type = parse ~f:Parser.parse_core_type

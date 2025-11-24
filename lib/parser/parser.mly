@@ -1,6 +1,6 @@
 %{
 open Grace
-open Mlsus_ast
+open Omniml_ast
 open Ast_types
 open Ast_builder.Default
 
@@ -31,7 +31,7 @@ let unary_op ~range ~op ~exp =
   Expression.(app ~range (var ~range op) exp)
 
 let range_of_lex lex =
-  Range.of_lex ?source:(Mlsus_source.get ()) lex
+  Range.of_lex ?source:(Omniml_source.get ()) lex
 %}
 
 %nonassoc prec_below_SEMI
@@ -68,7 +68,7 @@ parse_core_type:
 (** {2 Standard Library Extensions}
 
     This section contains definitions of several generic parameterized rules that
-    are useful for parsing mlsus. *)
+    are useful for parsing omniml. *)
 
 (** [seperated_nontrivial_list(sep, X)] parases a list containing at least two [X]s
     separated by [sep]. *)
