@@ -1,7 +1,7 @@
 open Core
-open Mlsus_constraint
+open Omniml_constraint
 module C = Constraint
-module Principal_shape = Mlsus_constraint_solver.For_testing.Principal_shape
+module Principal_shape = Omniml_constraint_solver.For_testing.Principal_shape
 
 let%quick_test _ =
   fun (type_scheme :

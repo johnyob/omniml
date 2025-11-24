@@ -8,5 +8,5 @@ val infer_str : ?with_stdlib:bool -> Ast.structure -> Constraint.t
 
 (** [check cst] checks that [cst] is satisfiable 
 
-    @raises Mlsus_error.T if the constraint is unsatisfiable *)
+    @raises Omniml_error.T if the constraint is unsatisfiable *)
 val check : Constraint.t -> unit

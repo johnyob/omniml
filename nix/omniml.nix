@@ -4,7 +4,7 @@
 }:
 with ocamlPackages;
   buildDunePackage rec {
-    pname = "mlsus";
+    pname = "omniml";
     version = "dev";
 
     src = lib.cleanSource ../.;

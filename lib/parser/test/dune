@@ -1,6 +1,6 @@
 (library
  (name test_parser)
- (libraries core fmt grace mlsus.ast mlsus.source mlsus.parser)
+ (libraries core fmt grace omniml.ast omniml.source omniml.parser)
  (inline_tests)
  (preprocess
   (pps ppx_jane -log-source-position)))

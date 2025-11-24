@@ -2,7 +2,7 @@ open Core
 open Ast_types
 
 (* This module defines the type for the abstract syntax tree (AST) produced by
-   parsing mlsus's source code. *)
+   parsing omniml's source code. *)
 
 type core_type = core_type_desc With_range.t
 

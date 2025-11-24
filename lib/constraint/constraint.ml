@@ -1,5 +1,5 @@
 open Core
-open Mlsus_std
+open Omniml_std
 open Grace
 
 module rec Type : sig
@@ -236,7 +236,7 @@ end
 
 type t =
   | True
-  | False of Mlsus_error.t
+  | False of Omniml_error.t
   | Conj of t * t
   | Eq of Type.t * Type.t
   | Exists of Type.Var.t * t

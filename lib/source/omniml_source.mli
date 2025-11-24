@@ -3,7 +3,7 @@ open Grace
 (** [with_source src f] runs [f] with the current source set to [src],
     clearing it once [f] returns. 
     
-    @raise Mlsus_error.T if the current source is already initialized *)
+    @raise Omniml_error.T if the current source is already initialized *)
 val with_source : source:Source.t -> (unit -> 'a) -> 'a
 
 (** [with_optional_source] optionally sets the source and runs [f]. *)

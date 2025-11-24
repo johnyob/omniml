@@ -1,6 +1,6 @@
 open Core
 open Async
-open Mlsus_main
+open Omniml_main
 
 let open_with_lexbuf ~f filename () =
   let in_ = In_channel.create filename in
@@ -82,7 +82,7 @@ module Command = struct
 
   let v =
     Command.group
-      ~summary:"mlsus"
+      ~summary:"omniml"
       [ "lex", lex
       ; "parse", parse
       ; "constraint-gen", constraint_gen

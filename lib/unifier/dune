@@ -1,6 +1,6 @@
 (library
- (name mlsus_unifier)
- (public_name mlsus.unifier)
- (libraries core mlsus.std)
+ (name omniml_unifier)
+ (public_name omniml.unifier)
+ (libraries core omniml.std)
  (preprocess
   (pps ppx_jane)))

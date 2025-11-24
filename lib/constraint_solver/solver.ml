@@ -11,7 +11,7 @@ module Error = struct
     }
 
   and desc =
-    | Unsatisfiable of Mlsus_error.t
+    | Unsatisfiable of Omniml_error.t
     | Unbound_type_var of C.Type.Var.t
     | Unbound_var of C.Var.t
     | Rigid_variable_escape
@@ -329,7 +329,7 @@ let solve : ?range:Range.t -> C.t -> (unit, Error.t) result =
     in
     (if num_partially_generalized_regions > 0
      then
-       Mlsus_error.(
+       Omniml_error.(
          raise
          @@ bug_s
               ~here:[%here]

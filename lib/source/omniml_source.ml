@@ -8,13 +8,13 @@ let get_exn () =
   match !state with
   | Some src -> src
   | None ->
-    Mlsus_error.(raise @@ bug_s ~here:[%here] [%message "State is not initialized"])
+    Omniml_error.(raise @@ bug_s ~here:[%here] [%message "State is not initialized"])
 ;;
 
 let assert_state_is_empty () =
   if Option.is_some !state
   then
-    Mlsus_error.(
+    Omniml_error.(
       raise
       @@ bug_s
            ~here:[%here]
