@@ -247,6 +247,7 @@ type t =
       { matchee : Type.Var.t
       ; closure : Closure.t
       ; case : Type.Matchee.t -> t
+      ; error : unit -> Omniml_error.t
       ; else_ : unit -> t
       }
   | With_range of t * Range.t
@@ -285,8 +286,8 @@ let poly_scheme (type_vars, (in_, type_)) = { type_vars; in_; type_ }
 let let_ (x, scheme) ~in_ = Let (x, scheme, in_)
 let inst x type_ = Instance (x, type_)
 
-let match_ matchee ~closure ~with_ ~else_ =
-  Match { matchee; closure = Closure.of_list closure; case = with_; else_ }
+let match_ matchee ~closure ~with_ ~else_ ~error =
+  Match { matchee; closure = Closure.of_list closure; case = with_; else_; error }
 ;;
 
 let with_range t ~range = With_range (t, range)

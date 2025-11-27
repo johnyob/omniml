@@ -16,6 +16,7 @@ module Error = struct
     | Unbound_var of C.Var.t
     | Rigid_variable_escape
     | Cannot_unify of Decoded_type.t * Decoded_type.t
+    | Cannot_discharge_match_constraints of Omniml_error.t list
   [@@deriving sexp]
 
   exception T of t
@@ -228,7 +229,7 @@ let rec solve : state:State.t -> env:Env.t -> C.t -> unit =
     let env = Env.enter_region ~state env in
     let env = forall_many ~state ~env type_vars in
     self ~state ~env in_
-  | Match { matchee; closure; case = f; else_ } ->
+  | Match { matchee; closure; case = f; else_; error } ->
     let matchee = Env.find_type_var env matchee in
     [%log.global.debug "Matchee type" (matchee : Type.t)];
     let gclosure = gclosure_of_closure ~env closure in
@@ -281,7 +282,7 @@ let rec solve : state:State.t -> env:Env.t -> C.t -> unit =
     G.Suspended_match.match_or_yield
       ~state
       ~curr_region:env.curr_region
-      { matchee; shape_matchee = shape_type; closure = gclosure; case; else_ }
+      { matchee; shape_matchee = shape_type; closure = gclosure; case; else_; error }
   | With_range (t, range) -> solve ~state ~env:(Env.with_range env ~range) t
 
 and gclosure_of_closure ~env closure : G.Suspended_match.closure =
@@ -309,10 +310,15 @@ and gscheme_of_scheme ~state ~env { type_vars; in_; type_ } =
   scheme
 ;;
 
-let solve : ?range:Range.t -> C.t -> (unit, Error.t) result =
-  fun ?range cst ->
+let solve
+  :  ?range:Range.t
+  -> ?defaulting:Omniml_options.Defaulting.t
+  -> C.t
+  -> (unit, Error.t) result
+  =
+  fun ?range ?(defaulting = Omniml_options.Defaulting.default) cst ->
   try
-    let state, root_region = State.create_with_root_region () in
+    let state, root_region = State.create_with_root_region ~defaulting in
     let env = Env.empty ~curr_region:root_region ~range in
     [%log.global.debug "Initial env and state" (state : State.t) (env : Env.t)];
     solve ~state ~env cst;
@@ -327,15 +333,21 @@ let solve : ?range:Range.t -> C.t -> (unit, Error.t) result =
     let num_partially_generalized_regions =
       G.Generalization_tree.num_partially_generalized_regions state.generalization_tree
     in
-    (if num_partially_generalized_regions > 0
-     then
-       Omniml_error.(
-         raise
-         @@ bug_s
-              ~here:[%here]
-              [%message
-                "There are still partially generalized regions"
-                  (num_partially_generalized_regions : int)]));
+    if num_partially_generalized_regions > 0
+    then (
+      match defaulting with
+      | Disabled ->
+        Error.raise ~range:None
+        @@ Cannot_discharge_match_constraints
+             (G.Generalization_tree.collect_svar_errors state.generalization_tree)
+      | Scc ->
+        Omniml_error.(
+          raise
+          @@ bug_s
+               ~here:[%here]
+               [%message
+                 "There are still partially generalized regions"
+                   (num_partially_generalized_regions : int)]));
     Ok ()
   with
   (* Catch solver exceptions *)

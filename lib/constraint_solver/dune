@@ -8,6 +8,7 @@
   omniml.std
   omniml.unifier
   omniml.constraint
+  omniml.options
   omniml.error)
  (preprocess
   (pps ppx_jane)))

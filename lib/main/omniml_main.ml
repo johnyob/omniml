@@ -2,6 +2,7 @@ open Core
 open Omniml_ast
 open Omniml_parser
 open Omniml_constraint
+module Options = Omniml_options
 
 let pp_structure ppf structure =
   Fmt.pf ppf "@[%a@]" Sexp.pp_hum ([%sexp_of: Ast.structure] structure)
@@ -32,11 +33,18 @@ let constraint_gen_and_print ?source lexbuf ~dump_ast ~with_stdlib =
   Fmt.pr "%a@." pp_constraint cst
 ;;
 
-let type_check_and_print ?source lexbuf ~dump_ast ~dump_constraint ~with_stdlib =
+let type_check_and_print
+      ?source
+      lexbuf
+      ~dump_ast
+      ~dump_constraint
+      ~with_stdlib
+      ~defaulting
+  =
   Omniml_error.handle_uncaught ~exit:true
   @@ fun () ->
   let cst = constraint_gen ?source lexbuf ~dump_ast ~with_stdlib in
   if dump_constraint then Fmt.pr "Generated constraint:@.%a@." pp_constraint cst;
-  Omniml_type_checker.check cst;
+  Omniml_type_checker.check ~defaulting cst;
   Fmt.pr "Well typed :)@."
 ;;

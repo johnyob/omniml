@@ -9,4 +9,4 @@ val infer_str : ?with_stdlib:bool -> Ast.structure -> Constraint.t
 (** [check cst] checks that [cst] is satisfiable 
 
     @raises Omniml_error.T if the constraint is unsatisfiable *)
-val check : Constraint.t -> unit
+val check : ?defaulting:Omniml_options.Defaulting.t -> Constraint.t -> unit

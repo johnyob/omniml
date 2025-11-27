@@ -98,6 +98,7 @@ type t =
       { matchee : Type.Var.t
       ; closure : Closure.t
       ; case : Type.Matchee.t -> t
+      ; error : unit -> Omniml_error.t
       ; else_ : unit -> t
       } (** [match a with [overline(a)]f] else default *)
   | With_range of t * Range.t (** [C^ell] *)
@@ -139,6 +140,7 @@ val match_
   -> closure:[< `Type of Type.Var.t | `Scheme of Var.t ] list
   -> with_:(Type.Matchee.t -> t)
   -> else_:(unit -> t)
+  -> error:(unit -> Omniml_error.t)
   -> t
 
 val with_range : t -> range:Range.t -> t

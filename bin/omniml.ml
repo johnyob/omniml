@@ -29,6 +29,15 @@ module Params = struct
   let disable_stdlib =
     flag "-disable-stdlib" no_arg ~doc:"Disables the inclusion of the standard library"
   ;;
+
+  let defaulting =
+    flag
+      "-defaulting"
+      (optional_with_default
+         Omniml_main.Options.Defaulting.default
+         Omniml_main.Options.Defaulting.arg_type)
+      ~doc:"STRATEGY Defaulting strategy, disabled by default"
+  ;;
 end
 
 module Command = struct
@@ -67,14 +76,16 @@ module Command = struct
         +> Params.dump_ast
         +> Params.dump_constraint
         +> Params.disable_stdlib
+        +> Params.defaulting
         +> Async_log.Global.set_level_via_param ())
-      (fun filename dump_ast dump_constraint without_stdlib () ->
+      (fun filename dump_ast dump_constraint without_stdlib defaulting () ->
          open_with_lexbuf filename ~f:(fun lexbuf ->
            let () =
              type_check_and_print
                ~dump_ast
                ~dump_constraint
                ~with_stdlib:(not without_stdlib)
+               ~defaulting
                lexbuf
            in
            Async_log.Global.flushed ()))
