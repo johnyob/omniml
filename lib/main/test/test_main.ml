@@ -857,6 +857,15 @@ let%expect_test "" =
   |}
   in
   type_check_and_print str;
+  [%expect
+    {|
+    error[E010]: ambiguous constructor
+        ┌─ expect_test.ml:10:15
+     10 │        let z = A ;;
+        │                ^
+        = hint: add a type annotation
+    |}];
+  type_check_and_print ~defaulting:Scc str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1172,6 +1181,15 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect
+    {|
+    error[E013]: ambiguous label
+        ┌─ expect_test.ml:15:26
+     15 │          ( { contents = { lbl = _ } } -> () )
+        │                           ^^^
+        = hint: add a type annotation
+    |}];
+  type_check_and_print ~defaulting:Scc str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1341,6 +1359,21 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect
+    {|
+    error[E010]: ambiguous constructor
+        ┌─ expect_test.ml:23:24
+     23 │          | { contents = B } -> ()
+        │                         ^
+        = hint: add a type annotation
+
+    error[E010]: ambiguous constructor
+        ┌─ expect_test.ml:22:24
+     22 │          ( { contents = A } -> ()
+        │                         ^
+        = hint: add a type annotation
+    |}];
+  type_check_and_print ~defaulting:Scc str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1529,6 +1562,21 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect
+    {|
+    error[E016]: unknown polytype
+        ┌─ expect_test.ml:5:48
+      5 │        let mono_use_pid_app_succ = fun pid -> @[pid] succ ;;
+        │                                                 ^^^
+        = hint: add a type annotation
+
+    error[E016]: unknown polytype
+        ┌─ expect_test.ml:3:39
+      3 │        let mono_use_pid = fun pid -> @[pid] ;;
+        │                                        ^^^
+        = hint: add a type annotation
+    |}];
+  type_check_and_print ~defaulting:Scc str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1605,6 +1653,21 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect
+    {|
+    error[E016]: unknown polytype
+        ┌─ expect_test.ml:3:61
+      3 │        let use_poly_mono = fun x -> let y = [ (id, x) ] in @[y] ;;
+        │                                                              ^
+        = hint: add a type annotation
+
+    error[E016]: unknown polytype
+        ┌─ expect_test.ml:3:46
+      3 │        let use_poly_mono = fun x -> let y = [ (id, x) ] in @[y] ;;
+        │                                               ^^^^^^^
+        = hint: add a type annotation
+    |}];
+  type_check_and_print ~defaulting:Scc str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1616,7 +1679,14 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
-  [%expect {| Well typed :) |}]
+  [%expect
+    {|
+    error[E016]: unknown polytype
+        ┌─ expect_test.ml:3:46
+      3 │        let use_poly_mono = fun x -> let y = [ (id, x) ] in 0 ;;
+        │                                               ^^^^^^^
+        = hint: add a type annotation
+    |}]
 ;;
 
 let%expect_test "" =
