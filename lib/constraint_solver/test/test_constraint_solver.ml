@@ -58,14 +58,15 @@ let%expect_test "Cannot resume suspended generic" =
      (cst
       (Exists ((id 0) (name Type.Var))
        (Match (matchee ((id 0) (name Type.Var)))
-        (closure ((type_vars ()) (vars ()))) (case <fun>) (else_ <fun>))))
+        (closure ((type_vars ()) (vars ()))) (case <fun>) (error <fun>)
+        (else_ <fun>))))
      (err
       ((it
-        (Unsatisfiable
-         ((severity Bug)
-          (message
-           "lib/constraint_solver/test/test_constraint_solver.ml:17:33: \"Cannot resume due to generic/cycle\"")
-          (code (Unknown)) (labels ()) (notes ()))))
+        (Cannot_discharge_match_constraints
+         ((((severity Bug)
+            (message
+             "lib/constraint_solver/test/test_constraint_solver.ml:15:27: \"Cannot resume due to generic/cycle\"")
+            (code (Unknown)) (labels ()) (notes ()))))))
        (range ()))))
     |}]
 ;;
@@ -91,14 +92,14 @@ let%expect_test "Cannot unsuspend undetermined" =
       (Exists ((id 0) (name Type.Var))
        (Match (matchee ((id 0) (name Type.Var)))
         (closure ((type_vars (((id 0) (name Type.Var)))) (vars ()))) (case <fun>)
-        (else_ <fun>))))
+        (error <fun>) (else_ <fun>))))
      (err
       ((it
-        (Unsatisfiable
-         ((severity Bug)
-          (message
-           "lib/constraint_solver/test/test_constraint_solver.ml:17:33: \"Cannot resume due to generic/cycle\"")
-          (code (Unknown)) (labels ()) (notes ()))))
+        (Cannot_discharge_match_constraints
+         ((((severity Bug)
+            (message
+             "lib/constraint_solver/test/test_constraint_solver.ml:15:27: \"Cannot resume due to generic/cycle\"")
+            (code (Unknown)) (labels ()) (notes ()))))))
        (range ()))))
     |}]
 ;;
@@ -127,7 +128,8 @@ let%expect_test "Can unsuspend determined (pre)" =
       (Exists ((id 0) (name Type.Var))
        (Conj (Eq (Var ((id 0) (name Type.Var))) (Constr () ((id 0) (name int))))
         (Match (matchee ((id 0) (name Type.Var)))
-         (closure ((type_vars ()) (vars ()))) (case <fun>) (else_ <fun>))))))
+         (closure ((type_vars ()) (vars ()))) (case <fun>) (error <fun>)
+         (else_ <fun>))))))
     |}]
 ;;
 
@@ -155,7 +157,8 @@ let%expect_test "Can unsuspend determined (post)" =
       (Exists ((id 0) (name Type.Var))
        (Conj
         (Match (matchee ((id 0) (name Type.Var)))
-         (closure ((type_vars ()) (vars ()))) (case <fun>) (else_ <fun>))
+         (closure ((type_vars ()) (vars ()))) (case <fun>) (error <fun>)
+         (else_ <fun>))
         (Eq (Var ((id 0) (name Type.Var))) (Constr () ((id 0) (name int))))))))
     |}]
 ;;
@@ -191,17 +194,21 @@ let%expect_test "Cannot unsuspend circular dependencies" =
         (Conj
          (Match (matchee ((id 0) (name Type.Var)))
           (closure ((type_vars (((id 1) (name Type.Var)))) (vars ())))
-          (case <fun>) (else_ <fun>))
+          (case <fun>) (error <fun>) (else_ <fun>))
          (Match (matchee ((id 1) (name Type.Var)))
           (closure ((type_vars (((id 0) (name Type.Var)))) (vars ())))
-          (case <fun>) (else_ <fun>))))))
+          (case <fun>) (error <fun>) (else_ <fun>))))))
      (err
       ((it
-        (Unsatisfiable
-         ((severity Bug)
-          (message
-           "lib/constraint_solver/test/test_constraint_solver.ml:17:33: \"Cannot resume due to generic/cycle\"")
-          (code (Unknown)) (labels ()) (notes ()))))
+        (Cannot_discharge_match_constraints
+         ((((severity Bug)
+            (message
+             "lib/constraint_solver/test/test_constraint_solver.ml:15:27: \"Cannot resume due to generic/cycle\"")
+            (code (Unknown)) (labels ()) (notes ())))
+          (((severity Bug)
+            (message
+             "lib/constraint_solver/test/test_constraint_solver.ml:15:27: \"Cannot resume due to generic/cycle\"")
+            (code (Unknown)) (labels ()) (notes ()))))))
        (range ()))))
     |}]
 ;;
@@ -240,9 +247,10 @@ let%expect_test "Can unsuspend topological dependencies" =
           (Eq (Var ((id 0) (name Type.Var))) (Constr () ((id 0) (name int))))
           (Match (matchee ((id 0) (name Type.Var)))
            (closure ((type_vars (((id 1) (name Type.Var)))) (vars ())))
-           (case <fun>) (else_ <fun>)))
+           (case <fun>) (error <fun>) (else_ <fun>)))
          (Match (matchee ((id 1) (name Type.Var)))
-          (closure ((type_vars ()) (vars ()))) (case <fun>) (else_ <fun>)))))))
+          (closure ((type_vars ()) (vars ()))) (case <fun>) (error <fun>)
+          (else_ <fun>)))))))
     |}]
 ;;
 
@@ -348,7 +356,7 @@ let%expect_test "Partial generic becomes instance" =
             (closure
              ((type_vars (((id 2) (name Type.Var)) ((id 1) (name Type.Var))))
               (vars ())))
-            (case <fun>) (else_ <fun>)))
+            (case <fun>) (error <fun>) (else_ <fun>)))
           (type_ (Var ((id 2) (name Type.Var)))))
          (Conj
           (Instance ((id 3) (name Constraint.Var))
@@ -392,7 +400,7 @@ let%expect_test "Partial generic becomes generic" =
          (in_
           (Match (matchee ((id 0) (name Type.Var)))
            (closure ((type_vars (((id 1) (name Type.Var)))) (vars ())))
-           (case <fun>) (else_ <fun>)))
+           (case <fun>) (error <fun>) (else_ <fun>)))
          (type_ (Var ((id 1) (name Type.Var)))))
         (Conj
          (Conj
@@ -461,10 +469,10 @@ let%expect_test "Propagating changes during partial generalization" =
            (Conj
             (Match (matchee ((id 0) (name Type.Var)))
              (closure ((type_vars (((id 2) (name Type.Var)))) (vars ())))
-             (case <fun>) (else_ <fun>))
+             (case <fun>) (error <fun>) (else_ <fun>))
             (Match (matchee ((id 1) (name Type.Var)))
              (closure ((type_vars (((id 2) (name Type.Var)))) (vars ())))
-             (case <fun>) (else_ <fun>))))
+             (case <fun>) (error <fun>) (else_ <fun>))))
           (type_ (Var ((id 2) (name Type.Var)))))
          (Exists ((id 3) (name Type.Var))
           (Conj
@@ -474,7 +482,7 @@ let%expect_test "Propagating changes during partial generalization" =
             (Eq (Var ((id 1) (name Type.Var))) (Constr () ((id 0) (name int)))))
            (Match (matchee ((id 3) (name Type.Var)))
             (closure ((type_vars (((id 0) (name Type.Var)))) (vars ())))
-            (case <fun>) (else_ <fun>)))))))))
+            (case <fun>) (error <fun>) (else_ <fun>)))))))))
     |}]
 ;;
 
@@ -515,9 +523,11 @@ let%expect_test "loop" =
          (Conj
           (Conj
            (Match (matchee ((id 1) (name Type.Var)))
-            (closure ((type_vars ()) (vars ()))) (case <fun>) (else_ <fun>))
+            (closure ((type_vars ()) (vars ()))) (case <fun>) (error <fun>)
+            (else_ <fun>))
            (Match (matchee ((id 2) (name Type.Var)))
-            (closure ((type_vars ()) (vars ()))) (case <fun>) (else_ <fun>)))
+            (closure ((type_vars ()) (vars ()))) (case <fun>) (error <fun>)
+            (else_ <fun>)))
           (Eq (Var ((id 1) (name Type.Var)))
            (Constr
             ((Var ((id 2) (name Type.Var))) (Var ((id 0) (name Type.Var))))
@@ -561,7 +571,7 @@ let%expect_test "Partial ungeneralization (Partial<>Instance)" =
             (closure
              ((type_vars (((id 2) (name Type.Var)) ((id 1) (name Type.Var))))
               (vars ())))
-            (case <fun>) (else_ <fun>)))
+            (case <fun>) (error <fun>) (else_ <fun>)))
           (type_ (Var ((id 2) (name Type.Var)))))
          (Conj
           (Conj
@@ -623,7 +633,7 @@ let%expect_test "Partial ungeneralization (Partial<>Partial)" =
                (closure
                 ((type_vars (((id 3) (name Type.Var)) ((id 2) (name Type.Var))))
                  (vars ())))
-               (case <fun>) (else_ <fun>)))
+               (case <fun>) (error <fun>) (else_ <fun>)))
              (type_ (Var ((id 3) (name Type.Var)))))
             (Conj
              (Instance ((id 5) (name Constraint.Var))
@@ -683,7 +693,7 @@ let%expect_test "Partials propagate to same instance group" =
            (closure
             ((type_vars (((id 1) (name Type.Var)) ((id 2) (name Type.Var))))
              (vars ())))
-           (case <fun>) (else_ <fun>)))
+           (case <fun>) (error <fun>) (else_ <fun>)))
          (type_
           (Arrow (Var ((id 2) (name Type.Var))) (Var ((id 1) (name Type.Var))))))
         (Exists ((id 3) (name Type.Var))
@@ -749,10 +759,10 @@ let%expect_test "Detect SCC cycle accross regions" =
            (Conj
             (Match (matchee ((id 1) (name Type.Var)))
              (closure ((type_vars (((id 2) (name Type.Var)))) (vars ())))
-             (case <fun>) (else_ <fun>))
+             (case <fun>) (error <fun>) (else_ <fun>))
             (Match (matchee ((id 2) (name Type.Var)))
              (closure ((type_vars (((id 1) (name Type.Var)))) (vars ())))
-             (case <fun>) (else_ <fun>)))
+             (case <fun>) (error <fun>) (else_ <fun>)))
            (Eq (Var ((id 1) (name Type.Var))) (Var ((id 0) (name Type.Var))))))
          (type_
           (Arrow (Var ((id 1) (name Type.Var))) (Var ((id 2) (name Type.Var))))))
@@ -760,10 +770,10 @@ let%expect_test "Detect SCC cycle accross regions" =
      (err
       ((it
         (Unsatisfiable
-         ((severity Bug)
-          (message
-           "lib/constraint_solver/test/test_constraint_solver.ml:17:33: \"Cannot resume due to generic/cycle\"")
-          (code (Unknown)) (labels ()) (notes ()))))
+         (((severity Bug)
+           (message
+            "lib/constraint_solver/test/test_constraint_solver.ml:15:27: \"Cannot resume due to generic/cycle\"")
+           (code (Unknown)) (labels ()) (notes ())))))
        (range ()))))
     |}]
 ;;
@@ -831,10 +841,10 @@ let%expect_test "" =
              (Conj
               (Match (matchee ((id 0) (name Type.Var)))
                (closure ((type_vars (((id 1) (name Type.Var)))) (vars ())))
-               (case <fun>) (else_ <fun>))
+               (case <fun>) (error <fun>) (else_ <fun>))
               (Match (matchee ((id 4) (name Type.Var)))
                (closure ((type_vars (((id 1) (name Type.Var)))) (vars ())))
-               (case <fun>) (else_ <fun>))))
+               (case <fun>) (error <fun>) (else_ <fun>))))
             (type_ (Var ((id 1) (name Type.Var)))))
            (Conj
             (Conj
@@ -882,7 +892,7 @@ let%expect_test "" =
           (closure
            ((type_vars (((id 0) (name Type.Var))))
             (vars (((id 2) (name Constraint.Var))))))
-          (case <fun>) (else_ <fun>))
+          (case <fun>) (error <fun>) (else_ <fun>))
          (Eq (Var ((id 0) (name Type.Var)))
           (Arrow (Constr () ((id 0) (name int))) (Constr () ((id 0) (name int))))))))))
     |}]
@@ -925,7 +935,7 @@ let%expect_test "" =
            ((type_vars ()) (in_ True) (type_ (Var ((id 1) (name Type.Var)))))
            (Match (matchee ((id 0) (name Type.Var)))
             (closure ((type_vars ()) (vars (((id 3) (name Constraint.Var))))))
-            (case <fun>) (else_ <fun>))))
+            (case <fun>) (error <fun>) (else_ <fun>))))
          (type_ (Var ((id 1) (name Type.Var)))))
         (Eq (Var ((id 0) (name Type.Var))) (Constr () ((id 0) (name int))))))))
     |}]
@@ -968,7 +978,7 @@ let%expect_test "" =
            ((type_vars ()) (in_ True) (type_ (Var ((id 1) (name Type.Var)))))
            (Match (matchee ((id 0) (name Type.Var)))
             (closure ((type_vars ()) (vars (((id 3) (name Constraint.Var))))))
-            (case <fun>) (else_ <fun>))))
+            (case <fun>) (error <fun>) (else_ <fun>))))
          (type_ (Var ((id 1) (name Type.Var)))))
         (Conj (Eq (Var ((id 0) (name Type.Var))) (Constr () ((id 0) (name int))))
          (Instance ((id 2) (name Constraint.Var))
