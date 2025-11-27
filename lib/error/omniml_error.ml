@@ -20,6 +20,8 @@ module Code = struct
     | Rigid_variable_escape
     | Ambiguous_label
     | Projection_out_of_bounds
+    | Ambiguous_tuple
+    | Ambiguous_polytype
     | Unknown
   [@@deriving sexp]
 
@@ -38,11 +40,13 @@ module Code = struct
     | Rigid_variable_escape -> "E012"
     | Ambiguous_label -> "E013"
     | Projection_out_of_bounds -> "E014"
+    | Ambiguous_tuple -> "E015"
+    | Ambiguous_polytype -> "E016"
     | Unknown -> "E???"
   ;;
 end
 
-type t = Code.t Diagnostic.t [@@deriving sexp]
+type t = Code.t Diagnostic.t list [@@deriving sexp]
 
 exception T of t
 
@@ -51,15 +55,21 @@ let raise t = raise (T t) [@@always_inline]
 let pp ppf t =
   let open Grace_ansi_renderer in
   let config = { Config.default with use_ansi = not !is_in_expect_test } in
-  Grace_ansi_renderer.pp_diagnostic ~config ~code_to_string:Code.to_string () ppf t
+  List.iteri t ~f:(fun i diag ->
+    if i <> 0 then Fmt.pf ppf "@.@.";
+    Grace_ansi_renderer.pp_diagnostic ~config ~code_to_string:Code.to_string () ppf diag)
 ;;
 
 let handle_uncaught ~exit:should_exit f =
   try f () with
-  | T err ->
-    Fmt.(pf stderr "@[%a@]@." pp err);
+  | T t ->
+    Fmt.(pf stderr "@[%a@]@." pp t);
     if should_exit && not !is_in_expect_test then exit 1
 ;;
+
+let singleton diag : t = [ diag ]
+let both t1 t2 = t1 @ t2
+let all ts = List.concat ts
 
 (* Constructors for errors *)
 
@@ -73,39 +83,43 @@ let pp_type_var_name ppf (type_var : Type_var_name.t) =
 let empty_primary_label ~range = Diagnostic.Label.primaryf ~range ""
 
 let bug ~here msg =
-  Diagnostic.(
-    create
-      ~code:Code.Unknown
-      Bug
-      (Message.createf "%s: %a" (Source_code_position.to_string here) Message.pp msg))
+  singleton
+  @@ Diagnostic.(
+       create
+         ~code:Code.Unknown
+         Bug
+         (Message.createf "%s: %a" (Source_code_position.to_string here) Message.pp msg))
 ;;
 
 let bugf ~here fmt = fmt |> Diagnostic.Message.kcreatef (bug ~here)
 let bug_s ~here sexp = bugf ~here "%a" Sexp.pp_hum sexp
 
 let unterminated_comment ~range : t =
-  Diagnostic.createf
-    ~labels:[ empty_primary_label ~range ]
-    ~code:Code.Unterminated_comment
-    Error
-    "unterminated comment"
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ empty_primary_label ~range ]
+       ~code:Code.Unterminated_comment
+       Error
+       "unterminated comment"
 ;;
 
 let unknown_start_of_token ~range c : t =
-  Diagnostic.createf
-    ~labels:[ empty_primary_label ~range ]
-    ~code:Code.Unknown_start_of_token
-    Error
-    "unknown start of token: %C"
-    c
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ empty_primary_label ~range ]
+       ~code:Code.Unknown_start_of_token
+       Error
+       "unknown start of token: %C"
+       c
 ;;
 
 let syntax_error ~range : t =
-  Diagnostic.createf
-    ~labels:[ empty_primary_label ~range ]
-    ~code:Code.Syntax_error
-    Error
-    "syntax error"
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ empty_primary_label ~range ]
+       ~code:Code.Syntax_error
+       Error
+       "syntax error"
 ;;
 
 let not_found_in_this_scope_label ~range =
@@ -113,53 +127,58 @@ let not_found_in_this_scope_label ~range =
 ;;
 
 let unbound_variable ~range (var_name : Var_name.t) : t =
-  Diagnostic.createf
-    ~labels:[ not_found_in_this_scope_label ~range ]
-    ~code:Code.Unbound_variable
-    Error
-    "cannot find value %a in this scope"
-    pp_quoted_s
-    (var_name :> string)
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ not_found_in_this_scope_label ~range ]
+       ~code:Code.Unbound_variable
+       Error
+       "cannot find value %a in this scope"
+       pp_quoted_s
+       (var_name :> string)
 ;;
 
 let unbound_type ~range (type_name : Type_name.t) : t =
-  Diagnostic.createf
-    ~labels:[ not_found_in_this_scope_label ~range ]
-    ~code:Code.Unbound_type_name
-    Error
-    "cannot find type %a in this scope"
-    pp_quoted_s
-    (type_name :> string)
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ not_found_in_this_scope_label ~range ]
+       ~code:Code.Unbound_type_name
+       Error
+       "cannot find type %a in this scope"
+       pp_quoted_s
+       (type_name :> string)
 ;;
 
 let unbound_type_variable ~range type_var : t =
-  Diagnostic.createf
-    ~labels:[ not_found_in_this_scope_label ~range ]
-    ~code:Code.Unbound_type_variable
-    Error
-    "cannot find type variable %a in this scope"
-    (pp_quoted pp_type_var_name)
-    type_var
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ not_found_in_this_scope_label ~range ]
+       ~code:Code.Unbound_type_variable
+       Error
+       "cannot find type variable %a in this scope"
+       (pp_quoted pp_type_var_name)
+       type_var
 ;;
 
 let unbound_constructor ~range (constr_name : Constructor_name.t) : t =
-  Diagnostic.createf
-    ~labels:[ not_found_in_this_scope_label ~range ]
-    ~code:Code.Unbound_constructor
-    Error
-    "cannot find constructor %a in this scope"
-    pp_quoted_s
-    (constr_name :> string)
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ not_found_in_this_scope_label ~range ]
+       ~code:Code.Unbound_constructor
+       Error
+       "cannot find constructor %a in this scope"
+       pp_quoted_s
+       (constr_name :> string)
 ;;
 
 let unbound_label ~range (label_name : Label_name.t) : t =
-  Diagnostic.createf
-    ~labels:[ not_found_in_this_scope_label ~range ]
-    ~code:Code.Unbound_constructor
-    Error
-    "cannot find label %a in this scope"
-    pp_quoted_s
-    (label_name :> string)
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ not_found_in_this_scope_label ~range ]
+       ~code:Code.Unbound_constructor
+       Error
+       "cannot find label %a in this scope"
+       pp_quoted_s
+       (label_name :> string)
 ;;
 
 let type_constructor_arity_mismatch
@@ -176,28 +195,30 @@ let type_constructor_arity_mismatch
   in
   if actual_arity = 0
   then
-    Diagnostic.createf
-      ~labels:[ expected_arguments_label ]
-      ~code:Code.Type_constructor_arity_mismatch
-      Error
-      "missing type arguments for type %a"
-      pp_quoted_s
-      (type_name.it :> string)
+    singleton
+    @@ Diagnostic.createf
+         ~labels:[ expected_arguments_label ]
+         ~code:Code.Type_constructor_arity_mismatch
+         Error
+         "missing type arguments for type %a"
+         pp_quoted_s
+         (type_name.it :> string)
   else
-    Diagnostic.createf
-      ~labels:
-        [ expected_arguments_label
-        ; Label.secondary
-            ~range:args_range
-            (if actual_arity > expected_arity
-             then Message.create "help: remove the unnecessary arguments"
-             else Message.createf "supplied %d arguments" actual_arity)
-        ]
-      ~code:Code.Type_constructor_arity_mismatch
-      Error
-      "type takes %d arguments but %d arguments were supplied"
-      expected_arity
-      actual_arity
+    singleton
+    @@ Diagnostic.createf
+         ~labels:
+           [ expected_arguments_label
+           ; Label.secondary
+               ~range:args_range
+               (if actual_arity > expected_arity
+                then Message.create "help: remove the unnecessary arguments"
+                else Message.createf "supplied %d arguments" actual_arity)
+           ]
+         ~code:Code.Type_constructor_arity_mismatch
+         Error
+         "type takes %d arguments but %d arguments were supplied"
+         expected_arity
+         actual_arity
 ;;
 
 let constructor_arity_mismatch
@@ -212,29 +233,31 @@ let constructor_arity_mismatch
   in
   match actual_arity, expected_arity with
   | `One, `Zero ->
-    Diagnostic.createf
-      ~labels:
-        [ expected_arguments_label 0
-        ; Label.secondary
-            ~range:arg_range
-            (Message.create "help: remove the unnecessary argument")
-        ]
-      ~code:Code.Constructor_arity_mismatch
-      Error
-      "too many arguments for constructor %a"
-      pp_quoted_s
-      (constr_name.it :> string)
+    singleton
+    @@ Diagnostic.createf
+         ~labels:
+           [ expected_arguments_label 0
+           ; Label.secondary
+               ~range:arg_range
+               (Message.create "help: remove the unnecessary argument")
+           ]
+         ~code:Code.Constructor_arity_mismatch
+         Error
+         "too many arguments for constructor %a"
+         pp_quoted_s
+         (constr_name.it :> string)
   | `Zero, `One ->
-    Diagnostic.createf
-      ~labels:
-        [ expected_arguments_label 1
-        ; Label.secondary ~range:arg_range (Message.create "supplied 0 arguments")
-        ]
-      ~code:Code.Constructor_arity_mismatch
-      Error
-      "too few arguments for constructor %a"
-      pp_quoted_s
-      (constr_name.it :> string)
+    singleton
+    @@ Diagnostic.createf
+         ~labels:
+           [ expected_arguments_label 1
+           ; Label.secondary ~range:arg_range (Message.create "supplied 0 arguments")
+           ]
+         ~code:Code.Constructor_arity_mismatch
+         Error
+         "too few arguments for constructor %a"
+         pp_quoted_s
+         (constr_name.it :> string)
   | `One, `One | `Zero, `Zero ->
     raise @@ bugf ~here:[%here] "expected actual_arity <> expected_arity"
 ;;
@@ -242,19 +265,20 @@ let constructor_arity_mismatch
 let mismatched_type ~range ~pp_type type1 type2 =
   let open Diagnostic in
   let pp_quoted_type = pp_quoted pp_type in
-  Diagnostic.createf
-    ~labels:
-      [ Label.primaryf
-          ~range
-          "@[<v>%a@;<1 2>is not equal to@,%a@]"
-          pp_quoted_type
-          type1
-          pp_quoted_type
-          type2
-      ]
-    ~code:Code.Type_mismatch
-    Error
-    "mismatched type"
+  singleton
+  @@ Diagnostic.createf
+       ~labels:
+         [ Label.primaryf
+             ~range
+             "@[<v>%a@;<1 2>is not equal to@,%a@]"
+             pp_quoted_type
+             type1
+             pp_quoted_type
+             type2
+         ]
+       ~code:Code.Type_mismatch
+       Error
+       "mismatched type"
 ;;
 
 let disambiguation_mismatched_type ~range ~type_head =
@@ -265,23 +289,26 @@ let disambiguation_mismatched_type ~range ~type_head =
     | `Arrow -> "function type"
     | `Poly -> "polymorphic type"
   in
-  Diagnostic.createf
-    ~labels:[ Label.primaryf ~range "expected a type constructor, found a %s" head_name ]
-    ~code:Code.Type_mismatch
-    Error
-    "mismatched type"
+  singleton
+  @@ Diagnostic.createf
+       ~labels:
+         [ Label.primaryf ~range "expected a type constructor, found a %s" head_name ]
+       ~code:Code.Type_mismatch
+       Error
+       "mismatched type"
 ;;
 
 let projection_out_of_bounds ~range ~arity ~index =
   let open Diagnostic in
-  Diagnostic.createf
-    ~labels:[ Label.primaryf ~range "unknown field" ]
-    ~code:Code.Projection_out_of_bounds
-    Error
-    "no field %a in tuple of arity %d"
-    (pp_quoted Fmt.int)
-    index
-    arity
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ Label.primaryf ~range "unknown field" ]
+       ~code:Code.Projection_out_of_bounds
+       Error
+       "no field %a in tuple of arity %d"
+       (pp_quoted Fmt.int)
+       index
+       arity
 ;;
 
 let disambiguation_tuple_mismatched_type ~range ~type_head =
@@ -292,39 +319,43 @@ let disambiguation_tuple_mismatched_type ~range ~type_head =
     | `Arrow -> "function type"
     | `Poly -> "polymorphic type"
   in
-  Diagnostic.createf
-    ~labels:[ Label.primaryf ~range "expected a tuple, found a %s" head_name ]
-    ~code:Code.Type_mismatch
-    Error
-    "mismatched type"
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ Label.primaryf ~range "expected a tuple, found a %s" head_name ]
+       ~code:Code.Type_mismatch
+       Error
+       "mismatched type"
 ;;
 
 let ambiguous_constructor ~range =
   let open Diagnostic in
-  Diagnostic.createf
-    ~labels:[ empty_primary_label ~range ]
-    ~notes:[ Message.createf "hint: add a type annotation" ]
-    ~code:Code.Ambiguous_constructor
-    Error
-    "ambiguous constructor"
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ empty_primary_label ~range ]
+       ~notes:[ Message.createf "hint: add a type annotation" ]
+       ~code:Code.Ambiguous_constructor
+       Error
+       "ambiguous constructor"
 ;;
 
 let rigid_variable_escape ~range =
-  Diagnostic.createf
-    ~labels:[ empty_primary_label ~range ]
-    ~code:Code.Rigid_variable_escape
-    Error
-    "generic type variable escapes its scope"
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ empty_primary_label ~range ]
+       ~code:Code.Rigid_variable_escape
+       Error
+       "generic type variable escapes its scope"
 ;;
 
 let ambiguous_label ~range =
   let open Diagnostic in
-  Diagnostic.createf
-    ~labels:[ empty_primary_label ~range ]
-    ~notes:[ Message.createf "hint: add a type annotation" ]
-    ~code:Code.Ambiguous_label
-    Error
-    "ambiguous label"
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ empty_primary_label ~range ]
+       ~notes:[ Message.createf "hint: add a type annotation" ]
+       ~code:Code.Ambiguous_label
+       Error
+       "ambiguous label"
 ;;
 
 let polytype_mismatched_type ~range ~type_head =
@@ -335,11 +366,35 @@ let polytype_mismatched_type ~range ~type_head =
     | `Arrow -> "function type"
     | `Constr -> "type constructor"
   in
-  Diagnostic.createf
-    ~labels:[ Label.primaryf ~range "expected a polymorphic type, found a %s" head_name ]
-    ~code:Code.Type_mismatch
-    Error
-    "mismatched type"
+  singleton
+  @@ Diagnostic.createf
+       ~labels:
+         [ Label.primaryf ~range "expected a polymorphic type, found a %s" head_name ]
+       ~code:Code.Type_mismatch
+       Error
+       "mismatched type"
+;;
+
+let ambiguous_tuple ~range =
+  let open Diagnostic in
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ empty_primary_label ~range ]
+       ~notes:[ Message.createf "hint: add a type annotation" ]
+       ~code:Code.Ambiguous_tuple
+       Error
+       "unknown tuple type"
+;;
+
+let ambiguous_polytype ~range =
+  let open Diagnostic in
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ empty_primary_label ~range ]
+       ~notes:[ Message.createf "hint: add a type annotation" ]
+       ~code:Code.Ambiguous_polytype
+       Error
+       "unknown polytype"
 ;;
 
 module For_testing = struct

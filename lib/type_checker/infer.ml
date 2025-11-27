@@ -249,6 +249,7 @@ module Make_adt_inst (X : sig
       -> Constraint.t
 
     val arg_closure : arg_type -> Type.Var.t list
+    val ambiguous : range:Range.t -> Omniml_error.t
   end) =
 struct
   let inst ~env ~(name : X.name With_range.t) ~infer_ctx ~arg ~(ret : Type.Var.t) =
@@ -316,6 +317,7 @@ struct
             in
             ff (Omniml_error.disambiguation_mismatched_type ~range:name.range ~type_head)
           | Constr (_args, type_ident) -> disambiguate_and_infer type_ident)
+        ~error:(fun () -> X.ambiguous ~range:name.range)
         ~else_:(fun () ->
           let default_type_def = List.hd_exn defs in
           infer_ret_shape default_type_def ret)
@@ -342,6 +344,8 @@ module Constructor_inst = Make_adt_inst (struct
       | None -> []
       | Some arg -> [ arg ]
     ;;
+
+    let ambiguous = Omniml_error.ambiguous_constructor
   end)
 
 module Label_inst = Make_adt_inst (struct
@@ -360,6 +364,7 @@ module Label_inst = Make_adt_inst (struct
     ;;
 
     let arg_closure arg = [ arg ]
+    let ambiguous = Omniml_error.ambiguous_label
   end)
 
 let exists_opt opt_var cst =
@@ -618,6 +623,7 @@ module Expression = struct
                  (Omniml_error.disambiguation_tuple_mismatched_type
                     ~range:exp.range
                     ~type_head))
+           ~error:(fun () -> Omniml_error.ambiguous_tuple ~range:exp.range)
            ~else_:(fun () ->
              exists_many' ~id_source index
              @@ fun comp_types ->
@@ -689,6 +695,7 @@ module Expression = struct
                  | _ -> assert false
                in
                ff (Omniml_error.polytype_mismatched_type ~range:exp.range ~type_head))
+           ~error:(fun () -> Omniml_error.ambiguous_polytype ~range:exp.range)
            ~else_:(fun () ->
              exists' ~id_source
              @@ fun mono -> Type.(var exp_type =~ poly (Type_scheme.create (var mono))))
@@ -717,6 +724,7 @@ module Expression = struct
                  | _ -> assert false
                in
                ff (Omniml_error.polytype_mismatched_type ~range:exp.range ~type_head))
+           ~error:(fun () -> Omniml_error.ambiguous_polytype ~range:exp.range)
            ~else_:(fun () ->
              exists' ~id_source
              @@ fun mono -> Type.(var poly_type =~ poly (Type_scheme.create (var mono))))

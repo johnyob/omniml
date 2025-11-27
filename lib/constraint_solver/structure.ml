@@ -99,6 +99,8 @@ module Suspended_first_order (S : S) = struct
 
     and 'a handler =
       { run : 'a S.t -> unit
+      ; error : unit -> Omniml_error.t
+        (** [error ()] is used to construct the ambiguity error (if defaulting is disabled) *)
       ; default : unit -> unit (** [default ()] is used to fill the variable (or fail) *)
       }
     [@@deriving sexp_of]

@@ -8,6 +8,12 @@ exception T of t
 
 val raise : t -> 'a
 
+(** [both t1 t2] combines two errors into one *)
+val both : t -> t -> t
+
+(** [all ts] combines all errors in [ts] into one *)
+val all : t list -> t
+
 include Pretty_printer.S with type t := t
 
 (** [handle_uncaught ~exit f] catches [T err] escaping [f] and prints the error
@@ -75,6 +81,9 @@ val polytype_mismatched_type
   :  range:Range.t
   -> type_head:[ `Tuple | `Arrow | `Constr ]
   -> t
+
+val ambiguous_tuple : range:Range.t -> t
+val ambiguous_polytype : range:Range.t -> t
 
 module For_testing : sig
   val use_expect_test_config : unit -> unit

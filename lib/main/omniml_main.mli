@@ -1,4 +1,5 @@
 open Grace
+module Options = Omniml_options
 
 (** [lex_and_print lexbuf] reads the tokens in [lexbuf] and prints them.
     Any errors are additionally printed. *)
@@ -32,4 +33,5 @@ val type_check_and_print
   -> dump_ast:bool
   -> dump_constraint:bool
   -> with_stdlib:bool
+  -> defaulting:Options.Defaulting.t
   -> unit

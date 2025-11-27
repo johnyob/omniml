@@ -614,6 +614,10 @@ module Generalization_tree : sig
   (** [num_partially_generalized_regions t] returns the number of regions that are partially
       generalized. This is used to detect cycles in the generalization tree. *)
   val num_partially_generalized_regions : t -> int
+
+  (** [collect_svar_errors t] returns a list of errors obtained by shape variables 
+      in the partially generalized regions. *)
+  val collect_svar_errors : t -> Omniml_error.t list
 end = struct
   type t =
     { entered_map :
@@ -621,7 +625,7 @@ end = struct
           , (Identifier.t, Type.sexp_identifier_region_node) Hashtbl.t )
           Hashtbl.t
       (** Maps node identifiers to immediate entered descendants *)
-    ; mutable num_partially_generalized_regions : int
+    ; partially_generalized_regions : (Identifier.t, Type.region_node) Hashtbl.t
       (** Tracks the partially generalized regions. If there are remaining
           partially generalized regions after generalizing the root region, it implies
           there exists suspended matches that were never scheduled (e.g. a cycle between matches). *)
@@ -629,21 +633,36 @@ end = struct
     }
   [@@deriving sexp_of]
 
-  let incr_partially_generalized_regions t =
-    t.num_partially_generalized_regions <- t.num_partially_generalized_regions + 1
+  let incr_partially_generalized_regions t (rn : Type.region_node) =
+    Hashtbl.set t.partially_generalized_regions ~key:rn.id ~data:rn
   ;;
 
-  let decr_partially_generalized_regions t =
-    t.num_partially_generalized_regions <- t.num_partially_generalized_regions - 1
+  let decr_partially_generalized_regions t (rn : Type.region_node) =
+    Hashtbl.remove t.partially_generalized_regions rn.id
   ;;
 
-  let num_partially_generalized_regions t = t.num_partially_generalized_regions
+  let num_partially_generalized_regions t = Hashtbl.length t.partially_generalized_regions
+
+  let collect_svar_errors t =
+    (* TODO: refactor SCC and this collection method into a single abstraction *)
+    Hashtbl.fold
+      t.partially_generalized_regions
+      ~init:[]
+      ~f:(fun ~key:_ ~data:region_node acc ->
+        let types = (Region.Tree.region region_node).types in
+        List.fold types ~init:acc ~f:(fun acc type_ ->
+          match Type.inner type_ with
+          | Var (Empty_one_or_more_handlers handlers) ->
+            acc @ List.map handlers ~f:(fun handler -> handler.error ())
+          | _ -> acc))
+  ;;
 
   let create ~(root : Type.region_node) =
     (* Initialize the root region + visit it *)
     let entered_map = Hashtbl.create (module Identifier) in
+    let partially_generalized_regions = Hashtbl.create (module Identifier) in
     Hashtbl.set entered_map ~key:root.id ~data:(Hashtbl.create (module Identifier));
-    { entered_map; num_partially_generalized_regions = 0; root }
+    { entered_map; partially_generalized_regions; root }
   ;;
 
   let is_empty t = Hashtbl.is_empty t.entered_map
@@ -727,11 +746,11 @@ end = struct
         (match bft_region_status, aft_region_status with
          | Not_generalized, Partially_generalized ->
            [%log.global.debug "Was a un-generalized region, now is partially generalized"];
-           incr_partially_generalized_regions t
+           incr_partially_generalized_regions t rn
          | Partially_generalized, Fully_generalized ->
            [%log.global.debug
              "Was an partially generalized region, now is fully generalized"];
-           decr_partially_generalized_regions t
+           decr_partially_generalized_regions t rn
          | Partially_generalized, Partially_generalized
          | Not_generalized, Fully_generalized -> ()
          | _, Not_generalized | Fully_generalized, _ ->
@@ -801,12 +820,13 @@ end
 module State = struct
   type t =
     { id_source : (Identifier.source[@sexp.opaque])
+    ; defaulting : Omniml_options.Defaulting.t
     ; generalization_tree : Generalization_tree.t
     ; scheduler : Scheduler.t
     }
   [@@deriving sexp_of]
 
-  let create_with_root_region () =
+  let create_with_root_region ~defaulting =
     let id_source = Identifier.create_source () in
     let rn =
       Tree.create
@@ -819,7 +839,7 @@ module State = struct
       |> Tree.root
     in
     let generalization_tree = Generalization_tree.create ~root:rn in
-    { id_source; generalization_tree; scheduler = Scheduler.create () }, rn
+    { id_source; generalization_tree; defaulting; scheduler = Scheduler.create () }, rn
   ;;
 end
 
@@ -846,79 +866,115 @@ module Young_region = struct
   ;;
 end
 
-module Guard_graph : sig
-  type t
+open State
 
-  val create : level:Tree.Level.t -> roots_and_guarded_partial_generics:Type.t list -> t
+module Scc_defaulting = struct
+  module Guard_graph : sig
+    type t
 
-  (** [never_realized t] returns a list of lists of types where each type is never realized.
+    val create : level:Tree.Level.t -> roots_and_guarded_partial_generics:Type.t list -> t
+
+    (** [never_realized t] returns a list of lists of types where each type is never realized.
 
       A type is realized if it is unified with a concrete (non-variable) structure. A type is
       known to never be realized if it is in a cycle of the guard graph and an old variable is not
       reachable. *)
-  val never_realized : t -> Type.t list list
-end = struct
-  (* When generalizing the young region, we construct a guard graph of the young
+    val never_realized : t -> Type.t list list
+  end = struct
+    (* When generalizing the young region, we construct a guard graph of the young
      region (and its children). Intuitively, this graph is a subgraph of the
      (implicit) global guard graph.
 
      This guard graph is used to compute the strongly connected components. *)
 
-  module G = struct
-    type t =
-      { nodes : Type.t list
-      ; young_level : Tree.Level.t
-      }
-    [@@deriving sexp_of]
+    module G = struct
+      type t =
+        { nodes : Type.t list
+        ; young_level : Tree.Level.t
+        }
+      [@@deriving sexp_of]
 
-    module Node = struct
-      type t = Type.t [@@deriving sexp_of]
+      module Node = struct
+        type t = Type.t [@@deriving sexp_of]
 
-      (* Hash the types using the identifier *)
-      let hash_fold_t state t = Identifier.hash_fold_t state (Type.id t)
-      let hash = Hash.of_fold hash_fold_t
-      let compare = Comparable.lift Identifier.compare ~f:Type.id
+        (* Hash the types using the identifier *)
+        let hash_fold_t state t = Identifier.hash_fold_t state (Type.id t)
+        let hash = Hash.of_fold hash_fold_t
+        let compare = Comparable.lift Identifier.compare ~f:Type.id
+      end
+
+      let iter_nodes t ~f = List.iter t.nodes ~f
+
+      let iter_succ t node ~f =
+        match Type.level node with
+        | None ->
+          (* The type is generic, it must be a root! *)
+          ()
+        | Some level ->
+          if Tree.Level.(level < t.young_level)
+          then
+            (* Old nodes are considered root nodes *)
+            ()
+          else
+            Guard.Map.Match.iter (Type.guards node) ~f:(fun ~key:_ ~data:succ -> f succ)
+      ;;
     end
 
-    let iter_nodes t ~f = List.iter t.nodes ~f
+    include G
+    include Scc.Make (G)
 
-    let iter_succ t node ~f =
-      match Type.level node with
-      | None ->
-        (* The type is generic, it must be a root! *)
-        ()
-      | Some level ->
-        if Tree.Level.(level < t.young_level)
-        then
-          (* Old nodes are considered root nodes *)
-          ()
-        else Guard.Map.Match.iter (Type.guards node) ~f:(fun ~key:_ ~data:succ -> f succ)
+    let create ~level ~roots_and_guarded_partial_generics =
+      { nodes = roots_and_guarded_partial_generics; young_level = level }
+    ;;
+
+    let never_realized t =
+      let scc_roots = scc_leafs t in
+      List.filter scc_roots ~f:(function
+        | [ node ] ->
+          (* We want to filter out any old nodes. Old nodes will always be in
+           leaf SCCs of length 1 *)
+          (match Type.level node with
+           | None ->
+             (* This is a generic leaf SCC -- it is never realized. Keep it *)
+             true
+           | Some level -> not Tree.Level.(level < t.young_level))
+        | _ -> true)
     ;;
   end
 
-  include G
-  include Scc.Make (G)
-
-  let create ~level ~roots_and_guarded_partial_generics =
-    { nodes = roots_and_guarded_partial_generics; young_level = level }
-  ;;
-
-  let never_realized t =
-    let scc_roots = scc_leafs t in
-    List.filter scc_roots ~f:(function
-      | [ node ] ->
-        (* We want to filter out any old nodes. Old nodes will always be in
-           leaf SCCs of length 1 *)
-        (match Type.level node with
-         | None ->
-           (* This is a generic leaf SCC -- it is never realized. Keep it *)
-           true
-         | Some level -> not Tree.Level.(level < t.young_level))
-      | _ -> true)
+  let strategy ~state ~young_level generics =
+    let roots_and_guarded_partial_generics =
+      List.filter generics ~f:(fun type_ ->
+        let structure = Type.structure type_ in
+        match structure.status, structure.inner with
+        | _, Var (Empty_one_or_more_handlers _) ->
+          (* Must contain handlers *)
+          true
+        | Partial _, _ ->
+          (* Or be guarded by a match handler *)
+          not (Guard.Map.Match.is_empty structure.guards)
+        | _ -> false)
+    in
+    [%log.global.debug
+      "Roots and guarded partial generics"
+        (roots_and_guarded_partial_generics : Type.t list)];
+    let guard_graph =
+      Guard_graph.create ~level:young_level ~roots_and_guarded_partial_generics
+    in
+    let never_realized_types = Guard_graph.never_realized guard_graph in
+    [%log.global.debug
+      "Never realized types"
+        (never_realized_types : Type.t list list)
+        (List.length never_realized_types : int)];
+    List.iter never_realized_types ~f:(fun cycle ->
+      List.iter cycle ~f:(fun type_ ->
+        match Type.inner type_ with
+        | Var (Empty_one_or_more_handlers handlers) ->
+          List.iter handlers ~f:(fun handler ->
+            Scheduler.schedule state.scheduler handler.default)
+        | _ -> assert false))
   ;;
 end
-
-open State
 
 let visit_region ~state rn = Generalization_tree.visit_region state.generalization_tree rn
 
@@ -1168,7 +1224,6 @@ let generalize_young_region ~state (young_region : Young_region.t) =
     match young_region.region.status with
     | Fully_generalized -> false
     | _ -> true);
-  let young_level = young_region.node.level in
   (* Generalize the region *)
   let propagate_work_list = Queue.create () in
   let generics =
@@ -1261,37 +1316,10 @@ let generalize_young_region ~state (young_region : Young_region.t) =
           (instance : Type.t)];
       Type.remove_guard instance (Instance instance_id)));
   [%log.global.debug "Changes" (generics : Type.t list)];
-  (* Schedule default handlers *)
-  let roots_and_guarded_partial_generics =
-    List.filter generics ~f:(fun type_ ->
-      let structure = Type.structure type_ in
-      match structure.status, structure.inner with
-      | _, Var (Empty_one_or_more_handlers _) ->
-        (* Must contain handlers *)
-        true
-      | Partial _, _ ->
-        (* Or be guarded by a match handler *)
-        not (Guard.Map.Match.is_empty structure.guards)
-      | _ -> false)
-  in
-  [%log.global.debug
-    "Roots and guarded partial generics"
-      (roots_and_guarded_partial_generics : Type.t list)];
-  let guard_graph =
-    Guard_graph.create ~level:young_level ~roots_and_guarded_partial_generics
-  in
-  let never_realized_types = Guard_graph.never_realized guard_graph in
-  [%log.global.debug
-    "Never realized types"
-      (never_realized_types : Type.t list list)
-      (List.length never_realized_types : int)];
-  List.iter never_realized_types ~f:(fun cycle ->
-    List.iter cycle ~f:(fun type_ ->
-      match Type.inner type_ with
-      | Var (Empty_one_or_more_handlers handlers) ->
-        List.iter handlers ~f:(fun handler ->
-          Scheduler.schedule state.scheduler handler.default)
-      | _ -> assert false));
+  (* Handle defaulting (if enabled) *)
+  (match state.defaulting with
+   | Disabled -> ()
+   | Scc -> Scc_defaulting.strategy ~state ~young_level:young_region.node.level generics);
   (* Update the region to only contain the remaining partial generics *)
   let partial_generics, generics =
     List.partition_tf generics ~f:(fun type_ ->
@@ -1370,6 +1398,7 @@ module Suspended_match = struct
     ; shape_matchee : Type.t
     ; closure : closure
     ; case : curr_region:Type.region_node -> Type.t R.t -> unit
+    ; error : unit -> Omniml_error.t
     ; else_ : curr_region:Type.region_node -> unit
     }
   [@@deriving sexp_of]
@@ -1402,7 +1431,11 @@ module Suspended_match = struct
       Scheme.iter_instances_and_partial_generics scheme ~f:visit_and_remove_guard)
   ;;
 
-  let match_or_yield ~state ~curr_region { matchee; shape_matchee; case; closure; else_ } =
+  let match_or_yield
+        ~state
+        ~curr_region
+        { matchee; shape_matchee; case; error; closure; else_ }
+    =
     match Type.inner shape_matchee with
     | Var _ ->
       let guard = Guard.Match (Match_identifier.create state.id_source) in
@@ -1424,6 +1457,7 @@ module Suspended_match = struct
               [%log.global.debug
                 "Generalization tree after solving case"
                   (state.generalization_tree : Generalization_tree.t)])
+        ; error
         ; default =
             (fun () ->
               let curr_region = curr_region_of_closure () in

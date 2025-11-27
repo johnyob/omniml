@@ -1,0 +1,6 @@
+(library
+ (name omniml_options)
+ (public_name omniml.options)
+ (libraries core)
+ (preprocess
+  (pps ppx_jane)))

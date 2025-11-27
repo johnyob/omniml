@@ -11,6 +11,7 @@ let type_check_and_print
       ?(dump_ast = false)
       ?(dump_constraint = false)
       ?(with_stdlib = true)
+      ?(defaulting = Options.Defaulting.default)
       ?(log_level = `Info)
       str
   =
@@ -21,6 +22,7 @@ let type_check_and_print
     ~dump_ast
     ~dump_constraint
     ~with_stdlib
+    ~defaulting
     (Lexing.from_string ~with_positions:true str)
 ;;
 

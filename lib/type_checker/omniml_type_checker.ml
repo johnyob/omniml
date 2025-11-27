@@ -19,8 +19,8 @@ let infer_str ?with_stdlib str =
   stdlib_wrapper ?with_stdlib @@ fun env -> Infer.Structure.infer_str ~env str
 ;;
 
-let check cst =
-  match Omniml_constraint_solver.solve cst with
+let check ?defaulting cst =
+  match Omniml_constraint_solver.(solve ?defaulting cst) with
   | Ok () -> ()
   | Error { range; it } ->
     let get_range range =
@@ -36,6 +36,7 @@ let check cst =
     in
     (match it with
      | Unsatisfiable err -> Omniml_error.raise err
+     | Cannot_discharge_match_constraints errs -> Omniml_error.(raise @@ all errs)
      | Unbound_type_var type_var ->
        Omniml_error.(
          raise
