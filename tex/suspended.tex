@@ -349,7 +349,7 @@ field usage:
 \begin{program}[input,checkocaml]
 let one = { x = 42; y = 1337 }                           °\ocamlflags 00°
 let ex_1 r = r.x                                         °\ocamlflags 21°
-let ex_2 (r : point) = r.x + r.y                         °\ocamlflags 10°
+let ex_2 (r : point) = r.x + r.y                         °\ocamlflags 00°
 let ex_3 r = (r.x, (r : point).y)                        °\ocamlflags 10°
 \end{program}
 %
