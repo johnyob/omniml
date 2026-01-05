@@ -37,11 +37,10 @@ If $\alpha$ is never unified, constraint is **false**.
 
 {pause up}
 # Example: `bnot`
-<div class="vspace-lg"></div>
+<div class="vspace-md"></div>
 
 
 {pause}
-<div class="vspace-lg"></div>
 
 {.two-grid-left}
 > ```math
@@ -98,21 +97,41 @@ If $\alpha$ is never unified, constraint is **false**.
 > {\color{royalblue}{\beta = \textsf{bool}}} \wedge {\color{fuchsia}\gamma = \textsf{bval}}
 > \wedge {\color{#ff7b72}{\gamma = \delta = \alpha}} = {\color{greenyellow}\textsf{bval}}
 > ```
+> {pause}
+> ```math
+> \longrightarrow
+> ```
+>
+> ```math
+> {\color{royalblue}{\beta = \textsf{bool}}}
+> \wedge {\color{#ff7b72}{\gamma = \delta = \alpha}} = {\color{greenyellow}\textsf{bval}}
+> ```
+
 
 
 <div class="vspace-lg"></div>
 
 {pause up}
-# The Troubles of `let` 
-
+# A Recap: `let`
 
 <div class="vspace-lg"></div>
 
+{pause}
+Let bindings *generalize* types into polymorphic ones
+
+
+<div class="vspace-md"></div>
+
+{#recap-let-id pause}
 ```ocaml
 let id = fun x -> x
 ```
 
-{pause}
+{pause exec}
+```slip-script
+let el = document.querySelector("#recap-let-id")
+slip.setClass(el, "does-compile", true)
+```
 
 {.no-background}
 ```ocaml
@@ -122,14 +141,37 @@ val id : 'a -> 'a
 {pause}
 
 
+<div class="vspace-lg"></div>
+
+Function bindings are monomorphic
+
+{pause}
+
 <div class="vspace-md"></div>
 
-{.does-not-compile}
+{#recap-fun-mono}
 ```ocaml
 (fun id -> id 1, id true) (fun x -> x)
 ```
 
-{pause}
+{pause exec}
+```slip-script
+let el = document.querySelector("#recap-fun-mono")
+slip.setClass(el, "does-not-compile", true)
+```
+
+<pre>
+| (fun id -> id 1, id true) (fun x -> x)
+                      ^^^^
+
+Error: This expression has type bool 
+       but an expression was expected of type int
+</pre>
+
+
+{pause up}
+# The Troubles of `let`
+
 
 <div class="vspace-lg"></div>
 
@@ -212,7 +254,7 @@ At the point of generalization:
      and all instances of $\beta$ to be $\gamma$
 
 {pause up}
-# Partial generalization
+# Partial Generalization
 
 {pause}
 <div class="vspace-lg"></div>

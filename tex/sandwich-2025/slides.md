@@ -38,16 +38,17 @@
   </figure>
 </div>
 
-### _Sandwich Seminar, 2025_
+### _Cambium Seminar, 2025_
 
 {pause up}
 # Omnidirectionality Provides
 
 {pause}
 
-*Principal* type inference for *fragile* features
+{#omni-provides-ans}
+## *Principal* type inference for *fragile* features
 
-{pause}
+{pause up=omni-provides-ans}
 
 - **Type inference**: Given a (mostly) unannotated program $e$, compute a type $\tau$ such that $e : \tau$
 
@@ -193,7 +194,7 @@ val getx : 'a gpoint -> 'a
 - *Static overloading of record fields and datatype constructors*
   ```ocaml
   let getx p = p.x
-  (*       ^ Infer `point` or `gray_point`?                             *)
+  (*       ^ Infer `point` or `gpoint`?                                *)
   ```
   Since: 4.01 (2013)
 
@@ -405,7 +406,7 @@ Omnidirectionality provides principal inference any way, {pause} sanity not guar
 
 <div class="vspace-lg"></div>
 
-Preprint: [https://www.ajo41.dev/papers/suspended-final.pdf](https://www.ajo41.dev/papers/suspended-final.pdf)
+Preprint: [https://arxiv.org/abs/2004.00396](https://arxiv.org/abs/2004.00396)
 
 - Principal and declarative specification for many other features 
 

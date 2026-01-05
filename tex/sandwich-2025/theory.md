@@ -41,8 +41,8 @@ Fragile (*implicit*) terms $e.\ell$ and robust (*annotated*) terms $e.(\ell \tex
 - *Fragile*
   ```math
   \frac
-    {\Gamma \vdash e : \bar\tau_1 \; T \quad \ell \textsf{ of } T \leq \bar \tau_1 \; T \to \tau_2}
-    {\Gamma \vdash e.\ell : \tau_2}
+    {\Gamma \vdash e.(\ell \textsf{ of } T) : \tau}
+    {\Gamma \vdash e.\ell : \tau}
   ```
 
   {pause}
@@ -69,19 +69,32 @@ Fragile (*implicit*) terms $e.\ell$ and robust (*annotated*) terms $e.(\ell \tex
 ```
 let getx (p : point) = (* hole *)
 ```
+
 {pause}
 
 <div class="vspace-md"></div>
 
-```
-(fun p -> (* hole *)) @@ ({ x = 42; y = 1337 } : point)
-```
-
-{pause}
 `p`'s type is *known* to be `point`
 
 
+{#ctxt-rules-second-example pause}
+
+<div class="vspace-lg"></div>
+
+
+```
+(fun p -> (* hole *)) @@ ({ x = 42; y = 1337 } : point)
+```
 {pause}
+
+<div class="vspace-md"></div>
+
+`p`'s type is also *known* to be `point`!
+
+
+{pause up=ctxt-rules-second-example}
+<div class="vspace-lg"></div>
+
 <div class="vspace-lg"></div>
 
 <style>
@@ -139,7 +152,10 @@ We call $\mathscr{E}[e \triangleright T]$ a *unicity* condition
 {.unicity-anim}
 > {#unicity-anim-mathblock}
 > ```math
-> \class{reveal-2}{\mathscr{E}[}e \triangleright T\class{reveal-2}{]} \quad\triangleq\quad \forall \; \Gamma, \tau_{\text{ground}}, \tau. \quad \Gamma \vdash \class{reveal-3}{\color{fuchsia}\lfloor}\class{reveal-2}{\mathscr{E}[\{\square \textsf{ with }} (e : \tau_{\text{ground}})\class{reveal-2}{\}]} \class{reveal-3}{\color{fuchsia}\rfloor} : \tau \implies \tau_{\text{ground}} = \_ \; T
+> \begin{array}{rcl}
+> \class{reveal-2}{\mathscr{E}[}e \triangleright T\class{reveal-2}{]} &\quad\triangleq\quad& \forall \; \Gamma, \tau_{\text{ground}}, \tau. \\ 
+> && \qquad \Gamma \vdash \class{reveal-3}{\color{fuchsia}\lfloor}\class{reveal-2}{\mathscr{E}[\{\square \textsf{ with }} (e : \tau_{\text{ground}})\class{reveal-2}{\}]} \class{reveal-3}{\color{fuchsia}\rfloor} : \tau \implies \tau_{\text{ground}} = \_ \; T
+> \end{array}
 > ```
 
 

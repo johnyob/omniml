@@ -916,7 +916,7 @@ code.hljs ::selection {
 .two-grid-left {
   display: grid;
   grid-template-columns: auto auto;
-  gap: 3em;
+  gap: 2.5em;
   align-items: start;
   justify-content: start;
 }
@@ -2208,11 +2208,11 @@ relevance:0},{begin:/-&gt;/}]})})();hljs.registerLanguage(&quot;ocaml&quot;,e)})
     &lt;/figcaption&gt;
   &lt;/figure&gt;
 &lt;/div&gt;
-&lt;h3 id=&quot;sandwich-seminar-2025&quot;&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#sandwich-seminar-2025&quot;&gt;&lt;/a&gt;&lt;em&gt;&lt;span&gt;Sandwich Seminar, 2025&lt;/span&gt;&lt;/em&gt;&lt;/h3&gt;
+&lt;h3 id=&quot;cambium-seminar-2025&quot;&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#cambium-seminar-2025&quot;&gt;&lt;/a&gt;&lt;em&gt;&lt;span&gt;Cambium Seminar, 2025&lt;/span&gt;&lt;/em&gt;&lt;/h3&gt;
 &lt;h1 id=&quot;omnidirectionality-provides&quot; up-at-unpause pause&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#omnidirectionality-provides&quot;&gt;&lt;/a&gt;&lt;span&gt;Omnidirectionality Provides&lt;/span&gt;&lt;/h1&gt;
 &lt;div pause&gt;&lt;/div&gt;
-&lt;p&gt;&lt;em&gt;&lt;span&gt;Principal&lt;/span&gt;&lt;/em&gt;&lt;span&gt; type inference for &lt;/span&gt;&lt;em&gt;&lt;span&gt;fragile&lt;/span&gt;&lt;/em&gt;&lt;span&gt; features&lt;/span&gt;&lt;/p&gt;
-&lt;div pause&gt;&lt;/div&gt;
+&lt;h2 id=&quot;omni-provides-ans&quot;&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#omni-provides-ans&quot;&gt;&lt;/a&gt;&lt;em&gt;&lt;span&gt;Principal&lt;/span&gt;&lt;/em&gt;&lt;span&gt; type inference for &lt;/span&gt;&lt;em&gt;&lt;span&gt;fragile&lt;/span&gt;&lt;/em&gt;&lt;span&gt; features&lt;/span&gt;&lt;/h2&gt;
+&lt;div up-at-unpause=omni-provides-ans pause&gt;&lt;/div&gt;
 &lt;ul&gt;
 &lt;li&gt;
 &lt;p&gt;&lt;strong&gt;&lt;span&gt;Type inference&lt;/span&gt;&lt;/strong&gt;&lt;span&gt;: Given a (mostly) unannotated program &lt;/span&gt;\(e\)&lt;span&gt;, compute a type &lt;/span&gt;\(\tau\)&lt;span&gt; such that &lt;/span&gt;\(e : \tau\)&lt;/p&gt;
@@ -2313,7 +2313,7 @@ let conv (type a b) (w : (a, b) eq) (x : a) =
 &lt;ul&gt;
 &lt;li&gt;&lt;em&gt;&lt;span&gt;Static overloading of record fields and datatype constructors&lt;/span&gt;&lt;/em&gt;
 &lt;pre&gt;&lt;code class=&quot;language-ocaml&quot;&gt;let getx p = p.x
-(*       ^ Infer `point` or `gray_point`?                             *)
+(*       ^ Infer `point` or `gpoint`?                                *)
 &lt;/code&gt;&lt;/pre&gt;
 &lt;span&gt;Since: 4.01 (2013)&lt;/span&gt;&lt;/li&gt;
 &lt;/ul&gt;
@@ -2489,10 +2489,8 @@ let bnot b = if b then False else (True : bval)
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;p&gt;&lt;span&gt;If &lt;/span&gt;\(\alpha\)&lt;span&gt; is never unified, constraint is &lt;/span&gt;&lt;strong&gt;&lt;span&gt;false&lt;/span&gt;&lt;/strong&gt;&lt;span&gt;.&lt;/span&gt;&lt;/p&gt;
 &lt;h1 id=&quot;example-bnot&quot; up-at-unpause pause&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#example-bnot&quot;&gt;&lt;/a&gt;&lt;span&gt;Example: &lt;/span&gt;&lt;code&gt;bnot&lt;/code&gt;&lt;/h1&gt;
-&lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
-&lt;div pause&gt;
-&lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
-&lt;/div&gt;
+&lt;div class=&quot;vspace-md&quot;&gt;&lt;/div&gt;
+&lt;div pause&gt;&lt;/div&gt;
 &lt;div class=&quot;two-grid-left&quot;&gt;
 \[
 \]
@@ -2541,20 +2539,46 @@ let bnot b = if b then False else (True : bval)
 {\color{royalblue}{\beta = \textsf{bool}}} \wedge {\color{fuchsia}\gamma = \textsf{bval}}
 \wedge {\color{#ff7b72}{\gamma = \delta = \alpha}} = {\color{greenyellow}\textsf{bval}}
 \]
+&lt;div pause&gt;
+\[
+\longrightarrow
+\]
+&lt;/div&gt;
+\[
+{\color{royalblue}{\beta = \textsf{bool}}}
+\wedge {\color{#ff7b72}{\gamma = \delta = \alpha}} = {\color{greenyellow}\textsf{bval}}
+\]
 &lt;/div&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
-&lt;h1 id=&quot;the-troubles-of-let&quot; up-at-unpause pause&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#the-troubles-of-let&quot;&gt;&lt;/a&gt;&lt;span&gt;The Troubles of &lt;/span&gt;&lt;code&gt;let&lt;/code&gt;&lt;/h1&gt;
+&lt;h1 id=&quot;a-recap-let&quot; up-at-unpause pause&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#a-recap-let&quot;&gt;&lt;/a&gt;&lt;span&gt;A Recap: &lt;/span&gt;&lt;code&gt;let&lt;/code&gt;&lt;/h1&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
-&lt;pre&gt;&lt;code class=&quot;language-ocaml&quot;&gt;let id = fun x -&amp;gt; x
+&lt;p pause&gt;&lt;span&gt;Let bindings &lt;/span&gt;&lt;em&gt;&lt;span&gt;generalize&lt;/span&gt;&lt;/em&gt;&lt;span&gt; types into polymorphic ones&lt;/span&gt;&lt;/p&gt;
+&lt;div class=&quot;vspace-md&quot;&gt;&lt;/div&gt;
+&lt;pre id=&quot;recap-let-id&quot; pause&gt;&lt;code class=&quot;language-ocaml&quot;&gt;let id = fun x -&amp;gt; x
 &lt;/code&gt;&lt;/pre&gt;
-&lt;div pause&gt;&lt;/div&gt;
+&lt;script type=slip-script exec-at-unpause pause&gt;
+let el = document.querySelector(&quot;#recap-let-id&quot;)
+slip.setClass(el, &quot;does-compile&quot;, true)&lt;/script&gt;
 &lt;pre class=&quot;no-background&quot;&gt;&lt;code class=&quot;language-ocaml&quot;&gt;val id : 'a -&amp;gt; 'a
 &lt;/code&gt;&lt;/pre&gt;
 &lt;div pause&gt;&lt;/div&gt;
-&lt;div class=&quot;vspace-md&quot;&gt;&lt;/div&gt;
-&lt;pre class=&quot;does-not-compile&quot;&gt;&lt;code class=&quot;language-ocaml&quot;&gt;(fun id -&amp;gt; id 1, id true) (fun x -&amp;gt; x)
-&lt;/code&gt;&lt;/pre&gt;
+&lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
+&lt;p&gt;&lt;span&gt;Function bindings are monomorphic&lt;/span&gt;&lt;/p&gt;
 &lt;div pause&gt;&lt;/div&gt;
+&lt;div class=&quot;vspace-md&quot;&gt;&lt;/div&gt;
+&lt;pre id=&quot;recap-fun-mono&quot;&gt;&lt;code class=&quot;language-ocaml&quot;&gt;(fun id -&amp;gt; id 1, id true) (fun x -&amp;gt; x)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;script type=slip-script exec-at-unpause pause&gt;
+let el = document.querySelector(&quot;#recap-fun-mono&quot;)
+slip.setClass(el, &quot;does-not-compile&quot;, true)&lt;/script&gt;
+&lt;pre&gt;
+| (fun id -&gt; id 1, id true) (fun x -&gt; x)
+                      ^^^^
+
+Error: This expression has type bool 
+       but an expression was expected of type int
+&lt;/pre&gt;
+&lt;h1 id=&quot;the-troubles-of-let&quot; up-at-unpause pause&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#the-troubles-of-let&quot;&gt;&lt;/a&gt;&lt;span&gt;The Troubles of &lt;/span&gt;&lt;code&gt;let&lt;/code&gt;&lt;/h1&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 \[
 \frac
@@ -2634,7 +2658,7 @@ type 'a gpoint = { x : 'a; y : 'a }
 &lt;/li&gt;
 &lt;/ul&gt;
 &lt;/div&gt;
-&lt;h1 id=&quot;partial-generalization&quot; up-at-unpause pause&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#partial-generalization&quot;&gt;&lt;/a&gt;&lt;span&gt;Partial generalization&lt;/span&gt;&lt;/h1&gt;
+&lt;h1 id=&quot;partial-generalization&quot; up-at-unpause pause&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#partial-generalization&quot;&gt;&lt;/a&gt;&lt;span&gt;Partial Generalization&lt;/span&gt;&lt;/h1&gt;
 &lt;div pause&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;/div&gt;
@@ -2700,8 +2724,8 @@ Hard to implement correctly
 &lt;p&gt;&lt;em&gt;&lt;span&gt;Fragile&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;
 \[
 \frac
-  {\Gamma \vdash e : \bar\tau_1 \; T \quad \ell \textsf{ of } T \leq \bar \tau_1 \; T \to \tau_2}
-  {\Gamma \vdash e.\ell : \tau_2}
+  {\Gamma \vdash e.(\ell \textsf{ of } T) : \tau}
+  {\Gamma \vdash e.\ell : \tau}
 \]
 &lt;p pause&gt;&lt;span&gt;This rule is natural &amp;amp; declarative&lt;/span&gt;&lt;/p&gt;
 &lt;p pause&gt;&lt;span&gt;Breaks principality, &lt;/span&gt;&lt;strong&gt;&lt;span&gt;guessing&lt;/span&gt;&lt;/strong&gt;&lt;span&gt; the record type &lt;/span&gt;\(T\)&lt;/p&gt;
@@ -2721,12 +2745,18 @@ Hard to implement correctly
 &lt;/code&gt;&lt;/pre&gt;
 &lt;div pause&gt;&lt;/div&gt;
 &lt;div class=&quot;vspace-md&quot;&gt;&lt;/div&gt;
+&lt;p&gt;&lt;code&gt;p&lt;/code&gt;&lt;span&gt;'s type is &lt;/span&gt;&lt;em&gt;&lt;span&gt;known&lt;/span&gt;&lt;/em&gt;&lt;span&gt; to be &lt;/span&gt;&lt;code&gt;point&lt;/code&gt;&lt;/p&gt;
+&lt;div id=&quot;ctxt-rules-second-example&quot; pause&gt;&lt;/div&gt;
+&lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;pre&gt;&lt;code&gt;(fun p -&amp;gt; (* hole *)) @@ ({ x = 42; y = 1337 } : point)
 &lt;/code&gt;&lt;/pre&gt;
-&lt;p pause&gt;&lt;code&gt;p&lt;/code&gt;&lt;span&gt;'s type is &lt;/span&gt;&lt;em&gt;&lt;span&gt;known&lt;/span&gt;&lt;/em&gt;&lt;span&gt; to be &lt;/span&gt;&lt;code&gt;point&lt;/code&gt;&lt;/p&gt;
-&lt;div pause&gt;
+&lt;div pause&gt;&lt;/div&gt;
+&lt;div class=&quot;vspace-md&quot;&gt;&lt;/div&gt;
+&lt;p&gt;&lt;code&gt;p&lt;/code&gt;&lt;span&gt;'s type is also &lt;/span&gt;&lt;em&gt;&lt;span&gt;known&lt;/span&gt;&lt;/em&gt;&lt;span&gt; to be &lt;/span&gt;&lt;code&gt;point&lt;/code&gt;&lt;span&gt;!&lt;/span&gt;&lt;/p&gt;
+&lt;div up-at-unpause=ctxt-rules-second-example pause&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;/div&gt;
+&lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;style&gt;
 .ctxt-rules-anim mjx-container .reveal-2,
 .ctxt-rules-anim mjx-container .reveal-3 { visibility: hidden; }
@@ -2767,7 +2797,10 @@ slip.setClass(el, &quot;step-3&quot;, true)&lt;/script&gt;
 &lt;div class=&quot;unicity-anim&quot;&gt;
 &lt;div id=&quot;unicity-anim-mathblock&quot;&gt;
 \[
-\class{reveal-2}{\mathscr{E}[}e \triangleright T\class{reveal-2}{]} \quad\triangleq\quad \forall \; \Gamma, \tau_{\text{ground}}, \tau. \quad \Gamma \vdash \class{reveal-3}{\color{fuchsia}\lfloor}\class{reveal-2}{\mathscr{E}[\{\square \textsf{ with }} (e : \tau_{\text{ground}})\class{reveal-2}{\}]} \class{reveal-3}{\color{fuchsia}\rfloor} : \tau \implies \tau_{\text{ground}} = \_ \; T
+\begin{array}{rcl}
+\class{reveal-2}{\mathscr{E}[}e \triangleright T\class{reveal-2}{]} &amp;amp;\quad\triangleq\quad&amp;amp; \forall \; \Gamma, \tau_{\text{ground}}, \tau. \\ 
+&amp;amp;&amp;amp; \qquad \Gamma \vdash \class{reveal-3}{\color{fuchsia}\lfloor}\class{reveal-2}{\mathscr{E}[\{\square \textsf{ with }} (e : \tau_{\text{ground}})\class{reveal-2}{\}]} \class{reveal-3}{\color{fuchsia}\rfloor} : \tau \implies \tau_{\text{ground}} = \_ \; T
+\end{array}
 \]
 &lt;/div&gt;
 &lt;/div&gt;
@@ -2818,7 +2851,7 @@ slip.setClass(el, &quot;step-3&quot;, true)&lt;/script&gt;
 &lt;p&gt;&lt;span&gt;Omnidirectionality provides principal inference any way, &lt;/span&gt;&lt;span pause&gt;&lt;/span&gt;&lt;span&gt; sanity not guaranteed.&lt;/span&gt;&lt;/p&gt;
 &lt;div pause&gt;&lt;/div&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
-&lt;p&gt;&lt;span&gt;Preprint: &lt;/span&gt;&lt;a href=&quot;https://www.ajo41.dev/papers/suspended-final.pdf&quot;&gt;&lt;span&gt;https://www.ajo41.dev/papers/suspended-final.pdf&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;Preprint: &lt;/span&gt;&lt;a href=&quot;https://arxiv.org/abs/2004.00396&quot;&gt;&lt;span&gt;https://arxiv.org/abs/2004.00396&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;
 &lt;p&gt;&lt;span&gt;Principal and declarative specification for many other features&lt;/span&gt;&lt;/p&gt;

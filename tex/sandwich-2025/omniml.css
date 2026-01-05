@@ -603,7 +603,7 @@ code.hljs ::selection {
 .two-grid-left {
   display: grid;
   grid-template-columns: auto auto;
-  gap: 3em;
+  gap: 2.5em;
   align-items: start;
   justify-content: start;
 }
