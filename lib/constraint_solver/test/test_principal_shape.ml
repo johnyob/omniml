@@ -1,13 +1,11 @@
 open Core
-open Omniml_constraint
-module C = Constraint
-module Principal_shape = Omniml_constraint_solver.For_testing.Principal_shape
+open Omniml_constraint_solver.For_testing
 
 let%quick_test _ =
   fun (type_scheme :
-        (C.Type_scheme.t
-        [@generator C.Quickcheckable.Type_scheme.quickcheck_generator]
-        [@shrinker C.Quickcheckable.Type_scheme.quickcheck_shrinker])) ->
+        (Type.Scheme.t
+        [@generator Quickcheckable.Type.Scheme.quickcheck_generator]
+        [@shrinker Quickcheckable.Type.Scheme.quickcheck_shrinker])) ->
   let _, poly_shape = Principal_shape.poly_shape_decomposition_of_scheme type_scheme in
   Principal_shape.Poly.invariant poly_shape
 ;;

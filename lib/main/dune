@@ -6,7 +6,6 @@
   grace
   omniml.ast
   omniml.parser
-  omniml.constraint
   omniml.type_checker
   omniml.constraint_solver)
  (preprocess

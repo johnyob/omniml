@@ -13,7 +13,7 @@ type t =
   ; types : type_definition list Type_name.Map.t
     (** [types] is a map from (user-defined) type names to type definitions.
       Each definition has a unique [type_ident]. *)
-  ; type_vars : Constraint.Type.Var.t Type_var_name.Map.t
+  ; type_vars : Type.Var.t Type_var_name.Map.t
     (** [type_vars] is a renaming from (user-defined) type variables to
       constraint type variables (unique). *)
   ; vars : Constraint.Var.t Var_name.Map.t
@@ -87,10 +87,7 @@ let find_var t var = Map.find t.vars var
 
 let rename_type_var t ~type_var ~in_ =
   let ctype_var =
-    Constraint.Type.Var.create
-      ~id_source:t.id_source
-      ~name:(type_var : Type_var_name.t :> string)
-      ()
+    Type.Var.create ~id_source:t.id_source ~name:(type_var : Type_var_name.t :> string) ()
   in
   let t = { t with type_vars = Map.set t.type_vars ~key:type_var ~data:ctype_var } in
   in_ t ctype_var

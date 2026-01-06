@@ -1,6 +1,0 @@
-(library
- (name omniml_constraint)
- (public_name omniml.constraint)
- (libraries core omniml.std omniml.error grace base_quickcheck)
- (preprocess
-  (pps ppx_jane)))

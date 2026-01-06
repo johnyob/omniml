@@ -1,12 +1,106 @@
 open! Import
-module C = Constraint
+module Self = Types.Principal_shape
 
 (* TODO: Have optimized type for solver which includes a hash for poly_shapes. 
          This will provide a cheap equality function for unification. *)
 
-include C.Principal_shape
+module Poly = struct
+  type t = Self.Poly.t =
+    { quantifiers : Type.Var.t list
+    ; scheme : Type.Scheme.t
+    }
+  [@@deriving sexp, equal, compare, hash]
 
-let create_var ~id_source () = C.Type.Var.create ~id_source ~name:"Principal_shape.Var" ()
+  let create_unchecked ?(quantifiers = []) scheme = { quantifiers; scheme }
+
+  let invariant t =
+    Invariant.invariant [%here] t [%sexp_of: t] (fun () ->
+      let shape_quantifiers = Type.Var.Hash_set.of_list t.quantifiers in
+      let scheme_quantifiers = Type.Var.Hash_set.of_list t.scheme.quantifiers in
+      let num_quantifiers =
+        Hash_set.length shape_quantifiers + Hash_set.length scheme_quantifiers
+      in
+      (* Invariant: all quantifiers are canonical. They are named using [0, num_quantifiers).  *)
+      let check_canonical_names () =
+        let marks = Array.create ~len:num_quantifiers false in
+        let check_canonical_name (var : Type.Var.t) =
+          assert (String.(var.name = "Principal_shape.Var"));
+          let idx = (var.id :> int) in
+          assert (not marks.(idx));
+          marks.(idx) <- true
+        in
+        List.iter t.quantifiers ~f:check_canonical_name;
+        List.iter t.scheme.quantifiers ~f:check_canonical_name;
+        (* All variables are within [0, num_quantifiers). No duplicates *)
+        assert (Array.for_all marks ~f:Fun.id)
+      in
+      let check_scheme_body () =
+        let uses = Array.create ~len:num_quantifiers 0 in
+        let[@inline] mark_use (var : Type.Var.t) =
+          let idx = (var.id :> int) in
+          uses.(idx) <- uses.(idx) + 1
+        in
+        let[@inline] num_uses (var : Type.Var.t) = uses.((var.id :> int)) in
+        let[@inline] is_polyshape (shape : Self.t) =
+          match shape with
+          | Sh_arrow | Sh_tuple _ | Sh_constr _ -> false
+          | Sh_poly _ -> true
+        in
+        (* We rely on non-short-circuting operators (since marking uses is effectful) *)
+        let ( ||| ) a b = a || b in
+        let non_short_circuiting_exists xs ~f =
+          List.fold xs ~init:false ~f:(fun acc x -> acc ||| f x)
+        in
+        (* Traverses the type checking invariants. Returns [true] if it contains a polymorphic part. *)
+        let rec loop (type_ : Type.t) : bool =
+          match type_ with
+          | Var var ->
+            mark_use var;
+            Hash_set.mem scheme_quantifiers var
+          | Arrow (type1, type2) ->
+            (* Invariant: all constructors must contain a polymorphic subterm. *)
+            assert (loop type1 ||| loop type2);
+            true
+          | Tuple types | Constr (types, _) ->
+            (* Invariant: ditto. *)
+            assert (non_short_circuiting_exists types ~f:loop);
+            true
+          | Poly _ ->
+            (* Invariant: no occurrences of [Poly]. *)
+            assert false
+          | Shape (types, shape) ->
+            (* Invariant: all shapes applications must contain a polymorphic subterm. *)
+            assert (non_short_circuiting_exists types ~f:loop);
+            (* Invariant: all shapes must be polyshapes. *)
+            assert (is_polyshape shape);
+            true
+        in
+        (* Invariant: body is skeletal *)
+        ignore (loop t.scheme.body : bool);
+        (* Invariant: shape quantifiers are linear (i.e. used exactly once). *)
+        Hash_set.iter shape_quantifiers ~f:(fun var -> assert (num_uses var = 1));
+        (* Invariant: all scheme quantifiers are used at least once. *)
+        Hash_set.iter scheme_quantifiers ~f:(fun var -> assert (num_uses var >= 1))
+      in
+      check_canonical_names ();
+      check_scheme_body ())
+  ;;
+
+  let create ?quantifiers scheme =
+    let t = create_unchecked ?quantifiers scheme in
+    invariant t;
+    t
+  ;;
+end
+
+type t = Self.t =
+  | Sh_arrow
+  | Sh_tuple of int
+  | Sh_constr of int * Type.Ident.t
+  | Sh_poly of Poly.t
+[@@deriving sexp, equal, compare, hash]
+
+let create_var ~id_source () = Type.Var.create ~id_source ~name:"Principal_shape.Var" ()
 
 let quantifiers t =
   match t with
@@ -25,8 +119,6 @@ let quantifiers t =
 ;;
 
 module Poly_shape_decomposition = struct
-  open C
-
   module State = struct
     type t =
       { id_source : (Identifier.source[@sexp.opaque])
@@ -106,7 +198,7 @@ module Poly_shape_decomposition = struct
     ;;
   end
 
-  let of_applied_shape (shape : Principal_shape.t) types : Type.t =
+  let of_applied_shape (shape : Self.t) types : Type.t =
     (* All applied shapes are normalized (aside from polytypes) *)
     match shape with
     | Sh_tuple _ -> Tuple types
@@ -151,7 +243,7 @@ module Poly_shape_decomposition = struct
       Part.map_principal_parts (List.map ts ~f:self_with_original) ~state ~f:(fun ts ->
         Shape (ts, Sh_poly poly_shape))
 
-  and of_scheme ({ quantifiers; body } : Type_scheme.t) : Type.t list * Poly.t =
+  and of_scheme ({ quantifiers; body } : Type.Scheme.t) : Type.t list * Poly.t =
     let state = State.create (Type.Var.Set.of_list quantifiers) in
     let scheme_body =
       let result = of_scheme_body ~state body in
@@ -171,11 +263,11 @@ module Poly_shape_decomposition = struct
     , (* Safety should be guaranteed by construction *)
       (Poly.create_unchecked
          ~quantifiers:shape_quantifiers
-         (Type_scheme.create ~quantifiers:scheme_quantifiers scheme_body)
+         (Type.Scheme.create ~quantifiers:scheme_quantifiers scheme_body)
        [@alert "-unsafe"]) )
   ;;
 end
 
 let poly_shape_decomposition_of_scheme = Poly_shape_decomposition.of_scheme
 
-include Comparable.Make (Constraint.Principal_shape)
+include Comparable.Make (Self)

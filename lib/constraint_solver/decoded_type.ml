@@ -1,5 +1,4 @@
 open! Import
-module C = Constraint
 module G = Generalization
 
 module Var = Var.Make (struct
@@ -22,7 +21,7 @@ module Pretter_printer = struct
     if suffix = 0 then char else char ^ Int.to_string suffix
   ;;
 
-  let[@inline] pp_ident ppf (ident : C.Type.Ident.t) =
+  let[@inline] pp_ident ppf (ident : Type.Ident.t) =
     Fmt.string ppf (String.split_on_chars ~on:[ '.' ] ident.name |> List.last_exn)
   ;;
 
@@ -53,22 +52,22 @@ module Pretter_printer = struct
   ;;
 
   module Constraint_type = struct
-    let[@inline] pp_var ppf (var : C.Type.Var.t) =
+    let[@inline] pp_var ppf (var : Type.Var.t) =
       let name = id_to_var_name var.id in
       Fmt.pf ppf "'%s" name
     ;;
 
-    let rec pp ppf (t : C.Type.t) =
-      let rec pp_lvl_arrow ppf (t : C.Type.t) =
+    let rec pp ppf (t : Type.t) =
+      let rec pp_lvl_arrow ppf (t : Type.t) =
         match t with
         | Arrow (t1, t2) | Shape ([ t1; t2 ], Sh_arrow) ->
           pp_arrow pp_lvl_tuple pp_lvl_arrow ppf (t1, t2)
         | t -> pp_lvl_tuple ppf t
-      and pp_lvl_tuple ppf (t : C.Type.t) =
+      and pp_lvl_tuple ppf (t : Type.t) =
         match t with
         | Tuple ts | Shape (ts, Sh_tuple _) -> pp_tuple pp_lvl_app ppf ts
         | t -> pp_lvl_app ppf t
-      and pp_lvl_app ppf (t : C.Type.t) =
+      and pp_lvl_app ppf (t : Type.t) =
         match t with
         | Constr (ts, constr) | Shape (ts, Sh_constr (_, constr)) ->
           pp_constr pp_lvl_args ppf (ts, constr)
@@ -99,7 +98,7 @@ module Pretter_printer = struct
           scheme
 
     and pp_scheme ppf scheme =
-      let { C.Type_scheme.quantifiers; body } = scheme in
+      let { Type.Scheme.quantifiers; body } = scheme in
       Fmt.pf ppf "@[<hov 2>%a.@ %a@]" Fmt.(list ~sep:comma pp_var) quantifiers pp body
     ;;
   end

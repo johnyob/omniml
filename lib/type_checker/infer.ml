@@ -91,7 +91,7 @@ module Convert = struct
       Type.constr arg_types type_ident
     | Type_poly scheme -> Type.poly (core_scheme_to_type_scheme ~env scheme)
 
-  and core_scheme_to_type_scheme ~env scheme : Type_scheme.t =
+  and core_scheme_to_type_scheme ~env scheme : Type.Scheme.t =
     let { scheme_quantifiers; scheme_body } = scheme.it in
     let env, scheme_quantifiers =
       List.fold_map scheme_quantifiers ~init:env ~f:(fun env type_var ->
@@ -99,7 +99,7 @@ module Convert = struct
           env, ctype_var))
     in
     let scheme_body = core_type_to_type ~env scheme_body in
-    Type_scheme.create ~quantifiers:scheme_quantifiers scheme_body
+    Type.Scheme.create ~quantifiers:scheme_quantifiers scheme_body
   ;;
 
   let rec type_expr ~env (type_ : Adt.type_expr) : Type.t =
@@ -125,13 +125,13 @@ module Convert = struct
       Type.constr arg_types constr
     | Type_poly scheme -> Type.poly (type_scheme_expr ~env scheme)
 
-  and type_scheme_expr ~env { scheme_quantifiers; scheme_body } : Type_scheme.t =
+  and type_scheme_expr ~env { scheme_quantifiers; scheme_body } : Type.Scheme.t =
     let env, scheme_quantifiers =
       List.fold_map scheme_quantifiers ~init:env ~f:(fun env type_var ->
         Env.rename_type_var env ~type_var ~in_:(fun env ctype_var -> env, ctype_var))
     in
     let scheme_body = type_expr ~env scheme_body in
-    Type_scheme.create ~quantifiers:scheme_quantifiers scheme_body
+    Type.Scheme.create ~quantifiers:scheme_quantifiers scheme_body
   ;;
 
   let core_scheme ~(env : Env.t) (scheme : Ast.core_scheme) : Type.Var.t list * Type.t =
@@ -698,7 +698,7 @@ module Expression = struct
            ~error:(fun () -> Omniml_error.ambiguous_polytype ~range:exp.range)
            ~else_:(fun () ->
              exists' ~id_source
-             @@ fun mono -> Type.(var exp_type =~ poly (Type_scheme.create (var mono))))
+             @@ fun mono -> Type.(var exp_type =~ poly (Type.Scheme.create (var mono))))
        | Some core_scheme ->
          let quantifiers, type_ = Convert.core_scheme ~env core_scheme in
          Type.(var exp_type =~ poly (Convert.core_scheme_to_type_scheme ~env core_scheme))
@@ -727,7 +727,7 @@ module Expression = struct
            ~error:(fun () -> Omniml_error.ambiguous_polytype ~range:exp.range)
            ~else_:(fun () ->
              exists' ~id_source
-             @@ fun mono -> Type.(var poly_type =~ poly (Type_scheme.create (var mono))))
+             @@ fun mono -> Type.(var poly_type =~ poly (Type.Scheme.create (var mono))))
 
   and infer_exps ~env exps k =
     match exps with

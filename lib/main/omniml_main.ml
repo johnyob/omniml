@@ -1,7 +1,7 @@
 open Core
 open Omniml_ast
 open Omniml_parser
-open Omniml_constraint
+module Constraint = Omniml_constraint_solver.Constraint
 module Options = Omniml_options
 
 let pp_structure ppf structure =

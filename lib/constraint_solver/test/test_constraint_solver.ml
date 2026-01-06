@@ -1,8 +1,7 @@
 open Core
 open Omniml_std
-open Omniml_constraint
-module C = Constraint
-module T = C.Type
+module C = Omniml_constraint_solver.Constraint
+module T = Omniml_constraint_solver.Type
 
 let () =
   let open Async.Log.Global in
@@ -24,13 +23,11 @@ let print_solve_result ?(log_level = `Info) ?defaulting cst =
   Async.Log.Global.set_level log_level;
   let result = Omniml_constraint_solver.solve ?defaulting cst in
   match result with
-  | Ok () -> print_s [%message "Constraint is satisfiable" (cst : Constraint.t)]
+  | Ok () -> print_s [%message "Constraint is satisfiable" (cst : C.t)]
   | Error err ->
     print_s
       [%message
-        "Constraint is unsatisfiable"
-          (cst : Constraint.t)
-          (err : Omniml_constraint_solver.Error.t)]
+        "Constraint is unsatisfiable" (cst : C.t) (err : Omniml_constraint_solver.Error.t)]
 ;;
 
 let predef_ident =
@@ -1002,8 +999,8 @@ let%expect_test "" =
     exists a1
     @@ T.(
          var a1
-         =~ poly (Type_scheme.create ~quantifiers:[ q2 ] (var q2))
-         &~ (var a1 =~ poly (Type_scheme.create ~quantifiers:[ q3 ] (var q3))))
+         =~ poly (T.Scheme.create ~quantifiers:[ q2 ] (var q2))
+         &~ (var a1 =~ poly (T.Scheme.create ~quantifiers:[ q3 ] (var q3))))
   in
   print_solve_result cst;
   [%expect
@@ -1035,8 +1032,8 @@ let%expect_test "" =
     exists a1
     @@ T.(
          var a1
-         =~ poly (Type_scheme.create ~quantifiers:[ q2 ] (var q2))
-         &~ (var a1 =~ poly (Type_scheme.create ~quantifiers:[ q3; q4 ] (var q3))))
+         =~ poly (T.Scheme.create ~quantifiers:[ q2 ] (var q2))
+         &~ (var a1 =~ poly (T.Scheme.create ~quantifiers:[ q3; q4 ] (var q3))))
   in
   print_solve_result cst;
   [%expect
@@ -1067,8 +1064,8 @@ let%expect_test "" =
     exists a1
     @@ T.(
          var a1
-         =~ poly (Type_scheme.create ~quantifiers:[ q1 ] (var q1))
-         &~ (var a1 =~ poly (Type_scheme.create ~quantifiers:[ q2 ] (var q2 @-> var q2))))
+         =~ poly (T.Scheme.create ~quantifiers:[ q1 ] (var q1))
+         &~ (var a1 =~ poly (T.Scheme.create ~quantifiers:[ q2 ] (var q2 @-> var q2))))
   in
   print_solve_result cst;
   [%expect
@@ -1119,18 +1116,14 @@ let%expect_test "" =
   let q3 = T.Var.create ~id_source () in
   let q4 = T.Var.create ~id_source () in
   let poly1 =
-    Type_scheme.create
+    T.Scheme.create
       ~quantifiers:[ q1 ]
-      T.(
-        tuple
-          [ var q1; poly (Type_scheme.create ~quantifiers:[ q2 ] (var q1 @-> var q2)) ])
+      T.(tuple [ var q1; poly (T.Scheme.create ~quantifiers:[ q2 ] (var q1 @-> var q2)) ])
   in
   let poly2 =
-    Type_scheme.create
+    T.Scheme.create
       ~quantifiers:[ q3 ]
-      T.(
-        tuple
-          [ var q3; poly (Type_scheme.create ~quantifiers:[ q4 ] (var q3 @-> var q4)) ])
+      T.(tuple [ var q3; poly (T.Scheme.create ~quantifiers:[ q4 ] (var q3 @-> var q4)) ])
   in
   let cst = exists a1 @@ T.(var a1 =~ poly poly1 &~ (var a1 =~ poly poly2)) in
   print_solve_result cst;
@@ -1176,8 +1169,8 @@ let%expect_test "" =
     exists_many [ a1; a2 ]
     @@ T.(
          var a1
-         =~ poly (Type_scheme.create ~quantifiers:[ q1 ] (tint @-> var q1))
-         &~ (var a1 =~ poly (Type_scheme.create ~quantifiers:[ q1 ] (var a2 @-> var q1)))
+         =~ poly (T.Scheme.create ~quantifiers:[ q1 ] (tint @-> var q1))
+         &~ (var a1 =~ poly (T.Scheme.create ~quantifiers:[ q1 ] (var a2 @-> var q1)))
          &~ (var a2 =~ tstring))
   in
   print_solve_result cst;

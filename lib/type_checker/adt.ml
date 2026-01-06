@@ -1,6 +1,6 @@
 open! Import
 open Ast_types
-module Type_ident = Constraint.Type.Ident
+module Type_ident = Type.Ident
 
 module Constructor_ident = Var.Make (struct
     let module_name = "Adt.Constructor_name"

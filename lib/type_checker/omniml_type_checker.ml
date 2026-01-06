@@ -44,7 +44,7 @@ let check ?defaulting cst =
               ~here:[%here]
               [%message
                 "Unbound constraint type variable"
-                  (type_var : Constraint.Type.Var.t)
+                  (type_var : Type.Var.t)
                   (range : Range.t option)
                   (cst : Constraint.t)])
      | Unbound_var var ->

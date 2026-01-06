@@ -54,12 +54,8 @@ val rename_var : t -> var:Var_name.t -> in_:(t -> Constraint.Var.t -> 'a) -> 'a
 
 (** [find_type_var t type_var_name] returns the type variable that [type_var_name]
     is renamed to. *)
-val find_type_var : t -> Type_var_name.t -> Constraint.Type.Var.t option
+val find_type_var : t -> Type_var_name.t -> Type.Var.t option
 
 (** [rename_type_var t ~type_var ~in_] renames the type variable [type_var] to some fresh
     [ctype_var] in [in_]. *)
-val rename_type_var
-  :  t
-  -> type_var:Type_var_name.t
-  -> in_:(t -> Constraint.Type.Var.t -> 'a)
-  -> 'a
+val rename_type_var : t -> type_var:Type_var_name.t -> in_:(t -> Type.Var.t -> 'a) -> 'a
