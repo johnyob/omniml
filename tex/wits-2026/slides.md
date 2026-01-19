@@ -19,7 +19,7 @@
       class="avatar"
     />
     <figcaption>
-      <div class="author">Didier Remy</div>
+      <div class="author">Didier Rémy</div>
       <div class="affiliation">Inria, Paris</div>
     </figcaption>
   </figure>
@@ -45,7 +45,6 @@
 <div class="vspace-lg"></div>
 
 {style="display: grid; grid-template-columns: 1fr 1fr; gap: 4em"}
-> {pause}
 > <img src="./assets/inference.svg" width="90%"/>
 > 
 > <div>
@@ -217,37 +216,31 @@ Error: x belongs to several types: gpoint point
 {pause up}
 # The French approach: constraints!
 
-{pause}
-
-The essence of ML type inference <span class="em-5">[Pottier and Remy, 2005]</span>
-
 {pause #constraint-pipeline}
 
 <div class="vspace-lg"></div>
 
 <img src="./assets/constraint-based.svg" style="width:100%"/>
 
-{pause} 
+{pause}
+The essence of ML type inference <span class="em-5">[Pottier and Rémy, 2005]</span>
 
 <div class="vspace-lg"></div>
 
-```ocaml
-let constraint_gen te = function
-  | Eapp (e1, e2) -> 
-    exists @@ fun tv ->
-    constraint_gen (Tarrow (tv, te)) e1 
-    && constraint_gen tv e2 
-```
+{pause} 
+Order-insensitive!
+
+<div class="vspace-lg"></div>
 
 {pause up=constraint-pipeline}
 
-Many advantages!
+Many other advantages!
 {pause}
 1. Constraint generation: many cases but easy code!
 {pause}
 2. Constraint solving: few cases, very tricky!
 {pause}
-3. Solving in any order!
+3. Elaboration is easy! (and modular!)
 
 {pause up}
 # The problem
@@ -256,6 +249,7 @@ Many advantages!
 
 <div style="display: flex; justify-content: center">
 
+<div id="non-omni-table">
 <table>
     <thead>
       <tr>
@@ -282,6 +276,41 @@ Many advantages!
       </tr>
     </tbody>
 </table>
+</div>
+
+<div id="omni-table" class="hidden">
+<table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>Constraint-based</th>
+        <th>Bidirectional</th>
+        <th>Omnidirectional</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Efficient</td>
+        <td class="tick">✓</td>
+        <td class="tick">✓</td>
+        <td class="tick">✓</td>
+      </tr>
+      <tr>
+        <td>Expressive</td>
+        <td class="cross">✗</td>
+        <td class="tick">✓</td>
+        <td class="tick">✓</td>
+      </tr>
+      <tr>
+        <td>No Fixed Order</td>
+        <td class="tick">✓</td>
+        <td class="cross">✗</td>
+        <td class="tick">✓</td>
+      </tr>
+    </tbody>
+</table>
+</div>
+
 
 </div>
 
@@ -294,12 +323,25 @@ Not solved by:
 {pause}
 - Contextual typing <span class="em-5">[Xue and Oliveria, 2024]</span>
 
+
+{pause exec}
+```slip-script
+let el1 = document.querySelector("#omni-table")
+let el2 = document.querySelector("#non-omni-table")
+slip.setClass(el2, "hidden", true)
+slip.setClass(el1, "hidden", false)
+```
+
+
 {pause up}
 # Omnidirectionality
 
 {pause}
 
-<span class="key-idea">*Key idea*</span>: If we don't have the required known type information yet, <span class="solution">**wait**</span>.
+Constraint-based approach {pause}(Efficiency <span class="tick">✓</span> and No Fixed Order <span class="tick">✓</span>)
+
+{pause}
+Ability to express when a type is <span class="em-3">known</span> {pause}(Expressive <span class="tick">✓</span>)
 
 <div class="vspace-lg"></div>
 
@@ -320,9 +362,12 @@ type type_shape =
   | Sarrow of type_expr * type_expr
 ```
 
-{pause center}
+{pause}
+<span class="key-idea">*Key idea*</span>: If we don't have the required known type information during solving, <span class="solution">**wait**</span>.
 
-<div class="vspace-lg"></div>
+{pause up=omni-match}
+
+<div class="vspace-md"></div>
 
 <span class="solution">*Waits*</span> on $\alpha$ to be unified:
 {pause}
@@ -335,11 +380,40 @@ type type_shape =
 
 <span class="problem">*Otherwise*</span> if $\alpha$ is never unified, fail
 
-{pause} 
+{pause up}
+# Questions?
 
-<div class="vspace-sm"></div>
+{pause}
+<span id="question-1">1. How do we specify typing rules for omnidirectionality?</span>
 
-Introduces a <span class="em-4">*dynamic*</span> order for inference (propagation via unification).
+<div class="vspace-lg"></div>
+
+{pause}
+<span id="question-2">2. What properties do we get from inference (e.g. principal types)?</span>
+
+<div class="vspace-lg"></div>
+
+{pause}
+3. How do we implement this?
+
+<div class="vspace-lg"></div>
+
+{pause}
+4. and how to do so efficiently?
+
+<div class="vspace-lg"></div>
+
+{pause}
+5. How do we scale it to complex features (e.g. `let`-polymorphism)?
+
+{pause exec}
+```slip-script
+let el1 = document.querySelector("#question-1")
+let el2 = document.querySelector("#question-2")
+slip.setClass(el1, "grayed", true)
+slip.setClass(el2, "grayed", true)
+```
+
 
 {pause up}
 # Implementation: STLC
@@ -374,7 +448,7 @@ Implemented using <span class="key-idea">*wait lists*</span> on variables
 
 {pause}
 
-Infers <span class="em-4">*principal*</span> types!
+Efficient! {pause}<span class="em-4">*No backtracking*</span>
 
 {pause up}
 # Next challenge: `let`-polymorphism
@@ -402,7 +476,7 @@ val id : 'a -> 'a
 
 <div class="vspace-lg"></div>
 
-<span class="key-idea">Generalization</span>: which inference variables $\alpha$ are <span class="em-2">*local*</span> and can be generalized into polymorphic variables.
+<span class="key-idea">Generalization</span>: which inference variables $\alpha$ are <span class="em-5">*local*</span> and can be generalized into polymorphic variables.
 
 
 <div class="vspace-lg"></div>
@@ -423,7 +497,7 @@ let rec infer ~env = function
 
 {pause up=infer-let}
 
-Fixed order:
+<span id="let-fixed-order" class="hidden problem">Fixed order</span><span id="let-order">Order</span>:
 {pause}
 1. <span class="em-1">Infer</span> the type of `e1`
 {pause}
@@ -433,7 +507,16 @@ Fixed order:
 
 <div class="vspace-lg"></div>
 
+{pause exec}
+```slip-script
+let el1 = document.querySelector("#let-fixed-order")
+let el2 = document.querySelector("#let-order")
+slip.setClass(el1, "hidden", false)
+slip.setClass(el2, "hidden", true)
+```
+
 {pause}
+
 Omnidirectionality *cannot* work with a <span class="problem">fixed order</span>
 
 {pause up}
@@ -511,7 +594,11 @@ At the point of generalization:
 {pause}
 - If $\beta$ is <span class="problem">guarded</span>, treat as polymorphic and <span class="em-4">patch</span> instantiations later 
 
-<div class="vspace-lg"></div>
+{pause}
+
+<span class="em-4">Not backtracking</span>{pause}, types only get more precise
+
+<div class="vspace-md"></div>
 
 
 {#example pause up=partial-generalize}
@@ -554,15 +641,14 @@ Delicate to implement. {pause} Difficult to implement *efficiently*
 {pause}
 <div class="vspace-lg"></div>
 
-Omnidirectionality provides expressive, efficient and principal type inference.
+Omnidirectionality provides {pause}expressive, {pause}efficient type inference {pause}that scales!
 
 {pause}
 <div class="vspace-lg"></div>
 
 {style="display: grid; grid-template-columns: 1fr 2fr; gap: 2em"}
-> {pause}
 > <div>
-> Check out our paper!
+> Check out our paper! 🥺 
 > <img src="./assets/qr-code.svg" width="90%"/>
 > </div>
 > 

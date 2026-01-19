@@ -993,6 +993,10 @@ td:not(:last-child) {
 
 /* Color palette for slide text highlighting */
 
+.grayed {
+  opacity: 0.5;
+}
+
 /* Semantic classes for consistent concepts */
 .key-idea {
   color: #d2a8ff;
@@ -1023,7 +1027,7 @@ td:not(:last-child) {
 .em-2 {
   color:
     /* #154162; */
-    #1C547E;
+#2F76A8;
   /* blue */
 }
 
@@ -2311,7 +2315,7 @@ relevance:0},{begin:/-&gt;/}]})})();hljs.registerLanguage(&quot;ocaml&quot;,e)})
       class=&quot;avatar&quot;
     /&gt;
     &lt;figcaption&gt;
-      &lt;div class=&quot;author&quot;&gt;Didier Remy&lt;/div&gt;
+      &lt;div class=&quot;author&quot;&gt;Didier Rémy&lt;/div&gt;
       &lt;div class=&quot;affiliation&quot;&gt;Inria, Paris&lt;/div&gt;
     &lt;/figcaption&gt;
   &lt;/figure&gt;
@@ -2330,9 +2334,7 @@ relevance:0},{begin:/-&gt;/}]})})();hljs.registerLanguage(&quot;ocaml&quot;,e)})
 &lt;h1 id=&quot;our-type-inference-ideology&quot; up-at-unpause pause&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#our-type-inference-ideology&quot;&gt;&lt;/a&gt;&lt;span&gt;Our type inference ideology&lt;/span&gt;&lt;/h1&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;div style=&quot;display: grid; grid-template-columns: 1fr 1fr; gap: 4em&quot;&gt;
-&lt;div pause&gt;
 &lt;img src=&quot;./assets/inference.svg&quot; width=&quot;90%&quot;/&gt;
-&lt;/div&gt;
 &lt;div&gt;
 &lt;div pause&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
@@ -2459,21 +2461,15 @@ slip.setClass(el, &quot;hidden&quot;, false)&lt;/script&gt;
 Error: x belongs to several types: gpoint point
 &lt;/pre&gt;
 &lt;h1 id=&quot;the-french-approach-constraints&quot; up-at-unpause pause&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#the-french-approach-constraints&quot;&gt;&lt;/a&gt;&lt;span&gt;The French approach: constraints!&lt;/span&gt;&lt;/h1&gt;
-&lt;div pause&gt;&lt;/div&gt;
-&lt;p&gt;&lt;span&gt;The essence of ML type inference &lt;/span&gt;&lt;span class=&quot;em-5&quot;&gt;&lt;span&gt;[Pottier and Remy, 2005]&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;
 &lt;div id=&quot;constraint-pipeline&quot; pause&gt;&lt;/div&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;img src=&quot;./assets/constraint-based.svg&quot; style=&quot;width:100%&quot;/&gt;
-&lt;div pause&gt;&lt;/div&gt;
+&lt;p pause&gt;&lt;span&gt;The essence of ML type inference &lt;/span&gt;&lt;span class=&quot;em-5&quot;&gt;&lt;span&gt;[Pottier and Rémy, 2005]&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
-&lt;pre&gt;&lt;code class=&quot;language-ocaml&quot;&gt;let constraint_gen te = function
-  | Eapp (e1, e2) -&amp;gt; 
-    exists @@ fun tv -&amp;gt;
-    constraint_gen (Tarrow (tv, te)) e1 
-    &amp;amp;&amp;amp; constraint_gen tv e2 
-&lt;/code&gt;&lt;/pre&gt;
+&lt;p pause&gt;&lt;span&gt;Order-insensitive!&lt;/span&gt;&lt;/p&gt;
+&lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;div up-at-unpause=constraint-pipeline pause&gt;&lt;/div&gt;
-&lt;p&gt;&lt;span&gt;Many advantages!&lt;/span&gt;
+&lt;p&gt;&lt;span&gt;Many other advantages!&lt;/span&gt;
 &lt;span pause&gt;&lt;/span&gt;&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;&lt;span&gt;Constraint generation: many cases but easy code!&lt;/span&gt;&lt;/li&gt;
@@ -2485,12 +2481,13 @@ Error: x belongs to several types: gpoint point
 &lt;/div&gt;
 &lt;div pause&gt;
 &lt;ol start=&quot;3&quot;&gt;
-&lt;li&gt;&lt;span&gt;Solving in any order!&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Elaboration is easy! (and modular!)&lt;/span&gt;&lt;/li&gt;
 &lt;/ol&gt;
 &lt;/div&gt;
 &lt;h1 id=&quot;the-problem&quot; up-at-unpause pause&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#the-problem&quot;&gt;&lt;/a&gt;&lt;span&gt;The problem&lt;/span&gt;&lt;/h1&gt;
 &lt;div class=&quot;vspace-xl&quot;&gt;&lt;/div&gt;
 &lt;div style=&quot;display: flex; justify-content: center&quot;&gt;
+&lt;div id=&quot;non-omni-table&quot;&gt;
 &lt;table&gt;
     &lt;thead&gt;
       &lt;tr&gt;
@@ -2518,6 +2515,39 @@ Error: x belongs to several types: gpoint point
     &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;/div&gt;
+&lt;div id=&quot;omni-table&quot; class=&quot;hidden&quot;&gt;
+&lt;table&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;
+        &lt;th&gt;&lt;/th&gt;
+        &lt;th&gt;Constraint-based&lt;/th&gt;
+        &lt;th&gt;Bidirectional&lt;/th&gt;
+        &lt;th&gt;Omnidirectional&lt;/th&gt;
+      &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+      &lt;tr&gt;
+        &lt;td&gt;Efficient&lt;/td&gt;
+        &lt;td class=&quot;tick&quot;&gt;✓&lt;/td&gt;
+        &lt;td class=&quot;tick&quot;&gt;✓&lt;/td&gt;
+        &lt;td class=&quot;tick&quot;&gt;✓&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td&gt;Expressive&lt;/td&gt;
+        &lt;td class=&quot;cross&quot;&gt;✗&lt;/td&gt;
+        &lt;td class=&quot;tick&quot;&gt;✓&lt;/td&gt;
+        &lt;td class=&quot;tick&quot;&gt;✓&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td&gt;No Fixed Order&lt;/td&gt;
+        &lt;td class=&quot;tick&quot;&gt;✓&lt;/td&gt;
+        &lt;td class=&quot;cross&quot;&gt;✗&lt;/td&gt;
+        &lt;td class=&quot;tick&quot;&gt;✓&lt;/td&gt;
+      &lt;/tr&gt;
+    &lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
 &lt;div pause&gt;&lt;/div&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;p&gt;&lt;span&gt;Not solved by:&lt;/span&gt;&lt;/p&gt;
@@ -2529,9 +2559,15 @@ Error: x belongs to several types: gpoint point
 &lt;li&gt;&lt;span&gt;Contextual typing &lt;/span&gt;&lt;span class=&quot;em-5&quot;&gt;&lt;span&gt;[Xue and Oliveria, 2024]&lt;/span&gt;&lt;/span&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/div&gt;
+&lt;script type=slip-script exec-at-unpause pause&gt;
+let el1 = document.querySelector(&quot;#omni-table&quot;)
+let el2 = document.querySelector(&quot;#non-omni-table&quot;)
+slip.setClass(el2, &quot;hidden&quot;, true)
+slip.setClass(el1, &quot;hidden&quot;, false)&lt;/script&gt;
 &lt;h1 id=&quot;omnidirectionality&quot; up-at-unpause pause&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#omnidirectionality&quot;&gt;&lt;/a&gt;&lt;span&gt;Omnidirectionality&lt;/span&gt;&lt;/h1&gt;
 &lt;div pause&gt;&lt;/div&gt;
-&lt;p&gt;&lt;span class=&quot;key-idea&quot;&gt;&lt;em&gt;&lt;span&gt;Key idea&lt;/span&gt;&lt;/em&gt;&lt;/span&gt;&lt;span&gt;: If we don't have the required known type information yet, &lt;/span&gt;&lt;span class=&quot;solution&quot;&gt;&lt;strong&gt;&lt;span&gt;wait&lt;/span&gt;&lt;/strong&gt;&lt;/span&gt;&lt;span&gt;.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;Constraint-based approach &lt;/span&gt;&lt;span pause&gt;&lt;/span&gt;&lt;span&gt;(Efficiency &lt;/span&gt;&lt;span class=&quot;tick&quot;&gt;&lt;span&gt;✓&lt;/span&gt;&lt;/span&gt;&lt;span&gt; and No Fixed Order &lt;/span&gt;&lt;span class=&quot;tick&quot;&gt;&lt;span&gt;✓&lt;/span&gt;&lt;/span&gt;&lt;span&gt;)&lt;/span&gt;&lt;/p&gt;
+&lt;p pause&gt;&lt;span&gt;Ability to express when a type is &lt;/span&gt;&lt;span class=&quot;em-3&quot;&gt;&lt;span&gt;known&lt;/span&gt;&lt;/span&gt;&lt;span&gt; &lt;/span&gt;&lt;span pause&gt;&lt;/span&gt;&lt;span&gt;(Expressive &lt;/span&gt;&lt;span class=&quot;tick&quot;&gt;&lt;span&gt;✓&lt;/span&gt;&lt;/span&gt;&lt;span&gt;)&lt;/span&gt;&lt;/p&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;div id=&quot;omni-match&quot; pause&gt;&lt;/div&gt;
 \[
@@ -2543,8 +2579,9 @@ Error: x belongs to several types: gpoint point
   | Sunit
   | Sarrow of type_expr * type_expr
 &lt;/code&gt;&lt;/pre&gt;
-&lt;div center-at-unpause pause&gt;&lt;/div&gt;
-&lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
+&lt;p pause&gt;&lt;span class=&quot;key-idea&quot;&gt;&lt;em&gt;&lt;span&gt;Key idea&lt;/span&gt;&lt;/em&gt;&lt;/span&gt;&lt;span&gt;: If we don't have the required known type information during solving, &lt;/span&gt;&lt;span class=&quot;solution&quot;&gt;&lt;strong&gt;&lt;span&gt;wait&lt;/span&gt;&lt;/strong&gt;&lt;/span&gt;&lt;span&gt;.&lt;/span&gt;&lt;/p&gt;
+&lt;div up-at-unpause=omni-match pause&gt;&lt;/div&gt;
+&lt;div class=&quot;vspace-md&quot;&gt;&lt;/div&gt;
 &lt;p&gt;&lt;span class=&quot;solution&quot;&gt;&lt;em&gt;&lt;span&gt;Waits&lt;/span&gt;&lt;/em&gt;&lt;/span&gt;&lt;span&gt; on &lt;/span&gt;\(\alpha\)&lt;span&gt; to be unified:&lt;/span&gt;
 &lt;span pause&gt;&lt;/span&gt;&lt;/p&gt;
 &lt;ul&gt;
@@ -2559,9 +2596,33 @@ Error: x belongs to several types: gpoint point
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;/div&gt;
 &lt;p&gt;&lt;span class=&quot;problem&quot;&gt;&lt;em&gt;&lt;span&gt;Otherwise&lt;/span&gt;&lt;/em&gt;&lt;/span&gt;&lt;span&gt; if &lt;/span&gt;\(\alpha\)&lt;span&gt; is never unified, fail&lt;/span&gt;&lt;/p&gt;
-&lt;div pause&gt;&lt;/div&gt;
-&lt;div class=&quot;vspace-sm&quot;&gt;&lt;/div&gt;
-&lt;p&gt;&lt;span&gt;Introduces a &lt;/span&gt;&lt;span class=&quot;em-4&quot;&gt;&lt;em&gt;&lt;span&gt;dynamic&lt;/span&gt;&lt;/em&gt;&lt;/span&gt;&lt;span&gt; order for inference (propagation via unification).&lt;/span&gt;&lt;/p&gt;
+&lt;h1 id=&quot;questions&quot; up-at-unpause pause&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#questions&quot;&gt;&lt;/a&gt;&lt;span&gt;Questions?&lt;/span&gt;&lt;/h1&gt;
+&lt;p pause&gt;&lt;span id=&quot;question-1&quot;&gt;&lt;span&gt;1. How do we specify typing rules for omnidirectionality?&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
+&lt;p pause&gt;&lt;span id=&quot;question-2&quot;&gt;&lt;span&gt;2. What properties do we get from inference (e.g. principal types)?&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
+&lt;div pause&gt;
+&lt;ol start=&quot;3&quot;&gt;
+&lt;li&gt;&lt;span&gt;How do we implement this?&lt;/span&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
+&lt;div pause&gt;
+&lt;ol start=&quot;4&quot;&gt;
+&lt;li&gt;&lt;span&gt;and how to do so efficiently?&lt;/span&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
+&lt;div pause&gt;
+&lt;ol start=&quot;5&quot;&gt;
+&lt;li&gt;&lt;span&gt;How do we scale it to complex features (e.g. &lt;/span&gt;&lt;code&gt;let&lt;/code&gt;&lt;span&gt;-polymorphism)?&lt;/span&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;script type=slip-script exec-at-unpause pause&gt;
+let el1 = document.querySelector(&quot;#question-1&quot;)
+let el2 = document.querySelector(&quot;#question-2&quot;)
+slip.setClass(el1, &quot;grayed&quot;, true)
+slip.setClass(el2, &quot;grayed&quot;, true)&lt;/script&gt;
 &lt;h1 id=&quot;implementation-stlc&quot; up-at-unpause pause&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#implementation-stlc&quot;&gt;&lt;/a&gt;&lt;span&gt;Implementation: STLC&lt;/span&gt;&lt;/h1&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;pre&gt;&lt;code class=&quot;language-ocaml&quot;&gt;type type_expr = 
@@ -2589,7 +2650,7 @@ Error: x belongs to several types: gpoint point
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;p&gt;&lt;span&gt;Implemented using &lt;/span&gt;&lt;span class=&quot;key-idea&quot;&gt;&lt;em&gt;&lt;span&gt;wait lists&lt;/span&gt;&lt;/em&gt;&lt;/span&gt;&lt;span&gt; on variables&lt;/span&gt;&lt;/p&gt;
 &lt;div pause&gt;&lt;/div&gt;
-&lt;p&gt;&lt;span&gt;Infers &lt;/span&gt;&lt;span class=&quot;em-4&quot;&gt;&lt;em&gt;&lt;span&gt;principal&lt;/span&gt;&lt;/em&gt;&lt;/span&gt;&lt;span&gt; types!&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;Efficient! &lt;/span&gt;&lt;span pause&gt;&lt;/span&gt;&lt;span class=&quot;em-4&quot;&gt;&lt;em&gt;&lt;span&gt;No backtracking&lt;/span&gt;&lt;/em&gt;&lt;/span&gt;&lt;/p&gt;
 &lt;h1 id=&quot;next-challenge-let-polymorphism&quot; up-at-unpause pause&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#next-challenge-let-polymorphism&quot;&gt;&lt;/a&gt;&lt;span&gt;Next challenge: &lt;/span&gt;&lt;code&gt;let&lt;/code&gt;&lt;span&gt;-polymorphism&lt;/span&gt;&lt;/h1&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;p&gt;&lt;span&gt;Let bindings &lt;/span&gt;&lt;span class=&quot;key-idea&quot;&gt;&lt;em&gt;&lt;span&gt;generalize&lt;/span&gt;&lt;/em&gt;&lt;/span&gt;&lt;span&gt; types into polymorphic ones&lt;/span&gt;&lt;/p&gt;
@@ -2601,7 +2662,7 @@ Error: x belongs to several types: gpoint point
 &lt;/code&gt;&lt;/pre&gt;
 &lt;div pause&gt;&lt;/div&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
-&lt;p&gt;&lt;span class=&quot;key-idea&quot;&gt;&lt;span&gt;Generalization&lt;/span&gt;&lt;/span&gt;&lt;span&gt;: which inference variables &lt;/span&gt;\(\alpha\)&lt;span&gt; are &lt;/span&gt;&lt;span class=&quot;em-2&quot;&gt;&lt;em&gt;&lt;span&gt;local&lt;/span&gt;&lt;/em&gt;&lt;/span&gt;&lt;span&gt; and can be generalized into polymorphic variables.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class=&quot;key-idea&quot;&gt;&lt;span&gt;Generalization&lt;/span&gt;&lt;/span&gt;&lt;span&gt;: which inference variables &lt;/span&gt;\(\alpha\)&lt;span&gt; are &lt;/span&gt;&lt;span class=&quot;em-5&quot;&gt;&lt;em&gt;&lt;span&gt;local&lt;/span&gt;&lt;/em&gt;&lt;/span&gt;&lt;span&gt; and can be generalized into polymorphic variables.&lt;/span&gt;&lt;/p&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;div id=&quot;infer-let&quot; center-at-unpause pause&gt;&lt;/div&gt;
 &lt;pre&gt;&lt;code class=&quot;language-ocaml&quot;&gt;let rec infer ~env = function
@@ -2614,7 +2675,7 @@ Error: x belongs to several types: gpoint point
 &lt;/code&gt;&lt;/pre&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;div up-at-unpause=infer-let pause&gt;&lt;/div&gt;
-&lt;p&gt;&lt;span&gt;Fixed order:&lt;/span&gt;
+&lt;p&gt;&lt;span id=&quot;let-fixed-order&quot; class=&quot;hidden problem&quot;&gt;&lt;span&gt;Fixed order&lt;/span&gt;&lt;/span&gt;&lt;span id=&quot;let-order&quot;&gt;&lt;span&gt;Order&lt;/span&gt;&lt;/span&gt;&lt;span&gt;:&lt;/span&gt;
 &lt;span pause&gt;&lt;/span&gt;&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;&lt;span class=&quot;em-1&quot;&gt;&lt;span&gt;Infer&lt;/span&gt;&lt;/span&gt;&lt;span&gt; the type of &lt;/span&gt;&lt;code&gt;e1&lt;/code&gt;&lt;/li&gt;
@@ -2630,7 +2691,13 @@ Error: x belongs to several types: gpoint point
 &lt;/ol&gt;
 &lt;/div&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
-&lt;p pause&gt;&lt;span&gt;Omnidirectionality &lt;/span&gt;&lt;em&gt;&lt;span&gt;cannot&lt;/span&gt;&lt;/em&gt;&lt;span&gt; work with a &lt;/span&gt;&lt;span class=&quot;problem&quot;&gt;&lt;span&gt;fixed order&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;script type=slip-script exec-at-unpause pause&gt;
+let el1 = document.querySelector(&quot;#let-fixed-order&quot;)
+let el2 = document.querySelector(&quot;#let-order&quot;)
+slip.setClass(el1, &quot;hidden&quot;, false)
+slip.setClass(el2, &quot;hidden&quot;, true)&lt;/script&gt;
+&lt;div pause&gt;&lt;/div&gt;
+&lt;p&gt;&lt;span&gt;Omnidirectionality &lt;/span&gt;&lt;em&gt;&lt;span&gt;cannot&lt;/span&gt;&lt;/em&gt;&lt;span&gt; work with a &lt;/span&gt;&lt;span class=&quot;problem&quot;&gt;&lt;span&gt;fixed order&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;
 &lt;h1 id=&quot;where-let-breaks&quot; up-at-unpause pause&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#where-let-breaks&quot;&gt;&lt;/a&gt;&lt;span&gt;Where &lt;/span&gt;&lt;code&gt;let&lt;/code&gt;&lt;span&gt; breaks&lt;/span&gt;&lt;/h1&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
@@ -2696,7 +2763,9 @@ Error: x belongs to several types: gpoint point
 &lt;li&gt;&lt;span&gt;If &lt;/span&gt;\(\beta\)&lt;span&gt; is &lt;/span&gt;&lt;span class=&quot;problem&quot;&gt;&lt;span&gt;guarded&lt;/span&gt;&lt;/span&gt;&lt;span&gt;, treat as polymorphic and &lt;/span&gt;&lt;span class=&quot;em-4&quot;&gt;&lt;span&gt;patch&lt;/span&gt;&lt;/span&gt;&lt;span&gt; instantiations later&lt;/span&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/div&gt;
-&lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
+&lt;div pause&gt;&lt;/div&gt;
+&lt;p&gt;&lt;span class=&quot;em-4&quot;&gt;&lt;span&gt;Not backtracking&lt;/span&gt;&lt;/span&gt;&lt;span pause&gt;&lt;/span&gt;&lt;span&gt;, types only get more precise&lt;/span&gt;&lt;/p&gt;
+&lt;div class=&quot;vspace-md&quot;&gt;&lt;/div&gt;
 &lt;div id=&quot;example&quot; up-at-unpause=partial-generalize pause&gt;&lt;/div&gt;
 &lt;pre&gt;&lt;code class=&quot;language-ocaml&quot;&gt;let difficult_lemon_difficult q = 
   let getx p = p.x in
@@ -2735,16 +2804,14 @@ Error: x belongs to several types: gpoint point
 &lt;div pause&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;/div&gt;
-&lt;p&gt;&lt;span&gt;Omnidirectionality provides expressive, efficient and principal type inference.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;Omnidirectionality provides &lt;/span&gt;&lt;span pause&gt;&lt;/span&gt;&lt;span&gt;expressive, &lt;/span&gt;&lt;span pause&gt;&lt;/span&gt;&lt;span&gt;efficient type inference &lt;/span&gt;&lt;span pause&gt;&lt;/span&gt;&lt;span&gt;that scales!&lt;/span&gt;&lt;/p&gt;
 &lt;div pause&gt;
 &lt;div class=&quot;vspace-lg&quot;&gt;&lt;/div&gt;
 &lt;/div&gt;
 &lt;div style=&quot;display: grid; grid-template-columns: 1fr 2fr; gap: 2em&quot;&gt;
-&lt;div pause&gt;
 &lt;div&gt;
-Check out our paper!
+Check out our paper! 🥺 
 &lt;img src=&quot;./assets/qr-code.svg&quot; width=&quot;90%&quot;/&gt;
-&lt;/div&gt;
 &lt;/div&gt;
 &lt;div&gt;
 Principal and declarative specification for many other features 
@@ -2756,7 +2823,7 @@ Principal and declarative specification for many other features
 &lt;div pause&gt;&lt;/div&gt;
 &lt;div style=&quot;text-align: center&quot;&gt;
 &lt;h3 id=&quot;thanks-for-listening&quot;&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#thanks-for-listening&quot;&gt;&lt;/a&gt;&lt;span&gt;Thanks for listening!&lt;/span&gt;&lt;/h3&gt;
-&lt;h2 id=&quot;questions&quot;&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#questions&quot;&gt;&lt;/a&gt;&lt;span&gt;Questions?&lt;/span&gt;&lt;/h2&gt;
+&lt;h2 id=&quot;questions-1&quot;&gt;&lt;a class=&quot;anchor&quot; aria-hidden=&quot;true&quot; href=&quot;#questions-1&quot;&gt;&lt;/a&gt;&lt;span&gt;Questions?&lt;/span&gt;&lt;/h2&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;/div&gt;

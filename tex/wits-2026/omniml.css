@@ -680,6 +680,10 @@ td:not(:last-child) {
 
 /* Color palette for slide text highlighting */
 
+.grayed {
+  opacity: 0.5;
+}
+
 /* Semantic classes for consistent concepts */
 .key-idea {
   color: #d2a8ff;
@@ -710,7 +714,7 @@ td:not(:last-child) {
 .em-2 {
   color:
     /* #154162; */
-    #1C547E;
+#2F76A8;
   /* blue */
 }
 
