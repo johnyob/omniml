@@ -14,4 +14,4 @@
 (menhir
  (merge_into parser)
  (modules token parser)
- (flags --explain --no-dollars --external-tokens Token))
+ (flags --dump --explain --no-dollars --external-tokens Token))

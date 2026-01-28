@@ -11,6 +11,7 @@ let type_check_and_print
       ?(dump_ast = false)
       ?(dump_constraint = false)
       ?(with_stdlib = true)
+      ?(with_poly_params = false)
       ?(defaulting = Options.Defaulting.default)
       ?(log_level = `Info)
       str
@@ -22,6 +23,7 @@ let type_check_and_print
     ~dump_ast
     ~dump_constraint
     ~with_stdlib
+    ~with_poly_params
     ~defaulting
     (Lexing.from_string ~with_positions:true str)
 ;;
@@ -71,6 +73,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -93,6 +97,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -108,6 +114,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -124,6 +132,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -143,6 +153,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -162,6 +174,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -185,6 +199,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -209,6 +225,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -243,6 +261,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -270,6 +290,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -297,6 +319,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -322,6 +346,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -335,6 +361,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -363,6 +391,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -377,6 +407,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -463,6 +495,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -494,6 +528,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -535,6 +571,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -598,6 +636,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -660,6 +700,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -751,6 +793,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -761,6 +805,14 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect
+    {|
+    error[E004]: cannot find value `y` in this scope
+        ┌─ expect_test.ml:2:25
+      2 │        let id = fun x -> y ;;
+        │                          ^ not found in this scope
+    |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect
     {|
     error[E004]: cannot find value `y` in this scope
@@ -780,6 +832,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -792,6 +846,16 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:3:9
+      3 │          (x, x) (fun y -> y)
+        │          ^^^^^^ `'a -> 'b`
+        │                   is not equal to
+        │                 `'c * 'd`
+    |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect
     {|
     error[E011]: mismatched type
@@ -820,6 +884,16 @@ let%expect_test "" =
         │                           ^^ `'a -> 'b`
         │                                is not equal to
         │                              `unit`
+    |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:3:26
+      3 │          (fun y z -> y z) ()
+        │                           ^^ `unit`
+        │                                is not equal to
+        │                              `'a -> 'b`
     |}]
 ;;
 
@@ -839,6 +913,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -888,6 +964,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -910,6 +988,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -931,6 +1011,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -981,7 +1063,9 @@ let%expect_test "" =
       (source
        (Reader ((id 0) (name (expect_test.ml)) (length 34) (unsafe_get <fun>))))))
     Well typed :)
-    |}]
+    |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
+  [%expect {| Well typed :) |}]
 ;;
 
 let include_mr_ms_records =
@@ -1009,6 +1093,16 @@ let%expect_test "" =
         │                      ^ `'a`
         │                          is not equal to
         │                        `'b`
+    |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:4:21
+      4 │            (fun x -> x : 'a -> 'b)
+        │                      ^ `'a`
+        │                          is not equal to
+        │                        `'b`
     |}]
 ;;
 
@@ -1027,6 +1121,7 @@ let%expect_test "" =
      error message looks off due to bug in Grace[^1]
 
      [1]: https://github.com/johnyob/grace/issues/42 *)
+  (* Buggy with polyparams *)
   [%expect
     {|
     error[E012]: generic type variable escapes its scope
@@ -1054,6 +1149,7 @@ let%expect_test "" =
      error message looks off due to bug in Grace[^1]
 
      [1]: https://github.com/johnyob/grace/issues/42 *)
+  (* Buggy with polyparams *)
   [%expect
     {|
     error[E012]: generic type variable escapes its scope
@@ -1075,6 +1171,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1096,6 +1194,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1108,6 +1208,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1133,6 +1235,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1166,6 +1270,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1207,6 +1313,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1224,6 +1332,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1258,6 +1368,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1294,6 +1406,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1325,6 +1439,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1342,6 +1458,8 @@ let%expect_test "" =
   |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1374,6 +1492,8 @@ let%expect_test "" =
         = hint: add a type annotation
     |}];
   type_check_and_print ~defaulting:Unary str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1398,6 +1518,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1413,6 +1535,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1430,6 +1554,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1444,6 +1570,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1458,6 +1586,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1471,6 +1601,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1484,6 +1616,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1497,6 +1631,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1520,6 +1656,16 @@ let%expect_test "" =
         │  `('a * 'b -> 'a * 'b) * ('c * 'b -> 'c * 'b)`
         │    is not equal to
         │  `('d * 'e -> 'd * 'e) * ('f * 'g -> 'f * 'g)`
+    |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:4:33
+      4 │        let see_pid1 = (fun x -> (@[x], @[x])) pid1 ;;
+        │                                  ^^^^ `('a * 'b) @(ν'a. [∀. 'a]) -> 'a * 'b`
+        │                                         is not equal to
+        │                                       `('c * 'd) @(ν'a. [∀. 'a]) -> 'c * 'd`
     |}]
 ;;
 
@@ -1533,6 +1679,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1549,6 +1697,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1577,6 +1727,8 @@ let%expect_test "" =
         = hint: add a type annotation
     |}];
   type_check_and_print ~defaulting:Unary str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1589,6 +1741,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1608,6 +1762,16 @@ let%expect_test "" =
         │                    ^^ `'a -> 'a`
         │                         is not equal to
         │                       `'b`
+    |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:3:19
+      3 │        let pid = [ id : 'a. 'a ] ;;
+        │                    ^^ `'a -> 'b`
+        │                         is not equal to
+        │                       `'c`
     |}]
 ;;
 
@@ -1627,6 +1791,16 @@ let%expect_test "" =
         │                    ^^^^ `int -> int`
         │                           is not equal to
         │                         `'a -> 'a`
+    |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:3:19
+      3 │        let pid = [ succ : 'a. 'a -> 'a ] ;;
+        │                    ^^^^ `'a -> int`
+        │                           is not equal to
+        │                         `'b @(ν'a. [∀. 'a]) -> 'b`
     |}]
 ;;
 
@@ -1642,6 +1816,8 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1668,6 +1844,8 @@ let%expect_test "" =
         = hint: add a type annotation
     |}];
   type_check_and_print ~defaulting:Unary str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1686,16 +1864,34 @@ let%expect_test "" =
       3 │        let use_poly_mono = fun x -> let y = [ (id, x) ] in 0 ;;
         │                                               ^^^^^^^
         = hint: add a type annotation
-    |}]
+    |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
+  [%expect {| Well typed :) |}]
 ;;
 
+(** Module for incrementally building up test code, like adding to a file *)
+module Incremental_test = struct
+  type t =
+    { mutable curr_str : string
+    ; test_fn : string -> unit
+    }
+
+  let create ?(initial = "") test_fn = { curr_str = initial; test_fn }
+
+  let run t ?(add = false) str =
+    let full_str = t.curr_str ^ str in
+    t.test_fn full_str;
+    if add then t.curr_str <- full_str
+  ;;
+end
+
 let%expect_test "" =
-  let curr_str = ref (include_fix ^ include_ref ^ include_option ^ include_list) in
-  let do_test ?(add = false) str =
-    let str = !curr_str ^ str in
-    type_check_and_print ~defaulting:Unary str;
-    if add then curr_str := str
+  let test =
+    Incremental_test.create
+      ~initial:(include_fix ^ include_ref ^ include_option ^ include_list)
+      (type_check_and_print ~defaulting:Unary)
   in
+  let do_test = Incremental_test.run test in
   do_test
     ~add:true
     {|
@@ -2014,6 +2210,364 @@ let%expect_test "" =
 ;;
 
 let%expect_test "" =
+  let test =
+    Incremental_test.create
+      ~initial:(include_fix ^ include_ref ^ include_option ^ include_list)
+      (type_check_and_print ~with_poly_params:true ~defaulting:Unary)
+  in
+  let do_test = Incremental_test.run test in
+  do_test
+    ~add:true
+    {|
+      let poly1 = fun (forall id : 'a. 'a -> 'a) ->
+        (id 1, id true)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly1 (fun x -> x);;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly1 (fun x -> x + 1);;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:24:28
+     24 │        let xignore = poly1 (fun x -> x + 1);;
+        │                             ^^^^^^^^^^^^^^ `'a -> int`
+        │                                              is not equal to
+        │                                            `'b @(ν'a. [∀. 'a]) -> 'b`
+    |}];
+  do_test
+    ~add:true
+    {|
+      let id = fun x -> x;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly1 id;;
+    |};
+  [%expect {| Well typed :) |}];
+  (* Passes in OmniML since we don't have the value restriction, 
+     but fails in OCaml *)
+  do_test
+    {|
+      let xignore = poly1 (id (fun x -> x));;
+    |};
+  [%expect {| Well typed :) |}];
+  (* Ditto *)
+  do_test
+    {|
+      let xignore = poly1 (let r = create_ref None in fun x -> set_ref r (Some x); x);;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let escape = fun f -> poly1 (fun x -> f x; x);;
+    |};
+  [%expect
+    {|
+    error[E012]: generic type variable escapes its scope
+        ┌─ expect_test.ml:26:36
+     26 │        let escape = fun f -> poly1 (fun x -> f x; x);;
+        │                                     ^^^^^^^^^^^^^^^
+    |}];
+  do_test
+    ~add:true
+    {|
+      let poly2 = fun (forall id : 'a. 'a -> 'a) ->
+        ((id 1, id true) : int * bool)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly2 (fun x -> x);;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly2 (fun x -> x + 1);;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:30:28
+     30 │        let xignore = poly2 (fun x -> x + 1);;
+        │                             ^^^^^^^^^^^^^^ `'a -> int`
+        │                                              is not equal to
+        │                                            `'b @(ν'a. [∀. 'a]) -> 'b`
+    |}];
+  do_test
+    ~add:true
+    {|
+      let poly3 = 
+        forall (type 'b) ->
+          fun (forall id : 'a. 'a -> 'a) (x : 'b) ->
+            ((id x, id (Some x)) : 'b * 'b option)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly3 (fun x -> x) 8;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly3 (fun x -> x + 1) 8;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:36:28
+     36 │        let xignore = poly3 (fun x -> x + 1) 8;;
+        │                             ^^^^^^^^^^^^^^ `'a -> int`
+        │                                              is not equal to
+        │                                            `'b @(ν'a. [∀. 'a]) -> 'b`
+    |}];
+  do_test
+    ~add:true
+    {|
+      let poly4 = fix (fun poly4 p (forall id : 'a. 'a -> 'a) ->
+        if p then poly4 false id else (id 4, id true))
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly4 true (fun x -> x);;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly4 true (fun x -> x + 1);;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:40:33
+     40 │        let xignore = poly4 true (fun x -> x + 1);;
+        │                                  ^^^^^^^^^^^^^^ `'a -> int`
+        │                                                   is not equal to
+        │                                                 `'b @(ν'a. [∀. 'a]) -> 'b`
+    |}];
+  do_test
+    ~add:true
+    {|
+      let poly5 = fix (fun poly5 (p : bool) (forall id : 'a. 'a -> 'a) -> 
+        ((if p then poly5 false id else (id 5, id true)) : int * bool))
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly5 true (fun x -> x);;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly5 true (fun x -> x + 1);;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:44:33
+     44 │        let xignore = poly5 true (fun x -> x + 1);;
+        │                                  ^^^^^^^^^^^^^^ `'a -> int`
+        │                                                   is not equal to
+        │                                                 `'b @(ν'a. [∀. 'a]) -> 'b`
+    |}];
+  do_test
+    ~add:true
+    {|
+      let poly6 = forall (type 'b) -> 
+        fix (fun poly6 -> 
+          fun (p : bool) (forall id : 'a. 'a -> 'a) (x : 'b) ->
+            ((if p then poly6 false id x else (id x, id (Some x))) : 'b * 'b option))
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly6 true (fun x -> x) 8;; 
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly6 true (fun x -> x + 1) 8;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:50:33
+     50 │        let xignore = poly6 true (fun x -> x + 1) 8;;
+        │                                  ^^^^^^^^^^^^^^ `'a -> int`
+        │                                                   is not equal to
+        │                                                 `'b @(ν'a. [∀. 'a]) -> 'b`
+    |}];
+  do_test
+    ~add:true
+    {|
+      let needs_magic = fun (forall magic : 'a 'b. 'a -> 'b) ->
+        (magic 5 : bool)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = needs_magic (fun x -> x);;
+    |};
+  (* Womp, no location for this unification error :// *)
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:1:1
+      1 │ ╭  external fix : 'a 'b. (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b;;
+      2 │ │      type 'a ref;;
+      3 │ │      type 'a ref_repr = { contents : 'a };;
+      4 │ │
+      5 │ │      external create_ref : 'a. 'a -> 'a ref;;
+      6 │ │      external get_ref : 'a. 'a ref -> 'a;;
+      7 │ │      external set_ref : 'a. 'a ref -> 'a -> unit;;
+      8 │ │      external ref_repr : 'a. 'a ref -> 'a ref_repr;;
+      9 │ │
+     10 │ │      type 'a option =
+     11 │ │        | None
+     12 │ │        | Some of 'a
+     13 │ │      ;;
+     14 │ │
+     15 │ │      type 'a list =
+     16 │ │        | Nil
+     17 │ │        | Cons of 'a * 'a list
+     18 │ │      ;;
+     19 │ │
+     20 │ │        let poly1 = fun (forall id : 'a. 'a -> 'a) ->
+     21 │ │          (id 1, id true)
+     22 │ │        ;;
+     23 │ │
+     24 │ │        let id = fun x -> x;;
+     25 │ │
+     26 │ │        let poly2 = fun (forall id : 'a. 'a -> 'a) ->
+     27 │ │          ((id 1, id true) : int * bool)
+     28 │ │        ;;
+     29 │ │
+     30 │ │        let poly3 =
+     31 │ │          forall (type 'b) ->
+     32 │ │            fun (forall id : 'a. 'a -> 'a) (x : 'b) ->
+     33 │ │              ((id x, id (Some x)) : 'b * 'b option)
+     34 │ │        ;;
+     35 │ │
+     36 │ │        let poly4 = fix (fun poly4 p (forall id : 'a. 'a -> 'a) ->
+     37 │ │          if p then poly4 false id else (id 4, id true))
+     38 │ │        ;;
+     39 │ │
+     40 │ │        let poly5 = fix (fun poly5 (p : bool) (forall id : 'a. 'a -> 'a) ->
+     41 │ │          ((if p then poly5 false id else (id 5, id true)) : int * bool))
+     42 │ │        ;;
+     43 │ │
+     44 │ │        let poly6 = forall (type 'b) ->
+     45 │ │          fix (fun poly6 ->
+     46 │ │            fun (p : bool) (forall id : 'a. 'a -> 'a) (x : 'b) ->
+     47 │ │              ((if p then poly6 false id x else (id x, id (Some x))) : 'b * 'b option))
+     48 │ │        ;;
+     49 │ │
+     50 │ │        let needs_magic = fun (forall magic : 'a 'b. 'a -> 'b) ->
+     51 │ │          (magic 5 : bool)
+     52 │ │        ;;
+     53 │ │
+     54 │ │        let xignore = needs_magic (fun x -> x);;
+     55 │ │
+        │ ╰─────^ `'a`
+                 is not equal to
+               `'b`
+    |}];
+  do_test
+    ~add:true
+    {|
+      let with_id = forall (type 'b) -> fun (f : ((forall 'a. 'a -> 'a) -> 'b)) ->
+        (f (fun x -> x) : 'b)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = with_id (fun id -> 
+        (id 1, id true)) 
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let non_principal1 = fun p f ->
+        if p then with_id f else f (fun x -> x)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let non_principal2 = fun p f ->
+        if p then f (fun x -> x) else with_id f
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let principal1 = exists (type 'b) -> fun p (f : (forall 'a. 'a -> 'a) -> 'b) ->
+        if p then f (fun x -> x) else with_id f
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let principal2 = exists (type 'b) -> 
+        (fun p f -> 
+          if p then f (fun x -> x) else with_id f 
+        : bool -> ((forall 'a. 'a -> 'a) -> 'b) -> 'b)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let principal3 = ( 
+        Cons (None, Cons (Some (fun x -> 
+          (x 5, x true)), Nil))
+        : ((forall 'a. 'a -> 'a) -> int * bool) option list)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let non_principal3 = 
+        Cons ((Some (fun x -> (x 5, x true)) : ((forall 'a. 'a -> 'a) -> int * bool) option), 
+        Cons (Some (fun x -> (x 6, x false)), Nil))
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let non_principal4 = 
+        Cons ((Some (fun x -> (x 5, x true))), 
+        Cons ((Some (fun x -> (x 6, x false)) : ((forall 'a. 'a -> 'a) -> int * bool) option), Nil))
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let foo = fun (f : (forall 'a. 'a -> 'a) -> int) -> 
+        (fun id -> f id
+        : (forall 'a 'b. 'a -> 'b) -> int)
+      ;;
+    |};
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
   (* All examples from https://dl.acm.org/doi/pdf/10.1145/3408971 *)
   (* The following compares results from QuickLook. We 
      primarily use the manual encoding of OCaml's polyparams into polytypes: 
@@ -2179,5 +2733,7 @@ let%expect_test "" =
     |}
   in
   type_check_and_print str;
+  [%expect {| Well typed :) |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;

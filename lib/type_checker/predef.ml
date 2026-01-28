@@ -12,11 +12,25 @@ let bool = Type.(constr [] bool_ident)
 let unit = Type.(constr [] unit_ident)
 
 module Env = struct
-  let bool_bop = Type.(bool @-> bool @-> bool)
-  let bool_uop = Type.(bool @-> bool)
-  let int_bop = Type.(int @-> int @-> int)
-  let int_uop = Type.(int @-> int)
-  let int_comparator = Type.(int @-> int @-> bool)
+  let arg_type ~with_poly_params type_ =
+    if with_poly_params then Type.poly (Type.Scheme.create type_) else type_
+  ;;
+
+  let bool_bop ~with_poly_params =
+    Type.(arg_type ~with_poly_params bool @-> arg_type ~with_poly_params bool @-> bool)
+  ;;
+
+  let bool_uop ~with_poly_params = Type.(arg_type ~with_poly_params bool @-> bool)
+
+  let int_bop ~with_poly_params =
+    Type.(arg_type ~with_poly_params int @-> arg_type ~with_poly_params int @-> int)
+  ;;
+
+  let int_uop ~with_poly_params = Type.(arg_type ~with_poly_params int @-> int)
+
+  let int_comparator ~with_poly_params =
+    Type.(arg_type ~with_poly_params int @-> arg_type ~with_poly_params int @-> bool)
+  ;;
 
   let type_def name arity ident =
     { Adt.type_name = Type_name.create name
@@ -28,32 +42,37 @@ module Env = struct
 
   let t = [ "int", 0, int_ident; "bool", 0, bool_ident; "unit", 0, unit_ident ]
 
-  let v =
-    [ "( || )", bool_bop
-    ; "( && )", bool_bop
-    ; "not", bool_uop
-    ; "( = )", int_comparator
-    ; "( <> )", int_comparator
-    ; "( < )", int_comparator
-    ; "( > )", int_comparator
-    ; "( <= )", int_comparator
-    ; "( >= )", int_comparator
-    ; "( + )", int_bop
-    ; "( - )", int_bop
-    ; "( * )", int_bop
-    ; "( / )", int_bop
-    ; "unary( - )", int_uop
+  let v ~with_poly_params =
+    [ "( || )", bool_bop ~with_poly_params
+    ; "( && )", bool_bop ~with_poly_params
+    ; "not", bool_uop ~with_poly_params
+    ; "( = )", int_comparator ~with_poly_params
+    ; "( <> )", int_comparator ~with_poly_params
+    ; "( < )", int_comparator ~with_poly_params
+    ; "( > )", int_comparator ~with_poly_params
+    ; "( <= )", int_comparator ~with_poly_params
+    ; "( >= )", int_comparator ~with_poly_params
+    ; "( + )", int_bop ~with_poly_params
+    ; "( - )", int_bop ~with_poly_params
+    ; "( * )", int_bop ~with_poly_params
+    ; "( / )", int_bop ~with_poly_params
+    ; "unary( - )", int_uop ~with_poly_params
     ]
   ;;
 
-  let wrap k =
+  let init () =
     let env = Env.empty () in
     let env =
       List.fold t ~init:env ~f:(fun env (type_str, type_arity, type_ident) ->
         Env.add_type_def env (type_def type_str type_arity type_ident))
     in
+    env
+  ;;
+
+  let wrap ~with_poly_params k =
+    let env = init () in
     let env, bindings =
-      List.fold_map v ~init:env ~f:(fun env (var_str, type_) ->
+      List.fold_map (v ~with_poly_params) ~init:env ~f:(fun env (var_str, type_) ->
         Env.rename_var env ~var:(Var_name.create var_str) ~in_:(fun env cvar ->
           env, (cvar, type_)))
     in

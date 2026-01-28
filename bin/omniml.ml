@@ -30,6 +30,10 @@ module Params = struct
     flag "-disable-stdlib" no_arg ~doc:"Disables the inclusion of the standard library"
   ;;
 
+  let fpoly_params =
+    flag "-fpoly-params" no_arg ~doc:"Enables the polymorphic parameters feature."
+  ;;
+
   let defaulting =
     flag
       "-defaulting"
@@ -60,10 +64,18 @@ module Command = struct
       ~summary:
         "Parses [filename] and prints the generated constraint (formatted as a sexp)."
       Command.Spec.(
-        empty +> anon ("filename" %: string) +> Params.dump_ast +> Params.disable_stdlib)
-      (fun filename dump_ast without_stdlib ->
+        empty
+        +> anon ("filename" %: string)
+        +> Params.dump_ast
+        +> Params.disable_stdlib
+        +> Params.fpoly_params)
+      (fun filename dump_ast without_stdlib with_poly_params ->
          open_with_lexbuf
-           ~f:(constraint_gen_and_print ~dump_ast ~with_stdlib:(not without_stdlib))
+           ~f:
+             (constraint_gen_and_print
+                ~dump_ast
+                ~with_stdlib:(not without_stdlib)
+                ~with_poly_params)
            filename)
   ;;
 
@@ -76,9 +88,16 @@ module Command = struct
         +> Params.dump_ast
         +> Params.dump_constraint
         +> Params.disable_stdlib
+        +> Params.fpoly_params
         +> Params.defaulting
         +> Async_log.Global.set_level_via_param ())
-      (fun filename dump_ast dump_constraint without_stdlib defaulting () ->
+      (fun filename
+        dump_ast
+        dump_constraint
+        without_stdlib
+        with_poly_params
+        defaulting
+        () ->
          open_with_lexbuf filename ~f:(fun lexbuf ->
            let source = `File filename in
            let () =
@@ -87,6 +106,7 @@ module Command = struct
                ~dump_ast
                ~dump_constraint
                ~with_stdlib:(not without_stdlib)
+               ~with_poly_params
                ~defaulting
                lexbuf
            in

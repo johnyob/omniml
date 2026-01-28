@@ -2,7 +2,7 @@
 open Grace
 open Omniml_ast
 open Ast_types
-open Ast_builder.Default
+open Ast_builder
 
 (* A set of predefined operator names *)
 module Predef_names = struct
@@ -117,10 +117,20 @@ type_name:
 arrow_type:
     type_ = tuple_type
       { type_ }
-  | type1 = tuple_type
+  | type1 = arrow_arg_type
     ; "->"
-    ; type2 = core_type
+    ; type2 = arrow_type
       { Type.arrow ~range:(range_of_lex $loc) type1 type2 }
+
+
+arrow_arg_type:
+    type_ = tuple_type
+      { Type.Function_param.mono ~range:(range_of_lex $loc) type_ }
+  | "("
+    ; "forall" 
+    ; scheme = core_scheme
+    ; ")"
+      { Type.Function_param.poly ~range:(range_of_lex $loc) scheme }
 
 tuple_type:
     type_ = atom_type
@@ -153,11 +163,16 @@ atom_type:
     ; ")"
       { types }
 
+poly_core_scheme:
+  type_var_names = nonempty_list(type_var_name)
+  ; "."
+  ; type_ = core_type
+    { Type.scheme ~range:(range_of_lex $loc) ~quantifiers:type_var_names type_ }
+
+
 core_scheme:
-    type_var_names = nonempty_list(type_var_name)
-    ; "."
-    ; type_ = core_type
-      { Type.scheme ~range:(range_of_lex $loc) ~quantifiers:type_var_names type_ }
+    scheme = poly_core_scheme 
+      { scheme }
   | type_ = core_type
       { Type.scheme ~range:(range_of_lex $loc) type_ }
 
@@ -253,7 +268,7 @@ expression:
     ; else_ = seq_expression
       { Expression.if_ ~range:(range_of_lex $loc) cond ~then_ ~else_ }
   | "fun"
-    ; pats = nonempty_list(atom_pattern)
+    ; pats = nonempty_list(function_param)
     ; "->"
     ; exp = seq_expression
       { Expression.fun_ ~range:(range_of_lex $loc) pats exp }
@@ -395,6 +410,24 @@ atom_expression:
       { Predef_names.and_ ~range:(range_of_lex $loc) }
   | "||"
       { Predef_names.or_ ~range:(range_of_lex $loc) }
+
+function_param:
+    pat = atom_pattern
+      { Expression.Function_param.mono_val
+          ~range:(range_of_lex $loc)
+          pat
+      }
+  | "("
+    ; "forall"
+    ; var_name = var_name
+    ; ":"
+    ; scheme = poly_core_scheme
+    ; ")"
+      { Expression.Function_param.poly_val
+          ~range:(range_of_lex $loc)
+          var_name
+          scheme
+      }
 
 pattern:
     pat = construct_pattern
