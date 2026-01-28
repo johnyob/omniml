@@ -16,8 +16,13 @@ module type S = sig
   val label_name : (string -> Label_name.With_range.t) with_range_fn
 
   module Type : sig
+    module Function_param : sig
+      val mono : (core_type -> param_type) with_range_fn
+      val poly : (core_scheme -> param_type) with_range_fn
+    end
+
     val var : (Type_var_name.With_range.t -> core_type) with_range_fn
-    val arrow : (core_type -> core_type -> core_type) with_range_fn
+    val arrow : (param_type -> core_type -> core_type) with_range_fn
     val tuple : (core_type list -> core_type) with_range_fn
     val constr : (core_type list -> Type_name.With_range.t -> core_type) with_range_fn
     val poly : (core_scheme -> core_type) with_range_fn
@@ -42,9 +47,16 @@ module type S = sig
   end
 
   module Expression : sig
+    module Function_param : sig
+      val mono_val : (pattern -> function_param) with_range_fn
+
+      val poly_val
+        : (Var_name.With_range.t -> core_scheme -> function_param) with_range_fn
+    end
+
     val var : (Var_name.With_range.t -> expression) with_range_fn
     val const : (constant -> expression) with_range_fn
-    val fun_ : (pattern list -> expression -> expression) with_range_fn
+    val fun_ : (function_param list -> expression -> expression) with_range_fn
     val app : (expression -> expression -> expression) with_range_fn
     val let_ : (value_binding -> in_:expression -> expression) with_range_fn
 
@@ -109,6 +121,11 @@ module Default : S with type 'a with_range_fn := range:Range.t -> 'a = struct
   let label_name ~range name = With_range.create ~range @@ Label_name.create name
 
   module Type = struct
+    module Function_param = struct
+      let mono ~range mono_type = With_range.create ~range @@ Param_mono_type mono_type
+      let poly ~range poly_type = With_range.create ~range @@ Param_poly_type poly_type
+    end
+
     let var ~range type_var_name = With_range.create ~range @@ Type_var type_var_name
     let arrow ~range type1 type2 = With_range.create ~range @@ Type_arrow (type1, type2)
     let tuple ~range types = With_range.create ~range @@ Type_tuple types
@@ -140,6 +157,14 @@ module Default : S with type 'a with_range_fn := range:Range.t -> 'a = struct
   end
 
   module Expression = struct
+    module Function_param = struct
+      let mono_val ~range pat = With_range.create ~range @@ Param_mono_val pat
+
+      let poly_val ~range var scheme =
+        With_range.create ~range @@ Param_poly_val { var; scheme }
+      ;;
+    end
+
     let var ~range var_name = With_range.create ~range @@ Exp_var var_name
     let const ~range const = With_range.create ~range @@ Exp_const const
     let fun_ ~range pats exp = With_range.create ~range @@ Exp_fun (pats, exp)
@@ -217,6 +242,11 @@ module Make (R : Range) : S with type 'a with_range_fn := 'a = struct
   let label_name = label_name ~range:R.v
 
   module Type = struct
+    module Function_param = struct
+      let mono = Type.Function_param.mono ~range:R.v
+      let poly = Type.Function_param.poly ~range:R.v
+    end
+
     let var = Type.var ~range:R.v
     let arrow = Type.arrow ~range:R.v
     let tuple = Type.tuple ~range:R.v
@@ -237,6 +267,11 @@ module Make (R : Range) : S with type 'a with_range_fn := 'a = struct
   end
 
   module Expression = struct
+    module Function_param = struct
+      let mono_val = Expression.Function_param.mono_val ~range:R.v
+      let poly_val = Expression.Function_param.poly_val ~range:R.v
+    end
+
     let var = Expression.var ~range:R.v
     let const = Expression.const ~range:R.v
     let fun_ = Expression.fun_ ~range:R.v
@@ -270,3 +305,5 @@ module Make (R : Range) : S with type 'a with_range_fn := 'a = struct
     let label_decl = Structure.label_decl
   end
 end
+
+include Default

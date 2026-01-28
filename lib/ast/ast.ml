@@ -8,11 +8,16 @@ type core_type = core_type_desc With_range.t
 
 and core_type_desc =
   | Type_var of Type_var_name.With_range.t
-  | Type_arrow of core_type * core_type
+  | Type_arrow of param_type * core_type
   | Type_tuple of core_type list
   | Type_constr of core_type list * Type_name.With_range.t
   | Type_poly of core_scheme
-[@@deriving sexp_of]
+
+and param_type = param_type_desc With_range.t
+
+and param_type_desc =
+  | Param_mono_type of core_type
+  | Param_poly_type of core_scheme
 
 and core_scheme = core_scheme_desc With_range.t
 
@@ -35,12 +40,22 @@ and pattern_desc =
   | Pat_annot of pattern * core_type
 [@@deriving sexp_of]
 
+type function_param = function_param_desc With_range.t
+
+and function_param_desc =
+  | Param_mono_val of pattern
+  | Param_poly_val of
+      { var : Var_name.With_range.t
+      ; scheme : core_scheme
+      }
+[@@deriving sexp_of]
+
 type expression = expression_desc With_range.t
 
 and expression_desc =
   | Exp_var of Var_name.With_range.t
   | Exp_const of constant
-  | Exp_fun of pattern list * expression
+  | Exp_fun of function_param list * expression
   | Exp_app of expression * expression
   | Exp_let of value_binding * expression
   | Exp_exists of Type_var_name.With_range.t list * expression

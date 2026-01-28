@@ -1,22 +1,23 @@
 open! Import
 open Constraint
 
-let empty_env_wrapper f = f (Env.empty ())
+let empty_env_wrapper f = f (Predef.Env.init ())
 
-let stdlib_wrapper ?(with_stdlib = true) f =
-  if with_stdlib then Predef.Env.wrap f else empty_env_wrapper f
+let stdlib_wrapper ?(with_stdlib = true) ~with_poly_params f =
+  if with_stdlib then Predef.Env.wrap ~with_poly_params f else empty_env_wrapper f
 ;;
 
-let infer_exp ?with_stdlib exp =
-  stdlib_wrapper ?with_stdlib
+let infer_exp ?with_stdlib ~with_poly_params exp =
+  stdlib_wrapper ?with_stdlib ~with_poly_params
   @@ fun env ->
   let exp_type = Type.Var.create ~id_source:(Env.id_source env) ~name:"exp_type0" () in
-  let c = Infer.Expression.infer_exp ~env exp exp_type in
+  let c = Infer.Expression.infer_exp ~with_poly_params ~env exp exp_type in
   exists exp_type c
 ;;
 
-let infer_str ?with_stdlib str =
-  stdlib_wrapper ?with_stdlib @@ fun env -> Infer.Structure.infer_str ~env str
+let infer_str ?with_stdlib ~with_poly_params str =
+  stdlib_wrapper ?with_stdlib ~with_poly_params
+  @@ fun env -> Infer.Structure.infer_str ~with_poly_params ~env str
 ;;
 
 let check ?defaulting ?range cst =
