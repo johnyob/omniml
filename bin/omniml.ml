@@ -80,8 +80,10 @@ module Command = struct
         +> Async_log.Global.set_level_via_param ())
       (fun filename dump_ast dump_constraint without_stdlib defaulting () ->
          open_with_lexbuf filename ~f:(fun lexbuf ->
+           let source = `File filename in
            let () =
              type_check_and_print
+               ~source
                ~dump_ast
                ~dump_constraint
                ~with_stdlib:(not without_stdlib)

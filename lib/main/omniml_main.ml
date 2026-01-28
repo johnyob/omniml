@@ -41,10 +41,17 @@ let type_check_and_print
       ~with_stdlib
       ~defaulting
   =
-  Omniml_error.handle_uncaught ~exit:true
+  Omniml_error.handle_uncaught ~exit:false
   @@ fun () ->
   let cst = constraint_gen ?source lexbuf ~dump_ast ~with_stdlib in
   if dump_constraint then Fmt.pr "Generated constraint:@.%a@." pp_constraint cst;
-  Omniml_type_checker.check ~defaulting cst;
+  let range =
+    let open Grace in
+    Option.(
+      source
+      >>| fun source ->
+      Range.create ~source Byte_index.initial (Byte_index.of_int @@ Source.length source))
+  in
+  Omniml_type_checker.check ~defaulting ?range cst;
   Fmt.pr "Well typed :)@."
 ;;

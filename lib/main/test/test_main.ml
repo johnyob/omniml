@@ -1690,6 +1690,330 @@ let%expect_test "" =
 ;;
 
 let%expect_test "" =
+  let curr_str = ref (include_fix ^ include_ref ^ include_option ^ include_list) in
+  let do_test ?(add = false) str =
+    let str = !curr_str ^ str in
+    type_check_and_print ~defaulting:Scc str;
+    if add then curr_str := str
+  in
+  do_test
+    ~add:true
+    {|
+      let poly1 = fun (id : [ 'a. 'a -> 'a ]) -> 
+        let id = @[id] in
+        (id 3, id true) 
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly1 [(fun x -> x)];;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly1 [(fun x -> x + 1)];;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:25:27
+     25 │        let xignore = poly1 [(fun x -> x + 1)];;
+        │                            ^^^^^^^^^^^^^^^^^^ `int -> int`
+        │                                                 is not equal to
+        │                                               `'a -> 'a`
+    |}];
+  do_test
+    ~add:true
+    {|
+      let id = fun x -> x;;
+      let xignore = poly1 [id];;
+    |};
+  [%expect {| Well typed :) |}];
+  (* This is ill-typed in OCaml, since [id (fun x -> x)] is expansive.
+     We don't have the value restriction in OmniML. *)
+  do_test
+    {|
+      let xignore = poly1 [id (fun x -> x)];;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly1 [(let r = create_ref None in fun x -> set_ref r (Some x); x)];;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let escape = fun f -> poly1 [(fun x -> f x; x)];;
+    |};
+  [%expect
+    {|
+    error[E012]: generic type variable escapes its scope
+        ┌─ expect_test.ml:28:35
+     28 │        let escape = fun f -> poly1 [(fun x -> f x; x)];;
+        │                                    ^^^^^^^^^^^^^^^^^^^
+    |}];
+  do_test
+    ~add:true
+    {|
+      let poly2 = fun id ->
+        let id = @[(id : ['a. 'a -> 'a])] in
+        ((id 1, id true) : int * bool)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly2 [(fun x -> x)];;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly2 [(fun x -> x + 1)];;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:33:27
+     33 │        let xignore = poly2 [(fun x -> x + 1)];;
+        │                            ^^^^^^^^^^^^^^^^^^ `int -> int`
+        │                                                 is not equal to
+        │                                               `'a -> 'a`
+    |}];
+  do_test
+    ~add:true
+    {|
+      let poly3 = 
+        forall (type 'b) ->
+          fun (id : ['a. 'a -> 'a]) (x : ['b]) ->
+            let id = @[id] in
+            let x = @[x] in
+            ((id x, id (Some x)) : 'b * 'b option)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly3 [(fun x -> x)] [8];;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly3 [(fun x -> x + 1)] [8];;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:41:27
+     41 │        let xignore = poly3 [(fun x -> x + 1)] [8];;
+        │                            ^^^^^^^^^^^^^^^^^^ `int -> int`
+        │                                                 is not equal to
+        │                                               `'a -> 'a`
+    |}];
+  do_test
+    ~add:true
+    {|
+      let poly4 = fix (fun poly4 p (id : ['a. 'a -> 'a]) ->
+        let p = @[p] in
+        let id = @[id] in
+        if p then poly4 [false] [id] else (id 4, id true))
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly4 [true] [(fun x -> x)];;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly4 [true] [(fun x -> x + 1)];;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:47:34
+     47 │        let xignore = poly4 [true] [(fun x -> x + 1)];;
+        │                                   ^^^^^^^^^^^^^^^^^^ `int -> int`
+        │                                                        is not equal to
+        │                                                      `'a -> 'a`
+    |}];
+  do_test
+    ~add:true
+    {|
+      let poly5 = fix (fun poly5 (p : [bool]) (id : ['a. 'a -> 'a]) -> 
+        let p = @[p] in
+        let id = @[id] in
+        ((if p then poly5 [false] [id] else (id 5, id true)) : int * bool))
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly5 [true] [(fun x -> x)];;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly5 [true] [(fun x -> x + 1)];;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:53:34
+     53 │        let xignore = poly5 [true] [(fun x -> x + 1)];;
+        │                                   ^^^^^^^^^^^^^^^^^^ `int -> int`
+        │                                                        is not equal to
+        │                                                      `'a -> 'a`
+    |}];
+  do_test
+    ~add:true
+    {|
+      let poly6 = forall (type 'b) -> 
+        fix (fun poly6 -> 
+          fun (p : [bool]) (id : ['a. 'a -> 'a]) (x : ['b]) ->
+            let p = @[p] in
+            let id = @[id] in
+            let x = @[x] in
+            ((if p then poly6 [false] [id] [x] else (id x, id (Some x))) : 'b * 'b option))
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly6 [true] [(fun x -> x)] [8];; 
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = poly6 [true] [(fun x -> x + 1)] [8];;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:62:34
+     62 │        let xignore = poly6 [true] [(fun x -> x + 1)] [8];;
+        │                                   ^^^^^^^^^^^^^^^^^^ `int -> int`
+        │                                                        is not equal to
+        │                                                      `'a -> 'a`
+    |}];
+  do_test
+    ~add:true
+    {|
+      let needs_magic = fun (magic : ['a 'b. 'a -> 'b]) ->
+        let magic = @[magic] in
+        (magic 5 : bool)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = needs_magic [(fun x -> x)];;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:67:33
+     67 │        let xignore = needs_magic [(fun x -> x)];;
+        │                                  ^^^^^^^^^^^^^^ `'a -> 'a`
+        │                                                   is not equal to
+        │                                                 `'b -> 'c`
+    |}];
+  do_test
+    ~add:true
+    {|
+      let with_id = forall (type 'b) -> fun (f : [['a. 'a -> 'a] -> 'b]) ->
+        let f = @[f] in
+        (f [(fun x -> x)] : 'b)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let xignore = with_id [(fun id -> 
+        let id = @[id] in
+        (id 1, id true))] 
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let non_principal1 = fun p f ->
+        let p = @[p] in
+        let f = @[f] in
+        if p then with_id [f] else f [(fun x -> x)]
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let non_principal2 = fun p f ->
+        let p = @[p] in
+        let f = @[f] in
+        if p then f [(fun x -> x)] else with_id [f]
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let principal1 = exists (type 'b) -> fun p (f : [['a. 'a -> 'a] -> 'b]) ->
+        let p = @[p] in
+        let f = @[f] in
+        if p then f [(fun x -> x)] else with_id [f]
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let principal2 = exists (type 'b) -> 
+        (fun p f -> 
+          let p = @[p] in
+          let f = @[f] in
+          if p then f [(fun x -> x)] else with_id [f] 
+        : [bool] -> [['a. 'a -> 'a] -> 'b] -> 'b)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let principal3 = ( 
+        Cons (None, Cons (Some (fun x -> 
+          let x = @[x] in
+          (x 5, x true)), Nil))
+        : (['a. 'a -> 'a] -> int * bool) option list)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let non_principal3 = 
+        Cons ((Some (fun x -> let x = @[x] in (x 5, x true)) : (['a. 'a -> 'a] -> int * bool) option), 
+        Cons (Some (fun x -> let x = @[x] in (x 6, x false)), Nil))
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let non_principal4 = 
+        Cons ((Some (fun x -> let x = @[x] in (x 5, x true))), 
+        Cons ((Some (fun x -> let x = @[x] in (x 6, x false)) : (['a. 'a -> 'a] -> int * bool) option), Nil))
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let foo = fun (f : [['a. 'a -> 'a] -> int]) -> 
+        let f = @[f] in
+        (fun id -> 
+          let id = @[id] in
+          f [id]
+        : ['a 'b. 'a -> 'b] -> int)
+      ;;
+    |};
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
   (* All examples from https://dl.acm.org/doi/pdf/10.1145/3408971 *)
   (* The following compares results from QuickLook. We 
      primarily use the manual encoding of OCaml's polyparams into polytypes: 

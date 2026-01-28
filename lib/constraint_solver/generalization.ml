@@ -86,7 +86,13 @@ module Guard = struct
 
   module Packed = struct
     module T = struct
-      type t = T : 'a T.t -> t [@@deriving sexp_of]
+      type t = T : 'a T.t -> t
+
+      let sexp_of_t (T t) =
+        match t with
+        | Match mid -> Match_identifier.sexp_of_t mid
+        | Instance iid -> Instance_identifier.sexp_of_t iid
+      ;;
 
       let t_of_sexp _ = assert false
 
@@ -134,6 +140,10 @@ module Guard = struct
       val is_empty : _ t -> bool
       val iter : 's t -> f:(key:Match_identifier.t -> data:'s -> unit) -> unit
     end
+
+    module Instance : sig
+      val is_empty : _ t -> bool
+    end
   end = struct
     module Key = T
 
@@ -151,8 +161,10 @@ module Guard = struct
     [@@deriving sexp_of]
 
     let sexp_of_t _sexp_of_a t =
-      [%sexp_of: Match_identifier.Set.t * Instance_identifier.Set.t]
-        (Map.key_set t.match_map, t.inst_set)
+      [%sexp
+        { match_map : Match_identifier.Set.t = Map.key_set t.match_map
+        ; inst_set : Instance_identifier.Set.t = t.inst_set
+        }]
     ;;
 
     let empty =
@@ -219,6 +231,10 @@ module Guard = struct
     module Match = struct
       let iter t ~f = Map.iteri t.match_map ~f
       let is_empty t = Map.is_empty t.match_map
+    end
+
+    module Instance = struct
+      let is_empty t = Set.is_empty t.inst_set
     end
   end
 end
@@ -397,23 +413,19 @@ module S = struct
              { region_node; instances = Instance_identifier.Map.empty; kind = Generic })
   ;;
 
-  let partial_generalize t ~f =
+  let partial_generalize t =
     match t.status with
     | Partial { kind = Generic; instances; region_node = _ } when is_generalizable t ->
-      (* An unguarded partial generic can be generalized. [f] can be used to notify instances *)
-      Map.iteri instances ~f:(fun ~key ~data -> f key data);
-      flexize { t with status = Generic }
-    | _ -> t
+      flexize { t with status = Generic }, Some instances
+    | _ -> t, None
   ;;
 
-  let partial_ungeneralize t ~f =
+  let partial_ungeneralize t =
     match t.status with
     | Partial ({ kind = Instance; instances; region_node = _ } as s) ->
-      (* An ungeneralized instance that is still partial (but whose level is lowered)
-         must noify the instances of this (likely making then less generic) *)
-      Map.iteri instances ~f:(fun ~key ~data -> f key data);
-      { t with status = Partial { s with instances = Instance_identifier.Map.empty } }
-    | _ -> t
+      ( { t with status = Partial { s with instances = Instance_identifier.Map.empty } }
+      , Some instances )
+    | _ -> t, None
   ;;
 
   type 'a ctx =
@@ -511,12 +523,22 @@ module Type = struct
 
   let partial_generalize t ~f =
     let structure = structure t in
-    set_structure t (S.partial_generalize structure ~f)
+    let structure, instances = S.partial_generalize structure in
+    set_structure t structure;
+    Option.iter instances ~f:(fun instances ->
+      (* An unguarded partial generic can be generalized. [f] can be used to notify instances *)
+      Map.iteri instances ~f:(fun ~key ~data -> f key data))
   ;;
 
   let partial_ungeneralize t ~f =
     let structure = structure t in
-    set_structure t (S.partial_ungeneralize structure ~f)
+    let structure, instances = S.partial_ungeneralize structure in
+    set_structure t structure;
+    Option.iter instances ~f:(fun instances ->
+      (* An ungeneralized instance that is still partial (but whose level is lowered)
+         must noify the instances of this (likely making then less generic) *)
+      [%log.global.debug "Partially ungeneralizing type"];
+      Map.iteri instances ~f:(fun ~key ~data -> f key data))
   ;;
 
   let add_guard t ~guard ~data =
@@ -903,20 +925,29 @@ module Scc_defaulting = struct
         let compare = Comparable.lift Identifier.compare ~f:Type.id
       end
 
-      let iter_nodes t ~f = List.iter t.nodes ~f
-
-      let iter_succ t node ~f =
+      let is_root_node t node =
         match Type.level node with
         | None ->
           (* The type is generic, it must be a root! *)
-          ()
+          `Yes_generic
         | Some level ->
-          if Tree.Level.(level < t.young_level)
-          then
-            (* Old nodes are considered root nodes *)
-            ()
-          else
-            Guard.Map.Match.iter (Type.guards node) ~f:(fun ~key:_ ~data:succ -> f succ)
+          (* Old nodes are considered root nodes (they may be updated in future!) *)
+          if
+            Tree.Level.(level < t.young_level)
+            ||
+            (* Instance guarded nodes can still be updated *)
+            not (Guard.Map.Instance.is_empty (Type.guards node))
+          then `Yes_alive
+          else `No
+      ;;
+
+      let iter_nodes t ~f = List.iter t.nodes ~f
+
+      let iter_succ t node ~f =
+        match is_root_node t node with
+        | `Yes_generic | `Yes_alive -> ()
+        | `No ->
+          Guard.Map.Match.iter (Type.guards node) ~f:(fun ~key:_ ~data:succ -> f succ)
       ;;
     end
 
@@ -931,13 +962,18 @@ module Scc_defaulting = struct
       let scc_roots = scc_leafs t in
       List.filter scc_roots ~f:(function
         | [ node ] ->
-          (* We want to filter out any old nodes. Old nodes will always be in
-           leaf SCCs of length 1 *)
-          (match Type.level node with
-           | None ->
+          (* We want to filter out any 'alive' root nodes. Any root 
+             node is guaranteed to be part of a singleton SCC. *)
+          (match is_root_node t node with
+           | `Yes_generic ->
              (* This is a generic leaf SCC -- it is never realized. Keep it *)
              true
-           | Some level -> not Tree.Level.(level < t.young_level))
+           | `Yes_alive ->
+             (* This is an alive leaf SCC, it may be realized in future. Discard it *)
+             false
+           | `No ->
+             (* This is not a deliberate root, keep it *)
+             true)
         | _ -> true)
     ;;
   end
@@ -967,6 +1003,7 @@ module Scc_defaulting = struct
         (never_realized_types : Type.t list list)
         (List.length never_realized_types : int)];
     List.iter never_realized_types ~f:(fun cycle ->
+      if List.length cycle > 1 then print_endline "Cyclic defaulting!";
       List.iter cycle ~f:(fun type_ ->
         match Type.inner type_ with
         | Var (Empty_one_or_more_handlers handlers) ->
@@ -1021,6 +1058,30 @@ let create_app ~state ~curr_region type1 type2 =
   create_former ~state ~curr_region (App (type1, type2))
 ;;
 
+(* The predecessor region of [region] *)
+let pred_region (region : Type.region_node) =
+  match region.parent with
+  | Some parent -> parent
+  | None -> region
+;;
+
+let lower_suspended_var_region ~state type_ r =
+  let structure = Type.structure type_ in
+  match structure.inner, structure.status with
+  | ( Var (Empty_one_or_more_handlers _)
+    , Partial { kind = _; region_node = r'; instances = _ } )
+  | Var (Empty_one_or_more_handlers _), Instance r' ->
+    (* We lower the region of the suspended var to [parent r] if necessary.
+       This ensures the invariant that if we have [App (spine, svar)] at region [r], 
+       then [svar] must be at [parent r]. *)
+    let r = pred_region r in
+    if Tree.compare_node_by_level r r' < 0
+    then (
+      visit_region ~state r;
+      Type.set_region type_ r)
+  | _, _ -> ()
+;;
+
 let copy
       ~state
       ~(copy_region : Type.region_node)
@@ -1065,6 +1126,7 @@ let copy
       if when_ structure
       then (
         on_alloc copy;
+        lower_suspended_var_region ~state copy curr_region;
         Type.set_inner copy (S.Inner.copy ~f:loop structure.inner));
       copy
   in
@@ -1151,7 +1213,11 @@ let update_type_levels ~state (young_region : Young_region.t) =
       else (
         [%log.global.debug "Type in young region, visiting children" (id : Identifier.t)];
         (* [type_] is in current region *)
-        Type.structure type_ |> S.iter ~f:(fun type_ -> loop type_ r)))
+        Type.structure type_
+        |> S.iter ~f:(fun type_ ->
+          (* Forces us to trigger any child suspended vars to be lowered. *)
+          lower_suspended_var_region ~state type_ r;
+          loop type_ r)))
   in
   young_region.region.types
   |> List.sort
@@ -1229,44 +1295,48 @@ let generalize_young_region ~state (young_region : Young_region.t) =
   let generics =
     young_region.region.types
     |> List.filter ~f:(fun type_ ->
-      Type.is_representative type_
-      &&
-      ([%log.global.debug "Visiting type" (type_ : Type.t)];
-       let r = Type.region_exn ~here:[%here] type_ in
-       [%log.global.debug "Region of type_" (r : Type.sexp_identifier_region_node)];
-       if Identifier.(r.id <> young_region.node.id)
-       then (
-         [%log.global.debug "Type is not generic"];
-         (* Invariant: region is a parent (or potentially a cousin) of [young_region] *)
-         (* Register [type_] in the region [r] *)
-         visit_region ~state r;
-         Region.(register_type (Tree.region r) type_);
-         (* If the type is partial, we notify the instances and unify them with
+      match Type.region type_ with
+      | None ->
+        (* Only the case if [type_] was in [generics] previously and has since been generalized *)
+        false
+      | Some r ->
+        [%log.global.debug "Visiting type" (type_ : Type.t)];
+        [%log.global.debug "Region of type_" (r : Type.sexp_identifier_region_node)];
+        if Identifier.(r.id <> young_region.node.id)
+        then (
+          [%log.global.debug "Type is not generic"];
+          (* Invariant: region is a parent (or potentially a cousin) of [young_region] *)
+          (* Register [type_] in the region [r] *)
+          visit_region ~state r;
+          Region.(register_type (Tree.region r) type_);
+          (* If the type is partial, we notify the instances and unify them with
             the ungeneralized partial type. *)
-         Type.partial_ungeneralize type_ ~f:(fun instance_id instance ->
-           let curr_region = Type.region_exn ~here:[%here] instance in
-           visit_region ~state curr_region;
-           unify ~state ~curr_region type_ instance;
-           [%log.global.debug
-             "Removing instance guard due to partial ungeneralization"
-               (type_ : Type.t)
-               (instance_id : Instance_identifier.t)
-               (instance : Type.t)];
-           Type.remove_guard instance (Instance instance_id));
-         (* Filter the type from the result list *)
-         false)
-       else (
-         [%log.global.debug "Type is generic"];
-         assert (Identifier.(r.id = young_region.node.id));
-         (* If the type is a partial instance and has instances, then we propagate
+          Type.partial_ungeneralize type_ ~f:(fun instance_id instance ->
+            let curr_region = Type.region_exn ~here:[%here] instance in
+            visit_region ~state curr_region;
+            [%log.global.debug "Unifying instance with type_" (instance : Type.t)];
+            Type.remove_guard instance (Instance instance_id);
+            unify ~state ~curr_region type_ instance;
+            [%log.global.debug
+              "Removing instance guard due to partial ungeneralization"
+                (instance_id : Instance_identifier.t)]);
+          [%log.global.debug "Partially ungeneralized type" (type_ : Type.t)];
+          (* Filter the type from the result list *)
+          false)
+        else
+          Type.is_representative type_
+          &&
+          ([%log.global.debug "Type is generic"];
+           assert (Identifier.(r.id = young_region.node.id));
+           (* If the type is a partial instance and has instances, then we propagate
             the structure. *)
-         (match Type.status type_ with
-          | Partial { kind = Instance; instances; _ } when not (Map.is_empty instances) ->
-            Queue.enqueue propagate_work_list type_
-          | _ -> ());
-         (* Make the type generic *)
-         Type.generalize type_;
-         true)))
+           (match Type.status type_ with
+            | Partial { kind = Instance; instances; _ } when not (Map.is_empty instances)
+              -> Queue.enqueue propagate_work_list type_
+            | _ -> ());
+           (* Make the type generic *)
+           Type.generalize type_;
+           true))
   in
   [%log.global.debug "Generics for young region" (generics : Type.t list)];
   (* Generalizing a rigid variable flexizes it. We remove the variable
@@ -1326,7 +1396,7 @@ let generalize_young_region ~state (young_region : Young_region.t) =
       match Type.status type_ with
       | Instance _ | Partial { kind = Instance; _ } ->
         (* No instances are left in the region *)
-        [%log.global.debug "Type that should be a generic but isn't" (type_ : Type.t)];
+        [%log.global.error "Type that should be a generic but isn't" (type_ : Type.t)];
         assert false
       | Partial { kind = Generic; _ } -> true
       | Generic -> false)
@@ -1395,11 +1465,10 @@ let instantiate ~state ~curr_region ({ root; region_node } : Scheme.t) =
 module Suspended_match = struct
   type t =
     { matchee : Type.t
-    ; shape_matchee : Type.t
     ; closure : closure
-    ; case : curr_region:Type.region_node -> Type.t R.t -> unit
+    ; case : curr_region:Type.region_node -> shape:Type.t R.t -> spine:Type.t -> unit
     ; error : unit -> Omniml_error.t
-    ; else_ : curr_region:Type.region_node -> unit
+    ; else_ : curr_region:Type.region_node -> shape:Type.t -> spine:Type.t -> unit
     }
   [@@deriving sexp_of]
 
@@ -1409,51 +1478,59 @@ module Suspended_match = struct
     }
   [@@deriving sexp_of]
 
-  let closure_add_guard ~state ~matchee { variables; schemes } ~guard ~data =
+  let closure_add_guard ~state ~matchee_spine { variables; schemes } ~guard ~data =
     let visit_and_add_guard type_ =
       visit_region ~state (Type.region_exn ~here:[%here] type_);
       Type.add_guard type_ ~guard ~data
     in
-    visit_and_add_guard matchee;
+    visit_and_add_guard matchee_spine;
     List.iter variables ~f:visit_and_add_guard;
     List.iter schemes ~f:(fun scheme ->
       Scheme.iter_instances_and_partial_generics scheme ~f:visit_and_add_guard)
   ;;
 
-  let closure_remove_guard ~state ~matchee { variables; schemes } guard =
+  let closure_remove_guard ~state ~matchee_spine { variables; schemes } guard =
     let visit_and_remove_guard type_ =
       visit_region ~state (Type.region_exn ~here:[%here] type_);
       Type.remove_guard type_ guard
     in
-    visit_and_remove_guard matchee;
+    visit_and_remove_guard matchee_spine;
     List.iter variables ~f:visit_and_remove_guard;
     List.iter schemes ~f:(fun scheme ->
       Scheme.iter_instances_and_partial_generics scheme ~f:visit_and_remove_guard)
   ;;
 
-  let match_or_yield
-        ~state
-        ~curr_region
-        { matchee; shape_matchee; case; error; closure; else_ }
-    =
-    match Type.inner shape_matchee with
+  let match_or_yield ~state ~curr_region { matchee; case; error; closure; else_ } =
+    (* Create the shape and spine types. Ensure the shape type is lowered *)
+    let pred_region = pred_region curr_region in
+    let matchee_shape = create_var ~state ~curr_region:pred_region () in
+    let matchee_spine = create_var ~state ~curr_region () in
+    (* Unify the spine and shape with the matchee *)
+    unify
+      ~state
+      ~curr_region
+      matchee
+      (create_app ~state ~curr_region matchee_spine matchee_shape);
+    (* The above unification cannot fail, and doesn't require the scheduler to be run. 
+       We do not attach handlers to types of kind [*]. *)
+    match Type.inner matchee_shape with
     | Var _ ->
       let guard = Guard.Match (Match_identifier.create state.id_source) in
-      let data = Guard.Map.Data.Match shape_matchee in
+      let data = Guard.Map.Data.Match matchee_shape in
       [%log.global.debug "Suspended match guard" (guard : Guard.Match.t Guard.t)];
       let curr_region_of_closure () =
         visit_region ~state curr_region;
         curr_region
       in
       Type.add_handler
-        shape_matchee
+        matchee_shape
         { run =
             (fun shape_structure ->
               let curr_region = curr_region_of_closure () in
               (* Remove guard from closure *)
-              closure_remove_guard ~state ~matchee closure guard;
+              closure_remove_guard ~state ~matchee_spine closure guard;
               (* Solve case *)
-              case ~curr_region shape_structure;
+              case ~curr_region ~shape:shape_structure ~spine:matchee_spine;
               [%log.global.debug
                 "Generalization tree after solving case"
                   (state.generalization_tree : Generalization_tree.t)])
@@ -1464,16 +1541,16 @@ module Suspended_match = struct
               (* HACK: This forces the region of [shape_matchee] to be visited as well. 
                  [closure_remove_guard] does not guarantee this. But the default handler 
                  always guarantee's that [shape_matchee] is updated. *)
-              visit_region ~state (Type.region_exn ~here:[%here] shape_matchee);
-              else_ ~curr_region;
+              visit_region ~state (Type.region_exn ~here:[%here] matchee_shape);
+              else_ ~curr_region ~shape:matchee_shape ~spine:matchee_spine;
               [%log.global.debug
                 "Generalization tree running default handler"
                   (state.generalization_tree : Generalization_tree.t)])
         };
       (* Add guard to closure *)
-      closure_add_guard ~state ~matchee closure ~guard ~data
+      closure_add_guard ~state ~matchee_spine closure ~guard ~data
     | Structure shape_structure ->
       (* Optimisation: Immediately solve the case *)
-      case ~curr_region shape_structure
+      case ~curr_region ~shape:shape_structure ~spine:matchee_spine
   ;;
 end

@@ -744,6 +744,7 @@ let%expect_test "Detect SCC cycle accross regions" =
   print_solve_result ~defaulting:Scc cst;
   [%expect
     {|
+    Cyclic defaulting!
     ("Constraint is unsatisfiable"
      (cst
       (Exists ((id 0) (name Type.Var))

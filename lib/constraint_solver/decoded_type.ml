@@ -38,7 +38,7 @@ module Pretter_printer = struct
   ;;
 
   let[@inline] pp_applied_shape pp_args pp_shape ppf (types, shape) =
-    Fmt.(pf ppf "@[%a%a@]") pp_args types pp_shape shape
+    Fmt.(pf ppf "@[%a@%a@]") pp_args types pp_shape shape
   ;;
 
   let pp_args ~in_app ~pp_atom ~pp ppf ts =
@@ -91,7 +91,7 @@ module Pretter_printer = struct
       | Sh_poly { quantifiers; scheme } ->
         Fmt.pf
           ppf
-          "@[(@[<hov 2>ν%a.@ %a@])@]"
+          "@[(@[<hov 2>ν%a.@ [%a]@])@]"
           Fmt.(list ~sep:comma pp_var)
           quantifiers
           pp_scheme
@@ -99,7 +99,7 @@ module Pretter_printer = struct
 
     and pp_scheme ppf scheme =
       let { Type.Scheme.quantifiers; body } = scheme in
-      Fmt.pf ppf "@[<hov 2>%a.@ %a@]" Fmt.(list ~sep:comma pp_var) quantifiers pp body
+      Fmt.pf ppf "@[<hov 2>∀%a.@ %a@]" Fmt.(list ~sep:comma pp_var) quantifiers pp body
     ;;
   end
 

@@ -130,7 +130,7 @@ let unify ~(state : State.t) ~(env : Env.t) gtype1 gtype2 =
        The first type will have the 'newest' allocated variables *)
     let dtype1 = decoder gtype1 in
     let dtype2 = decoder gtype2 in
-    Env.raise env @@ Cannot_unify (dtype1, dtype2)
+    Env.raise env (Cannot_unify (dtype1, dtype2))
 ;;
 
 let forall ~(state : State.t) ~env ~type_var =
@@ -152,27 +152,23 @@ let exists ~(state : State.t) ~env ~type_var =
 ;;
 
 let match_type
-  : state:State.t -> env:Env.t -> G.Type.t -> Principal_shape.t -> Env.t * Type.Matchee.t
+  :  state:State.t
+  -> env:Env.t
+  -> spine:G.Type.t
+  -> shape:Principal_shape.t
+  -> Env.t * Type.Matchee.t
   =
-  fun ~state ~env gtype sh ->
+  fun ~state ~env ~spine ~shape ->
   let curr_region = env.curr_region in
-  let shape_quantifiers = Principal_shape.quantifiers sh in
-  let env, spine =
+  let shape_quantifiers = Principal_shape.quantifiers shape in
+  let env, spine_vars =
     List.fold_map shape_quantifiers ~init:env ~f:(fun env quantifier ->
       let gvar = G.create_var ~state ~curr_region () in
       let env = Env.bind_type_var env ~var:quantifier ~type_:gvar in
       env, gvar)
   in
-  unify
-    ~state
-    ~env
-    gtype
-    (G.create_app
-       ~state
-       ~curr_region
-       (G.create_spine ~state ~curr_region spine)
-       (G.create_shape ~state ~curr_region sh));
-  match sh with
+  unify ~state ~env spine (G.create_spine ~state ~curr_region spine_vars);
+  match shape with
   | Sh_arrow ->
     (match shape_quantifiers with
      | [ var1; var2 ] -> env, Arrow (var1, var2)
@@ -233,26 +229,16 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
     let env = forall_many ~state ~env type_vars in
     self ~state ~env in_
   | Match { matchee; closure; case = f; else_; error } ->
-    let matchee = Env.find_type_var env matchee in
-    [%log.global.debug "Matchee type" (matchee : G.Type.t)];
+    let gmatchee = Env.find_type_var env matchee in
+    [%log.global.debug "Matchee type" (gmatchee : G.Type.t)];
     let gclosure = gclosure_of_closure ~env closure in
     [%log.global.debug
       "Closure of suspended match" (gclosure : G.Suspended_match.closure)];
-    (* Create the shape and spine types, lower the shape.  *)
-    let prev_region = Env.prev_region env in
-    let shape_type = G.create_var ~state ~curr_region:prev_region () in
-    let spine_type = G.create_var ~state ~curr_region:env.curr_region () in
-    (* Unify the spine and shape with the matchee *)
-    unify
-      ~state
-      ~env
-      matchee
-      (G.create_app ~state ~curr_region:env.curr_region spine_type shape_type);
     (* Register match for the shape *)
-    let case ~curr_region (shape_structure : _ G.R.t) =
-      [%log.global.debug "Entered match handler" (shape_structure : G.Type.t G.R.t)];
+    let case ~curr_region ~(shape : _ G.R.t) ~spine =
+      [%log.global.debug "Entered match handler" (shape : G.Type.t G.R.t)];
       let shape =
-        match shape_structure with
+        match shape with
         | Rigid_var | Structure (App _ | Spine _) -> assert false
         | Structure (Shape shape) -> shape
       in
@@ -261,7 +247,7 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
       [%log.global.debug "Handler env" (env : Env.t)];
       [%log.global.debug "Handler state" (state : State.t)];
       (* Solve *)
-      let env, matchee = match_type ~state ~env matchee shape in
+      let env, matchee = match_type ~state ~env ~spine ~shape in
       [%log.global.debug
         "Matchee and updated env" (matchee : Type.Matchee.t) (env : Env.t)];
       let cst = f matchee in
@@ -270,9 +256,15 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
       [%log.global.debug "Solved generated constraint" (cst : Constraint.t)];
       [%log.global.debug "Exiting case region"]
     in
-    let else_ ~curr_region =
+    let else_ ~curr_region ~shape ~spine =
       [%log.global.debug "Entered match default handler"];
       let env = Env.of_gclosure gclosure ~curr_region ~closure ~range:env.range in
+      let env =
+        Env.bind_type_var
+          env
+          ~var:matchee
+          ~type_:(G.create_app ~state ~curr_region:env.curr_region spine shape)
+      in
       [%log.global.debug "Handler env" (env : Env.t)];
       [%log.global.debug "Handler state" (state : State.t)];
       let cst = else_ () in
@@ -285,7 +277,7 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
     G.Suspended_match.match_or_yield
       ~state
       ~curr_region:env.curr_region
-      { matchee; shape_matchee = shape_type; closure = gclosure; case; else_; error }
+      { matchee = gmatchee; closure = gclosure; case; else_; error }
   | With_range (t, range) -> solve ~state ~env:(Env.with_range env ~range) t
 
 and gclosure_of_closure ~env closure : G.Suspended_match.closure =
@@ -352,9 +344,17 @@ let solve
                ~here:[%here]
                [%message
                  "There are still partially generalized regions"
-                   (num_partially_generalized_regions : int)]));
+                   (num_partially_generalized_regions : int)
+                   (state.generalization_tree : G.Generalization_tree.t)]));
     Ok ()
   with
   (* Catch solver exceptions *)
+  | G.Unify.Unify (gtype1, gtype2) ->
+    let decoder = Decoded_type.Decoder.create () in
+    (* The let bindings here are to used to ensure order.
+       The first type will have the 'newest' allocated variables *)
+    let dtype1 = decoder gtype1 in
+    let dtype2 = decoder gtype2 in
+    Error (Error.create ~range (Cannot_unify (dtype1, dtype2)))
   | Error.T err -> Error err
 ;;

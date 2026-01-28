@@ -602,7 +602,7 @@ module Expression = struct
       c1
       &~ match_
            tuple_type
-           ~closure:[ `Type tuple_type; `Type exp_type ]
+           ~closure:[ `Type exp_type ]
            ~with_:(function
              | Tuple comp_types ->
                (match List.nth comp_types (index - 1) with
@@ -683,7 +683,7 @@ module Expression = struct
          @@ fun cvar ->
          match_
            exp_type
-           ~closure:[ `Scheme cvar; `Type exp_type ]
+           ~closure:[ `Scheme cvar ]
            ~with_:(function
              | Poly { quantifiers; body } -> forall quantifiers @@ inst cvar body
              | (Arrow _ | Constr _ | Tuple _) as matchee ->
@@ -711,7 +711,7 @@ module Expression = struct
       infer_exp ~env exp poly_type
       &~ match_
            poly_type
-           ~closure:[ `Type poly_type; `Type exp_type ]
+           ~closure:[ `Type exp_type ]
            ~with_:(function
              | Poly { quantifiers; body } ->
                exists_many quantifiers Type.(var exp_type =~ body)
