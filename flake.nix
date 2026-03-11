@@ -87,7 +87,13 @@
         devShells.default = typixLib.devShell {
           name = "mlsus-dev-shell";
 
-          fontPaths = with pkgs; [libertinus roboto];
+          fontPaths = with pkgs; [
+            libertinus
+            roboto
+            fira-code
+            newcomputermodern
+            lmodern
+          ];
           inputsFrom = [mlsus];
 
           buildInputs = with pkgs; [
