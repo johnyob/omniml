@@ -8,8 +8,8 @@ end
 module type Traverse = sig
   include Basic
 
-  (** [copy t ~f] copies [t] using [f] to copy each child. *)
-  val copy : 'a t -> f:('a -> 'a) -> 'a t
+  (** [map t ~f] maps [t] using [f] to map each child. *)
+  val map : 'a t -> f:('a -> 'b) -> 'b t
 
   (** [iter t ~f] traverses [t], executing [f] on each child. *)
   val iter : 'a t -> f:('a -> unit) -> unit

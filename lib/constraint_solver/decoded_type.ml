@@ -7,9 +7,7 @@ module Var = Var.Make (struct
 
 type t =
   | Var of Var.t
-  | Shape of Principal_shape.t
-  | Spine of t list
-  | App of t * t
+  | App of t list * Principal_shape.t
   | Mu of Var.t * t
 [@@deriving sexp]
 
@@ -116,30 +114,30 @@ module Pretter_printer = struct
         | t -> pp_lvl_arrow ppf t
       and pp_lvl_arrow ppf t =
         match t with
-        | App (Spine [ t1; t2 ], Shape Sh_arrow) ->
-          pp_arrow pp_lvl_tuple pp_lvl_arrow ppf (t1, t2)
+        | App ([ t1; t2 ], Sh_arrow) -> pp_arrow pp_lvl_tuple pp_lvl_arrow ppf (t1, t2)
         | t -> pp_lvl_tuple ppf t
       and pp_lvl_tuple ppf t =
         match t with
-        | App (Spine ts, Shape (Sh_tuple _)) -> pp_tuple pp_lvl_app ppf ts
+        | App (ts, Sh_tuple _) -> pp_tuple pp_lvl_app ppf ts
         | t -> pp_lvl_app ppf t
       and pp_lvl_app ppf t =
         match t with
-        | App (_, Shape (Sh_tuple _ | Sh_arrow)) -> Fmt.(parens pp_lvl_arrow ppf t)
-        | App (t, Shape (Sh_constr (_, constr))) ->
-          pp_constr (pp_lvl_spine ~in_app:true) ppf (t, constr)
-        | App (t1, t2) ->
-          pp_applied_shape (pp_lvl_spine ~in_app:true) pp_lvl_atom ppf (t1, t2)
-        | t -> pp_lvl_spine ~in_app:false ppf t
-      and pp_lvl_spine ~in_app ppf t =
-        match t with
-        | Spine ts -> pp_args ~in_app ~pp_atom:pp_lvl_atom ~pp:pp_lvl_mu ppf ts
+        | App (ts, Sh_constr (_, constr)) ->
+          pp_constr
+            (pp_args ~in_app:true ~pp_atom:pp_lvl_atom ~pp:pp_lvl_mu)
+            ppf
+            (ts, constr)
+        | App (ts, (Sh_poly _ as shape)) ->
+          pp_applied_shape
+            (pp_args ~in_app:true ~pp_atom:pp_lvl_atom ~pp:pp_lvl_mu)
+            Constraint_type.pp_shape
+            ppf
+            (ts, shape)
         | t -> pp_lvl_atom ppf t
       and pp_lvl_atom ppf t =
         match t with
         | Var var -> pp_var ppf var
-        | Shape sh -> Constraint_type.pp_shape ppf sh
-        | App _ | Mu _ | Spine _ -> Fmt.(parens pp_lvl_mu ppf t)
+        | App _ | Mu _ -> Fmt.(parens pp_lvl_mu ppf t)
       in
       pp_lvl_mu ppf t
     ;;
@@ -210,22 +208,35 @@ module Decoder = struct
            | Active -> result)
       and decode_first_order_structure ~id structure =
         match structure with
-        | Var _ -> Var (State.rename_var state id)
+        | Var -> Var (State.rename_var state id)
         | Structure s -> decode_rigid_structure ~id s
       and decode_rigid_structure ~id structure =
         match structure with
         | Rigid_var -> Var (State.rename_var state id)
-        | Structure former -> decode_former former
-      and decode_former former =
-        match former with
-        | App (gtype1, gtype2) ->
-          (* The let bindings here are to ensure evaluation order,
-             which corresponds to allocating fresh variables from left to right *)
-          let dtype1 = decode gtype1 in
-          let dtype2 = decode gtype2 in
-          App (dtype1, dtype2)
-        | Spine gtypes -> Spine (List.map gtypes ~f:decode)
-        | Shape sh -> Shape sh
+        | Structure s -> decode_suspended_structure ~id s
+      and decode_suspended_structure ~id structure =
+        match structure with
+        | Shape_app { args; shape_var } ->
+          (match G.Type.inner args, Principal_shape.Var.peek_exn shape_var with
+           | Structure (Structure (Shape_args args)), shape ->
+             let args = List.map args ~f:decode in
+             App (args, shape)
+           | _ -> Var (State.rename_var state id)
+           | exception Principal_shape.Var.Empty -> Var (State.rename_var state id))
+        | Shape_args _ ->
+          (* Kind error, expected type *)
+          Omniml_error.(
+            raise
+            @@ bug_s
+                 ~here:[%here]
+                 [%message
+                   "Kind error when decoding types. Expected type, got args."
+                     (id : Identifier.t)
+                     (structure : G.Type.t G.M.t)])
+        | Structure f -> decode_former f
+      and decode_former { args; shape } =
+        let args = List.map args ~f:decode in
+        App (args, shape)
       in
       decode gtype
   ;;

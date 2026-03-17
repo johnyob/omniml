@@ -84,6 +84,15 @@ module Type : sig
   end
 end
 
+module Principal_shape : sig
+  type t
+
+  val ( @-> ) : t
+  val constr : arity:int -> Type.Ident.t -> t
+  val tuple : int -> t
+  val poly : Type.Scheme.t -> t
+end
+
 module Constraint : sig
   (** Variables standing for term/program variables in constraints. *)
   module Var : Var.S
@@ -182,6 +191,26 @@ module Constraint : sig
       bound to [x]. The variable [x] must be bound earlier by {!let_}. *)
   val inst : Var.t -> Type.t -> t
 
+  module Match_error : sig
+    type t =
+      | Cannot_default
+      (** [Cannot_default] is raised when [match v ...] could not be 
+          defaulted since we could not determine that [v] is *never* 
+          determined. *)
+      | Matchee_is_rigid
+      (** [Matchee_is_rigid] is raised when [match v ...] fails because [v] 
+          is unified with a rigid type variable. *)
+      | Inconsistent_default of
+          { actual : Principal_shape.t
+          ; expected : Principal_shape.t
+          }
+      (** [Inconsistent_default { actual; expected }] occurs when 
+          [match v ... else_:(fun () -> expected)] differs from the 
+          current shape of [v]. This occurs when one default has 
+          previously succeeded (with shape [actual]). *)
+    [@@deriving sexp]
+  end
+
   (** [match v ...] matches on the "shape" of [v] and has the following 
       interpretation:
 
@@ -189,21 +218,20 @@ module Constraint : sig
         refines [v] to a concrete type, and is given a {!Type.Matchee.t} 
         to describe the shape of said type. 
 
-      - [else_] is used when [v] is undetermined by the surrounding context. 
-        The constraint returned by [else_ ()] *must* unify [v] is a concrete 
-        type. Following this, the [with_] handler is invoked. 
-
-      - [error] provides an explanation if the solver doesn't discharge 
-        [with_] or [else_]. 
-
+      - [else_] is used when [v] is *never* determined by the surrounding context. 
+        If [else_ ()] is [sh], then [v] is unified s.t [shape(v) = sh],
+        triggering the associated case of [sh]. 
+      
+      - [error] is used when we cannot determine that [v] is *never* determined. 
+        
      The [closure] parameter specifies which variables are permitted to 
      appear in the generated constraints. *)
   val match_
     :  Type.Var.t
     -> closure:[< `Type of Type.Var.t | `Scheme of Var.t ] list
     -> with_:(Type.Matchee.t -> t)
-    -> else_:(unit -> t)
-    -> error:(unit -> Omniml_error.t)
+    -> else_:(unit -> Principal_shape.t)
+    -> error:(Match_error.t -> Omniml_error.t)
     -> t
 
   (** [with_range c ~range] is equivalent to [c], but attaches the source 
@@ -245,7 +273,7 @@ module Error : sig
   [@@deriving sexp]
 end
 
-(** [solve ?range ?defaulting c] solves the constraint [c]. 
+(** [solve ?range c] solves the constraint [c]. 
 
      On success returns [Ok ()]. On failure returns a structured 
      {!Error.t}. If [range] is provided, it is used as a fallback 

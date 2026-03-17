@@ -865,7 +865,7 @@ let%expect_test "" =
         │                ^
         = hint: add a type annotation
     |}];
-  type_check_and_print ~defaulting:Scc str;
+  type_check_and_print ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1189,7 +1189,7 @@ let%expect_test "" =
         │                           ^^^
         = hint: add a type annotation
     |}];
-  type_check_and_print ~defaulting:Scc str;
+  type_check_and_print ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1373,7 +1373,7 @@ let%expect_test "" =
         │                         ^
         = hint: add a type annotation
     |}];
-  type_check_and_print ~defaulting:Scc str;
+  type_check_and_print ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1565,18 +1565,18 @@ let%expect_test "" =
   [%expect
     {|
     error[E016]: unknown polytype
-        ┌─ expect_test.ml:5:48
-      5 │        let mono_use_pid_app_succ = fun pid -> @[pid] succ ;;
-        │                                                 ^^^
-        = hint: add a type annotation
-
-    error[E016]: unknown polytype
         ┌─ expect_test.ml:3:39
       3 │        let mono_use_pid = fun pid -> @[pid] ;;
         │                                        ^^^
         = hint: add a type annotation
+
+    error[E016]: unknown polytype
+        ┌─ expect_test.ml:5:48
+      5 │        let mono_use_pid_app_succ = fun pid -> @[pid] succ ;;
+        │                                                 ^^^
+        = hint: add a type annotation
     |}];
-  type_check_and_print ~defaulting:Scc str;
+  type_check_and_print ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1667,7 +1667,7 @@ let%expect_test "" =
         │                                               ^^^^^^^
         = hint: add a type annotation
     |}];
-  type_check_and_print ~defaulting:Scc str;
+  type_check_and_print ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
 
@@ -1693,7 +1693,7 @@ let%expect_test "" =
   let curr_str = ref (include_fix ^ include_ref ^ include_option ^ include_list) in
   let do_test ?(add = false) str =
     let str = !curr_str ^ str in
-    type_check_and_print ~defaulting:Scc str;
+    type_check_and_print ~defaulting:Unary str;
     if add then curr_str := str
   in
   do_test

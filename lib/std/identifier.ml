@@ -11,6 +11,8 @@ end
 include T
 include Comparable.Make (T)
 
+let pp ppf t = Format.fprintf ppf "%d" t
+
 type source = { next_id : unit -> t }
 
 let create_source () =

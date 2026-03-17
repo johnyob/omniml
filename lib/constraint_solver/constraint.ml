@@ -23,6 +23,17 @@ module Closure = struct
   ;;
 end
 
+module Match_error = struct
+  type t =
+    | Cannot_default
+    | Matchee_is_rigid
+    | Inconsistent_default of
+        { actual : Principal_shape.t
+        ; expected : Principal_shape.t
+        }
+  [@@deriving sexp]
+end
+
 type t =
   | True
   | False of Omniml_error.t
@@ -36,8 +47,8 @@ type t =
       { matchee : Type.Var.t
       ; closure : Closure.t
       ; case : Type.Matchee.t -> t
-      ; error : unit -> Omniml_error.t
-      ; else_ : unit -> t
+      ; else_ : unit -> Principal_shape.t
+      ; error : Match_error.t -> Omniml_error.t
       }
   | With_range of t * Range.t
 
