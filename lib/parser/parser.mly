@@ -310,10 +310,10 @@ app_expression:
       { Expression.app ~range:(range_of_lex $loc) exp1 exp2 }
 
 value_binding:
-  var_name = var_name
+  pat = pattern 
   ; "="
   ; exp = seq_expression
-    { value_binding ~range:(range_of_lex $loc) var_name exp }
+    { value_binding ~range:(range_of_lex $loc) pat exp }
 
 cases:
   "("

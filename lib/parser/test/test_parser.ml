@@ -800,8 +800,16 @@ let%expect_test "fun : map" =
     ((it
       (Exp_let
        ((it
-         ((value_binding_var
-           ((it map)
+         ((value_binding_pat
+           ((it
+             (Pat_var
+              ((it map)
+               (range
+                ((start 6) (stop 9)
+                 (source
+                  (Reader
+                   ((id 0) (name (expect_test.ml)) (length 146)
+                    (unsafe_get <fun>)))))))))
             (range
              ((start 6) (stop 9)
               (source
@@ -1377,8 +1385,16 @@ let%expect_test "let : fact" =
     ((it
       (Exp_let
        ((it
-         ((value_binding_var
-           ((it fact)
+         ((value_binding_pat
+           ((it
+             (Pat_var
+              ((it fact)
+               (range
+                ((start 5) (stop 9)
+                 (source
+                  (Reader
+                   ((id 0) (name (expect_test.ml)) (length 97)
+                    (unsafe_get <fun>)))))))))
             (range
              ((start 5) (stop 9)
               (source
@@ -2472,8 +2488,16 @@ let%expect_test "top level function definition" =
     (((it
        (Str_value
         ((it
-          ((value_binding_var
-            ((it smallest_integer)
+          ((value_binding_pat
+            ((it
+              (Pat_var
+               ((it smallest_integer)
+                (range
+                 ((start 12) (stop 28)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 39)
+                     (unsafe_get <fun>)))))))))
              (range
               ((start 12) (stop 28)
                (source
@@ -2981,8 +3005,16 @@ let%expect_test "eval example" =
      ((it
        (Str_value
         ((it
-          ((value_binding_var
-            ((it eval_bin_op)
+          ((value_binding_pat
+            ((it
+              (Pat_var
+               ((it eval_bin_op)
+                (range
+                 ((start 204) (stop 215)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 806)
+                     (unsafe_get <fun>)))))))))
              (range
               ((start 204) (stop 215)
                (source
@@ -3273,8 +3305,16 @@ let%expect_test "eval example" =
      ((it
        (Str_value
         ((it
-          ((value_binding_var
-            ((it eval)
+          ((value_binding_pat
+            ((it
+              (Pat_var
+               ((it eval)
+                (range
+                 ((start 338) (stop 342)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 806)
+                     (unsafe_get <fun>)))))))))
              (range
               ((start 338) (stop 342)
                (source
@@ -3599,8 +3639,16 @@ let%expect_test "eval example" =
                           ((it
                             (Exp_let
                              ((it
-                               ((value_binding_var
-                                 ((it env)
+                               ((value_binding_pat
+                                 ((it
+                                   (Pat_var
+                                    ((it env)
+                                     (range
+                                      ((start 496) (stop 499)
+                                       (source
+                                        (Reader
+                                         ((id 0) (name (expect_test.ml))
+                                          (length 806) (unsafe_get <fun>)))))))))
                                   (range
                                    ((start 496) (stop 499)
                                     (source
@@ -4016,8 +4064,16 @@ let%expect_test "eval example" =
                           ((it
                             (Exp_let
                              ((it
-                               ((value_binding_var
-                                 ((it n1)
+                               ((value_binding_pat
+                                 ((it
+                                   (Pat_var
+                                    ((it n1)
+                                     (range
+                                      ((start 692) (stop 694)
+                                       (source
+                                        (Reader
+                                         ((id 0) (name (expect_test.ml))
+                                          (length 806) (unsafe_get <fun>)))))))))
                                   (range
                                    ((start 692) (stop 694)
                                     (source
@@ -4095,8 +4151,16 @@ let%expect_test "eval example" =
                              ((it
                                (Exp_let
                                 ((it
-                                  ((value_binding_var
-                                    ((it n2)
+                                  ((value_binding_pat
+                                    ((it
+                                      (Pat_var
+                                       ((it n2)
+                                        (range
+                                         ((start 728) (stop 730)
+                                          (source
+                                           (Reader
+                                            ((id 0) (name (expect_test.ml))
+                                             (length 806) (unsafe_get <fun>)))))))))
                                      (range
                                       ((start 728) (stop 730)
                                        (source

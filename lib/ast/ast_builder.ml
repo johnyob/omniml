@@ -86,7 +86,7 @@ module type S = sig
     val inst : (expression -> expression) with_range_fn
   end
 
-  val value_binding : (Var_name.With_range.t -> expression -> value_binding) with_range_fn
+  val value_binding : (pattern -> expression -> value_binding) with_range_fn
 
   module Structure : sig
     val value : (value_binding -> structure_item) with_range_fn
@@ -208,8 +208,8 @@ module Default : S with type 'a with_range_fn := range:Range.t -> 'a = struct
     let inst ~range exp = With_range.create ~range @@ Exp_inst exp
   end
 
-  let value_binding ~range var exp =
-    With_range.create ~range { value_binding_exp = exp; value_binding_var = var }
+  let value_binding ~range pat exp =
+    With_range.create ~range { value_binding_exp = exp; value_binding_pat = pat }
   ;;
 
   module Structure = struct

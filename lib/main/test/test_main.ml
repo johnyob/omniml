@@ -1031,15 +1031,20 @@ let%expect_test "" =
      (Let
       ((type_vars ((Flexible ((id 0) (name Type.Var)))))
        (in_
-        (With_range
-         (Exists ((id 1) (name Type.Var))
-          (Exists ((id 2) (name Type.Var))
-           (Conj
-            (Eq (Var ((id 0) (name Type.Var)))
-             (Arrow (Var ((id 1) (name Type.Var)))
-              (Var ((id 2) (name Type.Var)))))
-            (With_range
-             (Conj True
+        (Conj
+         (With_range
+          (Exists ((id 1) (name Type.Var))
+           (Exists ((id 2) (name Type.Var))
+            (Conj
+             (Eq (Var ((id 0) (name Type.Var)))
+              (Arrow (Var ((id 1) (name Type.Var)))
+               (Var ((id 2) (name Type.Var)))))
+             (Conj
+              (With_range True
+               ((start 20) (stop 21)
+                (source
+                 (Reader
+                  ((id 0) (name (expect_test.ml)) (length 34) (unsafe_get <fun>))))))
               (Let
                ((type_vars ()) (in_ True)
                 (bindings
@@ -1051,15 +1056,16 @@ let%expect_test "" =
                  (source
                   (Reader
                    ((id 0) (name (expect_test.ml)) (length 34)
-                    (unsafe_get <fun>))))))))
-             ((start 20) (stop 21)
-              (source
-               (Reader
-                ((id 0) (name (expect_test.ml)) (length 34) (unsafe_get <fun>)))))))))
-         ((start 16) (stop 26)
-          (source
-           (Reader
-            ((id 0) (name (expect_test.ml)) (length 34) (unsafe_get <fun>)))))))
+                    (unsafe_get <fun>)))))))))))
+          ((start 16) (stop 26)
+           (source
+            (Reader
+             ((id 0) (name (expect_test.ml)) (length 34) (unsafe_get <fun>))))))
+         (With_range True
+          ((start 11) (stop 13)
+           (source
+            (Reader
+             ((id 0) (name (expect_test.ml)) (length 34) (unsafe_get <fun>))))))))
        (bindings
         (((binding_var ((id 4) (name id)))
           (binding_type (Var ((id 0) (name Type.Var))))))))
@@ -2569,6 +2575,279 @@ let%expect_test "" =
         : (forall 'a 'b. 'a -> 'b) -> int)
       ;;
     |};
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let (x, y) = (1, true);; 
+      let _ = y + 1;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:3:15
+      3 │        let _ = y + 1;;
+        │                ^ `bool`
+        │                    is not equal to
+        │                  `int`
+    |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let ((x, y), z) = ((1, 2), true);; 
+      let _ = x + y;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    include_option
+    ^ {|
+      let Some x = Some 5;; 
+      let _ = x + 1;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    include_option
+    ^ {|
+      let Some (x, y) = Some (1, true);;
+      let _ = x + 1;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    include_option
+    ^ {|
+      let (Some x, Some y) = (Some 1, Some 2);; 
+      let _ = x + y;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let ((x, y) : int * bool) = (1, true);;
+      let _ = x + 1;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let ((x : int), (y : bool)) = (1, true);;
+      let _ = x + 1;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let _ = 1 + 1;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let (_, y) = (1, true);; 
+      let _ = y;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let ((x, y) as p) = (1, true);;
+      let _ = p;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let ((x, y) as p) = (1, true);;
+      let _ = (x, y, p);;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      type 'a tree =
+        | Leaf
+        | Node of 'a * 'a tree * 'a tree
+      ;;
+
+      let Node (v, l, r) = Node (5, Leaf, Leaf);;
+      let _ = v + 2;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let (x, y) = (1, 2, 3);;
+    |}
+  in
+  type_check_and_print str;
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:2:11
+      2 │        let (x, y) = (1, 2, 3);;
+        │            ^^^^^^ `int * int * int`
+        │                     is not equal to
+        │                   `'a * 'b`
+    |}]
+;;
+
+let%expect_test "" =
+  let str =
+    include_option
+    ^ {|
+      let Some x = None;;
+      let _ = (x : int);;
+      let _ = (x : bool);;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let ((x : int), (y : bool)) = (true, 1);;
+      let _ = x;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:2:11
+      2 │        let ((x : int), (y : bool)) = (true, 1);;
+        │            ^^^^^^^^^^^^^^^^^^^^^^^ `bool * int`
+        │                                      is not equal to
+        │                                    `int * bool`
+    |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let pair = fun x y -> (x, y);;
+      let (x, y) = f 1 true;; 
+      let _ = (x + 1, y);;
+    |}
+  in
+  type_check_and_print str;
+  [%expect
+    {|
+    error[E004]: cannot find value `f` in this scope
+        ┌─ expect_test.ml:3:20
+      3 │        let (x, y) = f 1 true;;
+        │                     ^ not found in this scope
+    |}]
+;;
+
+let%expect_test "" =
+  let str =
+    include_list
+    ^ {|
+      let pair = fun x y -> (x, y);;
+      let Cons ((x, y), Cons ((z, w), Nil)) = 
+        Cons (pair 1 true, Cons (pair 2 false, Nil))
+      ;;
+      let _ = x + z;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      type point = { x : int; y : int };;
+      let { x = a; y = b } = { x = 1; y = 2 };;
+      let _ = a + b;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      type point = { x : int; y : int };;
+      let { x = a; y = b } = { x = 1; y = true };;
+    |}
+  in
+  type_check_and_print str;
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:3:43
+      3 │        let { x = a; y = b } = { x = 1; y = true };;
+        │                                            ^^^^ `int`
+        │                                                   is not equal to
+        │                                                 `bool`
+    |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      type point = { x : int; y : int };;
+      type point3d = { x : int; y : int; z : int };;
+      let { x = a; y = b } = { x = 1; y = 2; z = 3 };;
+    |}
+  in
+  type_check_and_print str;
   [%expect {| Well typed :) |}]
 ;;
 

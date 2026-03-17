@@ -394,18 +394,11 @@ module Label_inst = Make_adt_inst (struct
     let ambiguous = Omniml_error.ambiguous_label
   end)
 
-let exists_opt opt_var cst =
-  match opt_var with
-  | None -> cst
-  | Some var -> exists var cst
-;;
-
 let inst_constr
       ~(env : Env.t)
       ~(constr_name : Constructor_name.With_range.t)
       ~(constr_arity : Adt.constructor_arity With_range.t)
       ~constr_type
-      k
   =
   let constr_arg_range = constr_arity.range in
   let constr_arg =
@@ -421,63 +414,117 @@ let inst_constr
       ~arg:constr_arg
       ~ret:constr_type
   in
-  let result, c_arg = k constr_arg in
-  result, exists_opt constr_arg (c_arg &~ c_type)
+  constr_arg, c_type
 ;;
 
-let inst_label ~(env : Env.t) ~(label_name : Label_name.With_range.t) ~label_type k =
+let inst_label ~(env : Env.t) ~(label_name : Label_name.With_range.t) ~label_type =
   let label_arg = Type.Var.create ~id_source:(Env.id_source env) () in
   let c_type =
     Label_inst.inst ~env ~name:label_name ~infer_ctx:() ~arg:label_arg ~ret:label_type
   in
-  let result, c_arg = k label_arg in
-  result, exists label_arg (c_arg &~ c_type)
+  label_arg, c_type
 ;;
 
 module Pattern = struct
   module Fragment = struct
-    type t = { var_bindings : Type.Var.t Var_name.Map.t } [@@deriving sexp_of]
+    type t =
+      { var_bindings : Type.Var.t Var_name.Map.t
+      ; exist_bindings : Type.Var.t list
+      }
+    [@@deriving sexp_of]
 
-    let empty = { var_bindings = Var_name.Map.empty }
-    let singleton var type_ = { var_bindings = Var_name.Map.singleton var type_ }
+    let empty = { var_bindings = Var_name.Map.empty; exist_bindings = [] }
+
+    let singleton var type_ =
+      { var_bindings = Var_name.Map.singleton var type_; exist_bindings = [] }
+    ;;
 
     let extend t ~var ~type_ =
-      { var_bindings = Map.set t.var_bindings ~key:var ~data:type_ }
+      { t with var_bindings = Map.set t.var_bindings ~key:var ~data:type_ }
     ;;
+
+    let exists t type_var = { t with exist_bindings = type_var :: t.exist_bindings }
 
     let merge t1 t2 =
       { var_bindings =
           Map.merge_skewed t1.var_bindings t2.var_bindings ~combine:(fun ~key:_ _ b -> b)
+      ; exist_bindings = t1.exist_bindings @ t2.exist_bindings
       }
     ;;
-
-    let to_alist t = Map.to_alist t.var_bindings
   end
 
-  let exists' ~id_source f =
-    let a = Type.Var.create ~id_source () in
-    let result, c = f a in
-    result, exists a c
-  ;;
+  module With_fragment = struct
+    module T = struct
+      type 'a t = Fragment.t -> Fragment.t * 'a
 
-  let with_range' (result, c) ~range = result, with_range ~range c
+      let return x = fun fragment -> fragment, x
 
-  let rec infer_pat ~env ~with_poly_params (pat : pattern) (pat_type : Type.Var.t) k =
-    with_range' ~range:pat.range
+      let bind t ~f =
+        fun fragment ->
+        let fragment, x = t fragment in
+        f x fragment
+      ;;
+
+      let map = `Define_using_bind
+    end
+
+    include T
+    include Monad.Make (T)
+
+    let perform_exists type_var = fun fragment -> Fragment.exists fragment type_var, ()
+
+    let perform_extend ~var ~type_ =
+      fun fragment -> Fragment.extend fragment ~var ~type_, ()
+    ;;
+
+    let exists ~id_source f =
+      let open Let_syntax in
+      let a = Type.Var.create ~id_source () in
+      let%bind () = perform_exists a in
+      f a
+    ;;
+
+    let with_range t ~range = map t ~f:(fun c -> with_range ~range c)
+
+    let inst_label ~env ~label_name ~label_type k =
+      let open Let_syntax in
+      let label_arg, c_label = inst_label ~env ~label_name ~label_type in
+      let%bind () = perform_exists label_arg in
+      let%map c_arg = k label_arg in
+      c_label &~ c_arg
+    ;;
+
+    let inst_constr ~env ~constr_name ~constr_arity ~constr_type k =
+      let open Let_syntax in
+      let constr_arg, c_label =
+        inst_constr ~env ~constr_name ~constr_arity ~constr_type
+      in
+      let%bind () = Option.value_map constr_arg ~f:perform_exists ~default:(return ()) in
+      let%map c_arg = k constr_arg in
+      c_label &~ c_arg
+    ;;
+
+    let run t = t Fragment.empty
+  end
+
+  let rec infer_pat ~env ~with_poly_params (pat : pattern) (pat_type : Type.Var.t) =
+    let open With_fragment in
+    let open Let_syntax in
+    with_range ~range:pat.range
     @@
     match pat.it with
-    | Pat_any -> k (Fragment.empty, tt)
-    | Pat_var x -> k (Fragment.singleton x.it pat_type, tt)
+    | Pat_any -> return tt
+    | Pat_var x ->
+      let%map () = perform_extend ~var:x.it ~type_:pat_type in
+      tt
     | Pat_alias (pat, x) ->
-      infer_pat ~env ~with_poly_params pat pat_type
-      @@ fun (f, c) ->
-      let f = Fragment.extend f ~var:x.it ~type_:pat_type in
-      k (f, c)
-    | Pat_const const -> k (Fragment.empty, Type.(var pat_type =~ infer_constant const))
+      let%bind cpat = infer_pat ~env ~with_poly_params pat pat_type in
+      let%map () = perform_extend ~var:x.it ~type_:pat_type in
+      cpat
+    | Pat_const const -> return @@ Type.(var pat_type =~ infer_constant const)
     | Pat_tuple pats ->
-      infer_pats ~env ~with_poly_params pats
-      @@ fun (f, pat_types, c) ->
-      k (f, c &~ Type.(var pat_type =~ tuple (List.map ~f:var pat_types)))
+      let%map pat_types, cpats = infer_pats ~env ~with_poly_params pats in
+      cpats &~ Type.(var pat_type =~ tuple (List.map ~f:var pat_types))
     | Pat_constr (constr_name, arg_pat) ->
       inst_constr
         ~env
@@ -486,9 +533,8 @@ module Pattern = struct
         ~constr_type:pat_type
       @@ fun arg_type ->
       (match arg_pat, arg_type with
-       | Some arg_pat, Some arg_type ->
-         infer_pat ~env ~with_poly_params arg_pat arg_type k
-       | None, None -> k (Fragment.empty, tt)
+       | Some arg_pat, Some arg_type -> infer_pat ~env ~with_poly_params arg_pat arg_type
+       | None, None -> return tt
        | _ ->
          (* Note that arity mismatches are caught by [infer_constructor] *)
          Omniml_error.(
@@ -497,36 +543,38 @@ module Pattern = struct
                 ~here:[%here]
                 [%message "Constructor argument mistmatch in pattern" (pat : Ast.pattern)]))
     | Pat_record label_pats ->
-      infer_label_pats ~env ~with_poly_params ~record_type:pat_type label_pats k
+      infer_label_pats ~env ~with_poly_params ~record_type:pat_type label_pats
     | Pat_annot (pat, annot) ->
       let type_ = Convert.core_type_to_type ~env ~with_poly_params annot in
-      infer_pat ~env ~with_poly_params pat pat_type
-      @@ fun (f, c) -> k (f, Type.(var pat_type =~ type_) &~ c)
+      let%map c = infer_pat ~env ~with_poly_params pat pat_type in
+      Type.(var pat_type =~ type_) &~ c
 
-  and infer_pats ~env ~with_poly_params pats k =
+  and infer_pats ~env ~with_poly_params pats =
+    let open With_fragment in
+    let open Let_syntax in
     match pats with
-    | [] -> k (Fragment.empty, [], tt)
+    | [] -> return ([], tt)
     | pat :: pats ->
-      exists' ~id_source:(Env.id_source env)
-      @@ fun pat_type ->
-      infer_pat ~env ~with_poly_params pat pat_type
-      @@ fun (f, c1) ->
-      infer_pats ~env ~with_poly_params pats
-      @@ fun (f', pat_types, c2) ->
-      k (Fragment.merge f f', pat_type :: pat_types, c1 &~ c2)
+      let pat_type = Type.Var.create ~id_source:(Env.id_source env) () in
+      let%bind () = perform_exists pat_type in
+      let%bind cpat = infer_pat ~env ~with_poly_params pat pat_type in
+      let%map pat_types, cpats = infer_pats ~env ~with_poly_params pats in
+      pat_type :: pat_types, cpat &~ cpats
 
-  and infer_label_pats ~env ~with_poly_params ~record_type label_pats k =
-    match label_pats with
-    | [] -> k (Fragment.empty, tt)
-    | (label_name, arg_pat) :: label_pats ->
-      infer_label_pat ~env ~with_poly_params ~label_type:record_type label_name arg_pat
-      @@ fun (f, c1) ->
-      infer_label_pats ~env ~with_poly_params ~record_type label_pats
-      @@ fun (f', c2) -> k (Fragment.merge f f', c1 &~ c2)
+  and infer_label_pats ~env ~with_poly_params ~record_type label_pats =
+    let open With_fragment in
+    label_pats
+    |> List.map ~f:(fun (label_name, arg_pat) ->
+      infer_label_pat ~env ~with_poly_params ~label_type:record_type label_name arg_pat)
+    |> all
+    >>| Constraint.all
 
-  and infer_label_pat ~env ~with_poly_params ~label_type label_name arg_pat k =
+  and infer_label_pat ~env ~with_poly_params ~label_type label_name arg_pat
+    : Constraint.t With_fragment.t
+    =
+    let open With_fragment in
     inst_label ~env ~label_name ~label_type
-    @@ fun arg_type -> infer_pat ~env ~with_poly_params arg_pat arg_type k
+    @@ fun arg_type -> infer_pat ~env ~with_poly_params arg_pat arg_type
   ;;
 end
 
@@ -539,6 +587,19 @@ module Expression = struct
   let exists_many' ~id_source n f =
     let as_ = List.init n ~f:(fun _ -> Type.Var.create ~id_source ()) in
     exists_many as_ (f as_)
+  ;;
+
+  let inst_constr ~env ~constr_name ~constr_arity ~constr_type k =
+    let constr_arg, c_type = inst_constr ~env ~constr_name ~constr_arity ~constr_type in
+    let c_arg = k constr_arg in
+    let c = c_type &~ c_arg in
+    Option.value_map constr_arg ~default:c ~f:(fun constr_arg -> exists constr_arg c)
+  ;;
+
+  let inst_label ~env ~label_name ~label_type k =
+    let label_arg, c_type = inst_label ~env ~label_name ~label_type in
+    let c_arg = k label_arg in
+    exists label_arg (c_type &~ c_arg)
   ;;
 
   let default_mono_poly ~id_source =
@@ -566,23 +627,25 @@ module Expression = struct
       ~else_:(fun () -> default_mono_poly ~id_source)
   ;;
 
+  let infer_pat ~env ~with_poly_params pat pat_type =
+    let { Pattern.Fragment.var_bindings; exist_bindings }, cpat =
+      Pattern.(infer_pat ~env ~with_poly_params pat pat_type |> With_fragment.run)
+    in
+    let env, bindings =
+      var_bindings
+      |> Map.to_alist
+      |> List.fold_map ~init:env ~f:(fun env (var, type_) ->
+        Env.rename_var env ~var ~in_:(fun env cvar -> env, cvar @: Type.var type_))
+    in
+    env, bindings, exist_bindings, cpat
+  ;;
+
   let bind_pat ~env ~with_poly_params (pat : pattern) pat_type ~in_ =
-    (Pattern.infer_pat ~env ~with_poly_params pat pat_type
-     @@ fun (fragment, c) ->
-     let env, bindings =
-       fragment
-       |> Pattern.Fragment.to_alist
-       |> List.fold_map ~init:env ~f:(fun env (var, type_) ->
-         Env.rename_var env ~var ~in_:(fun env cvar -> env, (cvar, type_)))
-     in
-     let in_ = in_ env in
-     ( ()
-     , c
-       &~ let_
-            (mono_binding
-               (List.map bindings ~f:(fun (cvar, type_) -> cvar @: Type.var type_)))
-            ~in_ ))
-    |> snd
+    let env, bindings, exists_bindings, cpat =
+      infer_pat ~env ~with_poly_params pat pat_type
+    in
+    let in_ = in_ env in
+    exists_many exists_bindings (cpat &~ let_ (mono_binding bindings) ~in_)
   ;;
 
   let bind_mono_match_val ~env ~with_poly_params pat param_type ~in_ =
@@ -769,25 +832,22 @@ module Expression = struct
       let c2 = infer_exp ~env ~with_poly_params exp2 exp_type in
       Type.(var exp1_type =~ Predef.unit) &~ c1 &~ c2
     | Exp_constr (constr_name, arg_exp) ->
-      (inst_constr
-         ~env
-         ~constr_name
-         ~constr_arity:(infer_constructor_arity ~constr_name arg_exp)
-         ~constr_type:exp_type
-       @@ fun arg_type ->
-       match arg_exp, arg_type with
-       | Some arg_exp, Some arg_type ->
-         (), infer_exp ~env ~with_poly_params arg_exp arg_type
-       | None, None -> (), tt
+      inst_constr
+        ~env
+        ~constr_name
+        ~constr_arity:(infer_constructor_arity ~constr_name arg_exp)
+        ~constr_type:exp_type
+      @@ fun arg_type ->
+      (match arg_exp, arg_type with
+       | Some arg_exp, Some arg_type -> infer_exp ~env ~with_poly_params arg_exp arg_type
+       | None, None -> tt
        | _ ->
          Omniml_error.(
            raise
            @@ bug_s
                 ~here:[%here]
                 [%message
-                  "Constructor argument mistmatch in expression" (exp : Ast.expression)])
-      )
-      |> snd
+                  "Constructor argument mistmatch in expression" (exp : Ast.expression)]))
     | Exp_match (match_exp, cases) ->
       exists' ~id_source
       @@ fun match_exp_type ->
@@ -807,9 +867,9 @@ module Expression = struct
       exists' ~id_source
       @@ fun record_type ->
       let c1 = infer_exp ~env ~with_poly_params exp record_type in
-      let (), c2 =
+      let c2 =
         inst_label ~env ~label_name ~label_type:record_type
-        @@ fun arg_type -> (), Type.(var exp_type =~ var arg_type)
+        @@ fun arg_type -> Type.(var exp_type =~ var arg_type)
       in
       c1 &~ c2
     | Exp_poly (exp, scheme_annot) ->
@@ -861,17 +921,14 @@ module Expression = struct
       @@ fun (exp_types, c2) -> k (exp_type :: exp_types, c1 &~ c2)
 
   and infer_label_exps ~env ~with_poly_params ~record_type label_exps =
-    let cs =
-      label_exps
-      |> List.map ~f:(fun (label_name, arg_exp) ->
-        infer_label_exp ~env ~with_poly_params ~label_type:record_type label_name arg_exp)
-    in
-    all cs
+    label_exps
+    |> List.map ~f:(fun (label_name, arg_exp) ->
+      infer_label_exp ~env ~with_poly_params ~label_type:record_type label_name arg_exp)
+    |> all
 
   and infer_label_exp ~env ~with_poly_params ~label_type label_name arg_exp =
-    (inst_label ~env ~label_name ~label_type
-     @@ fun arg_type -> (), infer_exp ~env ~with_poly_params arg_exp arg_type)
-    |> snd
+    inst_label ~env ~label_name ~label_type
+    @@ fun arg_type -> infer_exp ~env ~with_poly_params arg_exp arg_type
 
   and infer_exp_principal ~env ~with_poly_params exp k =
     let id_source = Env.id_source env in
@@ -896,14 +953,19 @@ module Expression = struct
       infer_exp ~env ~with_poly_params exp rhs_type)
 
   and infer_value_binding ~(env : Env.t) ~with_poly_params value_binding k =
-    let { value_binding_var = var; value_binding_exp = exp } = value_binding.it in
+    let { value_binding_pat = pat; value_binding_exp = exp } = value_binding.it in
     let exp_type = Type.Var.create ~id_source:(Env.id_source env) () in
-    let c = infer_exp ~env ~with_poly_params exp exp_type in
-    Env.rename_var env ~var:var.it ~in_:(fun env cvar ->
-      let c' = k env in
-      let_
-        (poly_binding ([ Flexible, exp_type ] @. c @=> [ cvar @: Type.var exp_type ]))
-        ~in_:c')
+    let cexp = infer_exp ~env ~with_poly_params exp exp_type in
+    let env, bindings, exists_bindings, cpat =
+      infer_pat ~env ~with_poly_params pat exp_type
+    in
+    let cin = k env in
+    let_
+      (poly_binding
+         (((Flexible, exp_type) :: List.map exists_bindings ~f:(fun v -> Flexible, v))
+          @. (cexp &~ cpat)
+          @=> bindings))
+      ~in_:cin
   ;;
 end
 
