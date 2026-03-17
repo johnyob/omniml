@@ -77,7 +77,6 @@ module Env = struct
           env, (cvar, type_)))
     in
     let c = k env in
-    List.fold_right bindings ~init:c ~f:(fun (var, type_) in_ ->
-      let_ var#=(mono_scheme type_) ~in_)
+    let_ (mono_binding (List.map bindings ~f:(fun (var, type_) -> var @: type_))) ~in_:c
   ;;
 end
