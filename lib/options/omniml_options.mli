@@ -15,7 +15,7 @@ end
 module Defaulting : sig
   type t =
     | Disabled
-    | Scc
+    | Unary
   [@@deriving sexp]
 
   include S_with_default with type t := t

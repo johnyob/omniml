@@ -238,7 +238,7 @@ module Make_adt_inst (X : sig
     val ident : def -> Type.Ident.t
 
     (** [def_ret_shape d] returns the shape of the return type of the definition [d]. *)
-    val def_ret_shape : def -> Type_var_name.t list * Adt.type_expr
+    val def_ret_shape : def -> Type_var_name.t list * Type.Ident.t
 
     val infer
       :  def
@@ -286,26 +286,19 @@ struct
                      (defs : X.def list)
                      (type_ident : Type_ident.t)])
       in
-      let disambiguate_and_infer type_ident =
+      let disambiguate_and_infer args type_ident =
+        let ret = Type.Var.create ~id_source () in
         let def = disambiguate_defs_by_type_ident type_ident in
-        X.infer def ~id_source ~ctx:infer_ctx ~arg ~ret
-      in
-      (* Unifies [ret] with the return shape of [def] *)
-      let infer_ret_shape def ret =
-        let ret_alphas, ret_type = X.def_ret_shape def in
-        let env, vars =
-          List.fold_map ret_alphas ~init:(Env.empty ~id_source ()) ~f:(fun env type_var ->
-            Env.rename_type_var env ~type_var ~in_:(fun env cvar -> env, cvar))
-        in
-        let ret_type = Convert.type_expr ~env ret_type in
-        exists_many vars @@ Type.(var ret =~ ret_type)
+        exists ret
+        @@ (Type.(var ret =~ constr (List.map args ~f:var) type_ident)
+            &~ X.infer def ~id_source ~ctx:infer_ctx ~arg ~ret)
       in
       (* Matches on [ret], if its a constructor then we can disambiguate it. 
          If [ret] is never unified, it is unified with the default shape (the 
          lexically closest matching definition) *)
       match_
         ret
-        ~closure:(ret :: X.arg_closure arg |> List.map ~f:(fun v -> `Type v))
+        ~closure:(X.arg_closure arg |> List.map ~f:(fun v -> `Type v))
         ~with_:(function
           | (Arrow (_, _) | Tuple _ | Poly _) as matchee ->
             let type_head =
@@ -316,11 +309,12 @@ struct
               | _ -> assert false
             in
             ff (Omniml_error.disambiguation_mismatched_type ~range:name.range ~type_head)
-          | Constr (_args, type_ident) -> disambiguate_and_infer type_ident)
-        ~error:(fun () -> X.ambiguous ~range:name.range)
+          | Constr (args, type_ident) -> disambiguate_and_infer args type_ident)
+        ~error:(fun _ -> X.ambiguous ~range:name.range)
         ~else_:(fun () ->
           let default_type_def = List.hd_exn defs in
-          infer_ret_shape default_type_def ret)
+          let ret_alphas, ret_constr = X.def_ret_shape default_type_def in
+          Principal_shape.constr ~arity:(List.length ret_alphas) ret_constr)
   ;;
 end
 
@@ -333,7 +327,7 @@ module Constructor_inst = Make_adt_inst (struct
     let find env name = Env.find_constr env name
     let unbound ~range name = Omniml_error.unbound_constructor ~range name
     let ident def = def.Adt.constructor_type_ident
-    let def_ret_shape (def : def) = def.constructor_alphas, def.constructor_type
+    let def_ret_shape (def : def) = def.constructor_alphas, def.constructor_type_ident
 
     let infer def ~id_source ~ctx:(constr_name, constr_arg_range) ~arg ~ret =
       infer_constructor ~id_source ~constr_name ~constr_arg_range def arg ret
@@ -357,7 +351,7 @@ module Label_inst = Make_adt_inst (struct
     let find env name = Env.find_label env name
     let unbound ~range name = Omniml_error.unbound_label ~range name
     let ident def = def.Adt.label_type_ident
-    let def_ret_shape (def : def) = def.label_alphas, def.label_type
+    let def_ret_shape (def : def) = def.label_alphas, def.label_type_ident
 
     let infer def ~id_source ~ctx:() ~arg ~ret =
       infer_label ~id_source ~label_def:def arg ret
@@ -511,6 +505,11 @@ module Expression = struct
     exists_many as_ (f as_)
   ;;
 
+  let default_mono_poly ~id_source =
+    let mono = Type.Var.create ~id_source () in
+    Principal_shape.poly Type.(Scheme.create (var mono))
+  ;;
+
   let bind_pat ~env (pat : pattern) pat_type ~in_ =
     (Pattern.infer_pat ~env pat pat_type
      @@ fun (fragment, c) ->
@@ -623,11 +622,8 @@ module Expression = struct
                  (Omniml_error.disambiguation_tuple_mismatched_type
                     ~range:exp.range
                     ~type_head))
-           ~error:(fun () -> Omniml_error.ambiguous_tuple ~range:exp.range)
-           ~else_:(fun () ->
-             exists_many' ~id_source index
-             @@ fun comp_types ->
-             Type.(var tuple_type =~ tuple (List.map ~f:var comp_types)))
+           ~error:(fun _ -> Omniml_error.ambiguous_tuple ~range:exp.range)
+           ~else_:(fun () -> Principal_shape.tuple index)
     | Exp_if_then_else (if_exp, then_exp, else_exp) ->
       exists' ~id_source
       @@ fun if_type ->
@@ -695,10 +691,8 @@ module Expression = struct
                  | _ -> assert false
                in
                ff (Omniml_error.polytype_mismatched_type ~range:exp.range ~type_head))
-           ~error:(fun () -> Omniml_error.ambiguous_polytype ~range:exp.range)
-           ~else_:(fun () ->
-             exists' ~id_source
-             @@ fun mono -> Type.(var exp_type =~ poly (Type.Scheme.create (var mono))))
+           ~error:(fun _ -> Omniml_error.ambiguous_polytype ~range:exp.range)
+           ~else_:(fun () -> default_mono_poly ~id_source)
        | Some core_scheme ->
          let quantifiers, type_ = Convert.core_scheme ~env core_scheme in
          Type.(var exp_type =~ poly (Convert.core_scheme_to_type_scheme ~env core_scheme))
@@ -724,10 +718,8 @@ module Expression = struct
                  | _ -> assert false
                in
                ff (Omniml_error.polytype_mismatched_type ~range:exp.range ~type_head))
-           ~error:(fun () -> Omniml_error.ambiguous_polytype ~range:exp.range)
-           ~else_:(fun () ->
-             exists' ~id_source
-             @@ fun mono -> Type.(var poly_type =~ poly (Type.Scheme.create (var mono))))
+           ~error:(fun _ -> Omniml_error.ambiguous_polytype ~range:exp.range)
+           ~else_:(fun () -> default_mono_poly ~id_source)
 
   and infer_exps ~env exps k =
     match exps with

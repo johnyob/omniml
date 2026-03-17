@@ -1,8 +1,8 @@
 module type S = sig
   type 'a structure
 
-  module Type : sig
-    (** [t] represents a type *)
+  module Term : sig
+    (** [t] represents a term *)
     type t [@@deriving sexp_of]
 
     (** [make structure] creates a new unification type w/ structure [structure]. *)
@@ -26,9 +26,13 @@ module type S = sig
 
         [Unify (t1, t2)] is raised if the two node cannot be unified. *)
 
-    exception Unify of Type.t * Type.t
+    exception Unify of Term.t * Term.t
 
-    val unify : ctx:Type.t M.ctx -> Type.t -> Type.t -> unit
+    val unify : ctx:Term.t M.ctx -> Term.t -> Term.t -> unit
+
+    (** [try_unify_or_rollback ~ctx t1 t2] unifies [t1] and [t2]. If this 
+        raises [Unify], then any changes will be undone.  *)
+    val try_unify_or_rollback : ctx:Term.t M.ctx -> Term.t -> Term.t -> unit
   end
 end
 

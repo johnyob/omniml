@@ -1,4 +1,5 @@
 open! Import
+module Principal_shape = Principal_shape
 module Type = Type
 module Constraint = Constraint
 module Decoded_type = Decoded_type

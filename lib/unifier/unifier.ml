@@ -4,7 +4,7 @@ open Omniml_std
 module type S = sig
   type 'a structure
 
-  module Type : sig
+  module Term : sig
     (** [t] represents a type *)
     type t [@@deriving sexp_of]
 
@@ -29,14 +29,18 @@ module type S = sig
 
         [Unify (t1, t2)] is raised if the two node cannot be unified. *)
 
-    exception Unify of Type.t * Type.t
+    exception Unify of Term.t * Term.t
 
-    val unify : ctx:Type.t M.ctx -> Type.t -> Type.t -> unit
+    val unify : ctx:Term.t M.ctx -> Term.t -> Term.t -> unit
+
+    (** [try_unify_or_rollback ~ctx t1 t2] unifies [t1] and [t2]. If this 
+        raises [Unify], then any changes will be undone.  *)
+    val try_unify_or_rollback : ctx:Term.t M.ctx -> Term.t -> Term.t -> unit
   end
 end
 
 module Make (S : Structure.Basic) = struct
-  module Type = struct
+  module Term = struct
     type t = desc Union_find.t [@@deriving sexp_of]
     and desc = { structure : t S.t } [@@unboxed]
 
@@ -47,7 +51,7 @@ module Make (S : Structure.Basic) = struct
     let same_class = Union_find.same_class
   end
 
-  open Type
+  open Term
 
   module Make_unify (M : Structure.Merge with type 'a t := 'a S.t) = struct
     module Work_queue : sig
@@ -57,11 +61,11 @@ module Make (S : Structure.Basic) = struct
       type t
 
       val create : unit -> t
-      val enqueue : t -> Type.t -> Type.t -> unit
-      val run : t -> f:(Type.t -> Type.t -> unit) -> unit
+      val enqueue : t -> Term.t -> Term.t -> unit
+      val run : t -> f:(Term.t -> Term.t -> unit) -> unit
     end = struct
       (* A stack is used since it will likely yield errors earlier. *)
-      type t = (Type.t * Type.t) Stack.t
+      type t = (Term.t * Term.t) Stack.t
 
       let create () = Stack.create ()
       let enqueue t type1 type2 = Stack.push t (type1, type2)
@@ -81,12 +85,12 @@ module Make (S : Structure.Basic) = struct
     let unify_structure ~ctx ~work_queue type1 type2 =
       M.merge
         ~ctx
-        ~create:Type.create
+        ~create:Term.create
         ~unify:(Work_queue.enqueue work_queue)
         ~type1
         ~type2
-        (Type.structure type1)
-        (Type.structure type2)
+        (Term.structure type1)
+        (Term.structure type2)
     ;;
 
     let unify_desc ~ctx ~work_queue type1 type2 =
@@ -102,15 +106,16 @@ module Make (S : Structure.Basic) = struct
       Work_queue.run work_queue ~f:(unify_exn ~ctx ~work_queue)
     ;;
 
-    exception Unify of Type.t * Type.t
+    exception Unify of Term.t * Term.t
 
     let unify ~ctx t1 t2 =
       let work_queue = Work_queue.create () in
-      try
-        Union_find.Transaction.try_or_rollback ~f:(fun () ->
-          unify_exn ~ctx ~work_queue t1 t2)
-      with
+      try unify_exn ~ctx ~work_queue t1 t2 with
       | M.Cannot_merge -> raise (Unify (t1, t2))
+    ;;
+
+    let try_unify_or_rollback ~ctx t1 t2 =
+      Union_find.Transaction.try_or_rollback ~f:(fun () -> unify ~ctx t1 t2)
     ;;
   end
 end

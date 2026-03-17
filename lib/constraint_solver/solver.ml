@@ -27,7 +27,7 @@ module Env = struct
   type t =
     { type_vars : G.Type.t Type.Var.Map.t
     ; expr_vars : G.Scheme.t Constraint.Var.Map.t
-    ; curr_region : G.Type.region_node
+    ; curr_region : G.Region.t
     ; range : Range.t option
     }
   [@@deriving sexp_of]
@@ -96,24 +96,20 @@ end
 let rec gtype_of_type : state:State.t -> env:Env.t -> Type.t -> G.Type.t =
   fun ~state ~env type_ ->
   let self = gtype_of_type ~state ~env in
-  let gapp ~(env : Env.t) gs sh =
+  let gformer ~(env : Env.t) args shape =
     let curr_region = env.curr_region in
-    G.create_app
-      ~state
-      ~curr_region
-      (G.create_spine ~state ~curr_region gs)
-      (G.create_shape ~state ~curr_region sh)
+    G.create_former ~state ~curr_region { args; shape }
   in
   match type_ with
   | Var type_var -> Env.find_type_var env type_var
-  | Arrow (t1, t2) -> gapp ~env [ self t1; self t2 ] Sh_arrow
-  | Tuple ts -> gapp ~env (List.map ~f:self ts) (Sh_tuple (List.length ts))
+  | Arrow (t1, t2) -> gformer ~env [ self t1; self t2 ] Sh_arrow
+  | Tuple ts -> gformer ~env (List.map ~f:self ts) (Sh_tuple (List.length ts))
   | Constr (ts, ident) ->
-    gapp ~env (List.map ~f:self ts) (Sh_constr (List.length ts, ident))
-  | Shape (ts, shape) -> gapp ~env (List.map ~f:self ts) shape
+    gformer ~env (List.map ~f:self ts) (Sh_constr (List.length ts, ident))
+  | Shape (ts, shape) -> gformer ~env (List.map ~f:self ts) shape
   | Poly scheme ->
     let ts, poly_shape = Principal_shape.poly_shape_decomposition_of_scheme scheme in
-    gapp ~env (List.map ~f:self ts) (Sh_poly poly_shape)
+    gformer ~env (List.map ~f:self ts) (Sh_poly poly_shape)
 ;;
 
 let unify ~(state : State.t) ~(env : Env.t) gtype1 gtype2 =
@@ -121,8 +117,12 @@ let unify ~(state : State.t) ~(env : Env.t) gtype1 gtype2 =
     "Unify" (state : State.t) (env : Env.t) (gtype1 : G.Type.t) (gtype2 : G.Type.t)];
   try
     G.unify ~state ~curr_region:env.curr_region gtype1 gtype2;
-    [%log.global.debug "(Unify) Running scheduler" (state.scheduler : G.Scheduler.t)];
-    G.Scheduler.run state.scheduler
+    [%log.global.debug
+      "(Unify) Running scheduler"
+        (gtype1 : G.Type.t)
+        (gtype2 : G.Type.t)
+        (Scheduler.t () : Scheduler.t)];
+    Scheduler.(run (t ()))
   with
   | G.Unify.Unify (gtype1, gtype2) ->
     let decoder = Decoded_type.Decoder.create () in
@@ -152,22 +152,14 @@ let exists ~(state : State.t) ~env ~type_var =
 ;;
 
 let match_type
-  :  state:State.t
-  -> env:Env.t
-  -> spine:G.Type.t
-  -> shape:Principal_shape.t
-  -> Env.t * Type.Matchee.t
+  : env:Env.t -> shape:Principal_shape.t -> args:G.Type.t list -> Env.t * Type.Matchee.t
   =
-  fun ~state ~env ~spine ~shape ->
-  let curr_region = env.curr_region in
+  fun ~env ~shape ~args ->
   let shape_quantifiers = Principal_shape.quantifiers shape in
-  let env, spine_vars =
-    List.fold_map shape_quantifiers ~init:env ~f:(fun env quantifier ->
-      let gvar = G.create_var ~state ~curr_region () in
-      let env = Env.bind_type_var env ~var:quantifier ~type_:gvar in
-      env, gvar)
+  let env =
+    List.fold2_exn shape_quantifiers args ~init:env ~f:(fun env quantifier arg ->
+      Env.bind_type_var env ~var:quantifier ~type_:arg)
   in
-  unify ~state ~env spine (G.create_spine ~state ~curr_region spine_vars);
   match shape with
   | Sh_arrow ->
     (match shape_quantifiers with
@@ -228,50 +220,32 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
     let env = Env.enter_region ~state env in
     let env = forall_many ~state ~env type_vars in
     self ~state ~env in_
-  | Match { matchee; closure; case = f; else_; error } ->
+  | Match { matchee; closure; case; else_; error } ->
     let gmatchee = Env.find_type_var env matchee in
     [%log.global.debug "Matchee type" (gmatchee : G.Type.t)];
     let gclosure = gclosure_of_closure ~env closure in
     [%log.global.debug
       "Closure of suspended match" (gclosure : G.Suspended_match.closure)];
     (* Register match for the shape *)
-    let case ~curr_region ~(shape : _ G.R.t) ~spine =
-      [%log.global.debug "Entered match handler" (shape : G.Type.t G.R.t)];
-      let shape =
-        match shape with
-        | Rigid_var | Structure (App _ | Spine _) -> assert false
-        | Structure (Shape shape) -> shape
-      in
+    let case ~curr_region ~shape ~args =
+      [%log.global.debug "Entered match handler" (shape : Principal_shape.t)];
       (* Enter region and construct env *)
       let env = Env.of_gclosure gclosure ~closure ~curr_region ~range:env.range in
       [%log.global.debug "Handler env" (env : Env.t)];
       [%log.global.debug "Handler state" (state : State.t)];
       (* Solve *)
-      let env, matchee = match_type ~state ~env ~spine ~shape in
+      let env, matchee = match_type ~env ~shape ~args in
       [%log.global.debug
         "Matchee and updated env" (matchee : Type.Matchee.t) (env : Env.t)];
-      let cst = f matchee in
+      let cst = case matchee in
       [%log.global.debug "Generated constraint from case" (cst : Constraint.t)];
       solve ~state ~env cst;
       [%log.global.debug "Solved generated constraint" (cst : Constraint.t)];
       [%log.global.debug "Exiting case region"]
     in
-    let else_ ~curr_region ~shape ~spine =
+    let else_ () =
       [%log.global.debug "Entered match default handler"];
-      let env = Env.of_gclosure gclosure ~curr_region ~closure ~range:env.range in
-      let env =
-        Env.bind_type_var
-          env
-          ~var:matchee
-          ~type_:(G.create_app ~state ~curr_region:env.curr_region spine shape)
-      in
-      [%log.global.debug "Handler env" (env : Env.t)];
-      [%log.global.debug "Handler state" (state : State.t)];
-      let cst = else_ () in
-      [%log.global.debug "Generated constraint from else" (cst : Constraint.t)];
-      solve ~state ~env cst;
-      [%log.global.debug "Solved generated constraint" (cst : Constraint.t)];
-      [%log.global.debug "Exiting else region"]
+      else_ ()
     in
     [%log.global.debug "Suspending match..."];
     G.Suspended_match.match_or_yield
@@ -313,39 +287,50 @@ let solve
   -> Constraint.t
   -> (unit, Error.t) result
   =
-  fun ?range ?(defaulting = Omniml_options.Defaulting.default) cst ->
+  fun ?range ?defaulting cst ->
   try
-    let state, root_region = State.create_with_root_region ~defaulting in
+    Scheduler.(clear (t ()));
+    let state = State.create ?defaulting () in
+    let root_region = State.root_region state in
     let env = Env.empty ~curr_region:root_region ~range in
     [%log.global.debug "Initial env and state" (state : State.t) (env : Env.t)];
     solve ~state ~env cst;
     [%log.global.debug "State" (state : State.t)];
-    [%log.global.debug "Generalizing root region" (env.curr_region : G.Type.region_node)];
-    G.force_generalization ~state env.curr_region;
-    [%log.global.debug "Generalized root region" (env.curr_region : G.Type.region_node)];
-    [%log.global.debug "End state" (state : State.t)];
-    (* No more regions to generalize *)
-    assert (G.Generalization_tree.is_empty state.generalization_tree);
-    (* No partial regions are left *)
-    let num_partially_generalized_regions =
-      G.Generalization_tree.num_partially_generalized_regions state.generalization_tree
+    [%log.global.debug "Generalizing root region" (env.curr_region : G.Region.t)];
+    G.Region.mark ~state env.curr_region;
+    let shape_var_errors =
+      G.force_root_generalization_and_return_unsolved_shape_var_errors ~state
     in
-    if num_partially_generalized_regions > 0
-    then (
-      match defaulting with
-      | Disabled ->
-        Error.raise ~range:None
-        @@ Cannot_discharge_match_constraints
-             (G.Generalization_tree.collect_svar_errors state.generalization_tree)
-      | Scc ->
-        Omniml_error.(
-          raise
-          @@ bug_s
-               ~here:[%here]
-               [%message
-                 "There are still partially generalized regions"
-                   (num_partially_generalized_regions : int)
-                   (state.generalization_tree : G.Generalization_tree.t)]));
+    [%log.global.debug "Generalized root region" (env.curr_region : G.Region.t)];
+    if not Scheduler.(is_empty (t ()))
+    then raise_bug_s ~here:[%here] [%message "Scheduler not flushed"];
+    (* No more regions to generalize *)
+    if not (Tree.With_dirty.is_empty state.region_tree)
+    then
+      raise_bug_s
+        ~here:[%here]
+        [%message
+          "Region tree is not empty"
+            (state.region_tree : G.Type.t G.Pool.t Tree.With_dirty.t)];
+    if not (List.is_empty shape_var_errors)
+    then Error.raise ~range:None @@ Cannot_discharge_match_constraints shape_var_errors;
+    (* If we have no remaining shape var errors, then it must be the case that we have 
+       no alive regions. *)
+    let num_type_partially_generalized_regions = State.num_alive_regions state in
+    let num_shape_partially_generalized_regions =
+      Principal_shape.Var.State.num_partially_generalized_regions state.shape_var_state
+    in
+    if
+      num_shape_partially_generalized_regions > 0
+      || num_type_partially_generalized_regions > 0
+    then
+      raise_bug_s
+        ~here:[%here]
+        [%message
+          "Residual suspended constraints!"
+            (num_shape_partially_generalized_regions : int)
+            (num_type_partially_generalized_regions : int)
+            (state : State.t)];
     Ok ()
   with
   (* Catch solver exceptions *)
@@ -356,5 +341,9 @@ let solve
     let dtype1 = decoder gtype1 in
     let dtype2 = decoder gtype2 in
     Error (Error.create ~range (Cannot_unify (dtype1, dtype2)))
+  | G.Suspended_match.Cannot_match_on_rigid report
+  | G.Suspended_match.Inconsistent_defaults report ->
+    (* Catch suspended match constraint exceptions *)
+    Error (Error.create ~range (Unsatisfiable report))
   | Error.T err -> Error err
 ;;

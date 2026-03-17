@@ -16,7 +16,7 @@ module Defaulting = struct
   module T = struct
     type t =
       | Disabled
-      | Scc
+      | Unary
     [@@deriving sexp, enumerate]
   end
 

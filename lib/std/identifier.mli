@@ -4,6 +4,7 @@ open Core
 type t = private int [@@deriving equal, compare, sexp, hash, bin_io, quickcheck]
 
 include Comparable.S with type t := t
+include Pretty_printer.S with type t := t
 
 (** A source of identifiers. See [Identifier.create]. *)
 type source
