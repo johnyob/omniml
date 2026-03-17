@@ -41,7 +41,7 @@ type t =
   | Eq of Type.t * Type.t
   | Exists of Type.Var.t * t
   | Forall of Type.Var.t list * t
-  | Let of Var.t * scheme * t
+  | Let of let_binding * t
   | Instance of Var.t * Type.t
   | Match of
       { matchee : Type.Var.t
@@ -52,15 +52,15 @@ type t =
       }
   | With_range of t * Range.t
 
-and scheme =
-  { type_vars : (flexibility * Type.Var.t) list
-  ; in_ : t
-  ; type_ : Type.t
+and binding =
+  { binding_var : Var.t
+  ; binding_type : Type.t
   }
 
 and let_binding =
-  { let_var : Var.t
-  ; let_scheme : scheme
+  { type_vars : (flexibility * Type.Var.t) list
+  ; in_ : t
+  ; bindings : binding list
   }
 
 and flexibility =
@@ -83,12 +83,12 @@ let ( =~ ) type1 type2 = Eq (type1, type2)
 let exists type_var t = Exists (type_var, t)
 let exists_many vars in_ = List.fold_right vars ~init:in_ ~f:exists
 let forall type_vars t = Forall (type_vars, t)
-let ( #= ) x scheme = { let_var = x; let_scheme = scheme }
-let mono_scheme type_ = { type_vars = []; in_ = tt; type_ }
+let ( @: ) x type_ = { binding_var = x; binding_type = type_ }
+let mono_binding bindings = { type_vars = []; in_ = tt; bindings }
 let ( @=> ) t1 t2 = t1, t2
 let ( @. ) t1 t2 = t1, t2
-let poly_scheme (type_vars, (in_, type_)) = { type_vars; in_; type_ }
-let let_ binding ~in_ = Let (binding.let_var, binding.let_scheme, in_)
+let poly_binding (type_vars, (in_, bindings)) = { type_vars; in_; bindings }
+let let_ binding ~in_ = Let (binding, in_)
 let inst x type_ = Instance (x, type_)
 
 let match_ matchee ~closure ~with_ ~else_ ~error =

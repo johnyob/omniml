@@ -85,11 +85,34 @@ module Type : sig
 end
 
 module Principal_shape : sig
+  (** Principal shapes describe the "structure" of a type.
+
+      A shape [ν'a .. 'c. ty] denotes some structure [ty] 
+      where the variables ['a, .., 'c] are 'holes' within 
+      [ty]. 
+
+      A shape is principal if it is minimal with respect 
+      to the instantiation of its quantifiers and is 
+      non-trivial (i.e. not [ν'a. 'a]).
+
+      This is used by {!Constraint.match_} for defaulting 
+      when a type variable's structure cannot be determined 
+      from context. *)
+
+  (** [t] represents a principal shape. *)
   type t
 
+  (** [( @-> )] is the principal shape of function types. *)
   val ( @-> ) : t
+
+  (** [constr ~arity id] is the principal shape of the type constructor [id]
+      with the given [arity]. *)
   val constr : arity:int -> Type.Ident.t -> t
+
+  (** [tuple n] is the principal shape of a tuple with [n] components. *)
   val tuple : int -> t
+
+  (** [poly scm] is the principal shape of a polymorphic type with scheme [scm]. *)
   val poly : Type.Scheme.t -> t
 end
 
@@ -112,12 +135,13 @@ module Constraint : sig
   (** [t] is a constraint. *)
   type t
 
-  (** [scheme] is a constrainted type scheme [forall overline(a). C => tau]. *)
-  and scheme
+  (** [let_binding] is a constrainted type scheme with a number of binders.
 
-  (** [let_binding] is a constrainted type scheme binding [x = σ], 
-      consumed by {!let_}. *)
+      [forall overline(a). C => (x1 : ty1, ..., xn : tyn)]. *)
   and let_binding
+
+  (** [binding] is a type binding [x : ty], stored within a {!let_binding}. *)
+  and binding
 
   (** Whether a quantified type variable must be generalizable. *)
   and flexibility =
@@ -157,34 +181,41 @@ module Constraint : sig
       the constraint [c]. *)
   val forall : Type.Var.t list -> t -> t
 
-  (** [x #= σ] constructs the let binding [x = σ]. *)
-  val ( #= ) : Var.t -> scheme -> let_binding
+  (** [x @: ty] constructs the binding [x : ty]. *)
+  val ( @: ) : Var.t -> Type.t -> binding
 
   (** Building constrained type schemes using infix operators. 
       The constrained scheme 
       {[
-        forall vs. C => ty
+        forall vs. C => (x1 : ty1, ..., xn: tyn)
       ]}
-      is represented (compositionally) as [vs @. c @=> ty]. 
+      is represented (compositionally) as 
+      [vs @. c @=> (x1 : ty1, ..., xn : tyn)]. 
 
       The following combinators and types exist purely to support 
       this syntax. *)
 
-  type unquantified_scheme := t * Type.t
-  type quantified_scheme := (flexibility * Type.Var.t) list * unquantified_scheme
+  type unquantified_let_binding := t * binding list
 
-  val ( @=> ) : t -> Type.t -> unquantified_scheme
-  val ( @. ) : (flexibility * Type.Var.t) list -> unquantified_scheme -> quantified_scheme
+  type quantified_let_binding :=
+    (flexibility * Type.Var.t) list * unquantified_let_binding
 
-  (** [mono_scheme ty] builds a monomorphic scheme. 
-      This is equivalent to [poly_scheme ([] @. tt @=> ty)]. *)
-  val mono_scheme : Type.t -> scheme
+  val ( @=> ) : t -> binding list -> unquantified_let_binding
 
-  (** [poly_scheme (vs @. c @=> ty)] builds the constrained scheme 
-      [forall vs. c => ty]. *)
-  val poly_scheme : quantified_scheme -> scheme
+  val ( @. )
+    :  (flexibility * Type.Var.t) list
+    -> unquantified_let_binding
+    -> quantified_let_binding
 
-  (** [let_ x #= s ~in_:c] binds [x] to [s] in [c]. *)
+  (** [mono_binding bindings] builds a monomorphic let binding.
+      This is equivalent to [poly_binding ([] @. tt @=> bindings)]. *)
+  val mono_binding : binding list -> let_binding
+
+  (** [poly_binding (vs @. c @=> bindings)] builds the constrained let binding
+      [forall vs. c => bindings]. *)
+  val poly_binding : quantified_let_binding -> let_binding
+
+  (** [let_ binding ~in_:c] binds the variables in [binding] in [c]. *)
   val let_ : let_binding -> in_:t -> t
 
   (** [inst x ty] requires the type [ty] to be an instance of the scheme 

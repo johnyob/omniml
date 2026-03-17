@@ -628,7 +628,7 @@ end
 
 open State
 
-let enter_region ~state ~raise_scope_escape curr_region =
+let new_region ~state ~raise_scope_escape curr_region =
   let shape_var_region =
     match state.defaulting with
     | Disabled ->
@@ -929,8 +929,7 @@ let update_and_generalize ~state (curr_region : Region.t) =
   [%log.global.debug "End generalization" (curr_region.id : Identifier.t)]
 ;;
 
-let create_scheme root region : Scheme.t = { root; region }
-let exit_region ~curr_region root = create_scheme root curr_region
+let create_scheme ~curr_region root : Scheme.t = { root; region = curr_region }
 let run_scheduler () = Scheduler.(run (t ()))
 
 let force_generalization ~state region =

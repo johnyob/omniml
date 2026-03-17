@@ -266,14 +266,14 @@ let%expect_test "No suspended matches results in normal generalization" =
   let cst =
     exists a1
     @@ let_
-         xid#=(poly_scheme
-                 ([ Flexible, a2 ]
-                  @. (exists a3
-                      @@ exists a4
-                      @@ (T.(var a2 =~ var a3 @-> var a4)
-                          &~ let_ xx#=(mono_scheme (T.var a3)) ~in_:(inst xx (T.var a4)))
-                     )
-                  @=> T.var a2))
+         (poly_binding
+            ([ Flexible, a2 ]
+             @. (exists a3
+                 @@ exists a4
+                 @@ (T.(var a2 =~ var a3 @-> var a4)
+                     &~ let_ (mono_binding [ xx @: T.var a3 ]) ~in_:(inst xx (T.var a4)))
+                )
+             @=> [ xid @: T.var a2 ]))
          ~in_:
            (exists a5
             @@ exists a6
@@ -287,7 +287,7 @@ let%expect_test "No suspended matches results in normal generalization" =
     ("Constraint is satisfiable"
      (cst
       (Exists ((id 0) (name Type.Var))
-       (Let ((id 6) (name Constraint.Var))
+       (Let
         ((type_vars ((Flexible ((id 1) (name Type.Var)))))
          (in_
           (Exists ((id 2) (name Type.Var))
@@ -296,11 +296,16 @@ let%expect_test "No suspended matches results in normal generalization" =
              (Eq (Var ((id 1) (name Type.Var)))
               (Arrow (Var ((id 2) (name Type.Var)))
                (Var ((id 3) (name Type.Var)))))
-             (Let ((id 7) (name Constraint.Var))
-              ((type_vars ()) (in_ True) (type_ (Var ((id 2) (name Type.Var)))))
+             (Let
+              ((type_vars ()) (in_ True)
+               (bindings
+                (((binding_var ((id 7) (name Constraint.Var)))
+                  (binding_type (Var ((id 2) (name Type.Var))))))))
               (Instance ((id 7) (name Constraint.Var))
                (Var ((id 3) (name Type.Var)))))))))
-         (type_ (Var ((id 1) (name Type.Var)))))
+         (bindings
+          (((binding_var ((id 6) (name Constraint.Var)))
+            (binding_type (Var ((id 1) (name Type.Var))))))))
         (Exists ((id 4) (name Type.Var))
          (Exists ((id 5) (name Type.Var))
           (Conj
@@ -325,15 +330,15 @@ let%expect_test "Partial generic becomes instance" =
     exists a1
     @@ exists a2
     @@ let_
-         x1#=(poly_scheme
-                ([ Flexible, a3 ]
-                 @. match_
-                      a1
-                      ~closure:[ `Type a3; `Type a2 ]
-                      ~with_:(fun _ -> T.(var a3 =~ var a2) &~ T.(var a2 =~ tint))
-                      ~else_:else_match_err
-                      ~error:match_err
-                 @=> T.var a3))
+         (poly_binding
+            ([ Flexible, a3 ]
+             @. match_
+                  a1
+                  ~closure:[ `Type a3; `Type a2 ]
+                  ~with_:(fun _ -> T.(var a3 =~ var a2) &~ T.(var a2 =~ tint))
+                  ~else_:else_match_err
+                  ~error:match_err
+             @=> [ x1 @: T.var a3 ]))
          ~in_:(inst x1 tint &~ T.(var a1 =~ tstring))
   in
   print_solve_result cst;
@@ -343,7 +348,7 @@ let%expect_test "Partial generic becomes instance" =
      (cst
       (Exists ((id 0) (name Type.Var))
        (Exists ((id 1) (name Type.Var))
-        (Let ((id 3) (name Constraint.Var))
+        (Let
          ((type_vars ((Flexible ((id 2) (name Type.Var)))))
           (in_
            (Match (matchee ((id 0) (name Type.Var)))
@@ -351,7 +356,9 @@ let%expect_test "Partial generic becomes instance" =
              ((type_vars (((id 2) (name Type.Var)) ((id 1) (name Type.Var))))
               (vars ())))
             (case <fun>) (else_ <fun>) (error <fun>)))
-          (type_ (Var ((id 2) (name Type.Var)))))
+          (bindings
+           (((binding_var ((id 3) (name Constraint.Var)))
+             (binding_type (Var ((id 2) (name Type.Var))))))))
          (Conj
           (Instance ((id 3) (name Constraint.Var))
            (Constr () ((id 0) (name int))))
@@ -369,15 +376,15 @@ let%expect_test "Partial generic becomes generic" =
   let cst =
     exists a1
     @@ let_
-         x1#=(poly_scheme
-                ([ Flexible, a2 ]
-                 @. match_
-                      a1
-                      ~closure:[ `Type a2 ]
-                      ~with_:(fun _ -> exists a3 @@ T.(var a2 =~ var a3 @-> var a3))
-                      ~else_:else_match_err
-                      ~error:match_err
-                 @=> T.var a2))
+         (poly_binding
+            ([ Flexible, a2 ]
+             @. match_
+                  a1
+                  ~closure:[ `Type a2 ]
+                  ~with_:(fun _ -> exists a3 @@ T.(var a2 =~ var a3 @-> var a3))
+                  ~else_:else_match_err
+                  ~error:match_err
+             @=> [ x1 @: T.var a2 ]))
          ~in_:
            (inst x1 T.(tint @-> tint)
             &~ inst x1 T.(tstring @-> tstring)
@@ -389,13 +396,15 @@ let%expect_test "Partial generic becomes generic" =
     ("Constraint is satisfiable"
      (cst
       (Exists ((id 0) (name Type.Var))
-       (Let ((id 3) (name Constraint.Var))
+       (Let
         ((type_vars ((Flexible ((id 1) (name Type.Var)))))
          (in_
           (Match (matchee ((id 0) (name Type.Var)))
            (closure ((type_vars (((id 1) (name Type.Var)))) (vars ())))
            (case <fun>) (else_ <fun>) (error <fun>)))
-         (type_ (Var ((id 1) (name Type.Var)))))
+         (bindings
+          (((binding_var ((id 3) (name Constraint.Var)))
+            (binding_type (Var ((id 1) (name Type.Var))))))))
         (Conj
          (Conj
           (Instance ((id 3) (name Constraint.Var))
@@ -419,26 +428,26 @@ let%expect_test "Propagating changes during partial generalization" =
   let cst =
     exists_many [ a1; a2 ]
     @@ let_
-         x1#=(poly_scheme
-                ([ Flexible, a3 ]
-                 @. ((* This match forces [a3] to be partially generic *)
-                     match_
-                       a1
-                       ~closure:[ `Type a3 ]
-                       ~with_:(fun _ -> tt)
-                       ~else_:else_match_err
-                       ~error:match_err
-                     &~
-                     (* This match is resolved after [a2] is unified with int.
+         (poly_binding
+            ([ Flexible, a3 ]
+             @. ((* This match forces [a3] to be partially generic *)
+                 match_
+                   a1
+                   ~closure:[ `Type a3 ]
+                   ~with_:(fun _ -> tt)
+                   ~else_:else_match_err
+                   ~error:match_err
+                 &~
+                 (* This match is resolved after [a2] is unified with int.
                           But since [a3] is still partially generic, the structure of [a3] is
                           not propagated to [a4]. This causes a bug. *)
-                     match_
-                       a2
-                       ~closure:[ `Type a3 ]
-                       ~with_:(fun _ -> T.(var a3 =~ tint))
-                       ~else_:else_match_err
-                       ~error:match_err)
-                 @=> T.var a3))
+                 match_
+                   a2
+                   ~closure:[ `Type a3 ]
+                   ~with_:(fun _ -> T.(var a3 =~ tint))
+                   ~else_:else_match_err
+                   ~error:match_err)
+             @=> [ x1 @: T.var a3 ]))
          ~in_:
            (exists a4
             @@ (inst x1 (T.var a4)
@@ -457,7 +466,7 @@ let%expect_test "Propagating changes during partial generalization" =
      (cst
       (Exists ((id 0) (name Type.Var))
        (Exists ((id 1) (name Type.Var))
-        (Let ((id 4) (name Constraint.Var))
+        (Let
          ((type_vars ((Flexible ((id 2) (name Type.Var)))))
           (in_
            (Conj
@@ -467,7 +476,9 @@ let%expect_test "Propagating changes during partial generalization" =
             (Match (matchee ((id 1) (name Type.Var)))
              (closure ((type_vars (((id 2) (name Type.Var)))) (vars ())))
              (case <fun>) (else_ <fun>) (error <fun>))))
-          (type_ (Var ((id 2) (name Type.Var)))))
+          (bindings
+           (((binding_var ((id 4) (name Constraint.Var)))
+             (binding_type (Var ((id 2) (name Type.Var))))))))
          (Exists ((id 3) (name Type.Var))
           (Conj
            (Conj
@@ -540,15 +551,15 @@ let%expect_test "Partial ungeneralization (Partial<>Instance)" =
     exists a1
     @@ exists a2
     @@ let_
-         x1#=(poly_scheme
-                ([ Flexible, a3 ]
-                 @. match_
-                      a1
-                      ~closure:[ `Type a3; `Type a2 ]
-                      ~with_:(fun _ -> T.(var a3 =~ var a2))
-                      ~else_:else_match_err
-                      ~error:match_err
-                 @=> T.var a3))
+         (poly_binding
+            ([ Flexible, a3 ]
+             @. match_
+                  a1
+                  ~closure:[ `Type a3; `Type a2 ]
+                  ~with_:(fun _ -> T.(var a3 =~ var a2))
+                  ~else_:else_match_err
+                  ~error:match_err
+             @=> [ x1 @: T.var a3 ]))
          ~in_:(inst x1 tint &~ T.(var a2 =~ tstring) &~ T.(var a1 =~ tint))
   in
   print_solve_result cst;
@@ -558,7 +569,7 @@ let%expect_test "Partial ungeneralization (Partial<>Instance)" =
      (cst
       (Exists ((id 0) (name Type.Var))
        (Exists ((id 1) (name Type.Var))
-        (Let ((id 3) (name Constraint.Var))
+        (Let
          ((type_vars ((Flexible ((id 2) (name Type.Var)))))
           (in_
            (Match (matchee ((id 0) (name Type.Var)))
@@ -566,7 +577,9 @@ let%expect_test "Partial ungeneralization (Partial<>Instance)" =
              ((type_vars (((id 2) (name Type.Var)) ((id 1) (name Type.Var))))
               (vars ())))
             (case <fun>) (else_ <fun>) (error <fun>)))
-          (type_ (Var ((id 2) (name Type.Var)))))
+          (bindings
+           (((binding_var ((id 3) (name Constraint.Var)))
+             (binding_type (Var ((id 2) (name Type.Var))))))))
          (Conj
           (Conj
            (Instance ((id 3) (name Constraint.Var))
@@ -594,20 +607,20 @@ let%expect_test "Partial ungeneralization (Partial<>Partial)" =
     exists a1
     @@ exists a2
     @@ let_
-         x1#=(poly_scheme
-                ([ Flexible, a3 ]
-                 @. let_
-                      x2#=(poly_scheme
-                             ([ Flexible, a4 ]
-                              @. match_
-                                   a1
-                                   ~closure:[ `Type a4; `Type a3 ]
-                                   ~with_:(fun _ -> T.(var a4 =~ var a3))
-                                   ~else_:else_match_err
-                                   ~error:match_err
-                              @=> T.var a4))
-                      ~in_:(inst x2 tint &~ inst x2 tstring)
-                 @=> T.var a3))
+         (poly_binding
+            ([ Flexible, a3 ]
+             @. let_
+                  (poly_binding
+                     ([ Flexible, a4 ]
+                      @. match_
+                           a1
+                           ~closure:[ `Type a4; `Type a3 ]
+                           ~with_:(fun _ -> T.(var a4 =~ var a3))
+                           ~else_:else_match_err
+                           ~error:match_err
+                      @=> [ x2 @: T.var a4 ]))
+                  ~in_:(inst x2 tint &~ inst x2 tstring)
+             @=> [ x1 @: T.var a3 ]))
          ~in_:T.(var a1 =~ tstring)
   in
   print_solve_result cst;
@@ -617,10 +630,10 @@ let%expect_test "Partial ungeneralization (Partial<>Partial)" =
      (cst
       (Exists ((id 0) (name Type.Var))
        (Exists ((id 1) (name Type.Var))
-        (Let ((id 4) (name Constraint.Var))
+        (Let
          ((type_vars ((Flexible ((id 2) (name Type.Var)))))
           (in_
-           (Let ((id 5) (name Constraint.Var))
+           (Let
             ((type_vars ((Flexible ((id 3) (name Type.Var)))))
              (in_
               (Match (matchee ((id 0) (name Type.Var)))
@@ -628,13 +641,17 @@ let%expect_test "Partial ungeneralization (Partial<>Partial)" =
                 ((type_vars (((id 3) (name Type.Var)) ((id 2) (name Type.Var))))
                  (vars ())))
                (case <fun>) (else_ <fun>) (error <fun>)))
-             (type_ (Var ((id 3) (name Type.Var)))))
+             (bindings
+              (((binding_var ((id 5) (name Constraint.Var)))
+                (binding_type (Var ((id 3) (name Type.Var))))))))
             (Conj
              (Instance ((id 5) (name Constraint.Var))
               (Constr () ((id 0) (name int))))
              (Instance ((id 5) (name Constraint.Var))
               (Constr () ((id 1) (name string)))))))
-          (type_ (Var ((id 2) (name Type.Var)))))
+          (bindings
+           (((binding_var ((id 4) (name Constraint.Var)))
+             (binding_type (Var ((id 2) (name Type.Var))))))))
          (Eq (Var ((id 0) (name Type.Var))) (Constr () ((id 1) (name string))))))))
      (err
       ((it
@@ -656,15 +673,15 @@ let%expect_test "Partials propagate to same instance group" =
   let cst =
     exists a1
     @@ let_
-         x1#=(poly_scheme
-                ([ Flexible, a2; Flexible, a3 ]
-                 @. match_
-                      a1
-                      ~closure:[ `Type a2; `Type a3 ]
-                      ~with_:(fun _ -> T.(var a2 =~ var a3))
-                      ~else_:else_match_err
-                      ~error:match_err
-                 @=> T.(var a3 @-> var a2)))
+         (poly_binding
+            ([ Flexible, a2; Flexible, a3 ]
+             @. match_
+                  a1
+                  ~closure:[ `Type a2; `Type a3 ]
+                  ~with_:(fun _ -> T.(var a2 =~ var a3))
+                  ~else_:else_match_err
+                  ~error:match_err
+             @=> [ (x1 @: T.(var a3 @-> var a2)) ]))
          ~in_:
            (exists_many [ a4; a5 ]
             @@ (inst x1 T.(var a4 @-> var a5)
@@ -678,7 +695,7 @@ let%expect_test "Partials propagate to same instance group" =
     ("Constraint is unsatisfiable"
      (cst
       (Exists ((id 0) (name Type.Var))
-       (Let ((id 5) (name Constraint.Var))
+       (Let
         ((type_vars
           ((Flexible ((id 1) (name Type.Var)))
            (Flexible ((id 2) (name Type.Var)))))
@@ -688,8 +705,11 @@ let%expect_test "Partials propagate to same instance group" =
             ((type_vars (((id 1) (name Type.Var)) ((id 2) (name Type.Var))))
              (vars ())))
            (case <fun>) (else_ <fun>) (error <fun>)))
-         (type_
-          (Arrow (Var ((id 2) (name Type.Var))) (Var ((id 1) (name Type.Var))))))
+         (bindings
+          (((binding_var ((id 5) (name Constraint.Var)))
+            (binding_type
+             (Arrow (Var ((id 2) (name Type.Var)))
+              (Var ((id 1) (name Type.Var)))))))))
         (Exists ((id 3) (name Type.Var))
          (Exists ((id 4) (name Type.Var))
           (Conj
@@ -720,22 +740,22 @@ let%expect_test "Detect SCC cycle accross regions" =
   let cst =
     exists a1
     @@ let_
-         x1#=(poly_scheme
-                ([ Flexible, a2; Flexible, a3 ]
-                 @. (match_
-                       a2
-                       ~closure:[ `Type a3 ]
-                       ~with_:(fun _ -> tt)
-                       ~else_:else_match_err
-                       ~error:match_err
-                     &~ match_
-                          a3
-                          ~closure:[ `Type a2 ]
-                          ~with_:(fun _ -> tt)
-                          ~else_:else_match_err
-                          ~error:match_err
-                     &~ T.(var a2 =~ var a1))
-                 @=> T.(var a2 @-> var a3)))
+         (poly_binding
+            ([ Flexible, a2; Flexible, a3 ]
+             @. (match_
+                   a2
+                   ~closure:[ `Type a3 ]
+                   ~with_:(fun _ -> tt)
+                   ~else_:else_match_err
+                   ~error:match_err
+                 &~ match_
+                      a3
+                      ~closure:[ `Type a2 ]
+                      ~with_:(fun _ -> tt)
+                      ~else_:else_match_err
+                      ~error:match_err
+                 &~ T.(var a2 =~ var a1))
+             @=> [ (x1 @: T.(var a2 @-> var a3)) ]))
          ~in_:tt
   in
   print_solve_result cst;
@@ -744,7 +764,7 @@ let%expect_test "Detect SCC cycle accross regions" =
     ("Constraint is unsatisfiable"
      (cst
       (Exists ((id 0) (name Type.Var))
-       (Let ((id 3) (name Constraint.Var))
+       (Let
         ((type_vars
           ((Flexible ((id 1) (name Type.Var)))
            (Flexible ((id 2) (name Type.Var)))))
@@ -758,8 +778,11 @@ let%expect_test "Detect SCC cycle accross regions" =
              (closure ((type_vars (((id 1) (name Type.Var)))) (vars ())))
              (case <fun>) (else_ <fun>) (error <fun>)))
            (Eq (Var ((id 1) (name Type.Var))) (Var ((id 0) (name Type.Var))))))
-         (type_
-          (Arrow (Var ((id 1) (name Type.Var))) (Var ((id 2) (name Type.Var))))))
+         (bindings
+          (((binding_var ((id 3) (name Constraint.Var)))
+            (binding_type
+             (Arrow (Var ((id 1) (name Type.Var)))
+              (Var ((id 2) (name Type.Var)))))))))
         True)))
      (err
       ((it
@@ -798,22 +821,22 @@ let%expect_test "" =
   let cst =
     exists_many [ a1; a5; a6; a7 ]
     @@ let_
-         x1#=(poly_scheme
-                ([ Flexible, a2 ]
-                 @. (match_
-                       a1
-                       ~closure:[ `Type a2 ]
-                       ~with_:(fun _ ->
-                         exists_many [ a3; a4 ] @@ T.(var a2 =~ var a3 @-> var a4))
-                       ~else_:else_match_err
-                       ~error:match_err
-                     &~ match_
-                          a5
-                          ~closure:[ `Type a2 ]
-                          ~with_:(fun _ -> T.(var a2 =~ tint @-> tint))
-                          ~else_:else_match_err
-                          ~error:match_err)
-                 @=> T.(var a2)))
+         (poly_binding
+            ([ Flexible, a2 ]
+             @. (match_
+                   a1
+                   ~closure:[ `Type a2 ]
+                   ~with_:(fun _ ->
+                     exists_many [ a3; a4 ] @@ T.(var a2 =~ var a3 @-> var a4))
+                   ~else_:else_match_err
+                   ~error:match_err
+                 &~ match_
+                      a5
+                      ~closure:[ `Type a2 ]
+                      ~with_:(fun _ -> T.(var a2 =~ tint @-> tint))
+                      ~else_:else_match_err
+                      ~error:match_err)
+             @=> [ x1 @: T.var a2 ]))
          ~in_:
            ((* 1. Forces the generalization of x1's region *)
             inst x1 (T.var a6)
@@ -833,7 +856,7 @@ let%expect_test "" =
        (Exists ((id 4) (name Type.Var))
         (Exists ((id 5) (name Type.Var))
          (Exists ((id 6) (name Type.Var))
-          (Let ((id 7) (name Constraint.Var))
+          (Let
            ((type_vars ((Flexible ((id 1) (name Type.Var)))))
             (in_
              (Conj
@@ -843,7 +866,9 @@ let%expect_test "" =
               (Match (matchee ((id 4) (name Type.Var)))
                (closure ((type_vars (((id 1) (name Type.Var)))) (vars ())))
                (case <fun>) (else_ <fun>) (error <fun>))))
-            (type_ (Var ((id 1) (name Type.Var)))))
+            (bindings
+             (((binding_var ((id 7) (name Constraint.Var)))
+               (binding_type (Var ((id 1) (name Type.Var))))))))
            (Conj
             (Conj
              (Conj
@@ -865,7 +890,7 @@ let%expect_test "" =
   let cst =
     exists a1
     @@ let_
-         x1#=(poly_scheme @@ [ Flexible, a2 ] @. tt @=> T.(var a2 @-> var a2))
+         (poly_binding @@ [ Flexible, a2 ] @. tt @=> [ (x1 @: T.(var a2 @-> var a2)) ])
          ~in_:
            (match_
               a1
@@ -881,10 +906,13 @@ let%expect_test "" =
     ("Constraint is satisfiable"
      (cst
       (Exists ((id 0) (name Type.Var))
-       (Let ((id 2) (name Constraint.Var))
+       (Let
         ((type_vars ((Flexible ((id 1) (name Type.Var))))) (in_ True)
-         (type_
-          (Arrow (Var ((id 1) (name Type.Var))) (Var ((id 1) (name Type.Var))))))
+         (bindings
+          (((binding_var ((id 2) (name Constraint.Var)))
+            (binding_type
+             (Arrow (Var ((id 1) (name Type.Var)))
+              (Var ((id 1) (name Type.Var)))))))))
         (Conj
          (Match (matchee ((id 0) (name Type.Var)))
           (closure
@@ -906,18 +934,18 @@ let%expect_test "" =
   let cst =
     exists_many [ a1 ]
     @@ let_
-         x1#=(poly_scheme
-              @@ [ Flexible, a2 ]
-              @. let_
-                   x2#=(mono_scheme (T.var a2))
-                   ~in_:
-                     (match_
-                        a1
-                        ~closure:[ `Scheme x2 ]
-                        ~with_:(fun _ -> inst x2 tint)
-                        ~else_:else_match_err
-                        ~error:match_err)
-              @=> T.var a2)
+         (poly_binding
+          @@ [ Flexible, a2 ]
+          @. let_
+               (mono_binding [ x2 @: T.var a2 ])
+               ~in_:
+                 (match_
+                    a1
+                    ~closure:[ `Scheme x2 ]
+                    ~with_:(fun _ -> inst x2 tint)
+                    ~else_:else_match_err
+                    ~error:match_err)
+          @=> [ x1 @: T.var a2 ])
          ~in_:T.(var a1 =~ tint)
   in
   print_solve_result cst;
@@ -926,15 +954,20 @@ let%expect_test "" =
     ("Constraint is satisfiable"
      (cst
       (Exists ((id 0) (name Type.Var))
-       (Let ((id 2) (name Constraint.Var))
+       (Let
         ((type_vars ((Flexible ((id 1) (name Type.Var)))))
          (in_
-          (Let ((id 3) (name Constraint.Var))
-           ((type_vars ()) (in_ True) (type_ (Var ((id 1) (name Type.Var)))))
+          (Let
+           ((type_vars ()) (in_ True)
+            (bindings
+             (((binding_var ((id 3) (name Constraint.Var)))
+               (binding_type (Var ((id 1) (name Type.Var))))))))
            (Match (matchee ((id 0) (name Type.Var)))
             (closure ((type_vars ()) (vars (((id 3) (name Constraint.Var))))))
             (case <fun>) (else_ <fun>) (error <fun>))))
-         (type_ (Var ((id 1) (name Type.Var)))))
+         (bindings
+          (((binding_var ((id 2) (name Constraint.Var)))
+            (binding_type (Var ((id 1) (name Type.Var))))))))
         (Eq (Var ((id 0) (name Type.Var))) (Constr () ((id 0) (name int))))))))
     |}]
 ;;
@@ -949,18 +982,18 @@ let%expect_test "" =
   let cst =
     exists_many [ a1 ]
     @@ let_
-         x1#=(poly_scheme
-              @@ [ Flexible, a2 ]
-              @. let_
-                   x2#=(mono_scheme (T.var a2))
-                   ~in_:
-                     (match_
-                        a1
-                        ~closure:[ `Scheme x2 ]
-                        ~with_:(fun _ -> inst x2 tint)
-                        ~else_:else_match_err
-                        ~error:match_err)
-              @=> T.var a2)
+         (poly_binding
+          @@ [ Flexible, a2 ]
+          @. let_
+               (mono_binding [ x2 @: T.var a2 ])
+               ~in_:
+                 (match_
+                    a1
+                    ~closure:[ `Scheme x2 ]
+                    ~with_:(fun _ -> inst x2 tint)
+                    ~else_:else_match_err
+                    ~error:match_err)
+          @=> [ x1 @: T.var a2 ])
          ~in_:T.(var a1 =~ tint &~ inst x1 tstring)
   in
   print_solve_result cst;
@@ -969,15 +1002,20 @@ let%expect_test "" =
     ("Constraint is unsatisfiable"
      (cst
       (Exists ((id 0) (name Type.Var))
-       (Let ((id 2) (name Constraint.Var))
+       (Let
         ((type_vars ((Flexible ((id 1) (name Type.Var)))))
          (in_
-          (Let ((id 3) (name Constraint.Var))
-           ((type_vars ()) (in_ True) (type_ (Var ((id 1) (name Type.Var)))))
+          (Let
+           ((type_vars ()) (in_ True)
+            (bindings
+             (((binding_var ((id 3) (name Constraint.Var)))
+               (binding_type (Var ((id 1) (name Type.Var))))))))
            (Match (matchee ((id 0) (name Type.Var)))
             (closure ((type_vars ()) (vars (((id 3) (name Constraint.Var))))))
             (case <fun>) (else_ <fun>) (error <fun>))))
-         (type_ (Var ((id 1) (name Type.Var)))))
+         (bindings
+          (((binding_var ((id 2) (name Constraint.Var)))
+            (binding_type (Var ((id 1) (name Type.Var))))))))
         (Conj (Eq (Var ((id 0) (name Type.Var))) (Constr () ((id 0) (name int))))
          (Instance ((id 2) (name Constraint.Var))
           (Constr () ((id 1) (name string))))))))
