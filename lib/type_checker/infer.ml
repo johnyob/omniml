@@ -578,8 +578,10 @@ module Expression = struct
      let in_ = in_ env in
      ( ()
      , c
-       &~ List.fold bindings ~init:in_ ~f:(fun in_ (cvar, type_) ->
-         let_ cvar#=(mono_scheme (Type.var type_)) ~in_) ))
+       &~ let_
+            (mono_binding
+               (List.map bindings ~f:(fun (cvar, type_) -> cvar @: Type.var type_)))
+            ~in_ ))
     |> snd
   ;;
 
@@ -596,14 +598,14 @@ module Expression = struct
     Env.rename_var env ~var:var.it ~in_:(fun env cvar ->
       let poly_param_type = Type.Var.create ~id_source () in
       let_
-        cvar#=(poly_scheme
-                 ([ Flexible, poly_param_type ]
-                  @. match_inst
-                       ~id_source
-                       ~range:var.range
-                       ~poly_type:param_type
-                       ~mono_type:poly_param_type
-                  @=> Type.var poly_param_type))
+        (poly_binding
+           ([ Flexible, poly_param_type ]
+            @. match_inst
+                 ~id_source
+                 ~range:var.range
+                 ~poly_type:param_type
+                 ~mono_type:poly_param_type
+            @=> [ cvar @: Type.var poly_param_type ]))
         ~in_:(in_ env))
   ;;
 
@@ -619,7 +621,9 @@ module Expression = struct
     let quantifiers = List.map scheme.quantifiers ~f:(fun v -> Flexible, v) in
     Env.rename_var env ~var:var.it ~in_:(fun env cvar ->
       Type.(var param_type =~ poly scheme)
-      &~ let_ cvar#=(poly_scheme (quantifiers @. tt @=> scheme.body)) ~in_:(in_ env))
+      &~ let_
+           (poly_binding (quantifiers @. tt @=> [ cvar @: scheme.body ]))
+           ~in_:(in_ env))
   ;;
 
   let rec bind_params ~env ~with_poly_params params_and_types ~in_ =
@@ -708,8 +712,10 @@ module Expression = struct
       let c = infer_exp ~env ~with_poly_params exp exp_type' in
       let x = Var.create ~id_source:(Env.id_source env) () in
       let_
-        x#=(poly_scheme
-              (((Flexible, exp_type') :: rigid_type_vars) @. c @=> Type.var exp_type'))
+        (poly_binding
+           (((Flexible, exp_type') :: rigid_type_vars)
+            @. c
+            @=> [ x @: Type.var exp_type' ]))
         ~in_:(inst x (Type.var exp_type))
     | Exp_annot (exp, annot) ->
       let annot = Convert.core_type_to_type ~env ~with_poly_params annot in
@@ -872,10 +878,10 @@ module Expression = struct
     let cvar = Var.create ~id_source () in
     let exp_type = Type.Var.create ~id_source () in
     let_
-      cvar#=(poly_scheme
-               ([ Flexible, exp_type ]
-                @. infer_exp ~env ~with_poly_params exp exp_type
-                @=> Type.var exp_type))
+      (poly_binding
+         ([ Flexible, exp_type ]
+          @. infer_exp ~env ~with_poly_params exp exp_type
+          @=> [ cvar @: Type.var exp_type ]))
       ~in_:(k cvar)
 
   and infer_cases ~env ~with_poly_params cases ~lhs_type ~rhs_type =
@@ -895,7 +901,9 @@ module Expression = struct
     let c = infer_exp ~env ~with_poly_params exp exp_type in
     Env.rename_var env ~var:var.it ~in_:(fun env cvar ->
       let c' = k env in
-      let_ cvar#=(poly_scheme ([ Flexible, exp_type ] @. c @=> Type.var exp_type)) ~in_:c')
+      let_
+        (poly_binding ([ Flexible, exp_type ] @. c @=> [ cvar @: Type.var exp_type ]))
+        ~in_:c')
   ;;
 end
 
@@ -906,7 +914,7 @@ module Structure = struct
     let quantifiers = List.map ~f:(fun q -> Flexible, q) quantifiers in
     Env.rename_var env ~var:value_name.it ~in_:(fun env cvar ->
       let c = k env in
-      let_ cvar#=(poly_scheme (quantifiers @. tt @=> type_)) ~in_:c)
+      let_ (poly_binding (quantifiers @. tt @=> [ cvar @: type_ ])) ~in_:c)
   ;;
 
   let infer_type_decl

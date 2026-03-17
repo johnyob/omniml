@@ -1028,7 +1028,7 @@ let%expect_test "" =
     {|
     Generated constraint:
     (With_range
-     (Let ((id 4) (name id))
+     (Let
       ((type_vars ((Flexible ((id 0) (name Type.Var)))))
        (in_
         (With_range
@@ -1040,8 +1040,11 @@ let%expect_test "" =
               (Var ((id 2) (name Type.Var)))))
             (With_range
              (Conj True
-              (Let ((id 3) (name x))
-               ((type_vars ()) (in_ True) (type_ (Var ((id 1) (name Type.Var)))))
+              (Let
+               ((type_vars ()) (in_ True)
+                (bindings
+                 (((binding_var ((id 3) (name x)))
+                   (binding_type (Var ((id 1) (name Type.Var))))))))
                (With_range
                 (Instance ((id 3) (name x)) (Var ((id 2) (name Type.Var))))
                 ((start 25) (stop 26)
@@ -1057,7 +1060,9 @@ let%expect_test "" =
           (source
            (Reader
             ((id 0) (name (expect_test.ml)) (length 34) (unsafe_get <fun>)))))))
-       (type_ (Var ((id 0) (name Type.Var)))))
+       (bindings
+        (((binding_var ((id 4) (name id)))
+          (binding_type (Var ((id 0) (name Type.Var))))))))
       True)
      ((start 7) (stop 26)
       (source
