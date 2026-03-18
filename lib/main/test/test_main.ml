@@ -2852,6 +2852,22 @@ let%expect_test "" =
 ;;
 
 let%expect_test "" =
+  let str =
+    {|
+      let poly_pattern = fun (forall (id1, id2) : 'a 'b. ('a -> 'a) * ('b -> 'b)) -> 
+        let _ = id1 1 in
+        let _ = id1 true in
+        let _ = id2 1 in
+        let _ = id2 true in
+        ()
+      ;;
+    |}
+  in
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
   (* All examples from https://dl.acm.org/doi/pdf/10.1145/3408971 *)
   (* The following compares results from QuickLook. We 
      primarily use the manual encoding of OCaml's polyparams into polytypes: 

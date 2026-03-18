@@ -4636,8 +4636,16 @@ let%expect_test "polyparam - function" =
       (Exp_fun
        (((it
           (Param_poly_val
-           (var
-            ((it id)
+           (pat
+            ((it
+              (Pat_var
+               ((it id)
+                (range
+                 ((start 19) (stop 21)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 59)
+                     (unsafe_get <fun>)))))))))
              (range
               ((start 19) (stop 21)
                (source

@@ -49,9 +49,7 @@ module type S = sig
   module Expression : sig
     module Function_param : sig
       val mono_val : (pattern -> function_param) with_range_fn
-
-      val poly_val
-        : (Var_name.With_range.t -> core_scheme -> function_param) with_range_fn
+      val poly_val : (pattern -> core_scheme -> function_param) with_range_fn
     end
 
     val var : (Var_name.With_range.t -> expression) with_range_fn
@@ -160,8 +158,8 @@ module Default : S with type 'a with_range_fn := range:Range.t -> 'a = struct
     module Function_param = struct
       let mono_val ~range pat = With_range.create ~range @@ Param_mono_val pat
 
-      let poly_val ~range var scheme =
-        With_range.create ~range @@ Param_poly_val { var; scheme }
+      let poly_val ~range pat scheme =
+        With_range.create ~range @@ Param_poly_val { pat; scheme }
       ;;
     end
 
