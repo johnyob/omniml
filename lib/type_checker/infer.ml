@@ -640,7 +640,7 @@ module Expression = struct
     env, bindings, exist_bindings, cpat
   ;;
 
-  let bind_pat ~env ~with_poly_params (pat : pattern) pat_type ~in_ =
+  let bind_mono_pat ~env ~with_poly_params (pat : pattern) pat_type ~in_ =
     let env, bindings, exists_bindings, cpat =
       infer_pat ~env ~with_poly_params pat pat_type
     in
@@ -653,40 +653,49 @@ module Expression = struct
     exists' ~id_source
     @@ fun param_mono_type ->
     Type.(var param_type =~ poly (Type.Scheme.create (var param_mono_type)))
-    &~ bind_pat ~env ~with_poly_params pat param_mono_type ~in_
+    &~ bind_mono_pat ~env ~with_poly_params pat param_mono_type ~in_
   ;;
 
-  let bind_maybe_poly_var ~env (var : Var_name.With_range.t) param_type ~in_ =
+  let bind_unknown_poly_pat ~env ~with_poly_params (pat : Ast.pattern) param_type ~in_ =
     let id_source = Env.id_source env in
-    Env.rename_var env ~var:var.it ~in_:(fun env cvar ->
-      let poly_param_type = Type.Var.create ~id_source () in
-      let_
-        (poly_binding
-           ([ Flexible, poly_param_type ]
-            @. match_inst
-                 ~id_source
-                 ~range:var.range
-                 ~poly_type:param_type
-                 ~mono_type:poly_param_type
-            @=> [ cvar @: Type.var poly_param_type ]))
-        ~in_:(in_ env))
+    let pat_type = Type.Var.create ~id_source () in
+    let env, bindings, exist_bindings, cpat =
+      infer_pat ~env ~with_poly_params pat pat_type
+    in
+    let pat_quantifiers = List.map exist_bindings ~f:(fun v -> Flexible, v) in
+    let_
+      (poly_binding
+         (((Flexible, pat_type) :: pat_quantifiers)
+          @. (match_inst
+                ~id_source
+                ~range:pat.range
+                ~poly_type:param_type
+                ~mono_type:pat_type
+              &~ cpat)
+          @=> bindings))
+      ~in_:(in_ env)
   ;;
 
-  let bind_poly_var
-        ~env
-        ~with_poly_params
-        (var : Var_name.With_range.t)
-        scheme
-        param_type
-        ~in_
-    =
+  let bind_known_poly_pat ~env ~with_poly_params pat scheme param_type ~in_ =
+    let id_source = Env.id_source env in
     let scheme = Convert.core_scheme_to_type_scheme ~env ~with_poly_params scheme in
-    let quantifiers = List.map scheme.quantifiers ~f:(fun v -> Flexible, v) in
-    Env.rename_var env ~var:var.it ~in_:(fun env cvar ->
-      Type.(var param_type =~ poly scheme)
-      &~ let_
-           (poly_binding (quantifiers @. tt @=> [ cvar @: scheme.body ]))
-           ~in_:(in_ env))
+    let scheme_quantifiers = List.map scheme.quantifiers ~f:(fun v -> Rigid, v) in
+    (* Infer the pattern *)
+    let pat_type = Type.Var.create ~id_source () in
+    let env, bindings, exist_bindings, cpat =
+      infer_pat ~env ~with_poly_params pat pat_type
+    in
+    let pat_quantifiers =
+      (Flexible, pat_type) :: List.map exist_bindings ~f:(fun v -> Flexible, v)
+    in
+    (* Unify the param type with the expected poly type *)
+    Type.(var param_type =~ poly scheme)
+    &~ let_
+         (poly_binding
+            ((scheme_quantifiers @ pat_quantifiers)
+             @. (cpat &~ Type.(var pat_type =~ scheme.body))
+             @=> bindings))
+         ~in_:(in_ env)
   ;;
 
   let rec bind_params ~env ~with_poly_params params_and_types ~in_ =
@@ -697,14 +706,11 @@ module Expression = struct
         match With_range.it param with
         | Param_mono_val pat ->
           if with_poly_params
-          then (
-            match pat.it with
-            | Pat_var var -> bind_maybe_poly_var ~env var param_type
-            | _ -> bind_mono_match_val ~env ~with_poly_params pat param_type)
-          else bind_pat ~env ~with_poly_params pat param_type
-        | Param_poly_val { var; scheme } ->
+          then bind_unknown_poly_pat ~env ~with_poly_params pat param_type
+          else bind_mono_pat ~env ~with_poly_params pat param_type
+        | Param_poly_val { pat; scheme } ->
           assert with_poly_params;
-          bind_poly_var ~env ~with_poly_params var scheme param_type
+          bind_known_poly_pat ~env ~with_poly_params pat scheme param_type
       in
       infer_param ~in_:(fun env ->
         bind_params ~env ~with_poly_params params_and_types ~in_)
@@ -949,7 +955,7 @@ module Expression = struct
 
   and infer_case ~env ~with_poly_params case ~lhs_type ~rhs_type =
     let { case_lhs = pat; case_rhs = exp } = case.it in
-    bind_pat ~env ~with_poly_params pat lhs_type ~in_:(fun env ->
+    bind_mono_pat ~env ~with_poly_params pat lhs_type ~in_:(fun env ->
       infer_exp ~env ~with_poly_params exp rhs_type)
 
   and infer_value_binding ~(env : Env.t) ~with_poly_params value_binding k =

@@ -419,13 +419,13 @@ function_param:
       }
   | "("
     ; "forall"
-    ; var_name = var_name
+    ; pat = pattern
     ; ":"
     ; scheme = poly_core_scheme
     ; ")"
       { Expression.Function_param.poly_val
           ~range:(range_of_lex $loc)
-          var_name
+          pat 
           scheme
       }
 

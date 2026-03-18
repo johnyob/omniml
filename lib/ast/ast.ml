@@ -45,7 +45,7 @@ type function_param = function_param_desc With_range.t
 and function_param_desc =
   | Param_mono_val of pattern
   | Param_poly_val of
-      { var : Var_name.With_range.t
+      { pat : pattern
       ; scheme : core_scheme
       }
 [@@deriving sexp_of]
