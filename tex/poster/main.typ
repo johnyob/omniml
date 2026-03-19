@@ -21,6 +21,15 @@
 // Poster setup
 ////////////////////////////////////////////////////////////////////////////////
 
+// Configuration: "a2" or "custom" (for Jane Street's GRF 4:3 ratio)
+#let poster-config = "a2" 
+
+// Text sizes based on configuration
+#let default-text-size = if poster-config == "custom" { 16.5pt } else { 20pt }
+#let code-text-size = if poster-config == "custom" { 15pt } else { 19pt }
+#let heading-text-size = if poster-config == "custom" { 24pt } else { 30pt }
+#let subheading-text-size = if poster-config == "custom" { 20pt } else { 26pt }
+#let title-text-size = if poster-config == "custom" { 36pt } else { 48pt }
 
 #let custom-theme = theme-helper(
   palette: (
@@ -37,30 +46,36 @@
   ),
   overrides: (
     par: (
-      // default: (justify: false),
-      outlook: (justify: false),
+      default: (justify: true),
     ),
     text: (
-      default: (fill: rgb("#E8ECF1"), size: 20pt),
+      default: (fill: rgb("#E8ECF1"), size: default-text-size),
       title: (
         font: "Libertinus Sans",
-        size: 48pt,
+        size: title-text-size,
         weight: 200,
         tracking: 2pt,
         fill: rgb("#F5F7FB"),
+      ),
+      heading: (
+        size: heading-text-size,
+      ),
+      subheading: (
+        size: subheading-text-size,
       ),
     ),
   ),
 )
 
-#let container = (
+// A2 configuration (594 x 420 mm)
+#let container-a2 = (
   x: 0,
   y: 0,
   width: 594,
   height: 420,
 )
 
-#let frames = (
+#let frames-a2 = (
   // Top header - title takes 2/3, authors/affiliation takes 1/3
   title: (x: 15, y: 15, width: 375, height: 35),
   authors: (x: 400, y: 18, width: 174, height: 35),
@@ -80,6 +95,39 @@
   details: (x: 0, y: 0, width: 0, height: 0),
 )
 
+// Custom 4:3 configuration (480 x 360 mm)
+// Scaled proportionally from A2: width scale = 0.808, height scale = 0.857
+#let container-custom = (
+  x: 0,
+  y: 0,
+  width: 480,
+  height: 360,
+)
+
+#let frames-custom = (
+  // Top header - title takes 2/3, authors/affiliation takes 1/3
+  title: (x: 12, y: 13, width: 303, height: 30),
+  authors: (x: 323, y: 15, width: 141, height: 30),
+  // Three columns below header
+  // Column 1: Introduction (left)
+  introduction: (x: 12, y: 45, width: 150, height: 34),
+  overloading: (x: 12, y: 150, width: 150, height: 278),
+  // Column 2: Description + Methods (middle)
+  bidir: (x: 170, y: 45, width: 150, height: 157),
+  constraints: (x: 170, y: 210, width: 150, height: 133),
+  // Column 3: Illustration + Outlook (right)
+  omni: (x: 327, y: 45, width: 141, height: 291),
+  contributions: (x: 327, y: 315, width: 141, height: 15),
+  // Unused (needed by poster-syndrome)
+  cover-image: (x: 0, y: 0, width: 0, height: 0),
+  subtitle: (x: 0, y: 0, width: 0, height: 0),
+  details: (x: 0, y: 0, width: 0, height: 0),
+)
+
+// Select configuration based on poster-config
+#let container = if poster-config == "custom" { container-custom } else { container-a2 }
+#let frames = if poster-config == "custom" { frames-custom } else { frames-a2 }
+
 // initialise with defaults
 #let (poster, frame) = poster-syndrome-setup(
   theme: custom-theme,
@@ -88,7 +136,7 @@
 )
 
 #let page-background = {
-  let padding = 0.4cm
+  let padding = if poster-config == "custom" { 0.3cm } else { 0.4cm }
 
   let page-base = rgb("#0F1115")
   let constraints-fill = rgb("#151D29")
@@ -117,20 +165,22 @@
   )
 }
 
+#let crop-marks-bleed = if poster-config == "custom" { 6.8pt } else { 8.5pt }
+#let crop-marks-trim = if poster-config == "custom" { 23.6pt } else { 29.5pt }
 
-#let page-foreground(bleed: 8.5pt, trim: 29.5pt, frames: none) = {
+#let page-foreground = {
   // outer
   crop-marks(
-    distance: trim - bleed,
+    distance: crop-marks-trim - crop-marks-bleed,
     offset: 0pt,
-    length: trim - bleed - 0pt,
+    length: crop-marks-trim - crop-marks-bleed - 0pt,
     stroke: .5pt + black,
   )
   // inner with outline
-  crop-marks(distance: trim, length: trim + 2pt, stroke: 2pt + white)
+  crop-marks(distance: crop-marks-trim, length: crop-marks-trim + 2pt, stroke: 2pt + white)
   crop-marks(
-    distance: trim,
-    length: trim + 2pt,
+    distance: crop-marks-trim,
+    length: crop-marks-trim + 2pt,
     stroke: 0.5pt + black,
   )
 }
@@ -144,7 +194,7 @@
   date: "",
   cover-image: none,
   credit: "",
-  foreground: page-foreground(frames: frames), // show boxes with frames: _default-frames
+  foreground: page-foreground,
   background: page-background,
 )
 
@@ -241,7 +291,7 @@
           #text(size: 11pt, weight: "bold", fill: white)[#lang]
         ]
       ]
-      #set text(size: 19pt)
+      #set text(size: code-text-size)
       #body
     ]
   ]
@@ -283,8 +333,12 @@
   )
 }
 
+
+#let qr-code-dx = if poster-config == "custom" { -20mm } else { -25mm }
+#let qr-code-width = if poster-config == "custom" { 24mm } else { 30mm }
+
 #frame(tag: "authors")[
-  #set text(size: 20pt)
+  #set text(size: default-text-size)
   #grid(
     columns: (1fr, auto),
     column-gutter: 12pt,
@@ -293,7 +347,7 @@
       Alistair O'Brien#super[1], Didier Rémy#super[2], Gabriel Scherer#super[2]
 
       #text(
-        size: 14pt,
+        size: 0.7 * default-text-size,
         fill: custom-theme.palette.highlight.darken(40%),
         weight: "regular",
         features: (smcp: 1, c2sc: 1, onum: 1),
@@ -301,14 +355,16 @@
         #super[1]University of Cambridge, #super[2]Inria Paris
       ]
     ],
-    place(dx: -25mm, dy: -5mm)[#image("qr-code.svg", width: 30mm)],
+
+    
+    place(dx: qr-code-dx, dy: -5mm)[#image("qr-code.svg", width: qr-code-width)],
   )
 ]
 
 
 #frame(tag: "introduction")[
   #set par(justify: true)
-  #set text(size: 20pt)
+  #set text(size: default-text-size)
 
   == Principality
 
@@ -332,7 +388,7 @@
 
 #frame(tag: "overloading")[
   #set par(justify: true)
-  #set text(size: 20pt)
+  #set text(size: default-text-size)
 
   == Static Overloading
 
@@ -386,7 +442,7 @@
 
 #frame(tag: "bidir")[
   #set par(justify: true)
-  #set text(size: 20pt)
+  #set text(size: default-text-size)
 
   == Bidirectional typechecking
 
@@ -436,21 +492,17 @@
 
 #frame(tag: "constraints")[
   #set par(justify: true)
-  #set text(size: 20pt)
+  #set text(size: default-text-size)
 
   == Constraint-based inference
 
-  #columns(2, gutter: 12pt)[
+  #let gutter-size = if poster-config == "custom" { 12pt } else { 12pt }
+
+  #columns(2, gutter: gutter-size)[
     $
       C ::= ty ceq ty' bar C cand C' bar dots
     $
 
-    //      $
-    //        (phi(ty) = phi(ty')) / (phi tack ty ceq ty')
-    //        quad
-    //        (phi tack C quad phi tack C') / (phi tack C cand C')
-    //      $
-    //
     Constraint generation: generate $cinfer(e, ty)$, a constraint that is
     satisfiable $<==>$ $e$ has the type $ty$.
 
@@ -460,15 +512,19 @@
     #red[*Problem:*] Cannot express whether the solution $delta |-> ty'$
     is known or guessed.
 
-    #align(center)[
+    #colbreak()
+
+    #align(right)[
       #canvas({
         import draw
 
-        let box-w = 7.5
-        let box-h = 1.8
+        let scalar = if poster-config == "custom" { 0.8 } else { 1 }
+
+        let box-w = scalar * 7.5
+        let box-h = scalar * 1.8
         let gap = 1.25
-        let radius = 0.15
-        let label-size = 0.7
+        let radius = scalar * 0.15
+        let label-size = scalar * 0.7
 
         // Helper to draw a labeled box with badge
         let labeled-box(
@@ -496,7 +552,7 @@
           draw.content(
             (box-w - label-size / 2, y + box-h - label-size / 2),
             text(
-              size: 9pt,
+              size: scalar * 9pt,
               fill: white,
               weight: "bold",
             )[#badge-label],
@@ -519,13 +575,13 @@
             (box-w / 2 + 1.2, y - gap / 2),
             anchor: "west",
             text(
-              size: 10pt,
+              size: scalar * 10pt,
               fill: rgb("#888888"),
             )[#label],
           )
         }
 
-        let y1 = 10
+        let y1 = scalar * 10
         let y2 = y1 - box-h - gap
         let y3 = y2 - box-h - gap
         let y4 = y3 - box-h - gap
@@ -536,7 +592,7 @@
           rgb("#E6F2FF"),
           rgb("#4682B4"),
           $e$,
-          $efun(x, e)$,
+          $efun(x, x)$,
         )
         labeled-arrow(y1, [Generate $#cinfer([-], ty)$])
 
@@ -570,10 +626,6 @@
         )
       })
     ]
-
-    #colbreak()
-
-
   ]
   #v(8pt)
 
@@ -581,7 +633,7 @@
 ]
 
 #frame(tag: "omni")[
-  #set text(size: 20pt)
+  #set text(size: default-text-size)
   #set par(justify: true)
 
   == Solution: Omnidirectional inference
@@ -620,7 +672,7 @@
   What if $e_1$ has suspended constraints?
 
   #ocaml-code-block(lang: "OmniML")[
-    #set text(size: 18.4pt)
+    #set text(size: code-text-size)
     ```ocaml let getx p = p.x in```
     #v(-3mm)
     #code-with-status(
@@ -639,7 +691,7 @@
 ]
 
 #frame(tag: "contributions")[
-  #set text(size: 20pt)
+  #set text(size: default-text-size)
   #set par(justify: true)
 
   #text(fill: custom-theme.palette.highlight.darken(40%))[*Contributions:*]
