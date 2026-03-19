@@ -1,8 +1,5 @@
-
-
-From the reviewers:
-
 Referee: 1
+=========
 
 Comments to the Author
 # Summary
@@ -291,6 +288,7 @@ What is a normalized constraint? that no further rewriting rule applies?
 
 
 Referee: 2
+==========
 
 Comments to the Author
 # Summary
@@ -488,6 +486,7 @@ can be challenging to distinguish for colour-blind readers. I would
 suggest using colour-blind safe colours.
 
 Referee: 3
+==========
 
 Comments to the Author
 Summary: This submission develops a type inference scheme for
