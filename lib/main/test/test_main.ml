@@ -3037,3 +3037,182 @@ let%expect_test "" =
   type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect {| Well typed :) |}]
 ;;
+
+let%expect_test "" =
+  let str =
+    {|
+      type t = 
+        | Foo of u
+
+      and u = 
+        | Foo of t
+      ;;
+
+      external unify : 'a. 'a -> 'a -> unit;;
+
+      (* Cycles are possible with recursive overloaded variants *)
+      let _ = 
+        fun x y -> 
+          unify x (Foo (y));
+          unify y (Foo (x))
+      ;;
+    |}
+  in
+  type_check_and_print ~defaulting:Unary str;
+  [%expect
+    {|
+    error[E010]: ambiguous constructor
+        ┌─ expect_test.ml:15:20
+     15 │            unify y (Foo (x))
+        │                     ^^^
+        = hint: add a type annotation
+
+    error[E010]: ambiguous constructor
+        ┌─ expect_test.ml:14:20
+     14 │            unify x (Foo (y));
+        │                     ^^^
+        = hint: add a type annotation
+    |}];
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
+  [%expect
+    {|
+    error[E010]: ambiguous constructor
+        ┌─ expect_test.ml:14:20
+     14 │            unify x (Foo (y));
+        │                     ^^^
+        = hint: add a type annotation
+
+    error[E010]: ambiguous constructor
+        ┌─ expect_test.ml:15:20
+     15 │            unify y (Foo (x))
+        │                     ^^^
+        = hint: add a type annotation
+    |}]
+;;
+
+(*
+   Why can cycles not occur in the defaulting of polyparams (without -rectypes)?
+
+   Recall that the constraint generation function [[ e : 't ]] 
+   for polyparams includes:
+
+   [[ x : 't ]] = x 't
+
+   [[ fun x -> e : 't ]] = 
+     exists 'a 'b. 
+     't = 'a -> 'b 
+     && let x = \'c. <'a>([s] -> s <= 'c) ? mono in
+        [[ e : 'b ]]
+
+
+   [[ e1 e2 : 't ]] =
+     exists 'a 'b.
+     [[ e1 : 'a ]] 
+     && 'a = 'b -> 't 
+     && let arg = \'c. [[ e2 : 'c ]] in
+        <'b>([s] -> arg <= s) ? mono
+
+   We proceed by proof by contradiction. That is, let us assume 
+   for some [[ e : 't ]] there is a cycle. Let us consider cases 
+   on e. 
+
+   We proceed by cases on `e`: 
+
+     - e = x: No cycles, contradiction!
+
+     - e = fun x -> e': 
+
+       We have: 
+
+       [[ e : 't ]] = 
+         exists 'a 'b. 
+         't = 'a -> 'b 
+         && let x = \'c. <'a>([s] -> s <= 'c) ? mono in
+            [[ e' : 'b ]]
+
+       Two cases: 
+       - <'a>([s] -> s <= 'c) ? mono is involved in a cycle
+
+         For a suspended constraint on 'a to be in a cycle, a variable 
+         in it's closure must be suspended and guards 'a. 
+
+         The closure of this suspended constraint is 'c. 
+
+         But 'c is locally bound to the let binding on `x`! 
+
+         No other suspended constraint is associated with 'c. 
+
+         Hence no cycle, contradiction!
+         
+
+       - <'a>([s] -> s <= 'c) ? mono is not involved in a cycle
+
+         Then the cycle of suspended constraints must be contained in 
+         [[ e' : 'b ]]. Recurse and contradict. 
+
+
+     - e = e1 e2
+
+       
+       We have:
+
+       [[ e : 't ]] =
+         exists 'a 'b.
+         [[ e1 : 'a ]] 
+         && 'a = 'b -> 't 
+         && let arg = \'c. [[ e2 : 'c ]] in
+            <'b>([s] -> arg <= s) ? mono
+
+       Two cases: 
+       - <'b>([s] -> arg <= s) ? mono is not involved in a cycle
+         
+         Recursive and contradict in either e1 or e2. 
+
+       - <'b>([s] -> arg <= s) ? mono is involved in a cycle.
+
+         The closure of this constraint contains 'c.
+
+         For a cycle, we need some variable reachable from 'c 
+         with a suspended constraint (generated in [[ e2 : 'c ]]) 
+         that transitively guards 'b.
+
+         Key point: We ruled out above that `fun x -> e` can contribute to 
+         a cycle. So suppose e2 contains an application, generating:
+
+           exists 'd 'e.
+           [[ e3 : 'd ]]
+           && 'd = 'e -> 'l
+           && let arg2 = \'f. [[ e4 : 'f ]] in
+              <'e>([s] -> arg2 <= s) ? mono
+
+         where 'l is a descendant of 'c. And 'e is a member of the 
+         cycle involving 'b. Hence, it must also be the case that 'e 
+         appears in 'l. 
+
+         Key point: It is worth noting that 'l and 'e cannot be equal 
+         (since 'l is a monotype variable and 'e is a polytype 
+         variable). 
+
+         Hence 'd must appear in 'l. But, this contradicts our 
+         assumption for acyclic types (no equi-recursive types).
+
+    So we are done.
+*)
+
+let%expect_test "" =
+  (* rectypes can cause defaulting to fail for polyparams *)
+  let str =
+    {|
+      let _ = fun f -> f f;;
+    |}
+  in
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
+  [%expect
+    {|
+    error[E016]: unknown polytype
+        ┌─ expect_test.ml:2:26
+      2 │        let _ = fun f -> f f;;
+        │                           ^
+        = hint: add a type annotation
+    |}]
+;;
