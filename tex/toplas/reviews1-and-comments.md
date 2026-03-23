@@ -240,6 +240,11 @@ definition of shape that didn't require them to be closed).
 > 
 > It seems you only reason about canonical principal shapes. Would it simplify the
 > presentation to introduce canonical shapes directly?
+
+Canonical principal shapes have a rather complex structure. Whereas the
+properties of being canonical and principal are rather intuitive, hence why we
+introduce shapes, principal shapes and canonical principal shapes.
+
 > 
 > - page 15, line 37-39, `𝜈𝛾.[∀𝛼.([∀𝛽.(𝛽 →𝛾)∗ 𝛽])→𝛼 →𝛼].`
 > 
