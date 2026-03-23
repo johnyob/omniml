@@ -180,6 +180,10 @@ that ex_1 is accepted by OCaml (with default rules enabled).
 > 
 > What's the difference between `ex4` and `ex3`? Does this let expression change
 > the behavior compared to the tuple in `ex3`?
+
+Fixed in e357f4f. This is a good point. The `let` doesn't change the behavior.
+We've changed this to use `ex3` instead. 
+
 > 
 > - The `(𝜎1 : 𝜎 : 𝜎2)` judgment remains somewhat mysterious. If you want to
 > retain the rules, consider providing a concrete example of this judgment.
