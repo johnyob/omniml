@@ -708,7 +708,7 @@ annotability is fragile, in that well-typedness depends on the
 \emph{precise} placement of annotations, often forcing the programmer
 to introduce annotations that would otherwise be unnecessary.
 For instance, the following two terms differ only in the position of
-the annotation, yet only the one on the left-hand side is well-typed in
+the annotation, yet only \code{self_2_1} is well-typed in
 \OCaml---while they are both well-typed in \OML:
 \begin{program}[input,angles,checkpolyml]
 let self_2_1 x = <(x : [ 'a. 'a -> 'a ])> x °\ocamlflags 00°
