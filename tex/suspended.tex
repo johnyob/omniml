@@ -425,16 +425,12 @@ formal account of such ``default rules''.
 
 \parcomment{Default rules interact poorly with directional inference}
 
-Defaulting also interacts poorly with \OCaml's directional inference. Once
-the compiler selects a type, it commits to it---even if that choice causes
-errors downstream. Consider:
-\begin{program}[input,checkocaml=true]
-let ex_4 r = let x = r.x in x + (r : point).y    °\ocamlflags 10°
-\end{program}
-Here, \OCaml defaults to \code{gray_point} for \code{r} when typing \code{r.x},
-and subsequently fails on \code{(r : point).y}. \OML succeeds by suspending the
-resolution of \code{r.x} until it learns from \code{(r : point).y} that \code{r}
-has type \code{point}.
+Defaulting also interacts poorly with \OCaml's directional inference. Once the
+compiler selects a type, it commits to it---even if that choice causes errors
+downstream. Consider \code{ex_3}: when typing \code{r.x}, \OCaml defaults
+\code{r} to \code{gray_point}, and subsequently fails on \code{(r : point).y}.
+\OML succeeds by suspending the resolution of \code{r.x} until it learns from
+\code{(r : point).y} that \code{r} has type \code{point}.
 
 \parcomment{Variants are supported, but not discussed}
 
@@ -2931,7 +2927,7 @@ Explicit records and projections, along with closed-world disambiguated terms,
 bypass suspension and directly instantiate the appropriate labels.
 
 \begin{example}
-Considering the example from \cref{sec/overview/overloading}:
+Consider the following example:
 \begin{program}[input]
   let ex_4 r = let x = r.x in x + (r : point).y °\ocamlflags 10°
 \end{program}
