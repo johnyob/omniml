@@ -222,6 +222,9 @@ annotations for ML-like systems. e.g. PolyML uses a similar rule using the
 `(𝜎1 : 𝜎 : 𝜎2)` judgement to instantiate existential variables in `𝜎`. 
 
 > - page 13, line 14, "in §1" -> "in §2"
+
+Fixed in 12aca82.
+
 > 
 > - page 15, rule Inst-Shape
 > 
