@@ -251,6 +251,10 @@ introduce shapes, principal shapes and canonical principal shapes.
 > It was not clear to me until this example that the holes (`𝛾`) cannot refer to
 > bound variables (e.g. `𝛼` and `𝛽`). I think this is a crucial detail worth
 > stating explicitly.
+
+This just a property of the substitution being capture avoiding wrt to
+universal quantifiers. I'm not too sure this is a crucial detail.
+
 > 
 > - page 16, Fig 3, line 5, `ℰ ::= □|ℰ 𝑒 |𝑒ℰ |...`
 > 
