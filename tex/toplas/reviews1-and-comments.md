@@ -163,6 +163,10 @@ Fixed in 0a15e72
 > - page 4, line 11, the example `ex2`
 > 
 > Why exactly is this rejected by OCaml? A brief clarification would be helpful.
+
+`ex2` isn't rejected by OCaml. Appears there was a mistake in the submission. 
+This was corrected in 033ad6f7.
+
 > 
 > - page 4, line 27-28, the example `let get x r = r.x`
 > 
