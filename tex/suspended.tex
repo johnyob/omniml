@@ -1709,7 +1709,7 @@ polytypes can be decomposed into shapes and thus treated analogously to
 type constructors.
 \begingroup
 \newcommand {\tsh}[1]%
-  {\def \tsi {\all \tvb {{\parens{\tvb \to #1}}} \tprod \tvb}
+  {\def \tsi {\all \tvb {{\parens{\tva \to #1}}} \tprod \tvb}
   \tpoly {\all \tva {\parens {\tpoly \tsi} \to \tva} \to \tva}}%
 For instance, the polytype $\tsh {\tint \tlist}$ has the principal shape
 $\sh$ equal to $\any \tvc {\tsh \tvc}$. The original polytype can thus be
