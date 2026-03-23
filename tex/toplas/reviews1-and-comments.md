@@ -207,6 +207,9 @@ We've changed this to use `ex3` instead.
 > - page 7, line 18, "on the left-hand side"
 > 
 > the left-hand side?
+
+Fixed in c38da98.
+
 > 
 > - page 12, fig 2, rule Annot
 > 
