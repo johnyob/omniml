@@ -231,6 +231,10 @@ Fixed in 12aca82.
 > You mentioned on line 14 that "By construction, we require 𝛾 to be exactly the
 > free variables of 𝜏." If that's the case, the free variables of `𝜈𝛾1.𝜏` will be
 > empty, so why is that premise `𝛾2 #𝜈 𝛾1.𝜏` needed?
+
+Fixed in 7aadc28. The premise is indeed useless (an artifact from an earlier
+definition of shape that didn't require them to be closed).
+
 > 
 > - page 15, line 25-26, Definition 3.1
 > 
