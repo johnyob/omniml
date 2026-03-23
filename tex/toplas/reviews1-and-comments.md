@@ -156,6 +156,9 @@ Referee: 1
 > You cite "Semi-explicit polymorphic parameters" as both [White 2013] and [White
 > 2023]. Please make things consistent (e.g., citing the most recent or both
 > consistently).
+
+Fixed in 0a15e72
+
 > 
 > - page 4, line 11, the example `ex2`
 > 
