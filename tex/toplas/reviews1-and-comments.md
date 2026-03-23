@@ -171,6 +171,10 @@ This was corrected in 033ad6f7.
 > - page 4, line 27-28, the example `let get x r = r.x`
 > 
 > This seems the identical as `ex1`. Why not simply refer back to `ex1`?
+
+Renamed getx to ex_1 in 57cee6d. But we need to keep this copy of ex_1 to highlight 
+that ex_1 is accepted by OCaml (with default rules enabled).
+
 > 
 > - page 4, line 36, the example `ex4`
 > 
