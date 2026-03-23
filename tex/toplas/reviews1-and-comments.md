@@ -260,6 +260,9 @@ universal quantifiers. I'm not too sure this is a crucial detail.
 > 
 > Can `ℰ` appear within lambdas? Example 3.3 suggests yes, but the definition in
 > Appendix A suggests no.
+
+Fixed in e5b83e3.
+
 > 
 > - page 16, Fig 3, rule Proj-I
 > 
