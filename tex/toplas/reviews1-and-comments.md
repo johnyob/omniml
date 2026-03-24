@@ -323,6 +323,9 @@ Fixed in 620a6ca.
 > It was initially confusing why the field types of the record are omitted. A
 > brief explanation of why these are not required for this part of the formalism
 > would be useful.
+
+Fixed in 082aa3c.
+
 > 
 > - page 24, "a instance" -> "an instance"
 > 
