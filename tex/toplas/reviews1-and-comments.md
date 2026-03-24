@@ -328,6 +328,9 @@ Fixed in 082aa3c.
 
 > 
 > - page 24, "a instance" -> "an instance"
+
+Fixed in 015269b.
+
 > 
 > - page 27, line 43, "𝛼 ≺+𝑈 𝛼"
 > 
