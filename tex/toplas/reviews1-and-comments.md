@@ -275,6 +275,36 @@ Fixed in 7290358.
 > 
 > I'm confused about why you require the list of `𝑒s`, as it does not seem to be
 > used in the rules.
+
+This is only because all our fragile elimination rules (Rcd-Proj-I, Use-I,
+Proj-I) only have one subterm. 
+
+But this isn't the case for all features. If one were to consider
+omnidirectionality for local type inference in the style of Pierce and Turner,
+we could have:
+  
+   𝜏 ::= ... | ∀𝛼s. 𝜏s -> 𝜏
+
+with the rule: 
+
+
+    ℰ [e ⊳ νɣs. ∀𝛼s. 𝜏s -> 𝜏 | 𝑒s]
+    Γ |- ℰ[(e : ∃ɣs. ∀𝛼s. 𝜏s -> 𝜏)@es] : 𝜏'
+   ----------------------------------------- [App-I]
+    Γ |- ℰ[e es] : 𝜏'
+
+Here, e es is the implicit form for application and (e : ∃ɣs. ∀𝛼s. 𝜏s -> 𝜏)@es
+is the explicit form, with the rule: 
+
+
+    Γ |- e : (∀𝛼s. 𝜏s -> 𝜏)[ɣs:=𝜏s']
+    Γ |- es : 𝜏s[ɣs:=𝜏s', 𝛼s:=𝜏s'']
+   -------------------------------------------------------- [App-X]
+    Γ |- (e : ∃ɣs. ∀𝛼s. 𝜏s -> 𝜏)@es : 𝜏[ɣs:=𝜏s', 𝛼s:=𝜏s'']
+
+TODO: @Didier, @Gabriel, we could add a footnote or something to clarify that
+our rules are just an instance of the omnidirectional recipe?
+
 > 
 > - page 17, line 21, the omnidirectional recipe
 > 
