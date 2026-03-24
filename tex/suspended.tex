@@ -3798,8 +3798,8 @@ Incremental instantiation constraints are reduced using the following rules:
 There are three cases in which an instantiation constraint is eliminated:
 \begin{enumerate}
   \item
-    A nullary shape is copied and no further instantiations are needed
-    (\Rule{S-Inst-Copy}).
+    A base type (\ie a nullary shape) is copied and no further
+    instantiations are needed (\Rule{S-Inst-Copy}).
 
   \item
     The copied variable $\tvb$ is polymorphic, and thus the instantiation
