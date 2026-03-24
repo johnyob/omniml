@@ -3241,10 +3241,10 @@ Finally, \Rule{U-Cycle} implements the \emph{occurs check}, ensuring that a
 type variable does not occur in the type it is being unified with. This is a
 necessary condition for unification, as it would otherwise lead to infinite
 types.
-This is formalized by the relation $\tv \prec_\up \tvb$ indicating that
-$\tv$ occurs in a type equated to $\tvb$ in $\up$, that is, when $\up =
-\Up\where{\cunif \tvb {\cunif \t \ueq}}$,
-$\tv \in \fvs \t$ and $\tv, \tvb \disjoint \bvs \Up$.
+This is formalized by the relation $\tv \prec_\up \tvb$, which indicates that
+$\tv$ occurs in a non-variable type $\t$ equated to $\tvb$ in $\up$. Concretely, this holds when 
+$\up = \Up\where{\cunif \tvb {\cunif \t \ueq}}$,
+$\tv \in \fvs \t$, $\t \notin \TyVars$ and $\tv, \tvb \disjoint \bvs \Up$.
 %
 A unification problem $\up$ is said to be cyclic, written $\cyclic \up$, if
 $\tv \prec_\up^+ \tv$ for some $\tv$.
