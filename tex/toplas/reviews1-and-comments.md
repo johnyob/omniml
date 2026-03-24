@@ -267,6 +267,9 @@ Fixed in e5b83e3.
 > - page 16, Fig 3, rule Proj-I
 > 
 > This rule appears before you have introduced tuples (in footnote 9).
+
+Fixed in 7290358.
+
 > 
 > - page 16, Fig 3, `ℰ [𝑒 ⊳ 𝜍 | 𝑒s] `
 > 
