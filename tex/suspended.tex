@@ -3490,11 +3490,12 @@ is unsound in the presence of suspended constraints.
 
 A tempting alternative, used in
 \citet*{Vytiniotis-Peyton-Jones-Schrijvers-Sulzmann/outsidein@jfp2011} and
-\citet*{benevs2025simple}, is to treat the let-bindings
-\emph{monomorphically}, sharing $\tvp$ directly between both applications.
-However, this is incomplete: in \code{ex_8}, the two calls to \code{getx}
-require different instantiations of $\tvp$---\code{int gpoint} and \code{float
-gpoint}, respectively.
+\citet*{benevs2025simple}, is to treat the let-bindings \emph{monomorphically},
+sharing $\tvp$ directly between both applications. However, this is incomplete
+with respect to \OML's type system: it forbids local let-polymorphism (commonly 
+used in \OCaml) and fails to typecheck \code{ex_8}, where the two calls to
+\code{getx} require different instantiations of $\tvp$---\code{int gpoint} and
+\code{float gpoint}, respectively.
 
 \parcomment{Generalization in the context of constraint solving}
 
