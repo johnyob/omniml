@@ -347,6 +347,9 @@ Fixed in 930177b.
 > - page 29, line 35, "However, this is incomplete"
 > 
 > Incomplete with respect to? It's true that it would reject `ex8`.
+
+Fixed in ff0067e.
+
 > 
 > - page 31, line 35, "a nullary shape"
 > 
