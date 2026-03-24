@@ -314,6 +314,9 @@ our rules are just an instance of the omnidirectional recipe?
 > - page 17, line 49, `𝜆𝑟.(𝑟.x,𝑟.point.y)` from §2.1.
 > 
 > The example differs slightly from the version in §2.1, which was: `𝜆𝑟.(𝑟.x,𝑟:point.y)`
+
+Fixed in 620a6ca.
+
 > 
 > - page 23, line 6-7, `𝜌 ::= ... | rcd 𝑡 _ | ...`
 > 
