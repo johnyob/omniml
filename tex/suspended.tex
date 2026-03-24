@@ -2847,6 +2847,8 @@ Shape patterns include:
 
   \item Record type patterns $\cpatrcd \ct$, binding the name $\T$
     of a record type $\trcd \T \tys$ to the record variable $\ct$.
+    The parameters $\ty$ are not bound in the pattern, since record 
+    field overloading depends only on the name $\T$.
 
   \item Polytype patterns $\cpatpoly \cscm$ matching a polytype $\tpoly \ts$ and
     binding the resulting scheme to the variable $\cscm$.
