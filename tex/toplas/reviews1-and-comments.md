@@ -354,6 +354,9 @@ Fixed in ff0067e.
 > - page 31, line 35, "a nullary shape"
 > 
 > This is the first mention of a "nullary shape." I assume this refers to a unit type.
+
+Fixed in 8ab55de.
+
 > 
 > - page 31, line 36-37, "The copied variable 𝛽"
 > 
