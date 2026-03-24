@@ -334,8 +334,15 @@ Fixed in 015269b.
 > 
 > - page 27, line 43, "𝛼 ≺+𝑈 𝛼"
 > 
-> Could you clarify the notation `≺+𝑈`? Additionally, how does it rule out "𝛼 =
-> 𝛼"?
+> Could you clarify the notation `≺+𝑈`? 
+
+≺+𝑈 is the transitive closure of the relation ≺𝑈. I think this is pretty standard 
+notation (I've never seen different notation for transitive closure previous).
+
+> Additionally, how does it rule out "𝛼 = 𝛼"? 
+
+Fixed in 930177b.
+
 > 
 > - page 29, line 35, "However, this is incomplete"
 > 
