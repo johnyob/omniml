@@ -629,9 +629,20 @@ Fixed in 06ab049
 No. 𝜍 = shape(𝜙(𝜏)) is just an equality premise between shapes. It is not a constraint.
 
 > * Page 21 line 40: I think some steps are omitted. It would be helpful to show the full derivation
+
+@Didier, @Gabriel. There is a missing (but rather redundant) 𝛼 = int from the derivation 
+(if we're strictly following the definition of discharged match constraint). But I think 
+it would hurt readability more.
+
 > * Page 21 line 40: This is a good example but boring, because there
 >   is a unique solution for `α`. It might be helpful to show another
 >   more interesting example without a unique solution.
+
+@Didier, @Gabriel. We could do the example 
+  match 𝛼 with _ ⇒ true
+
+This has many solutions for 𝛼, but is also a little boring.
+
 > * Page 24 line 37: I think you wanted to say "every instance of s is an instance of x"
 > * Page 35 line 21: ``unification dependently-typed systems''
 > 
