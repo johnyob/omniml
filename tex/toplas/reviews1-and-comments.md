@@ -621,6 +621,9 @@ Correct! Fixed in bed08b3
 Fixed in d80ddb8
 
 > * Page 18 line 35: ``it is a given that''
+
+Fixed in 06ab049
+
 > * Page 21 line 30: In the rule Match-Nat, I think there should be `Φ|-` before the first premise
 > * Page 21 line 40: I think some steps are omitted. It would be helpful to show the full derivation
 > * Page 21 line 40: This is a good example but boring, because there
