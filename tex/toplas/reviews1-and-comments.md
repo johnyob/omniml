@@ -421,6 +421,8 @@ Note: There was a typo on line 36-37, where we claimed that
 > 
 > What is a normalized constraint? that no further rewriting rule applies?
 
+Fixed in c69752c.
+
 
 Referee: 2
 ==========
