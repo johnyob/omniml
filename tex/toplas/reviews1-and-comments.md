@@ -780,6 +780,9 @@ me ://
 
 > 
 > p.12, L50:  A relevant citation for modular implicits is desirable.
+
+Fixed in e10599 
+
 > 
 > p.13, L24: "possible empty" -> "possibly empty"
 > 
