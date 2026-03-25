@@ -761,6 +761,9 @@ See 63c36b3
 
 > 
 > p.7, L18, "on the left-hand side": "below"?
+
+Fixed in c38da98.
+
 > 
 > p.9, L46: What is a "ground record name"?  (Are there non-ground record names?)
 > 
