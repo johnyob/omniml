@@ -6570,8 +6570,8 @@ generally in our system.
 	    \VdashPf{\semenv}{\C\where{\ca}}{\cref{thm:canonicalization}}
 	    \shapePf\Cp\t\sh{Inversion of \Rule{Can-Match-Ctx}}
 	    \VdashPf{\semenv}{\Cp\where{\cmatched \t \sh \cbrs}}{\ditto}
-	    \eqPf{\C\where{\ca}}{\Cp\where{\cmatched \t \sh \cbrs}}{\ditto}
-	    \continueeqPf{\Ctwo\where{\cmatched \t \sh \cbrs, \ca}}{For some two-hole context $\Ctwo$}
+	    \eqPf{\C\where{\ca}}{\Cp\where{\cmatch \t \cbrs}}{\ditto}
+	    \continueeqPf{\Ctwo\where{\cmatch \t \cbrs, \ca}}{For some two-hole context $\Ctwo$}
 	    \vdashPf{\semenv}{\Ctwo\where{\cmatched \t \sh \cbrs, \cb}}{By \ih}
 	    \ForallPf{\semenvp, \gt}{}{Defn of $\Cshape \Cp \t \sh$}
 	    \vdashPf{\semenvp}{\cerase{\Ctwo\where{\t \is \gt, \cb}}}{Premise}
