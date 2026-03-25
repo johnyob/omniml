@@ -793,9 +793,15 @@ Fixed in a7165b8
 > free variables of the right operand of # seems to be empty, because
 > you "require \gamma to be exactly the free variables of \tau."
 > Maybe "\nu \gamma_1" should be removed?
+
+Fixed in 7aadc28
+
 > 
 > Fig. 3: Proj-I is for tuple projection but tuples are not discussed, so
 > far.
+
+Fixed in 7290358.
+
 > 
 > p.17, LL13-20: I had this very question immedietely after looking at
 > the definition of the unicity condition and had a hard time reading the
