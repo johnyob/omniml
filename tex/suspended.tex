@@ -6319,6 +6319,20 @@ composability property.
 	Similar to the \Rule{True} case.
       \end{llproof}
 
+
+      \proofcasederivation
+        {Match-Ctx}
+        {\Cshape \C \t \sh \\ \semenv \th \C\where{\cmatched \t \sh \cbrs}}
+        {\semenv \th \C\where{\cmatch \t \cbrs}}
+
+
+      \begin{llproof}
+        \shapePf{\C}{\t}{\sh}{Premise}
+        \VdashPf{\semenv}{\C\where{\cmatched \t \sh \cbrs}}{Premise}
+        \vdashPf{\semenv}{\C\where{\cmatched \t \sh \cbrs}}{By \ih}
+\Hand        \vdashPf{\semenv}{\C\where{\cmatch \t \cbrs}}{By \Rule{Can-Match-Ctx}}
+      \end{llproof}
+
       \proofcasederivation
 	{LetR}
         {\semenv\where{\x \is \gabsr} \th \cb \\
@@ -6385,17 +6399,6 @@ composability property.
     We use canonicalization (\cref{thm:canonicalization}) to induct on $\semenv \Th
     \C\where{\cmatch \t \cbrs}$ instead of $\semenv \th \C\where{\cmatch \t
     \cbrs}$.
-
-\begin{local}\sloppy
-    This simplifies the proof, but introduces a circular dependency between
-    \cref{thm:canonicalization} and \cref{lem:susp-inversion}.
-    %
-    However, this does not compromise the well-foundedness of induction, as the
-    application of \cref{lem:susp-inversion} (via
-    \cref{corollary:matched-abstractions}) within the proof of
-    \cref{thm:canonicalization} is restricted to strictly smaller constraints.
-
-\end{local}
 
     \begin{proofcases}
       \proofcasederivation
@@ -6464,34 +6467,34 @@ composability property.
   \end{proof}
 \end{lemma}
 
-\begin{corollary}
-  \label{corollary:matched-abstractions}
-  If $\Cshape \C \t \sh$, then $\semenv(\cabs \tv \C\where{\cmatch \t \cbrs}) = \semenv(\cabs \tv \C\where{\cmatched \t \sh \cbrs})$.
-  Similarly, $\semenv(\cabsr \tv \tvs \C\where{\cmatch \t \cbrs}) = \semenv(\cabsr \tv \tvs \C\where{\cmatched \t \sh \cbrs})$.
-  \begin{proof}
-    It is sufficient to show that $\semenv\where{\tv \is \gt} \th \C\where{\cmatch \t \cbrs}$ if and only if
-    $\semenv \th \C\where{\cmatched \t \sh \cbrs}$.
-
-    \begin{proofcases}
-      \proofcase{$\implies$}
-
-	\begin{llproof}
-	  \shapePf{\C}{\t}{\sh}{Premise}
-	  \vdashPf{\semenv\where{\tv \is \gt}}{\C\where{\cmatch \t \cbrs}}{Premise}
-\Hand 	  \vdashPf{\semenv\where{\tv \is \gt}}{\C\where{\cmatched \t \sh \cbrs}}{\cref{lem:susp-inversion}}
-	\end{llproof}
-      \proofcase{$\impliedby$}
-
-	\begin{llproof}
-	  \shapePf{\C}{\t}{\sh}{Premise}
-	  \vdashPf{\semenv\where{\tv \is \gt}}{\C\where{\cmatched \t \sh \cbrs}}{Premise}
-\Hand 	  \vdashPf{\semenv\where{\tv \is \gt}}{\C\where{\cmatch \t \cbrs}}{By \Rule{Match-Ctx}}
-	\end{llproof}
-    \end{proofcases}
-
-    For $\semenv(\cabsr \tv \tvs \C\where{\cmatch \t \cbrs}) = \semenv(\cabsr \tv \tvs \C\where{\cmatched \t \sh \cbrs})$, the proof is identical.
-  \end{proof}
-\end{corollary}
+%\begin{corollary}
+%  \label{corollary:matched-abstractions}
+%  If $\Cshape \C \t \sh$, then $\semenv(\cabs \tv \C\where{\cmatch \t \cbrs}) = \semenv(\cabs \tv \C\where{\cmatched \t \sh \cbrs})$.
+%  Similarly, $\semenv(\cabsr \tv \tvs \C\where{\cmatch \t \cbrs}) = \semenv(\cabsr \tv \tvs \C\where{\cmatched \t \sh \cbrs})$.
+%  \begin{proof}
+%    It is sufficient to show that $\semenv\where{\tv \is \gt} \th \C\where{\cmatch \t \cbrs}$ if and only if
+%    $\semenv \th \C\where{\cmatched \t \sh \cbrs}$.
+%
+%    \begin{proofcases}
+%      \proofcase{$\implies$}
+%
+%	\begin{llproof}
+%	  \shapePf{\C}{\t}{\sh}{Premise}
+%	  \vdashPf{\semenv\where{\tv \is \gt}}{\C\where{\cmatch \t \cbrs}}{Premise}
+%\Hand 	  \vdashPf{\semenv\where{\tv \is \gt}}{\C\where{\cmatched \t \sh \cbrs}}{\cref{lem:susp-inversion}}
+%	\end{llproof}
+%      \proofcase{$\impliedby$}
+%
+%	\begin{llproof}
+%	  \shapePf{\C}{\t}{\sh}{Premise}
+%	  \vdashPf{\semenv\where{\tv \is \gt}}{\C\where{\cmatched \t \sh \cbrs}}{Premise}
+%\Hand 	  \vdashPf{\semenv\where{\tv \is \gt}}{\C\where{\cmatch \t \cbrs}}{By \Rule{Match-Ctx}}
+%	\end{llproof}
+%    \end{proofcases}
+%
+%    For $\semenv(\cabsr \tv \tvs \C\where{\cmatch \t \cbrs}) = \semenv(\cabsr \tv \tvs \C\where{\cmatched \t \sh \cbrs})$, the proof is identical.
+%  \end{proof}
+%\end{corollary}
 
 \section{Properties of the constraint solver}
 \label{app:proofs-solving}
