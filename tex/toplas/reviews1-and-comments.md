@@ -644,6 +644,9 @@ it would hurt readability more.
 This has many solutions for 𝛼, but is also a little boring.
 
 > * Page 24 line 37: I think you wanted to say "every instance of s is an instance of x"
+
+Fixed in ff0e3bb
+
 > * Page 35 line 21: ``unification dependently-typed systems''
 > 
 > 
