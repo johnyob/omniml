@@ -1837,6 +1837,7 @@ To make sense of these definitions, we rely on a few auxiliary notions:
 \newcommand{\Erule}[2]{\eerase {#1} &\eqdef& {#2}}
   \begin{tabular}{RCL}
   \Erule{\epoly \e}{\emagic {\eerase \e}}\\
+    \Erule{\expoly \e \tvs \ts}{\expoly {\eerase \e} \tvs \ts}\\
   \Erule{\einst \e}{\emagic {\eerase \e}}\\
   \Erule{\exinst \e \tvs \ts}{\exinst {\eerase \e} \tvs \ts}\\
     \Erule{\erecord {\elaba = \ea; \ldots; \elab_n = \en}}{\begin{cases}
