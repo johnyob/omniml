@@ -1258,10 +1258,10 @@ bidirectional or $\Geninst$-directional type inference.
 
 \item[(\cref{sec:implementation})]
 
-  Implementing efficient incremental instantiation is non-trivial in comparison
-  to ordinary \ML instantiation, as refinements of partial type schemes must
-  trigger re-instantiations without introducing redundant constraint solving
-  across successive instantiations of the same scheme.
+  Implementing efficient incremental instantiation is harder than \ML
+    instantiation, as refinements of partial type schemes must trigger
+    re-instantiations while avoiding solving the same constraints 
+    repeatedly across successive instantiations.
 
 \end{enumerate}
 We hope to pay off some of this complexity in future work; in particular, we
