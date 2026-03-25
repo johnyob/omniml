@@ -390,6 +390,32 @@ Fixed in 8e6db4b.
 > - page 62, line 39-40, "𝜙 ⊢𝒞2 [match 𝜏 := 𝜍 with¯ 𝜒,𝐶2] By i.h."
 > 
 > Should it be `𝜙 ⊢𝒞2 [𝐶2] By i.h.`?
+
+No, 𝒞2 is a *two-hole* where 𝒞2 [match 𝜏 with¯ 𝜒,𝐶1] = 𝒞[𝐶1]. 
+The inductive hypothesis is: 
+    
+    forall 𝒞' with one less suspended match constraint than 𝒞, 
+      𝒞' [𝐶1] === 𝒞' [𝐶1]
+
+On line 36, we have
+
+    𝜙 ⊢𝒞2 [match 𝜏 := 𝜍 with¯ 𝜒,𝐶1] 
+
+and by noting that 
+
+    𝒞2 [match 𝜏 := 𝜍 with¯ 𝜒,-]
+
+has one less suspended match constraint than 
+
+    𝒞[-], 
+
+then 
+
+    𝜙 ⊢𝒞2 [match 𝜏 := 𝜍 with¯ 𝜒,𝐶2] 
+
+Note: There was a typo on line 36-37, where we claimed that 
+𝒞2 [match 𝜏 := 𝜍 with¯ 𝜒,𝐶1] = 𝒞[𝐶1]. 
+
 > 
 > - page 66, Lemma C.11, "If 𝒞 is normalized"
 > 
