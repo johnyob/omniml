@@ -744,6 +744,13 @@ Referee: 3
 > 
 > p.4, L18 and L26: There are two references to footnote 2.  Is this
 > intended?
+
+I split the footnotes and clarified the reference to footnote 2. 
+Fixed in 46f21cf
+
+@Gabriel, @Didier: I feel like footnote 2 just repeats what we 
+later say about 'Default rules' later. Should we keep it?
+
 > 
 > p.6, L32, "For OCaml, ...":  It wasn't very clear what you meant.
 > 
