@@ -361,6 +361,9 @@ Fixed in 8ab55de.
 > - page 31, line 36-37, "The copied variable 𝛽"
 > 
 > The copied variable in rule S-Inst-Poly is `𝛼'`
+
+Fixed in bbaef47.
+
 > 
 > - page 36, line 21, "implement unification (of) dependently-typed systems"
 > 
