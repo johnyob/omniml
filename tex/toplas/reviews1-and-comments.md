@@ -609,6 +609,9 @@ Fixed in 47adbae
 Fixed in 917933c
 
 > * Page 12 line 45: The sentence is difficult to parse
+
+Fixed in 5b2547b (maybe?)
+
 > * Page 15 Theorem 3.2: I think a principal shape is already non-trivial, why repeating here?
 > * Page 16 Figure 4: why not showing the erasure of `[e:∃a.σ]`?
 > * Page 18 line 35: ``it is a given that''
