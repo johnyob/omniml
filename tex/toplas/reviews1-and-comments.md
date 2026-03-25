@@ -785,6 +785,9 @@ Fixed in e10599
 
 > 
 > p.13, L24: "possible empty" -> "possibly empty"
+
+Fixed in a7165b8
+
 > 
 > p.15:  Isn't the premise of Inst-Shape always satisfied?  The set of
 > free variables of the right operand of # seems to be empty, because
