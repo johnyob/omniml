@@ -773,6 +773,11 @@ Fixed in f931752
 > p.10: The last two paragraphs of Sec 2.4 are not very clear.  In
 > particular, it's not clear how the heading "The forest, not the trees."
 > and the contents match.
+
+I think reviewer 3 struggled with the quirky title here. I'm not too sure 
+what to do. I re-read these two paragraphs and they seem pretty clear to 
+me :// 
+
 > 
 > p.12, L50:  A relevant citation for modular implicits is desirable.
 > 
