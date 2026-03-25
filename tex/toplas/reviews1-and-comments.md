@@ -648,6 +648,9 @@ This has many solutions for 𝛼, but is also a little boring.
 Fixed in ff0e3bb
 
 > * Page 35 line 21: ``unification dependently-typed systems''
+
+Fixed in 0bf7384.
+
 > 
 > 
 > ## Non-technical Comments
