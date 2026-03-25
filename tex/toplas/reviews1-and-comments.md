@@ -382,6 +382,10 @@ Fixed in a2cdcb4.
 > dependency between Theorem B.5 and Lemma B.6. "
 > 
 > Theorem B.5 does not seem to use Lemma B.6 (or Corollary B.7).
+
+Correct, this appears to be an artefact of an earlier version of the proof. 
+Fixed in 8e6db4b.
+
 > 
 > - page 62, line 39-40, "𝜙 ⊢𝒞2 [match 𝜏 := 𝜍 with¯ 𝜒,𝐶2] By i.h."
 > 
