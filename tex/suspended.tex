@@ -1041,8 +1041,8 @@ with the type of $\e$ (via $\cinfer \e \tv$), and suspends resolution
 of the return type $\t$ until the type $\tv$ of $\e$ becomes
 \emph{known} to be some non-variable type $\tz$. The branch then
 matches $\tz$ against the record type pattern $(\cpatrcd \ct)$. If $\tz$
-is a record type $(\trcd {\T} \tyas)$ for some ground record name ${\T}$,
-then the record name variable $\ct$ in the pattern is bound to $\T$,
+is a record type $(\trcd {\T} \tyas)$,
+then the pattern binds the record name variable $\ct$ to the record name $\T$,
 otherwise the whole constraint fails. When $\ct$ is bound to $\T$, the
 right-hand-side constraint becomes
 $\labfrom \elab \T \leq (\tlab \tv \t)$, which requires that the type
@@ -1067,7 +1067,7 @@ constraint:
 %
 The match remains suspended until $\tv$ resolves to some type $\tz$. If, upon
 resolution, $\tz$ is $\tpoly \ts$, the pattern $\tpoly \cscm$ matches
-successfully, binding $\ts$ to the polytype variable $\cscm$ and performs the
+successfully, binding the polytype variable $\cscm$ to $\ts$ and performing the
 instantiation $\cleq \ts \t$. Otherwise, the
 pattern does not match and the constraint fails.
 
@@ -2850,13 +2850,13 @@ Shape patterns include:
 % over enumerate*)
 \begin{enumerate}
 
-  \item Record type patterns $\cpatrcd \ct$, binding the name $\T$
-    of a record type $\trcd \T \tys$ to the record variable $\ct$.
-    The parameters $\ty$ are not bound in the pattern, since record 
+  \item Record type patterns $\cpatrcd \ct$, which match record types $\trcd \T \tys$, 
+    and bind the record variable $\ct$ to the name $\T$. 
+    The parameters $\tys$ are not bound, since record
     field overloading depends only on the name $\T$.
 
-  \item Polytype patterns $\cpatpoly \cscm$ matching a polytype $\tpoly \ts$ and
-    binding the resulting scheme to the variable $\cscm$.
+  \item Polytype patterns $\cpatpoly \cscm$, which match polytypes $\tpoly \ts$ and
+    bind the scheme variable $\cscm$ to $\ts$.
 
 \end{enumerate}
 
@@ -2919,7 +2919,7 @@ annotations can the required type information: the polytype $\tpoly \ts$.
 By contrast, implicit unboxing suspends until the inferred type of $\e$ is
 known to be some non-variable type $\tz$. At that point, the suspended match
 constraint attempts to match $\tz$ against the pattern $\cpatpoly \cscm$. If
-$\tz = \tpoly \ts$, the match succeeds, binding $\ts$ to $\cscm$ and requiring
+$\tz = \tpoly \ts$, the match succeeds, binding $\cscm$ to $\ts$ and requiring
 $\t$ to be an instance of $\cscm$ (\ie $\ts \leq \t$); otherwise, the match
 fails and the term is ill-typed.
 
@@ -2938,7 +2938,7 @@ concern record shapes rather than polytypes. A record projection generate a
 fresh variable $\tv$ for the record type and constrain $\e$ to this type,
 suspending until the type of $\e$ ($\tv$) resolves to some type $\tz$. When
 $\tz = \trcd \T \tys$, the shape pattern $(\cpatrcd \ct)$ matches successfully,
-binding $\T$ to the record name variable $\ct$; the matching branch then
+binding $\ct$ to the record name $\T$; the matching branch then
 retrieves the projected label's type from the global label context $\labenv$
 and instantiates it to match $\tv \to \t$. If $\tz$ is not a
 record type, the match fails and the term is ill-typed.
