@@ -366,6 +366,9 @@ Fixed in bbaef47.
 
 > 
 > - page 36, line 21, "implement unification (of) dependently-typed systems"
+
+Fixed in 0bf7384.
+
 > 
 > - page 36, line 49-50, "Furthermore, OutsideIn forgoes a declarative specification"
 > 
