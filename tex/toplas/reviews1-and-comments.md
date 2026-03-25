@@ -601,6 +601,9 @@ Referee: 2
 > ## Minor Comments and Typos
 > 
 > * Page 5 line 46: considered of => considered as
+
+Fixed in 47adbae
+
 > * Page 11 line 30: `r.x` => `r.color`
 > * Page 12 line 45: The sentence is difficult to parse
 > * Page 15 Theorem 3.2: I think a principal shape is already non-trivial, why repeating here?
