@@ -753,6 +753,12 @@ later say about 'Default rules' later. Should we keep it?
 
 > 
 > p.6, L32, "For OCaml, ...":  It wasn't very clear what you meant.
+
+I don't see the misunderstanding here :// I've tried to clarify it a 
+bit. We've previously had problems with this sentence.
+
+See 63c36b3
+
 > 
 > p.7, L18, "on the left-hand side": "below"?
 > 
