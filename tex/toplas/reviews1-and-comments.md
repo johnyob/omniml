@@ -374,6 +374,9 @@ Fixed in 0bf7384.
 > 
 > "OutsideIn" should be OutsideIn(X) when referring to [Vytiniotis, Jones,
 > Schrijvers and Sulzmann 2011]
+
+Fixed in a2cdcb4.
+
 > 
 > - page 60, line 23-24, "This simplifies the proof, but introduces a circular
 > dependency between Theorem B.5 and Lemma B.6. "
