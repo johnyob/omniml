@@ -3802,9 +3802,9 @@ There are three cases in which an instantiation constraint is eliminated:
     instantiations are needed (\Rule{S-Inst-Copy}).
 
   \item
-    The copied variable $\tvb$ is polymorphic, and thus the instantiation
+    The copied variable $\tvp$ is polymorphic, and thus the instantiation
     constraint imposes no restriction (\Rule{S-Inst-Poly}), provided no
-    other instantiations of $\tvb$ remain at the same instantiation side (if
+    other instantiations of $\tvp$ exist for the same instantiation $\inst$ (if
     not, then apply \Rule{S-Inst-Unify}).
 
   \item
