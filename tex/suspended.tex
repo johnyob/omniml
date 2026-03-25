@@ -4266,13 +4266,13 @@ context outside the GADT clauses. Using our new perspective on \emph{known}
 type information, we can say that their semantics enforces that only
 \emph{known} information from outside GADT clauses can be used inside.
 %
-Later work on \OutsideIn argues
-\citep*{Vytiniotis-Peyton-Jones-Schrijvers-Sulzmann/outsidein@jfp2011} that
-delayed implication constraints make local let-generalization all but
-unmanageable, both in theory and implementation. Their proposed fix is to
+Later work on \OutsideIn, namely
+\OutsideInX~\citep*{Vytiniotis-Peyton-Jones-Schrijvers-Sulzmann/outsidein@jfp2011},
+argues that delayed implication constraints make local let-generalization all
+but unmanageable, both in theory and implementation. Their proposed fix is to
 abandon local let-generalization altogether. By contrast, our work shows that
 the difficult interactions between let-generalization and suspended constraints
-can be resolved. Furthermore, \OutsideIn forgoes a declarative specification
+can be resolved. Furthermore, \OutsideInX forgoes a declarative specification
 complete with respect to its inference algorithm, on the grounds that such a
 specification would be ``as complicated and hard to understand as the
 [inference] algorithm''. We believe that our \emph{omnidirectional recipe}
