@@ -766,6 +766,9 @@ Fixed in c38da98.
 
 > 
 > p.9, L46: What is a "ground record name"?  (Are there non-ground record names?)
+
+Fixed in f931752
+
 > 
 > p.10: The last two paragraphs of Sec 2.4 are not very clear.  In
 > particular, it's not clear how the heading "The forest, not the trees."
