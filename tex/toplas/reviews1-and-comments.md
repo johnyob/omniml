@@ -613,6 +613,9 @@ Fixed in 917933c
 Fixed in 5b2547b (maybe?)
 
 > * Page 15 Theorem 3.2: I think a principal shape is already non-trivial, why repeating here?
+
+Correct! Fixed in bed08b3
+
 > * Page 16 Figure 4: why not showing the erasure of `[e:∃a.σ]`?
 > * Page 18 line 35: ``it is a given that''
 > * Page 21 line 30: In the rule Match-Nat, I think there should be `Φ|-` before the first premise
