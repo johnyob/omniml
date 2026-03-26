@@ -843,6 +843,9 @@ Fixed in dd43385
 > intuition is helpful.
 > 
 > p.29, L39:  What does \bar \epsilon stand for?
+
+Fixed in 5bc1b6a
+
 > 
 > pp.29-30: Again, the discussion about partial type schemes and
 > incremental instantiation is hard to understand.  I'd like to see a concrete example of constraint solving that involves incremental
@@ -850,6 +853,9 @@ Fixed in dd43385
 > 
 > p.32, rule S-Inst-Copy:  What does i^x(\bar \beta) ~> \bar \beta' stand for?
 > Is it a sequence of i^x(beta1) ~> beta1, ..., i^x(beta_n) ~> beta_n combined by conjunction?
+
+Fixed in 5bc1b6a
+
 > 
 > p.38-39: The discussion on semi-unification is not very informative,
 > although it sounds interesting.  I don't quite see the relationship to
