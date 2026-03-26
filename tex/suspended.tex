@@ -3621,10 +3621,21 @@ system, operating modulo $\alpha$-equivalence, and the associativity and
 commutativity of conjunction. Rewriting takes place under an arbitrary
 one-hole constraint context $\C$.
 %
-% Solved forms
+% Solved forms / normal forms
 A constraint $\c$ is satisfiable if it rewrites to a solved form $\hat\up$
 (\cref{def:solved-form}); otherwise it gets stuck---in particular, $\cfalse$ is
-considered a stuck constraint.
+considered a stuck constraint. To characterize all stuck constraints, we 
+introduce \emph{normal forms}.
+%
+Every solved form is a normal form, but not every normal form is solved. 
+
+\begin{definition}[Normal forms]
+  \label{def/normal-forms}
+  A constraint $\c$ is in \emph{normal form}, written $\hat\c$, if no 
+  rewriting rules apply, \ie $\c \cnsolve$. Similarly, a constraint context 
+  $\C$ is in \emph{normal form}, written $\hat\C$, if $\C\where\ctrue$ is in normal form.
+\end{definition}
+
 
 \paragraph{Basic rules}
 
@@ -3979,8 +3990,8 @@ other shape would render the instantiation unsatisfiable. This rule is
 well-founded because the regional depth of the hole strictly decreases
 in the premise.
 
-For a solved context $\hat\C$, this syntactic is moreover sound and
-complete with respect to the semantic definition of unicity:
+For a normalized context $\hat\C$ (\cref{def/normal-forms}), this syntactic is
+moreover sound and complete with respect to the semantic definition of unicity:
 $\Cshape \C \tau \sh$ holds if and only if $\th \Cshape \C \tau \sh$ is
 derivable (Appendix~\cref{lem:unicity-completeness}).
 
@@ -4012,8 +4023,9 @@ If $\ca \csolve \cb$, then $\fvs \ca \supseteq \fvs \cb$.
   \begin{enumerate}
     \item $\c$ is solved.
     \item $\c$ is $\cfalse$.
-    \item for every match constraint $\hat\C\where{\cmatch \tv \cbrs}$ in
-        $\c$, $\Cshape {\hat\C} \tv \sh$ does not hold for any $\sh$.
+    \item for every match constraint $\c = \hat\C\where{\cmatch \tv \cbrs}$ with 
+      $\hat\c$ in normal form (\cref{def/normal-forms}), 
+      $\Cshape {\hat\C} \tv \sh$ does not hold for any $\sh$.
   \end{enumerate}
 \end{theorem}
 
@@ -5545,6 +5557,40 @@ $\c$. \\
       {\ctrue}
 \end{judgboxmathpar}
 
+\judgbox
+  {\tva \prec_\up \tvb}
+  {$\tva$ occurs in $\tvb$ in the constraint $\up$.}
+\smallskip
+\begin{judgboxmathpar}
+  {\cyclic \up}
+  {$\up$ contains a cyclic type.}
+
+  \inferrule[Occurs]
+    {\tva \in \fvs \t \\
+     \t \notin \TyVars \\
+     \tva, \tvb \disjoint \bvs \Up}
+    {\tva \prec_{\Up\where{\cunif {\tvb~} {~\cunif {\t~} ~\ueq}}} \tvb}
+
+  \inferrule[Cycle]
+    {\tva \prec_\up^+ \tva}
+    {\cyclic \up}
+\end{judgboxmathpar}
+
+
+\begin{definition}[Solved form $\hat\up$]
+  We write $\hat\up$ for constraints in \emph{solved form}, that is,
+  constraints of the form $\cexists \tvs {\cAnd \iton \ueqi}$, where:
+\begin{enumerate*}
+  \item
+    each $\ueqi$ contains at most one non-variable type;
+  \item
+    each type variable may occur as a member of at most one multi-equation
+    $\ueqi$;
+    %% head variables do not occur in multiple equations;
+  \item the constraint is acyclic.
+\end{enumerate*}\relax
+\end{definition}
+
 
 \label {app/ref/solver}
 \begin{judgboxmathpar}
@@ -5778,6 +5824,14 @@ $\c$. \\
     \Srule{\insts {\cpinst \inst \tv \t}}{\set {\inst(\tv)}}
   \end{tabular}
 \end{judgboxmathpar}
+
+
+\begin{definition}[Normal forms]
+  \label{def/normal-forms-appendix}
+  A constraint $\c$ is in \emph{normal form}, written $\hat\c$, if no 
+  rewriting rules apply, \ie $\c \cnsolve$. Similarly, a constraint context 
+  $\C$ is in \emph{normal form}, written $\hat\C$, if $\C\where\ctrue$ is in normal form.
+\end{definition}
 
 
 \begin{definition}[Measure]
@@ -6862,12 +6916,6 @@ generally in our system.
   \end{proof}
 \end{lemma}
 
-\begin{definition}
-  A constraint $\c$ is \emph{normalized}, or in \emph{normal form}, if no 
-  rewriting rules apply, \ie $\c \cnsolve$. Similarly, a constraint context 
-  $\C$ is \emph{normalized} if $\C\where\ctrue$ is \emph{normalized}.
-\end{definition}
-
 \begin{lemma}
   \label{lem:unicity-completeness}
 
@@ -7417,11 +7465,10 @@ generally in our system.
           $\x \disjoint \hat\C$ and $\inst(\tv) \disjoint \insts {\hat\C}$;
       \item
         \label {item/progress/suspended}
-        for every match constraint $\hat\C\where{\cmatch \tv \cbrs}$ in
-        $\c$, $\Cshape {\hat\C} \tv \sh$ does not hold for any $\sh$.
+      for every match constraint $\c = \hat\C\where{\cmatch \tv \cbrs}$, 
+          $\Cshape {\hat\C} \tv \sh$ does not hold for any $\sh$.
       \end{enumerate*}
-     Here, $\hat\C$ is a normal context, \ie such that no other
-     rewrites can be applied.
+    Here, $\hat\C$ is a normalized context (\cref{def/normal-forms-appendix}).  
   \end{enumerate}
 \end{theorem}
 \begin{proof}
