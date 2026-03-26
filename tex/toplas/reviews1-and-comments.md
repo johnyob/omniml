@@ -824,6 +824,10 @@ Fixed in 620a6ca4
 
 > 
 > p.25, L18: "can [be?] the required type information"
+
+"contain the required type information"
+Fixed in c32e490.
+
 > 
 > p.27, Def. 5.1: Later you use \hat C and \hat{\mathcal{C}} but they
 > don't appear to be defined.
