@@ -449,35 +449,24 @@ Polymorphic methods \citep*{Garrigue-Remy/poly-ml} bring some System-$\F$-like
 expressiveness to \OCaml by allowing first-class polymorphism (impredicative
 higher-rank polymorphism) while preserving principal type inference.
 
-%% \begin{mathparfig}[htpb!]%
-%%   {fig:polyml}%
-%%   {Syntax and typing rules for polytypes from
-%%   \citet*{Garrigue-Remy/poly-ml}.}
-
-%% \par
-%% \end{mathparfig}
-
 \paragraph{From polymorphic methods to polytypes}
 \label{sec/overview/polymethods-reduction}
 
 \parcomment{Idea and syntax}
 
 Polymorphic methods can be translated into ordinary methods that carry a
-\emph{polytype}: a boxed type scheme $\tapoly \ts \av$ that
+\emph{polytype}: a boxed type scheme $\tpoly \ts$ that
 can be explicitly unboxed at use sites.
 %
-The purpose of the annotation variable $\av$ will be explained
-shortly. Boxed polytypes are considered to be (mono)types, enabling
+Boxed polytypes are considered to be (mono)types, enabling
 impredicativity. We write $\epoly[\ts] \e$ to box a term $\e$ with the
 scheme $\ts$, and $\einst \e$ to unbox a polytype, instantiating
 it.
 
-\begin{mathparfig}[tb]
-  {fig:polyml}
-  {Syntax and typing rules for polytypes from
-   \PolyML~\citep*{Garrigue-Remy/poly-ml}.}
-%% No \par here
-\begin{bnfgrammar}
+
+\begin{bnffig}[tb]
+  {fig:polyml-syntax}
+  {Selected syntax for polytypes \citep*{Garrigue-Remy/poly-ml}.}
      \entry[Terms]{\e}{
        \epoly[\ts] \e
        \and \einst \e
@@ -485,29 +474,11 @@ it.
        \and \dots
      }\\
      \entry[Types]{\t}{
-        \tapoly \ts \av
+        \tpoly \ts
         \and \dots
-     }\\
-     \entry[Type schemes]{\ts}{
-       \t \and \tfor \tv \ts \and \tfor \av \ts
-     }\\
-    \entry[Annotation variables]{\av}{
-     }\\
-\end{bnfgrammar}
+     }
+\end{bnffig}
 
-  \infer[PolyML-Poly]
-    { \G \th \e : \tsa \\ (\tsa : \ts : \tsb) }
-    {\G \th \epoly[\ts] \e : \tapoly {\tsb} \av}
-
-  \infer[PolyML-Inst]
-    {\G \th \e : \tfor \av {\tapoly \ts \av}}
-    {\G \th \einst \e : \ts}
-
-  \infer[PolyML-Annot]
-    {\G \th \e : \ta \\ (\ta : \t : \tb)}
-    {\G \th \eannot \e {} \t : \tb}
-%% No \par here
-\end{mathparfig}
 
 \parcomment{Example}
 
@@ -539,74 +510,9 @@ This reduction is useful for two reasons:
 Polytypes expose the tricky interaction with principality of interest. For the
 remainder of this work, we therefore focus on polytypes\penalty 50---also
 called \emph{semi-explicit first-class polymorphism}
-\citep*{Garrigue-Remy/poly-ml}---as originally formulated in the \PolyML
-calculus, whose typing rules are collected in \cref{fig:polyml}.
+\citep*{Garrigue-Remy/poly-ml}. We next present their typing rules using
+existing \emph{directional approaches}.
 
-\parcomment {Annotation variables. Why?}
-
-Annotation variables record the origins of polytypes and may themselves be
-generalized, yielding type schemes such as $\tfor \av {\tapoly \ts \av}$. When
-$\av$ is generalized, the polytype is considered \emph{known}, rather than
-still being inferred---this distinction is precisely the purpose of annotation
-variables.
-
-\parcomment {Boxing}
-
-The introduction form (\Rule{PolyML-Poly}) for polytypes is a boxing operator
-$\epoly[\ts] \e$ with an explicit polytype annotation $\ts$.
-%
-The resulting expression has type $\tapoly {\tsb} \av$ where $\av$ is an
-arbitrary (typically fresh) annotation variable and $\tsb$ is a \emph{freshened
-copy} of $\tsa$, \ie a variant of $\tsa$ with only the annotation variables
-of $\ts$ renamed (see \Rule{PolyML-Annot} below for details). Because
-$\ts$ is supplied by the programmer, the polytype is treated as known:
-$\epoly[\ts] \e$ also has the generalized type scheme $\all \av {\tapoly {\tsb}
-\av}$. This is by design---the explicit annotation in $\epoly[\ts] \e$ records
-that the polytype is known.
-
-
-\parcomment {Unboxing (principality restriction and \geninst-directionality)}
-
-Conversely, to instantiate a polytype expression (\Rule{PolyML-Inst}), one must
-use an explicit unboxing operator $\einst \e$, which requires no accompanying
-type annotation. However, the operator requires $\e$ to have a \emph{known} polytype scheme
-of the form $\tfor \av {\tapoly \ts \av}$ and then assigns $\einst \e$ the type
-$\ts$. If, by contrast, $\e$ has the type $\tapoly \ts \av$ for some
-non-generalizable annotation variable $\av$, then $\e$ is considered as a
-\emph{not-yet-known} polytype, and therefore $\einst \e$ is ill-typed. This
-restriction enforces principality, preventing instantiation on \emph{guessed}
-polytypes.
-
-\parcomment {Example ill-typed term}
-
-For example, the expression $\efun \x {\einst \x}$ is not typable. Indeed, the
-$\lambda$-bound variable $\x$ is assigned a monotype. The only admissible type
-for $\x$ is $x : \tapoly \ts \av$ for some $\ts$ and $\av$.  Since $\av$
-appears in the type of $\x$ in the typing context at the point of typing
-$\einst \x$, it cannot be generalized prior to unboxing, rendering the term
-ill-typed.
-
-\parcomment {Annotations}
-
-\Rule{PolyML-Annot} can be used to freshen annotation variables. The auxiliary
-relation $(\tsa : \ts : \tsb)$ (also used in \Rule{PolyML-Poly}) holds if there
-exists renamings $\eta_1, \eta_2$ on annotation variables (leaving ordinary
-type variables unchanged) and a type substitution $\theta$ such that $\tsa =
-\theta(\eta_1(\ts))$ and $\tsb = \theta(\eta_2(\ts))$.
-%
-Intuitively, $(\tsa : \ts : \tsb)$ first produces two \emph{fresh copies} of
-$\ts$, preventing unwanted sharing of annotation variables that could otherwise
-block generalization. It then instantiates the corresponding free type
-variables between these two copies using $\theta$.  We usually omit annotation
-variables in source type annotations, since we can implicitly introduce fresh
-ones in their place.
-
-For example, $\efun {\x : \tapoly \ts {}}
-{\einst \x}$, which is syntactic sugar for $\efun \x {\elet \x {(\x : \tapoly
-\ts {})} {\einst \x}}$, is well-typed because the explicit annotation
-introduces a fresh variable annotation $\ava$, which can then be generalized,
-yielding $\tfor \ava {\tapoly \ts \ava}$ for the type of the let-bound
-variable $\x$.
 
 \subsection{Directional type inference}
 \label{sec/overview/directional}
@@ -623,44 +529,126 @@ with the motivation for omnidirectional type inference.
 Most \ML type inference algorithms proceed in a fixed order when typechecking
 let-bindings $\elet \x \ea \eb$: first typecheck the definition $\ea$,
 generalize its type, and then typecheck the body $\eb$ under the extended
-environment. \Geninst-directionality, originating from \PolyML
-(\cref{sec/overview/polytypes}), leverages this ordering to resolve overloaded
-or ambiguous constructs in a \emph{principal} way. The key point is that this
-ordering reveals which types are \emph{known}, namely types that are fixed by
-generalization---and therefore stable enough to guide disambiguation.
+environment. \Geninst-directionality leverages this ordering to resolve
+overloaded or ambiguous constructs in a \emph{principal} way. The key idea is
+that this ordering reveals which types are \emph{known}, namely types that are
+fixed by generalization---and therefore stable enough to guide disambiguation.
+We call this approach \geninst-directional (read as
+``\textbf{pi}-directional'') type inference, reflecting that \textbf{p}olymorphic
+expressions must be typed before their \textbf{i}nstances. 
 
-\parcomment{What is a known type?}
+\parcomment{Annotation variables. Why?}
 
-A type $\t$ (\eg $\tapoly \ts \av$) is considered \emph{known} if its
-annotation variables are eligible for generalization (\eg $\tfor \av {\tapoly \ts
-\av}$). Conversely, types with monomorphic annotation variables are
-considered \emph{not-yet-known} and cannot be relied on for
-disambiguation.
-
-\parcomment{Naming}
-
-We call this \geninst-directional (read as ``\textbf{pi}-directional'') type
-inference, to mean that \textbf{p}olymorphic expressions must be typed before
-their \textbf{i}nstances. \Geninst-directionality is subtle, but it aligns with
-the implicit inference order already present in most \ML-like typecheckers,
-making it straightforward to retrofit into existing implementations. For
-\OCaml, the mechanism for implementing annotation variables even comes
-\emph{for free}, as a byproduct of the extensive optimizations in its inference
-algorithm.
-
-\parcomment{Who uses this?}
-
-Building on its introduction in \PolyML, \geninst-directionality was later used
-by~\citet*{LeBotlan-Remy/recasting-mlf} for empowering \penalty1 \MLF.
+To make this notion precise, we annotate types with \emph{annotation variables}
+$\av$. We write $\tannot \t \av$ for a type $\t$ annotated with the variable
+$\av$. These variables record the origins of types and may themselves be
+generalized, yielding type schemes such as $\tfor \av {\tannot \t \av}$
 %
-It has since been adopted in \OCaml for features such as polymorphic object
-methods and the overloading of record fields and variant constructors. More
-generally, \OCaml uses \geninst-directionality whenever the typechecker employs
-type-based disambiguation.
+\parcomment{What is a known type?}
+%
+A type $\tannot \t \av$ is considered \emph{known} if its annotation variable
+$\av$ is eligible for generalization (\eg $\tfor \av {\tannot \t \av}$). Conversely,
+types with monomorphic annotation variables are considered \emph{not-yet-known}
+and cannot be relied on for disambiguation.
+
+
+\begin{mathparfig}[tb]
+  {fig:polyml}
+  {\Geninst-directional syntax and typing rules for polytypes from \PolyML~\citep*{Garrigue-Remy/poly-ml}.}
+\begin{bnfgrammar}[\def\bnfsep{\;}]
+     \entry[Types]{\t}{
+        \tannot \t \av
+        \and \dots
+     }\\
+     \entry[Type schemes]{\ts}{
+       \t \and \tfor \tv \ts \and \tfor \av \ts
+     }\\
+     \entry[\llap{Annotation variables}]{\av}{}
+\end{bnfgrammar}
+
+  \infer[PolyML-Poly]
+    { \G \th \e : \tsa \\ (\tsa : \ts : \tsb) }
+    {\G \th \epoly[\ts] \e : \tapoly {\tsb} \av}
+
+  \infer[PolyML-Inst]
+    {\G \th \e : \tfor \av {\tapoly \ts \av}}
+    {\G \th \einst \e : \ts}
+
+  \infer[PolyML-Annot]
+    {\G \th \e : \ta \\ (\ta : \t : \tb)}
+    {\G \th \eannot \e {} \t : \tb}
+\end{mathparfig}
+
+
+\parcomment{\PolyML typing rules}
+
+Using this approach, we can give typing rules for polytypes; this yields precisely the 
+formulation introduced in \PolyML~\citep*{Garrigue-Remy/poly-ml}, given in \cref{fig:polyml}. 
+%
+\parcomment {Boxing}
+%
+The introduction form (\Rule{PolyML-Poly}) for polytypes is a boxing operator
+$\epoly[\ts] \e$ with an explicit polytype annotation $\ts$.
+%
+The resulting expression has type $\tapoly {\tsb} \av$ where $\av$ is an
+arbitrary (typically fresh) annotation variable and $\tsb$ is a \emph{freshened
+copy} of $\tsa$, \ie a variant of $\tsa$ with only the annotation variables
+of $\ts$ renamed (see \Rule{PolyML-Annot} below for details). Because
+$\ts$ is supplied by the programmer, the polytype is treated as known:
+$\epoly[\ts] \e$ also has the generalized type scheme $\all \av {\tapoly {\tsb}
+\av}$. This is by design---the explicit annotation in $\epoly[\ts] \e$ records
+that the polytype is known.
+
+\parcomment {Unboxing (principality restriction and \geninst-directionality)}
+
+Conversely, to instantiate a polytype expression (\Rule{PolyML-Inst}), one must
+use an explicit unboxing operator $\einst \e$, which requires no accompanying
+type annotation. However, the operator requires $\e$ to have a \emph{known} polytype scheme
+of the form $\tfor \av {\tapoly \ts \av}$ and then assigns $\einst \e$ the type
+$\ts$. If, by contrast, $\e$ has the type $\tapoly \ts \av$ for some
+non-generalizable annotation variable $\av$, then $\e$ is considered as a
+\emph{not-yet-known} polytype, and therefore $\einst \e$ is ill-typed. This
+restriction enforces principality, preventing instantiation on \emph{guessed}
+polytypes.
+
+\Xalistair{I'm still not particularly happy that we have to deal with flexible type 
+variables here using $\theta$, while the corresponding bidirectional system doesn't. 
+I feel this needlessly complicates this relation (whose main purpose is to freshen 
+annotation variables)}
+
+\parcomment {Annotations}
+
+\Rule{PolyML-Annot} can be used to freshen annotation variables. The auxiliary
+relation $(\tsa : \ts : \tsb)$ (also used in \Rule{PolyML-Poly}) holds if there
+exists renamings $\eta_1, \eta_2$ on annotation variables (leaving ordinary
+type variables unchanged) and a type substitution $\theta$ such that $\tsa =
+\theta(\eta_1(\ts))$ and $\tsb = \theta(\eta_2(\ts))$.
+%
+Intuitively, $(\tsa : \ts : \tsb)$ first produces two \emph{fresh copies} of
+$\ts$, preventing unwanted sharing of annotation variables that could otherwise
+block generalization. It then instantiates the corresponding free type
+variables between these two copies using $\theta$.  We usually omit annotation
+variables in source type annotations, since we can implicitly introduce fresh
+ones in their place.
+
+\Xalistair{Now that we've properly separated annotations and polytypes, we 
+have a problem: the annotation may not want to include an annotation on the 
+polytype anyway. I was thinking, instead of a relation, if we removed flexible 
+type variables from annotations, we could turn this ternary relation into a function 
+$\mathrm{annot}(\t)$ which would add fresh annotation variables to all polytypes/
+annotated types.}
+
+\parcomment {Who uses this?}
+% This paragraph also performs the duty of linking PolyML and OCaml in the below examples
+
+Building on its introduction in \PolyML, \geninst-directionality has since been
+adopted in other systems, notably \MLF~\citep*{LeBotlan-Remy/recasting-mlf},
+and in \OCaml for features such as polymorphic object methods and the
+overloading of record fields and variant constructors.  
 
 \parcomment{Good example}
 
-To illustrate \geninst-directionality, consider:%
+We illustrate \geninst-directionality using the following \OCaml examples:%
 %
 \footnote{
 % Some space hacking since it appears spaces aren't respected in lstinline w/
@@ -744,47 +732,39 @@ but the opposite, mode-correct choice (\Rule{Chk-App}) is also possible:
     {\G \th \ea \Leftarrow \ta \to \tb \\ \G \th \eb \Rightarrow \ta}
     {\G \th \eapp \ea \eb \Leftarrow \tb}
 \end{mathpar}
+%
+Following the standard bidirectional recipe of checking introduction forms and
+inferring elimination forms---often referred to as the \emph{Pfenning
+recipe}~\citep*{conf/popl/DunfieldP04}---the former rule (\Rule{Syn-App}) is
+typically preferred. 
 
-\parcomment{Known type information}
+\begin{mathparfig}[tb]
+  {fig:bidir-poly}
+  {Bidirectional typing rules for polytypes.}
+  \infer[Syn-Var]
+    {\x : \t \in \G}
+    {\G \th \x \Rightarrow \t}
 
-Within the bidirectional framework, a type $\t$ is \emph{known} when it is
-either:
-\begin{enumerate*}
-  \item part of an annotation,
-  \item supplied as input to a checking judgment in the conclusion
-  ($\G \th \e \Leftarrow \t$), or
-  \item produced by a synthesizing premise ($\G \th \e \Rightarrow \t$)
-\end{enumerate*}.
+  \infer[Chk-Fun]
+    {\G, \x : \ta \th \e \Leftarrow \tb}
+    {\G \th \efun \x \e \Leftarrow \ta \to \tb}
 
-Using this discipline, we can recast polytypes and eliminate two artifacts
-needed in our \geninst-directional presentation: explicit annotations on boxing
-and annotation variables. Since $\eannot \e {} \t$ already propagates known
-information, $\epoly \e$ requires no attached annotation; and because
-``knownness'' now follows from inference modes rather than polymorphism,
-annotation variables are unnecessary. The resulting syntax and typing rules are
-as follows:
-\begin{mathpar}
-  \begin{minipage}[l]{16em}
-  %% \scalebox{0.9}{
-  \begin{bnfgrammar}[\def\bnfsep{\;}]
-    \noalign{\vskip -1em}
-    \entry[Terms]{\e}{
-       \epoly \e
-       \and \einst \e
-       \and \eannot \e {} \t
-       \and \dots
-     }\\
-     \entry[Types]{\t}{
-        \tpoly \ts
-        \and \dots
-     }\\
-     \entry[\llap{Type schemes}]{\ts}{
-       \t \and \tfor \tv \ts
-     }\\
-  \end{bnfgrammar}
-  %% }
-  \end{minipage}
-  \hfill
+  \infer[Syn-App]
+    {\G \th \ea \Rightarrow \ta \to \tb \\ \G \th \eb \Leftarrow \ta}
+    {\G \th \eapp \ea \eb \Rightarrow \tb}
+
+  \infer[Syn-Annot]
+    {\G \th \e \Leftarrow \t}
+    {\G \th \eannot \e {} \t \Rightarrow \t}
+
+  \infer[Chk-Forall]
+    {\G \th \e \Leftarrow \ts \\ \tv \notin \fvs \G}
+    {\G \th \e \Leftarrow \tfor \tv \ts}
+
+  \infer[Syn-Inst]
+    {\G \th \e \Rightarrow \ts \\ \ts \leq \t}
+    {\G \th \e \Leftarrow \t}
+
   \infer[Chk-Poly]
     {\G \th \e \Leftarrow \ts}
     {\G \th \epoly \e \Leftarrow \tpoly \ts}
@@ -792,21 +772,44 @@ as follows:
   \infer[Syn-Inst]
     {\G \th \e \Rightarrow \tpoly \ts}
     {\G \th \einst \e \Rightarrow \ts}
+\end{mathparfig}
 
-  \infer[Syn-Annot]
-    {\G \th \e \Leftarrow \t}
-    {\G \th \eannot \e {} \t \Rightarrow \t}
-\end{mathpar}
+
+\parcomment{Known type information}
+
+Cruicially, the assignment of modes determines how type information flows
+through the program. In particular, types become available either as inputs to
+checking judgements or as outputs of synthesizing judgements. We call such
+types \emph{known}. 
+%
+Formally, a type $\t$ is \emph{known} when it is either:
+\begin{enumerate*}
+  \item part of an annotation,
+  \item supplied as input to a checking judgment in the conclusion
+  ($\G \th \e \Leftarrow \t$), or
+  \item produced by a synthesizing premise ($\G \th \e \Rightarrow \t$)
+\end{enumerate*}.
+
+\parcomment{Polytype rules}
+
+Using this notion of known types, we can give a \emph{principal} type system
+for polytypes, shown in \cref{fig:bidir-poly}. This system eliminates two
+artifacts needed in the \geninst-directional presentation: explicit annotations
+on boxing and annotation variables. Since $\eannot \e {} \t$ already propagates
+known information, $\epoly \e$ requires no attached annotation; and because
+``known-ness'' now follows from inference modes rather than polymorphism,
+annotation variables are unnecessary. 
 
 \parcomment{Limitations}
 
-However, there is usually no optimal assignment of modes: for any choice of
-modes, some programs will typecheck successfully, while others will fail
-unnecessarily. Yet, the typing rules must irrevocably commit to a fixed set of
-modes, after which, principal types often exist, but only with respect to a
-specification that made non-principal choices to begin with. For instance,
-\code{ex_6} would be ill-typed using the above rules for polytypes (with
-\Rule{Syn-App}).
+While this approach yields a remarkably clean account of polytypes, it suffers
+from the fundamental limitation of bidirectional typing: there is generally no
+optimal assignment of modes. For any choice of modes, some programs will
+typecheck successfully, while others will fail unnecessarily. Yet, the typing
+rules must irrevocably commit to a fixed set of modes, after which, principal
+types exist, but only with respect to a specification that made non-principal
+choices to begin with. For instance, \code{ex_6} would be ill-typed under the
+rules of \cref{fig:bidir-poly}.
 
 \parcomment{Contextual typing}
 
@@ -816,7 +819,11 @@ and \Rule{Chk-App}. Typing multiple arguments from right to left
 (\Rule{Chk-App}) when sufficient contextual information is available, and thus
 successfully typechecks \code{ex_6}. Nevertheless, it still enforces a fixed
 order of propagation, so some well-typed programs are rejected as ill-typed
-(\eg \code{ex_6_2, ex_6_3}).
+(\eg \code{ex_6_2, ex_6_3}).\footnote{\let \code \Code%
+  Readers wishing to verify that \code{ex_6_2} and \code{ex_6_3} are rejected
+  under contextual typing must inline \code{app} and \code{rev_app}, as the
+  system lacks polymorphism.
+}
 
 % Contextual typing stuff
 %
@@ -920,7 +927,9 @@ let ex_6_2 = app (fun p -> <p>) pid  °\Ocamlcomment{\ocamlFlag {\OML}0}°
 let ex_6_3 = rev_app pid (fun p -> <p>) °\Ocamlcomment{\ocamlFlag {\OML}0}°
 \end{program}
 %
-Under \geninst-directionality, both terms are ill-typed; under a bidirectional
+Under \geninst-directionality, both terms are ill-typed; under \Xalistair[a]{It 
+would be better to reference \OCaml's bidirectional approach here, since 
+the rules we give in \cref{fig:bidir-poly} would also fail to typecheck \code{ex_6_3}} bidirectional
 approach (using \Rule{Syn-App}), only \code{ex_6_2} is rejected. Yet both terms
 have a principal type---it is merely a question of propagating type information
 in the right order. Omnidirectional type inference typechecks both: since it
@@ -996,6 +1005,7 @@ that is never discharged is considered unsatisfiable.
 
 \parcomment{A note on shape patterns}
 
+\Xalistair{I find it a bit odd that the notation for type constructors differs here ://}
 For now, it suffices to think of shapes as parts of types (\eg the type
 constructor $\T$ in $\Fapp[\T] \tys$%
 \footnote{
