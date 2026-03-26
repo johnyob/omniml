@@ -810,9 +810,18 @@ Fixed in 7290358.
 > and Hole, and the other for the full language.  Then, the unicity
 > condition (for expressions without fragile constructs) can be
 > explained and defined before presenting Fig. 3.
+
+We found that readers struggled primarily with understanding the intuition
+behind the unicity condition, rather than with establishing that the definition
+is well-founded (which follows from a relatively straightforward argument, even
+without understanding what unicity is doing). 
+
 > 
 > Example 3.3:  In Section 2.1, ex_3 was defined by using (r : point).y.
 > Are r.point.y and (r : point).y equilavent?
+
+Fixed in 620a6ca4
+
 > 
 > p.25, L18: "can [be?] the required type information"
 > 
