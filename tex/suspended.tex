@@ -3110,6 +3110,13 @@ is either a solved form---from which we can read off a most general
 solution---or unsatisfiable (if the constraint
 $\c$ is closed).
 
+
+\paragraph{Conjunction notation}
+
+Our rewriting rules frequently manipulate collections of constraints. We write
+$\bar\c$ for a (possibly empty) sequence of constraints interpreted as their
+conjunction $\cAnd_i \ci$. The empty sequence denotes $\ctrue$.
+
 \subsection{Unification}
 
 \begin{figure}[tp]
@@ -3262,7 +3269,7 @@ $\tv \prec_\up^+ \tv$ for some $\tv$.
 \begin{definition}[Solved form $\hat\up$]
 \label{def:solved-form}
   We write $\hat\up$ for constraints in \emph{solved form}, that is,
-  constraints of the form $\cexists \tvs {\cAnd \iton \ueqi}$, where:
+  constraints of the form $\cexists \tvs {\ueqs}$, where:
 \begin{enumerate*}
   \item
     each $\ueqi$ contains at most one non-variable type;
@@ -3731,7 +3738,7 @@ constraints already handled by the solver.
     \tvbs' \disjoint \tvb, \tvc, \tvbs}
   {{\begin{array}{l}\cletr \x \tv \tvs {\c}
       \C\where{\cexists {\tvbs'}
-        \cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst}\end{array}}}
+      \cunif \tvc {\shapp \tvbs'} \cand \overline{\cpapp \x {\tvb} {\tvb'} \inst}}\end{array}}}
 
 \rewrite[S-Inst-Unify]
   {\cpinst \inst \tvb \tvca \cand \cpinst \inst \tvb \tvcb}
@@ -5579,7 +5586,7 @@ $\c$. \\
 
 \begin{definition}[Solved form $\hat\up$]
   We write $\hat\up$ for constraints in \emph{solved form}, that is,
-  constraints of the form $\cexists \tvs {\cAnd \iton \ueqi}$, where:
+  constraints of the form $\cexists \tvs \ueqs$, where:
 \begin{enumerate*}
   \item
     each $\ueqi$ contains at most one non-variable type;
@@ -5667,7 +5674,7 @@ $\c$. \\
      \x \disjoint \bvs \C}
     {\cletr \x \tv \tvs {\c}
       \C\where{\cexists {\tvbs'}
-         {\cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst}}}
+         {\cunif \tvc {\shapp \tvbs'} \cand \overline{\cpapp \x {\tvb} {\tvb'} \inst}}}}
 
   \rewrite[S-Inst-Unify]
     {\cpinst \inst \tv \tvca \cand \cpinst \inst \tv \tvcb}
