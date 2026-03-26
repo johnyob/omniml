@@ -831,6 +831,9 @@ Fixed in c32e490.
 > 
 > p.27, Def. 5.1: Later you use \hat C and \hat{\mathcal{C}} but they
 > don't appear to be defined.
+
+Fixed in dd43385
+
 > 
 > p.28: The discussion about regional let-constraints is hard to
 > understand.  The semantics of a regional let is defined in Fig. 9 and
