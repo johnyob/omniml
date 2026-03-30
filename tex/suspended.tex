@@ -445,9 +445,10 @@ only on record fields in this work. Our prototype implementation
 
 \parcomment{Why polymorphic methods?}
 
-Polymorphic methods \citep*{Garrigue-Remy/poly-ml} bring some System-$\F$-like
-expressiveness to \OCaml by allowing first-class polymorphism (impredicative
-higher-rank polymorphism) while preserving principal type inference.
+Polymorphic methods \citep*{Garrigue-Remy/poly-ml} bring a form of
+System-$\F$-like expressiveness to \OCaml by supporting first-class
+polymorphism (impredicative higher-rank polymorphism) while preserving
+principal type inference.
 
 \paragraph{From polymorphic methods to polytypes}
 \label{sec/overview/polymethods-reduction}
@@ -455,13 +456,13 @@ higher-rank polymorphism) while preserving principal type inference.
 \parcomment{Idea and syntax}
 
 Polymorphic methods can be translated into ordinary methods that carry a
-\emph{polytype}: a boxed type scheme $\tpoly \ts$ that
-can be explicitly unboxed at use sites.
+\emph{polytype}: a boxed type scheme $\tpoly \ts$ that can be explicitly
+unboxed at use sites. The syntax of polytypes is given in
+\cref{fig:polyml-syntax}.
 %
-Boxed polytypes are considered to be (mono)types, enabling
-impredicativity. We write $\epoly[\ts] \e$ to box a term $\e$ with the
-scheme $\ts$, and $\einst \e$ to unbox a polytype, instantiating
-it.
+Boxed polytypes are considered to be (mono)types, thereby enabling
+impredicativity. We write $\epoly[\ts] \e$ to box a term $\e$ with the scheme
+$\ts$, and $\einst \e$ to unbox a polytype, instantiating it.
 
 
 \begin{bnffig}[tb]
@@ -504,15 +505,49 @@ This reduction is useful for two reasons:
 
 \end{enumerate*}
 
+\paragraph{Default rules}
+\label{sec/default-rules/poly}
+
+As with static overloading in \cref{sec/default-rules}, \OCaml employs a
+defaulting rule for polytypes: when a polytype cannot be inferred as
+\emph{known} , it is defaulted to a monomorphic polytype. 
+%
+This is particularly useful, as we would still like to typecheck functions such
+as \ocaml{fun l x -> l#mem x} without annotations. Here, the method invocation
+$\ttlab l \esend \ttlab {mem}$ introduces an unboxing operation, becoming
+$\einst {\texttt{l} \esend \texttt{mem}}$. At this point, the defaulting rule
+assigns \ocaml{l}'s \ocaml{mem} field the \emph{monomorphic} polytype 
+$\tpoly {\tva \to \tvb}$.
+
+While such defaulting is relatively uncommon with polymorphic methods, it
+becomes essential for more recent features such as polymorphic parameters
+\citep*{White/polyparams@ml2023}, which introduce polytype boxing and unboxing
+at every function application.
+
 \paragraph{Semi-explicit first-class polymorphism}
 \label{sec/overview/polytypes}
 
-Polytypes expose the tricky interaction with principality of interest. For the
-remainder of this work, we therefore focus on polytypes\penalty 50---also
-called \emph{semi-explicit first-class polymorphism}
-\citep*{Garrigue-Remy/poly-ml}. We next present their typing rules using
-existing \emph{directional approaches}.
+% Polytypes are semi-explicit (not implicit nor explicit)
+Polytypes---also called \emph{semi-explicit first-class polymorphism}
+\citep*{Garrigue-Remy/poly-ml}---stand in contrast to \emph{implicit}
+higher-rank or first-class polymorphism, provided by systems such as
+\DK~\citep*{dunfield-krishnaswami-bidirectional-poly},
+\QuickLook~\citep*{journals/pacmpl/SerranoHJV20}, and \Frost~\citep*{frost}:
+polymorphic values must be explicitly boxed and unboxed. At the same time, they
+are less explicit than \emph{fully explicit} polymorphism (\eg System-$\F$),
+where quantification and instantiation are entirely syntactic. 
 
+% Ward off comments that polytypes aren't as good as implicit first-class 
+% polymorphism.
+We focus on polytypes in the remainder of this work for two reasons. First,
+they are used in \OCaml, notably for polymorphic methods and polymorphic
+function parameters. Second, they expose the subtle interaction with
+principality that is of interest. 
+%
+By contrast, for implicit first-class polymorphism, it remains unclear whether
+inference using omnidirectionality can be achieved \emph{without} default
+rules---a mechanism also used in bidirectional systems, \eg \DK's
+\textsc{$\hat\tv$App} rule.
 
 \subsection{Directional type inference}
 \label{sec/overview/directional}
@@ -552,7 +587,7 @@ types with monomorphic annotation variables are considered \emph{not-yet-known}
 and cannot be relied on for disambiguation.
 
 
-\begin{mathparfig}[tb]
+\begin{mathparfig}[htpb!]
   {fig:polyml}
   {\Geninst-directional syntax and typing rules for polytypes from \PolyML~\citep*{Garrigue-Remy/poly-ml}.}
 \begin{bnfgrammar}[\def\bnfsep{\;}]
@@ -567,7 +602,7 @@ and cannot be relied on for disambiguation.
 \end{bnfgrammar}
 
   \infer[PolyML-Poly]
-    { \G \th \e : \tsa \\ (\tsa : \ts : \tsb) }
+    { \G \th \e : \tsa \\ \annot \ts \tsa \\ \annot \ts \tsb}
     {\G \th \epoly[\ts] \e : \tapoly {\tsb} \av}
 
   \infer[PolyML-Inst]
@@ -575,8 +610,12 @@ and cannot be relied on for disambiguation.
     {\G \th \einst \e : \ts}
 
   \infer[PolyML-Annot]
-    {\G \th \e : \ta \\ (\ta : \t : \tb)}
+    {\G \th \e : \ta \\ \annot \t \ta \\ \annot \t \tb}
     {\G \th \eannot \e {} \t : \tb}
+
+  \infer[Annot-Poly]
+    {\annot \ts \tsp}
+    {\annot {\tpoly \ts} {\tannot {\tpoly \tsp} \av}}
 \end{mathparfig}
 
 
@@ -592,12 +631,12 @@ $\epoly[\ts] \e$ with an explicit polytype annotation $\ts$.
 %
 The resulting expression has type $\tapoly {\tsb} \av$ where $\av$ is an
 arbitrary (typically fresh) annotation variable and $\tsb$ is a \emph{freshened
-copy} of $\tsa$, \ie a variant of $\tsa$ with only the annotation variables
-of $\ts$ renamed (see \Rule{PolyML-Annot} below for details). Because
-$\ts$ is supplied by the programmer, the polytype is treated as known:
-$\epoly[\ts] \e$ also has the generalized type scheme $\all \av {\tapoly {\tsb}
-\av}$. This is by design---the explicit annotation in $\epoly[\ts] \e$ records
-that the polytype is known.
+copy} of $\ts$, \ie a variant of $\ts$ with fresh annotation variables placed
+at polytypes (see \Rule{Annot-Poly}). Because $\ts$ is supplied by the
+programmer, the polytype is treated as known: $\epoly[\ts] \e$ also has the
+generalized type scheme $\all \av {\tapoly {\tsb} \av}$. This is by
+design---the explicit annotation in $\epoly[\ts] \e$ records that the polytype
+is known.
 
 \parcomment {Unboxing (principality restriction and \geninst-directionality)}
 
@@ -611,32 +650,17 @@ non-generalizable annotation variable $\av$, then $\e$ is considered as a
 restriction enforces principality, preventing instantiation on \emph{guessed}
 polytypes.
 
-\Xalistair{I'm still not particularly happy that we have to deal with flexible type 
-variables here using $\theta$, while the corresponding bidirectional system doesn't. 
-I feel this needlessly complicates this relation (whose main purpose is to freshen 
-annotation variables)}
-
 \parcomment {Annotations}
 
-\Rule{PolyML-Annot} can be used to freshen annotation variables. The auxiliary
-relation $(\tsa : \ts : \tsb)$ (also used in \Rule{PolyML-Poly}) holds if there
-exists renamings $\eta_1, \eta_2$ on annotation variables (leaving ordinary
-type variables unchanged) and a type substitution $\theta$ such that $\tsa =
-\theta(\eta_1(\ts))$ and $\tsb = \theta(\eta_2(\ts))$.
-%
-Intuitively, $(\tsa : \ts : \tsb)$ first produces two \emph{fresh copies} of
-$\ts$, preventing unwanted sharing of annotation variables that could otherwise
-block generalization. It then instantiates the corresponding free type
-variables between these two copies using $\theta$.  We usually omit annotation
-variables in source type annotations, since we can implicitly introduce fresh
-ones in their place.
-
-\Xalistair{Now that we've properly separated annotations and polytypes, we 
-have a problem: the annotation may not want to include an annotation on the 
-polytype anyway. I was thinking, instead of a relation, if we removed flexible 
-type variables from annotations, we could turn this ternary relation into a function 
-$\mathrm{annot}(\t)$ which would add fresh annotation variables to all polytypes/
-annotated types.}
+\Rule{PolyML-Annot} can be used to freshen annotation variables.
+Intuitively, $\ta$ and $\tb$ are two \emph{fresh copies} of the annotation $\t$, 
+preventing unwanted sharing of annotation variables that could otherwise block generalization. 
+For example, $\efun {\x : \tpoly \ts} {\einst \x}$, which is syntactic sugar for 
+$\efun \x {\elet \x {\eannot \x {} {\tpoly \ts}}} {\einst \x}$, is well-typed 
+becuase the explicit annotation introduces a fresh annotation variable $\ava$ 
+for $\eannot \x {} {\tpoly \ts}$, which can then be generalized, yielding 
+$\tfor \ava {\tannot {\tpoly \ts} \ava}$ for the type of the let-bound variable 
+$\x$.
 
 \parcomment {Who uses this?}
 % This paragraph also performs the duty of linking PolyML and OCaml in the below examples
@@ -738,7 +762,7 @@ inferring elimination forms---often referred to as the \emph{Pfenning
 recipe}~\citep*{conf/popl/DunfieldP04}---the former rule (\Rule{Syn-App}) is
 typically preferred. 
 
-\begin{mathparfig}[tb]
+\begin{mathparfig}[htpb!]
   {fig:bidir-poly}
   {Bidirectional typing rules for polytypes.}
   \infer[Syn-Var]
@@ -811,56 +835,6 @@ types exist, but only with respect to a specification that made non-principal
 choices to begin with. For instance, \code{ex_6} would be ill-typed under the
 rules of \cref{fig:bidir-poly}.
 
-\parcomment{Contextual typing}
-
-Recent work on \emph{contextual typing} \citep{journals/pacmpl/XueO24}
-addresses this difficulty by deferring the commitment between \Rule{Syn-App}
-and \Rule{Chk-App}. Typing multiple arguments from right to left
-(\Rule{Chk-App}) when sufficient contextual information is available, and thus
-successfully typechecks \code{ex_6}. Nevertheless, it still enforces a fixed
-order of propagation, so some well-typed programs are rejected as ill-typed
-(\eg \code{ex_6_2, ex_6_3}).\footnote{\let \code \Code%
-  Readers wishing to verify that \code{ex_6_2} and \code{ex_6_3} are rejected
-  under contextual typing must inline \code{app} and \code{rev_app}, as the
-  system lacks polymorphism.
-}
-
-% Contextual typing stuff
-%
-% See typing rules in Figure 5 on pg 11 of
-% https://dl.acm.org/doi/pdf/10.1145/3674655
-%
-% Here is a brief argument of why contextual typing fails here: Take ex_62 for
-% instance (everything inlined to avoid talking about implicit polymorphism):
-%
-% ```ocaml
-%  (fun f x -> f x) (fun p -> < p >) [ fun x -> x : 'a. 'a -> 'a ]
-% ```
-%
-% In order to type check `fun f x -> f x`, we must type check it with quantity
-% 2 (S S 0) since it has two unknown parameters (according to DLam on pg 11).
-% Thus to typecheck the application `(fun f x -> f x) (fun p -> < p >)` we need
-% to use DApp2 with quantity 1 (S 0) for the conclusion. But this requires us
-% to type `fun p -> < p >` with quantity 0! This is not possible (n- is
-% undefined for n = 0).
-%
-% Similar argument for ex_63: `(fun x f -> f x) [ fun x -> x : 'a. 'a -> 'a ]`
-% is typable with quantity 1. But the application of `(fun p -> < p >)` would
-% (yet again) need to be typable with quantity 0 (in order to apply DApp2).
-% This is not possible.
-
-\parcomment{QuickLook and Freezing Bidirectional}
-
-In parallel, \QuickLook \citep{journals/pacmpl/SerranoHJV20} and \Frost
-\citep{frost} take a pragmatic approach to mitigating order-dependence in
-applications. Both target impredicative higher-rank polymorphism, using partial
-approximations of function and argument types to guide type inference at the
-point of application. This enables a limited form of \emph{argument
-reordering}, where information from later arguments can influence the typing of
-earlier ones within an application spine. In practice, these mechanisms work
-well, but they still enforce a fixed overall direction of propagation between
-surrounding constructs (\eg let-bindings).
-
 \paragraph{Limitations of directional type inference}
 
 Bidirectional type inference is lightweight, practical, and well-suited for
@@ -927,14 +901,12 @@ let ex_6_2 = app (fun p -> <p>) pid  °\Ocamlcomment{\ocamlFlag {\OML}0}°
 let ex_6_3 = rev_app pid (fun p -> <p>) °\Ocamlcomment{\ocamlFlag {\OML}0}°
 \end{program}
 %
-Under \geninst-directionality, both terms are ill-typed; under \Xalistair[a]{It 
-would be better to reference \OCaml's bidirectional approach here, since 
-the rules we give in \cref{fig:bidir-poly} would also fail to typecheck \code{ex_6_3}} bidirectional
-approach (using \Rule{Syn-App}), only \code{ex_6_2} is rejected. Yet both terms
-have a principal type---it is merely a question of propagating type information
-in the right order. Omnidirectional type inference typechecks both: since it
-allows the typing of either side to proceed first, suspending the other until
-the relevant type information is \emph{known}.
+Under \geninst-directionality, both terms are ill-typed; under \OCaml's
+bidirectional approach\footnote{\TODO{Give ocamlc flags to check this}}, only \code{ex_6_2}
+is rejected. Yet both terms have a principal type---it is merely a question of
+propagating type information in the right order. Omnidirectional type inference
+typechecks both: since it allows the typing of either side to proceed first,
+suspending the other until the relevant type information is \emph{known}.
 
 \paragraph{To be or not to be known}
 \label{sec/overview/omni/unicity}
@@ -1005,11 +977,12 @@ that is never discharged is considered unsatisfiable.
 
 \parcomment{A note on shape patterns}
 
-\Xalistair{I find it a bit odd that the notation for type constructors differs here ://}
-For now, it suffices to think of shapes as parts of types (\eg the type
-constructor $\T$ in $\Fapp[\T] \tys$%
+For now, it suffices to think of shapes as parts of types (\eg the record type constructor 
+$\T$ in ($\trcd \T \tys$)%
 \footnote{
-  Type constructors are prefixed, except in \OCaml code, where they are postfixed.
+  For readability in shape patterns, record type constructors are written in 
+  prefix form and prefixed with \textsf{rcd}. This prefix is omitted in \OCaml code, 
+  where type constructors appear in postfix position.
 })
 while shape patterns $\cpat$ act as type `destructors', binding parts of the type
 (\eg the constructor name $\T$) to meta-variables (\eg the pattern variable
@@ -1237,12 +1210,12 @@ type disambiguation. We leave this refinement to future work.
 \parcomment{No default rules formalism}
 
 We do not yet provide a formal account of \emph{default rules} mentioned in
-\cref{sec/default-rules}.  However, our prototype implementation, discussed in
-\cref{sec:implementation}, does support (optionally) attaching a default
-strategy to each suspended constraint.  \Draft{More details can be found in
-Appendix \cref {app/default-rules}.}{} In practice, defaulting proves useful
-and appears essential for certain features such as polymorphic parameters
-\citep{White/polyparams@ml2023}.
+\cref{sec/default-rules} and \cref{sec/default-rules/poly}.  However, our
+prototype implementation, discussed in \cref{sec:implementation}, does support
+(optionally) attaching a default strategy to each suspended constraint.
+\Draft{More details can be found in Appendix \cref {app/default-rules}.}{} In
+practice, defaulting proves useful and appears essential for richer features
+such as implicit first-class polymorphism.
 % Alistair: I don't think we should say anything about defaulting beside we don't
 % know formally how to do it, we can do it in practice, we think it is important.
 % We shouldn't make any claims about being better than OCaml (especially since we
@@ -4314,34 +4287,101 @@ specification would be ``as complicated and hard to understand as the
 could provide a declarative specification: one capable of being principal and
 complete for GADTs, and we would be interested in studying this application.
 
-\paragraph{Higher-rank polymorphism}
+\paragraph{Directionality}
 
-Polytypes are not \emph{higher-rank} in the usual sense; our interest in them
-stems from their role in \OCaml's inference of polymorphic methods. Many
-systems for higher-rank polymorphism exist; here we highlight a few in the
-context of \ML.
+The fixed directionality of bidirectional type systems is a known limitation.
+Prior work has sought to mitigate this within the bidirectional setting by
+altering the order in which information flows. For instance,
+\citet*{conf/esop/XieO18}'s \emph{let arguments go first} typechecks
+applications $\eapp \ea \eb$ by checking the argument $\ea$ before the function
+$\ea$, allowing information to flow from argument to function (\cf
+\Rule{Chk-App}).
 
-\MLF is an extension of \ML that supports first-class
-polymorphism that goes beyond the power of System $\mathsf{F}$, while retaining
-type inference. It is a generalization of \citet{Garrigue-Remy/poly-ml}'s
-polytypes, relying on \geninst-directionality, but it remains unclear how to
-effectively scale \MLF to the rest of \OCaml's features.
+\parcomment{Contextual typing}
+
+More recent work on \emph{contextual typing} \citep{journals/pacmpl/XueO24}
+goes further by deferring the commitment between \Rule{Syn-App}
+and \Rule{Chk-App} by parameterizing typing $\G \th_m \e : \t$ 
+with contextual information $m$.
+%
+This enables typing multiple arguments from right to left when sufficient
+contextual information is available, and thus successfully typechecks programs
+such as \code{ex_6} from \cref{sec/overview/directional}. Nevertheless, it
+still enforces a fixed order of propagation, so some well-typed programs are
+rejected as ill-typed (\eg \code{ex_6_2, ex_6_3}).\footnote{\let \code \Code%
+%
+Readers wishing to verify
+that \code{ex_6_2} and \code{ex_6_3} are rejected under contextual typing must
+inline \code{app} and \code{rev_app}, as the system lacks polymorphism. }
+
+% Contextual typing stuff
+%
+% See typing rules in Figure 5 on pg 11 of
+% https://dl.acm.org/doi/pdf/10.1145/3674655
+%
+% Here is a brief argument of why contextual typing fails here: Take ex_62 for
+% instance (everything inlined to avoid talking about implicit polymorphism):
+%
+% ```ocaml
+%  (fun f x -> f x) (fun p -> < p >) [ fun x -> x : 'a. 'a -> 'a ]
+% ```
+%
+% In order to type check `fun f x -> f x`, we must type check it with quantity
+% 2 (S S 0) since it has two unknown parameters (according to DLam on pg 11).
+% Thus to typecheck the application `(fun f x -> f x) (fun p -> < p >)` we need
+% to use DApp2 with quantity 1 (S 0) for the conclusion. But this requires us
+% to type `fun p -> < p >` with quantity 0! This is not possible (n- is
+% undefined for n = 0).
+%
+% Similar argument for ex_63: `(fun x f -> f x) [ fun x -> x : 'a. 'a -> 'a ]`
+% is typable with quantity 1. But the application of `(fun p -> < p >)` would
+% (yet again) need to be typable with quantity 0 (in order to apply DApp2).
+% This is not possible.
+
+\parcomment{Comparisons}
+
+Omnidirectionality removes this restriction, allowing information to flow
+without committing to a fixed propagation order. The contextual information $m$
+of contextual typing can be viewed as an abstraction of the surrounding context
+$\E$ in our system; thus, omnidirectionality subsumes contextual typing. 
+%
+However, omnidirectionality alone cannot subsume all bidirectional systems. In
+particular, systems for implicit first-class polymorphisms require
+\emph{default rules}, as discussed in \cref{sec/default-rules/poly}.
+
+\paragraph{First-class polymorphism}
+
+Polytypes provide a form of \emph{semi-explicit} first-class polymorphism and
+are of particular interest due to their role in \OCaml's inference of
+polymorphic methods. Many systems for first-class polymorphism exist; here we
+highlight a few in the context of \ML.
+
+\MLF is an extension of \ML that supports first-class polymorphism that goes
+beyond the power of System $\mathsf{F}$, while retaining type inference. It is
+a generalization of polytypes, relying on \geninst-directionality, but it
+remains unclear how to effectively scale \MLF to the rest of \OCaml's features.
 %
 \FreezeML is an impredicative type inference system in which polymorphic
 variables can be \emph{frozen}, written $\lceil x \rceil$, and only allowing
 instantiation on ordinary (unfrozen) variables $x$. Unlike polytypes,
 \FreezeML permits higher-rank types directly in the syntax of types, though these
-can be encoded back into polytypes. The essential difference is that
+can be encoded back into polytypes.\footnote{%
+Each let-binding $\elet \x \ea \eb$ introduces a boxed polytype $\elet \x {\epoly \ea} {\eb}$, 
+with each variable occurrence of $\x$ implicitly unboxing it $\einst \x$.
+Freezing disables this implicit unboxing.
+} 
+%
+The essential difference is that
 generalization of higher-rank types is implicit, inferring the most-general
-type (if one exists).
+type (if one exists), whereas polytypes require an annotation $\expoly \e \ts$.
 
 \QuickLook \citep{journals/pacmpl/SerranoHJV20}, \Haskell's latest approach at
-impredicative higher-rank polymorphism, uses bidirectional propagation to take
-a ``quick look'' at the spine of an application to guide instantiation of
-higher-rank functions. This permits \emph{argument reordering}, by allowing
+first-class polymorphism, uses bidirectional propagation to take
+a ``quick look'' at the spine of an application to guide the instantiation of
+higher-rank functions. This permits \emph{argument reordering}, allowing
 later arguments to influence the type of earlier ones within the same
-application spine. It mitigates the order-dependence of fixed directionality
-(\cref{sec/overview/directional}) but still enforces a global direction of
+application spine. While this mitigates the order-dependence of fixed directionality
+(\cref{sec/overview/directional}), it still enforces a global direction of
 type propagation between surrounding constructs (\eg let-bindings). In this
 sense, \QuickLook is \emph{locally omnidirectional} but \emph{globally
 directional}: they reduce order sensitivity within applications, but do not
@@ -4535,7 +4575,7 @@ principality held \emph{anyway}, precisely because of omnidirectionality.
 \paragraph{Future work}
 
 We aim to extend our framework to support more advanced features. One direction
-is generalized \emph{static overloading}; another is \emph{higher-rank
+is generalized \emph{static overloading}; another is \emph{implicit first-class 
 polymorphism}. We also plan to investigate \emph{default rules}---a mechanism
 where ambiguity is resolved by falling back on a default, non-principal choice
 \eg \OCaml selects the most recent matching record type in scope for ambiguous
