@@ -4039,16 +4039,11 @@ If $\ca \csolve \cb$, then $\fvs \ca \supseteq \fvs \cb$.
 \section{Implementation}
 \label{sec:implementation}
 
-We have two working prototypes implementing the \OML language with suspended
+We have a working prototype implementing the \OML language with suspended
 match constraints and partial type schemes, in which we have reproduced the
-various type-system features and examples presented in this work.  One
+various type-system features and examples presented in this work. The implementation 
 closely follows the constraint-based presentation described
 here.%
-%
-\footnote{
-  The other prototype is a direct implementation of type inference based on
-  semi-unification which we discuss in \cref{sec:related-work}.
-}
 %
 It is public and open-source, available at
 \url{https://github.com/johnyob/omniml}. Its implementation is inspired by
@@ -4176,6 +4171,70 @@ instantiation, it only optimizes for a common case. In some situations,
 re-generalization before instantiation can still be more costly than
 instantiating first, since the instantiation may discharge suspended
 constraints that further refine the region's partial type scheme.
+
+\section{Discussion}
+\label{sec/discussion}
+
+\paragraph{Semi-unification}
+
+\parcomment{What is semi-unification? And it's relation to \ML}
+
+Semi-unification \citep*{Henglein/phd,Henglein/tiasu@toplas93}, introduced in
+the late 1980's, is a generalization of unification that solves a collection
+$\bigwedge_{i \in I} \ti \leq \tip$ of \emph{instantiation inequalities},
+meaning that there exist a unifier $\theta$ and a collection of
+substitutions $\bar\rho$ such that $\rho_i(\theta(\ti)) = \theta(\tip)$.
+%
+Unfortunately, semi-unification was soon proved undecidable~\citep*{%
+Kfoury-Tiuryn-Urzyczyn/ic1993} and almost abandoned for type inference
+purposes---even though \citeauthor{Henglein/phd} observed that his
+semi-algorithm appeared to terminate on \emph{most} \ML type inference
+problems involving polymorphic recursion.%
+%
+\footnote{
+  Although the undecidability of semi-unification already implied the existence
+  of such examples, the specific class of examples of non-terminating cases was
+  only characterized later \citep*{Figueiredo-Camarao/semiunif-ptm@unpub2004}.
+  These patterns are extremely complex, suggesting that they are unlikely to
+  appear in practice, unless crafted deliberately.
+}
+%
+Moreover, in the absence of polymorphic recursion, semi-unification constraints
+arising from \ML type inference are acyclic and therefore guaranteed to
+terminate.
+
+\parcomment{Semi-unification is omnidirectionally-ready}
+
+Semi-unification constraints can be solved \emph{incrementally}, in any order,
+making them a natural foundation for scaling omnidirectional type inference to
+\ML-style polymorphism. Although it offered little advantage for traditional
+\ML inference, \citeauthor{Henglein/phd}'s algorithm was
+\emph{omnidirectionally-ready}, merely waiting for fragile constructs to give
+it new life!
+
+\parcomment{What we did}
+
+Motivated by this observation, we explored a second prototype that implements
+let-generalization via semi-unification. To enable a more direct encoding of
+type inference problems and improve solving efficiency, we enriched
+semi-unification constraints with a notion of \emph{scope}, forming the same
+tree-like structure as regions in our \emph{generalization tree}
+(\cref{sec:implementation}). This extends the formalization of semi-unification
+with \emph{unknowns} proposed by~\citet {Lushman-Cormack/subti@tr2008}, and
+allows for more efficient handling of \emph{monomorphization}---that is,
+instantiations that collapse into unification constraints (akin to
+\Rule{S-Inst-Mono} in our constraint solver).
+
+\parcomment{The solutions coincide}
+
+Although this prototype began from a different perspective, the implementation
+problems and their solutions turned out to be strikingly similar to those in
+our first prototype (described in \cref{sec:implementation}). This close
+correspondence naturally raises the question of whether partial type schemes
+could be enriched to cope with polymorphic recursion.
+
+
+
 
 \section{Related work}
 \label{sec:related-work}
@@ -4500,67 +4559,7 @@ disambiguation---such as fields containing polymorphic types or GADT
 existentials. In contrast, suspended match constraints naturally accommodate
 such non-uniformity in typing rules.
 
-\paragraph{Semi-unification}
-
-\parcomment{What is semi-unification? And it's relation to \ML}
-
-Semi-unification \citep*{Henglein/phd,Henglein/tiasu@toplas93}, introduced in
-the late 1980's, is a generalization of unification that solves a collection
-$\bigwedge_{i \in I} \ti \leq \tip$ of \emph{instantiation inequalities},
-meaning that there exist a unifier $\theta$ and a collection of
-substitutions $\bar\rho$ such that $\rho_i(\theta(\ti)) = \theta(\tip)$.
-%
-Unfortunately, semi-unification was soon proved undecidable~\citep*{%
-Kfoury-Tiuryn-Urzyczyn/ic1993} and almost abandoned for type inference
-purposes---even though \citeauthor{Henglein/phd} observed that his
-semi-algorithm appeared to terminate on \emph{most} \ML type inference
-problems involving polymorphic recursion.%
-%
-\footnote{
-  Although the undecidability of semi-unification already implied the existence
-  of such examples, the specific class of examples of non-terminating cases was
-  only characterized later \citep*{Figueiredo-Camarao/semiunif-ptm@unpub2004}.
-  These patterns are extremely complex, suggesting that they are unlikely to
-  appear in practice, unless crafted deliberately.
-}
-%
-Moreover, in the absence of polymorphic recursion, semi-unification constraints
-arising from \ML type inference are acyclic and therefore guaranteed to
-terminate.
-
-\parcomment{Semi-unification is omnidirectionally-ready}
-
-Semi-unification constraints can be solved \emph{incrementally}, in any order,
-making them a natural foundation for scaling omnidirectional type inference to
-\ML-style polymorphism. Although it offered little advantage for traditional
-\ML inference, \citeauthor{Henglein/phd}'s algorithm was
-\emph{omnidirectionally-ready}, merely waiting for fragile constructs to give
-it new life!
-
-\parcomment{What we did}
-
-Motivated by this observation, we explored a second prototype that implements
-let-generalization via semi-unification. To enable a more direct encoding of
-type inference problems and improve solving efficiency, we enriched
-semi-unification constraints with a notion of \emph{scope}, forming the same
-tree-like structure as regions in our \emph{generalization tree}
-(\cref{sec:implementation}). This extends the formalization of semi-unification
-with \emph{unknowns} proposed by~\citet {Lushman-Cormack/subti@tr2008}, and
-allows for more efficient handling of \emph{monomorphization}---that is,
-instantiations that collapse into unification constraints (akin to
-\Rule{S-Inst-Mono} in our constraint solver).
-
-\parcomment{The solutions coincide}
-
-Although this prototype began from a different perspective, the implementation
-problems and their solutions turned out to be strikingly similar to those in
-our first prototype (described in \cref{sec:implementation}). This close
-correspondence naturally raises the question of whether partial type schemes
-could be enriched to cope with polymorphic recursion.
-
-
 \section{Conclusions}
-\label{sec:discussion}
 \label{sec:future-work}
 
 We presented a constraint-based framework for omnidirectional type inference,
