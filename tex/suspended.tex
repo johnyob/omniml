@@ -287,8 +287,9 @@ The subsequent sections present our main contributions:
     that omnidirectional inference for \ML is practical.
 
 \end{enumerate}
-Finally, \cref{sec:related-work} compares related work. Section
-\cref{sec:future-work} concludes with future work. Appendix
+Section \cref{sec/discussion} considers additional practical and peripheral
+aspects of our work. Finally, \cref{sec:related-work} compares related work,
+and \cref{sec:future-work} concludes with future work. Appendix
 \cref{app:full-reference} contains a complete technical reference, collecting
 key definitions and figures for convenient lookup. All proofs are deferred to
 the appendices.
@@ -4234,7 +4235,22 @@ correspondence naturally raises the question of whether partial type schemes
 could be enriched to cope with polymorphic recursion.
 
 
+\paragraph{Error reporting}
 
+Recent work on error reporting for constraint-based inference
+\citep*{journals/pacmpl/BhanukaPBB23} shows that the structure of constraints
+can be leveraged to produce precise, localized diagnostics. 
+%
+Our setting fits well with this line of work: suspended constraints, in
+particular, do not fundamentally complicate error reporting. 
+% 
+In fact, the causal ordering among suspended constraints gives a natural
+account of information flow, which can aid in tracing the source of type
+errors. 
+%
+At present, our prototype supports only basic error reporting, attching source
+locations to constraints. That said, we see no obstacle to adopting the
+approach of \citet*{journals/pacmpl/BhanukaPBB23}
 
 \section{Related work}
 \label{sec:related-work}
@@ -4490,7 +4506,7 @@ prototype and formalize their meta-theory in Appendix
 
 We also remark that \PolySML~\citep*{sml-polyml} goes further than other \SML
 implementations on this front, supporting examples that even rely on
-backpropagation
+backpropagation:
 \begin{program}[input,deletekeywords={true,false}]
 let fun fst r = #1 r in (fst (1, 2), fst (true, false)) end; °\polysmlflags 00°
 \end{program}
