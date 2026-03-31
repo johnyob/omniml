@@ -3731,11 +3731,11 @@ constraints already handled by the solver.
 
 \rewrite[S-Inst-Poly]
   {\cletr \x \tv {\tvs} {\ueqs \cand \c}
-      {\C\where{\cpapp \x \tvp \tvc \inst}} \\}
-  {\cfor \tvp \cexists {\tv} {\ueqs} \cequiv \ctrue \\
-   \tvp \in \reg \tv \tvs \\
-   \tvp \disjoint \c \\\\
-   \inst(\tvp) \disjoint \insts \C \\
+      {\C\where{\cpapp \x \tvp \tvc \inst}}}
+  {\cfor \tvb \cexists {\tvbs} {\ueqs} \cequiv \ctrue \\\\
+   \tvb, \tvbs \subseteq \tv, \tvs \\
+   \tvbs \disjoint \c \\
+   \inst(\tvb) \disjoint \insts \C \\
    \x \disjoint \bvs \C}
   {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where\ctrue}}
 
@@ -5752,10 +5752,10 @@ $\c$. \\
   \rewrite[S-Inst-Poly]
     {\cletr \x \tv {\tvs} {\ueqs \cand \c}
         {\C\where{\cpapp \x \tvp \tvc \inst}}}
-    {\cfor \tvp \cexists {\tv} {\ueqs} \cequiv \ctrue \\\\
-     \tvp \in \reg \tv \tvs \\
-     \tvp \disjoint \c \\
-     \inst(\tvp) \disjoint \insts \C \\
+    {\cfor \tvb \cexists {\tvbs} {\ueqs} \cequiv \ctrue \\\\
+     \tvb, \tvbs \subseteq \tv, \tvs \\
+     \tvbs \disjoint \c \\
+     \inst(\tvb) \disjoint \insts \C \\
      \x \disjoint \bvs \C}
     {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where\ctrue}}
 
@@ -7307,30 +7307,30 @@ generally in our system.
 
     \proofcaserewrite
       {S-Inst-Poly}
-      {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where{\cpapp \x \tvp \tvc \inst}} \\
-       \cfor \tvp \cexists {\tv, \tvs} {\ueqs} \cequiv \ctrue \\
-       \tvp \in \reg \tv \tvs \\
-       \tvp \disjoint \c \\
-       \inst(\tvp) \disjoint \insts \C \\
+      {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where{\cpapp \x \tvb \tvc \inst}} \\
+       \cfor \tvb \cexists {\tvbs \setminus \tvb} {\ueqs} \cequiv \ctrue \\\\
+       \tvb \in \tvbs \subseteq \tv, \tvs \\
+       \tvbs \disjoint \c \\
+       \inst(\tvb) \disjoint \insts \C \\
        \x \disjoint \bvs \C}
       {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where\ctrue}}
 
 	\begin{llproof}
-	  \equivPf{\cfor \tvp \cexists {\tv, \tvs} \ueqs}{\ctrue}{Premise}
-	  \disjointPf{\tvp}{\c}{Premise}
-    \disjointPf{\inst(\tvp)}{\insts \C}{Premise}
+	  \equivPf{\cfor \tvb \cexists {\tvbs \setminus \tvb} \ueqs}{\ctrue}{Premise}
+	  \disjointPf{\tvbs}{\c}{Premise}
+    \disjointPf{\inst(\tvb)}{\insts \C}{Premise}
 	  \disjointPf{\x}{\bvs \C}{Premise}
 	  \decolumnizePf
 	  \sufficientPf{equivalence between}
-	    {\cpapp \x \tvp \tvc \inst \text{ and } \ctrue}
+	    {\cpapp \x \tvb \tvc \inst \text{ and } \ctrue}
 	    {\cref{lem:simple-let-equiv}}
-	  \supposePf{\semenvp(\x) = \semenv(\cabsr \tv {\tvs, \tvp} \ueqs \cand \c)}{Premise}
+	  \supposePf{\semenvp(\x) = \semenv(\cabsr \tv {\tvs} \ueqs \cand \c)}{Premise}
 	\end{llproof}
 	\begin{proofcases}
 	  \proofcase{$\implies$}
 
 	    \begin{llproof}
-	      \vdashPf{\semenvp}{\cpapp \x \tvp \tvc \inst}{Premise}
+	      \vdashPf{\semenvp}{\cpapp \x \tvb \tvc \inst}{Premise}
 \Hand	      \vdashPf{\semenvp}{\ctrue}{By \Rule{True}}
 	    \end{llproof}
 
@@ -7340,32 +7340,34 @@ generally in our system.
 	      \vdashPf{\semenvp}{\ctrue}{Premise}
 	      \inPf{\greg \gt {\semenva}}{\semenvp(\x)}{$\C = \Ca\where{\cexistsi \inst \x \Cb}$}
 	      \eqPf{\semenvp(\inst)}{\semenva}{\ditto}
-	      \casesPf{\semenva(\tvp)}
+	      \casesPf{\semenva(\tvb)}
 	    \end{llproof}
 	    \begin{proofcases}
-	      \proofcase{$\semenva(\tvp) = \semenvp(\tvc)$}
+	      \proofcase{$\semenva(\tvb) = \semenvp(\tvc)$}
 
 		\begin{llproof}
-		  \eqPf{\semenva(\tvp)}{\semenvp(\tvc)}{Premise}
-\Hand		  \vdashPf{\semenvp}{\cpapp \x \tvp \tvc \inst}{By \Rule{Incr-Inst}}
+		  \eqPf{\semenva(\tvb)}{\semenvp(\tvc)}{Premise}
+\Hand		  \vdashPf{\semenvp}{\cpapp \x \tvb \tvc \inst}{By \Rule{Incr-Inst}}
 		\end{llproof}
 
 
-	      \proofcase{$\semenva(\tvp) \neq \semenvp(\tvc)$}
+	      \proofcase{$\semenva(\tvb) \neq \semenvp(\tvc)$}
 
 		\begin{llproof}
-		  \LetPf{\semenvb}{\semenva\where{\tvp \is \semenvp(\tvc)}}{}
+		  \LetPf{\semenvbp}{\semenva\where{\tvb \is \semenvp(\tvc)}}{}
+      \vdashPf{\semenvbp}{\cexists {\tvbs \setminus \tvb} \ueqs}{$\tfor \tvb {\cexists {\tvbs \setminus \tvb} \ueqs} \cequiv \ctrue$}
+		  \LetPf{\semenvb}{\semenva\where{\tvb \is \semenvp(\tvc), \tvbs \setminus \tvb \is \gts}}{}
+      \vdashPf{\semenvb}{\ueqs}{Simple inversion}
 		  \vdashPf{\semenva}{\ueqs \cand \c}{By definition}
-		  \vdashPf{\semenva}{\ueqs}{Simple inversion}
-		  \vdashPf{\semenvb}{\ueqs}{$\tvp$ is polymorphic}
-		  \vdashPf{\semenvb}{\c}{$\tvp \disjoint \c$}
+		  \vdashPf{\semenva}{\c}{Simple inversion}
+		  \vdashPf{\semenvb}{\c}{$\tvbs \disjoint \c$}
 		  \vdashPf{\semenvb}{\ueqs \cand \c}{By \Rule{Conj}}
-		  \inPf{\greg \gt \semenvb}{\semenv(\x)}{By definition}
+		  \inPf{\greg \gtp \semenvb}{\semenv(\x)}{By definition}
 		  \supposePf{\semenvc \th \Cb\where\ctrue}{Considering entailment on $\cexistsi \inst \x$}
 		  \eqPf{\semenvc(\inst)}{\semenva}{\ditto}
-      \vdashPf{\semenvc\where{\inst \is \semenvb}}{\Cb\where\ctrue}{$\inst(\tvp) \disjoint \insts \Cb$}
+      \vdashPf{\semenvc\where{\inst \is \semenvb}}{\Cb\where\ctrue}{$\inst(\tvb) \disjoint \insts \Cb$}
 		  \vdashPf{\deriv :: \semenvc}{\Cb\where\ctrue}{By \Rule{Exists-Inst}}
-		  \commentPf{$\deriv$ is a derivation that satisfies $\semenva(\tvp) = \semenvp(\tvc)$.}{}
+		  \commentPf{$\deriv$ is a derivation that satisfies $\semenva(\tvb) = \semenvp(\tvc)$.}{}
 \Hand		  \commentPf{So this case degenerates to the former case.}{}
 		\end{llproof}
 	    \end{proofcases}
