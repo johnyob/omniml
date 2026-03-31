@@ -3267,6 +3267,7 @@ $\tv \prec_\up^+ \tv$ for some $\tv$.
 
 
 \subsection{Administrative constraints}
+\label{sec/solving/admin}
 
 \parcomment {Intro: new administrative constraint formers!}
 
@@ -3986,7 +3987,187 @@ moreover sound and complete with respect to the semantic definition of unicity:
 $\Cshape \C \tau \sh$ holds if and only if $\th \Cshape \C \tau \sh$ is
 derivable (Appendix~\cref{lem:unicity-completeness}).
 
+\begin{example}
+\begin{local}
+\def \xgetx{{\ttlab {getx}}}
+\def \xdiag{{\ttlab {diag}}}
+\def \elabx{{\ttlab x}}
+\def \tvp {{\tv_{\ttlab p}}}
+\def \tvpc {{\tvc_{\ttlab p}}}
+\def \tvpcp {{\tvc_{\ttlab p}'}}
+\def \tvgp {{\tv_{\ttlab {gp}}}}
+\def \tvgetx {{\tva_\xgetx}}
+\def \tvcgetx {{\tvc_\xgetx}}
+\def \tvcpgetx {{\tvc_\xgetx'}}
+\def \tvgetxret {\tvc}
+\def \tvcgetxret {\tvca}
+\def \tvcpgetxret {\tvcb}
+\def \tgpoint {\ttlab {gpoint}}
+\def \qcommaq {\quad,\quad}
+\def \commaq {\quad}
 
+Let us consider the (simplified) constraint generation for \ocaml{ex_8} discussed in \cref{sec/solving/admin}. 
+We begin by factoring out the following invariant two-hole constraint context $\C$ for readability:
+\begin{mathpar}
+  \C\where{\hole_1, \hole_2} \quad \eqdef \quad   \begin{array}{rl}
+  \cexists {\tvgp, \tvd}
+    &\Let \xgetx = \cabs \tvgetx
+  {\cexists {\tvp, \tvgetxret}
+    {\bigwedge \PARENS {
+      \cunif \tvgetx {\tvp \to \tvgetxret} \\
+      \hole_1}}}
+  \\[2ex]
+    & \In {\hole_2
+      \cand \capp \xgetx \parens{\tvgp \to \tfloat}}
+  \end{array}
+\end{mathpar}
+The initial constraint is:
+\begin{mathpar}
+  \begin{array}{cl}
+  \cexists {\tvgp, \tvd}
+    &\Let \xgetx = \cabs \tvgetx
+  {\cexists {\tvp, \tvgetxret}
+    {\bigwedge \PARENS {
+      \cunif \tvgetx {\tvp \to \tvgetxret} \\
+      \cmatch \tvp {\cbranch {(\cpatrcd \ct)}
+         {\labfrom {\ttlab \x} \ct \leq \tvp \to \tvgetxret}}
+       }}}
+  \\[2ex]
+    & \In {\capp \xgetx \parens{\trcd \tgpoint \tint \to \tvd}
+      \cand \capp \xgetx \parens{\tvgp \to \tfloat}} \\[3ex]
+    \equiv &\C\where{
+        \cmatch \tvp {\cbranch {(\cpatrcd \ct)}
+         {\labfrom {\ttlab \x} \ct \leq \tvp \to \tvgetxret}},
+        \capp \xgetx \parens{\trcd \tgpoint \tint \to \tvd}
+       }
+  \end{array}
+\end{mathpar}
+We now reduce the constraint step by step using the rules 
+outlined above. 
+\begin{mathpar}
+  \begin{array}{lll}
+  &\C\where{
+        \cmatch \tvp {\cbranch {(\cpatrcd \ct)}
+         {\labfrom {\ttlab \x} \ct \leq \tvp \to \tvgetxret}}\qcommaq
+        \capp \xgetx \parens{\trcd \tgpoint \tint \to \tvd}
+      }\\[2ex]
+\csolve 
+  &\C\where{
+        \ldots \commaq
+        \cexistsi {\tvcgetx, \inst} \xgetx \cpinst \inst \tvgetx \tvcgetx \cand \cunif {\tvcgetx} {\trcd \tgpoint \tint \to \tvd}
+       }
+    & \Rule{S-Let-AppR}\\[2ex]
+\csolve
+  &\C\Where{
+      \ldots \commaq
+      \cexistsi {\tvcgetx, \tvpc, \tvcgetxret, \inst} \xgetx 
+        {\bigwedge \PARENS 
+          { \cunif \tvcgetx {\tvpc \to \tvcgetxret} \cand \cpinst \inst \tvp \tvpc \cand \cpinst \inst \tvc \tvcgetxret \\ 
+          \cunif {\tvcgetx} {\trcd \tgpoint \tint \to \tvd} }}
+  }
+  & \Rule{S-Inst-Copy}\\[2ex]
+\csolve^+
+  &\C\Where{
+      \ldots \commaq
+      \cexistsi {\tvcgetx, \tvpc, \tvcgetxret, \inst} \xgetx 
+        {\bigwedge \PARENS 
+          { \cpinst \inst \tvp \tvpc \cand \cpinst \inst \tvc \tvcgetxret \\ 
+          \cunif {\tvcgetx} {\tvpc \to \tvcgetxret} \cand \cunif \tvpc {\trcd \tgpoint \tint} \cand \cunif \tvcgetxret \tvd }}
+  }
+  & \Rule{U-Merge}\\[2ex]
+\csolve
+  &\C\where{
+    \cmatched \tvp {\any \eta {\trcd \tgpoint \eta}} {\cbranch {(\cpatrcd \ct)}
+         {\labfrom {\ttlab \x} \ct \leq \tvp \to \tvgetxret}}\qcommaq
+      \ldots
+  }
+  & \Rule{S-Match-Ctx}\\[2ex]
+\csolve^+
+  &\C\where{
+    {\labfrom {\ttlab \x} \tgpoint \leq \tvp \to \tvgetxret} \qcommaq
+    \ldots
+  }
+  & \\[2ex]
+\csolve^+
+  &\C\where{
+    \cunif \tvp {\trcd \tgpoint \tvgetxret} \qcommaq
+    \ldots
+  }\\[2ex]
+\csolve
+    &\C\Where{
+        \ldots \commaq
+        \cexistsi {\tvcgetx, \tvpc, \tvcgetxret, \tvcgetxret', \inst} \xgetx 
+          {\bigwedge \PARENS 
+            {\cpinst \inst \tvgetxret \tvcgetxret \cand \cpinst \inst \tvgetxret {\tvcgetxret'} \\ 
+            \cunif {\tvcgetx} {\tvpc \to \tvcgetxret} \cand \cunif \tvpc {\trcd \tgpoint \tint} \cand \cunif \tvcgetxret \tvd \\ 
+            \cunif {\tvpc} {\trcd \tgpoint {\tvcgetxret'}}}}
+    }
+    & \Rule{S-Inst-Copy} \\[2ex]
+\end{array}
+\end{mathpar}
+\begin{mathpar}
+\begin{array}{lll}
+\csolve 
+    &\C\Where{
+        \ldots \commaq
+        \cexistsi {\tvcgetx, \tvpc, \tvcgetxret, \tvcgetxret', \inst} \xgetx 
+          {\bigwedge \PARENS 
+            {\cpinst \inst \tvgetxret \tvcgetxret  \\ 
+            \cunif {\tvcgetx} {\tvpc \to \tvcgetxret} \cand \cunif \tvpc {\trcd \tgpoint \tint} \cand \cunif \tvcgetxret \tvd \\ 
+            \cunif {\tvpc} {\trcd \tgpoint {\tvcgetxret'}} \cand \cunif {\tvcgetxret} {\tvcgetxret'}}}
+    }
+    & \Rule{S-Inst-Unif} \\[2ex]
+\csolve^+
+    &\C\Where{
+        \ldots \commaq
+        \cexistsi {\tvcgetx, \tvpc, \tvcgetxret, \tvcgetxret', \inst} \xgetx 
+          {\bigwedge \PARENS 
+            {\cpinst \inst \tvgetxret \tvcgetxret  \\ 
+            \cunif {\tvcgetx} {\tvpc \to \tvcgetxret} \cand \cunif \tvpc {\trcd \tgpoint \tvcgetxret} \\ 
+            \cunif {\tvcgetxret} {\cunif \tvd {\cunif \tvcgetxret' \tint}}}}
+    }
+    & \\[2ex]
+\csolve
+    &\C\Where{
+        \ldots \commaq
+        \cexistsi {\tvcgetx, \tvpc, \tvcgetxret, \tvcgetxret', \inst} \xgetx 
+          {\bigwedge \PARENS 
+            {\cunif {\tvcgetx} {\tvpc \to \tvcgetxret} \cand \cunif \tvpc {\trcd \tgpoint \tvcgetxret} \\ 
+            \cunif {\tvcgetxret} {\cunif \tvd {\cunif \tvcgetxret' \tint}}}}
+    }
+    & \Rule{S-Inst-Poly}
+  \end{array}
+\end{mathpar}
+
+We begin by applying \Rule{S-Let-AppR} to the application of $\xgetx$,
+introducing a fresh instantiation $\inst$. We then apply \Rule{S-Inst-Copy},
+which copies the arrow shape of $\tvgetx$ and introduces two incremental
+instantiation constraints on the parameter $\tvp$ and return $\tvgetxret$
+types. 
+%
+Using \Rule{U-Merge} and \Rule{U-Decomp}, we combine the two equations on
+$\tvcgetx$, from which the solver deduces that $\tvpc$ must be the record type
+$\trcd \tgpoint \tint$. 
+%
+From this equality on $\tvpc$, it follows that $\tvpc$ has the shape $\any \eta
+{\trcd \tgpoint \eta}$. Together with the instantiation $\cpinst \inst \tvp
+\tvpc$, we can apply \Rule{S-Match-Ctx} using \Rule{Uni-BackProp}. The match
+constraint is then discharged, yielding a label instantiation constraint
+forcing $\tvp$ to be $\trcd \tgpoint \tvgetxret$.
+%
+We next apply \Rule{S-Inst-Copy} to this equality on $\tvp$, which introduces a
+duplicate instantiation constraints on $\tvgetxret$. This is eliminated using
+\Rule{S-Inst-Unif}. 
+%
+Finally, applying \Rule{U-Merge} and \Rule{U-Decomp} simplifies the remaining
+equalities on $\tvcgetxret$ and $\tvpc$,  and \Rule{S-Inst-Poly} removes the
+last instantiation constraint on $\tvgetxret$, since it is
+polymorphic.
+
+\Xalistair{@Didier any suggestions for improving the \LaTeX here?}
+
+\end{local}
+\end{example}
 
 \subsection{Metatheory}
 
