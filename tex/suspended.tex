@@ -457,14 +457,18 @@ principal type inference.
 \parcomment{Idea and syntax}
 
 Polymorphic methods can be translated into ordinary methods that carry a
-\emph{polytype}: a boxed type scheme $\tpoly \ts$ that can be explicitly
-unboxed at use sites. The syntax of polytypes is given in
+\emph{polytype}: a polytype is a \emph{boxed} type scheme $\tpoly \ts$ that
+must be explicitly unboxed at use sites. The syntax of polytypes is given in
 \cref{fig:polyml-syntax}.
 %
-Boxed polytypes are considered to be (mono)types, thereby enabling
-impredicativity. We write $\epoly[\ts] \e$ to box a term $\e$ with the scheme
-$\ts$, and $\einst \e$ to unbox a polytype, instantiating it.
-
+We write $\epoly[\ts] \e$ to box a term $\e$ with the scheme $\ts$. This
+returns an expression whose type is the polytype $\tpoly \ts$.  Since
+polytypes are boxed, they cannot be be freely instantiated, by
+contrast with regular type scheme. An expression~$\e$ of a polytype $\tpoly
+\ts$ must first be unboxed with the construct $\einst \e$, in order to be
+seen at any type instance $\t$ of $\ts$ and used accordingly.  Since they
+are boxed, polytypes can be treated as regular (mono)types, thereby enabling
+impredicativity.
 
 \begin{bnffig}[tb]
   {fig:polyml-syntax}
@@ -478,7 +482,7 @@ $\ts$, and $\einst \e$ to unbox a polytype, instantiating it.
      \entry[Types]{\t}{
         \tpoly \ts
         \and \dots
-     }
+     }:
 \end{bnffig}
 
 
@@ -511,7 +515,7 @@ This reduction is useful for two reasons:
 
 As with static overloading in \cref{sec/default-rules}, \OCaml employs a
 defaulting rule for polytypes: when a polytype cannot be inferred as
-\emph{known} , it is defaulted to a monomorphic polytype. 
+\emph{known}, it is defaulted to a monomorphic polytype. 
 %
 This is particularly useful, as we would still like to typecheck functions such
 as \ocaml{fun l x -> l#mem x} without annotations. Here, the method invocation
@@ -529,14 +533,18 @@ at every function application.
 \label{sec/overview/polytypes}
 
 % Polytypes are semi-explicit (not implicit nor explicit)
-Polytypes---also called \emph{semi-explicit first-class polymorphism}
-\citep*{Garrigue-Remy/poly-ml}---stand in contrast to \emph{implicit}
-higher-rank or first-class polymorphism, provided by systems such as
+Polytypes, introduced by \citet{Garrigue-Remy/poly-ml}, allow so-called
+\emph{semi-explicit first-class polymorphism}. Polytypes require
+explicit introduction and elimination forms, but only an explicit type
+scheme annotation at their introduction, the type instantiation at their
+elimination being left implicit. Therefore, polytypes stand in contrast to
+\emph{implicit} higher-rank or first-class polymorphism, provided by systems
+such as
 \DK~\citep*{dunfield-krishnaswami-bidirectional-poly},
-\QuickLook~\citep*{journals/pacmpl/SerranoHJV20}, and \Frost~\citep*{frost}:
-polymorphic values must be explicitly boxed and unboxed. At the same time, they
-are less explicit than \emph{fully explicit} polymorphism (\eg System-$\F$),
-where quantification and instantiation are entirely syntactic. 
+\QuickLook~\citep*{journals/pacmpl/SerranoHJV20}, and \Frost~\citep*{frost},
+which are unboxed. At the same time, they are less explicit than \emph{fully
+explicit} polymorphism (\eg System-$\F$), where both quantification and
+instantiation must be explicitly and fully specified.
 
 % Ward off comments that polytypes aren't as good as implicit first-class 
 % polymorphism.
@@ -622,8 +630,9 @@ and cannot be relied on for disambiguation.
 
 \parcomment{\PolyML typing rules}
 
-Using this approach, we can give typing rules for polytypes; this yields precisely the 
-formulation introduced in \PolyML~\citep*{Garrigue-Remy/poly-ml}, given in \cref{fig:polyml}. 
+Using this approach, we can give typing rules for polytypes; this yields
+precisely the formulation introduced in
+\PolyML~\citep*{Garrigue-Remy/poly-ml}, given in \cref{fig:polyml}.
 %
 \parcomment {Boxing}
 %
