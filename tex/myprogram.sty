@@ -26,6 +26,9 @@
 \renewcommand{\lstlistingname}{Example}
 \newcommand{\lvl}{{\ensuremath n}}
 
+\newcommand{\lstsize}{}
+\let \lstsize \relax
+
 \lstdefinelanguage{ocaml}[Objective]{Caml}{
   % Fix errors in the default definition of ocaml.
   deletekeywords={closed,ref},
@@ -37,7 +40,7 @@
   commentstyle=\ocamlcommentstyle,
   morecomment=[is]{\%\%}{\^^M},
   % By default, we use a small font.
-  basicstyle=\lstxbasicstyle\ttfamily\small,%\relax \footnotesize
+  basicstyle=\lstxbasicstyle\ttfamily\lstsize,%\relax \footnotesize
   numberstyle=\small,
   %% identifierstyle=\sffamily,
   % Keyword style
@@ -256,8 +259,10 @@
 \define@boolkey{lst}{hide}[true]
    {\ifKV@lst@hide \let \lst@hide \True\else \let \lst@hide \False\fi}
 
+\newcommand{\lstprogramsize}{\small}
 \lstnewenvironment{program}[1][language=ocaml]
-   {\lstset{%
+   {\let \lstsize \lstprogramsize
+    \lstset{%
        language=ocaml,%
        aboveskip=\smallskipamount,%
        belowskip=\smallskipamount,%
