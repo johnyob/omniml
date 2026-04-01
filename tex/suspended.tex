@@ -681,9 +681,10 @@ is known.
 
 Conversely, to instantiate a polytype expression (\Rule{PolyML-Inst}), one must
 use an explicit unboxing operator $\einst \e$, which requires no accompanying
-type annotation. However, the operator requires $\e$ to have a \emph{known} polytype scheme
-of the form $\tfor \av {\tapoly \ts \av}$ and then assigns $\einst \e$ the type
-$\ts$. If, by contrast, $\e$ has the type $\tapoly \ts \av$ for some
+type annotation. However, the operator requires $\e$ to have a \emph{known}
+polytype scheme 
+of the form $\tfor \av {\tapoly \ts \av}$ and then assigns $\einst \e$ the
+type~$\ts$. If, by contrast, $\e$ has the type $\tapoly \ts \av$ for some 
 non-generalizable annotation variable $\av$, then $\e$ is considered as a
 \emph{not-yet-known} polytype, and therefore $\einst \e$ is ill-typed. This
 restriction enforces principality, preventing instantiation on \emph{guessed}
@@ -693,16 +694,18 @@ polytypes.
 
 \Rule{PolyML-Annot} can be used to freshen annotation variables.
 Intuitively, $\ta$ and $\tb$ are two \emph{fresh copies} of the annotation $\t$, 
-preventing unwanted sharing of annotation variables that could otherwise block generalization. 
+preventing unwanted sharing of annotation variables that could otherwise
+block generalization.  
 For example, $\efun {\x : \tpoly \ts} {\einst \x}$, which is syntactic sugar for 
 $\efun \x {\elet \x {\eannot \x {} {\tpoly \ts}}} {\einst \x}$, is well-typed 
-becuase the explicit annotation introduces a fresh annotation variable $\ava$ 
+because the explicit annotation introduces a fresh annotation variable~$\ava$ 
 for $\eannot \x {} {\tpoly \ts}$, which can then be generalized, yielding 
 $\tfor \ava {\tannot {\tpoly \ts} \ava}$ for the type of the let-bound variable 
 $\x$.
 
 \parcomment {Who uses this?}
-% This paragraph also performs the duty of linking PolyML and OCaml in the below examples
+% This paragraph also performs the duty of linking PolyML and OCaml in the
+% below examples 
 
 Building on its introduction in \PolyML, \geninst-directionality has since been
 adopted in other systems, notably \MLF~\citep*{LeBotlan-Remy/recasting-mlf},
@@ -728,7 +731,7 @@ let ex_5 = let p = pid in <p> °\ocamlflags 00°
 let ex_6 = (fun p -> <p>) pid °\ocamlflags 10°
 \end{program}
 At first glance, \code{ex_5} and \code{ex_6} appear equivalent: both simply
-instantiate the polytype bound to \code{p}. Yet, \OCaml accepts \code{ex_5} and
+instantiate the polytype bound to~\code{p}. Yet, \OCaml accepts \code{ex_5} and
 rejects \code{ex_6}. This is because the let-binding in \code{ex_5}
 allows \code{p} to have type scheme $\tfor \av {\tapoly {\tfor \tv \tv \to
 \tv} \av}$, and thus its type is considered \emph{known}---permitting unboxing
