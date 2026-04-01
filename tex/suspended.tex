@@ -50,6 +50,16 @@
   \country{France}
 }
 
+%% Main repeated citations
+
+\newcommand{\BBemlti}{Pottier-Remy/emlti}
+\newcommand{\BBpolyml}{Garrigue-Remy/poly-ml}
+\newcommand{\BBpolyparams}{White/polyparams@ml2023}
+\newcommand{\BBoutsidein}
+   {Vytiniotis-Peyton-Jones-Schrijvers-Sulzmann/outsidein@jfp2011}
+
+
+
 \title{Omnidirectional type inference for \ML: principality any way}
 
 \begin{document}
@@ -128,7 +138,7 @@ higher-kinded types \citep*{journals/jfp/Jones95}---are \emph{robust}: they
 preserve principality. Others, including GADTs
 \citep*{conf/icfp/SchrijversJSV09, conf/aplas/GarrigueR13}, higher-rank and
 first-class polymorphism \citep*{conf/popl/OderskyL96,
-Garrigue-Remy/poly-ml, journals/pacmpl/SerranoHJV20}, and static overloading
+\BBpolyml, journals/pacmpl/SerranoHJV20}, and static overloading
 \citep*{Chargueraud-Bodin-Dunfield-Riboulet/jfla2025}, are \emph{fragile}: they
 break principality under their \emph{natural} typing rules.
 
@@ -136,7 +146,7 @@ break principality under their \emph{natural} typing rules.
 
 This fragility can already be observed in \OCaml through impredicative
 higher-rank (\ie first-class) polymorphism, exposed by \emph{polymorphic
-methods}~\citep{Garrigue-Remy/poly-ml} (\smashcolorbox{welltyped}{\strut green} indicates
+methods}~\citep{\BBpolyml} (\smashcolorbox{welltyped}{\strut green} indicates
 typechecking success and \smashcolorbox{illtyped}{\strut red} indicates
 failure):
 %
@@ -191,7 +201,7 @@ indirect algorithmic flavor in order to preserve principality and completeness.
 
 The two dominant approaches thus far are \emph{bidirectional} type inference
 \citep*{conf/popl/PierceT98} and \emph{\geninst-directional}
-inference~\citep*{Garrigue-Remy/poly-ml}. Each impose some \emph{static}
+inference~\citep*{\BBpolyml}. Each impose some \emph{static}
 ordering of inference, using it to propagate inferred types and user-provided
 annotations as \emph{known} information.
 
@@ -225,7 +235,7 @@ We present omnidirectionality as a general framework for inference in the
 presence of fragile features. While this paper instantiates our framework for
 two concrete features in \OCaml---static overloading and polymorphic object
 methods---its scope is broader: we expect it to extend to more richer features
-such as GADTs, polymorphic parameters \citep{White/polyparams@ml2023}, and
+such as GADTs, polymorphic parameters \citep{\BBpolyparams}, and
 more generalized static overloading \ala Swift.
 
 \parcomment {Scaling to ML / let-generalization}
@@ -446,7 +456,7 @@ only on record fields in this work. Our prototype implementation
 
 \parcomment{Why polymorphic methods?}
 
-Polymorphic methods \citep*{Garrigue-Remy/poly-ml} bring a form of
+Polymorphic methods \citep*{\BBpolyml} bring a form of
 System-$\F$-like expressiveness to \OCaml by supporting first-class
 polymorphism (impredicative higher-rank polymorphism) while preserving
 principal type inference.
@@ -472,7 +482,7 @@ impredicativity.
 
 \begin{bnffig}[tb]
   {fig:polyml-syntax}
-  {Selected syntax for polytypes \citep*{Garrigue-Remy/poly-ml}.}
+  {Selected syntax for polytypes \citep*{\BBpolyml}.}
      \entry[Terms]{\e}{
        \epoly[\ts] \e
        \and \einst \e
@@ -506,7 +516,7 @@ This reduction is useful for two reasons:
 
 
   \item Polytypes underpin other features in \OCaml, notably the recent
-    addition of polymorphic function parameters \citep*{White/polyparams@ml2023}.
+    addition of polymorphic function parameters \citep*{\BBpolyparams}.
 
 \end{enumerate*}
 
@@ -526,14 +536,14 @@ $\tpoly {\tva \to \tvb}$.
 
 While such defaulting is relatively uncommon with polymorphic methods, it
 becomes essential for more recent features such as polymorphic parameters
-\citep*{White/polyparams@ml2023}, which introduce polytype boxing and unboxing
+\citep*{\BBpolyparams}, which introduce polytype boxing and unboxing
 at every function application.
 
 \paragraph{Semi-explicit first-class polymorphism}
 \label{sec/overview/polytypes}
 
 % Polytypes are semi-explicit (not implicit nor explicit)
-Polytypes, introduced by \citet{Garrigue-Remy/poly-ml}, allow so-called
+Polytypes, introduced by \citet{\BBpolyml}, allow so-called
 \emph{semi-explicit first-class polymorphism}. Polytypes require
 explicit introduction and elimination forms, but only an explicit type
 scheme annotation at their introduction, the type instantiation at their
@@ -553,10 +563,11 @@ they are used in \OCaml, notably for polymorphic methods and polymorphic
 function parameters. Second, they expose the subtle interaction with
 principality that is of interest. 
 %
-By contrast, for implicit first-class polymorphism, it remains unclear whether
-inference using omnidirectionality can be achieved \emph{without} default
-rules---a mechanism also used in bidirectional systems, \eg \DK's
-\textsc{$\hat\tv$App} rule.
+By contrast, for implicit first-class polymorphism, it remains unclear
+whether inference using omnidirectionality can be achieved \emph{without}
+default rules---a mechanism also used in bidirectional systems, \eg \DK's
+``\textsf{$\hat\tv$App}'' rule~\cite [Fig 11]
+{dunfield-krishnaswami-bidirectional-poly}.
 
 \subsection{Directional type inference}
 \label{sec/overview/directional}
@@ -598,7 +609,7 @@ and cannot be relied on for disambiguation.
 
 \begin{mathparfig}[htpb!]
   {fig:polyml}
-  {\Geninst-directional syntax and typing rules for polytypes from \PolyML~\citep*{Garrigue-Remy/poly-ml}.}
+  {\Geninst-directional syntax and typing rules for polytypes from \PolyML~\citep*{\BBpolyml}.}
 \begin{bnfgrammar}[\def\bnfsep{\;}]
      \entry[Types]{\t}{
         \tannot \t \av
@@ -632,7 +643,7 @@ and cannot be relied on for disambiguation.
 
 Using this approach, we can give typing rules for polytypes; this yields
 precisely the formulation introduced in
-\PolyML~\citep*{Garrigue-Remy/poly-ml}, given in \cref{fig:polyml}.
+\PolyML~\citep*{\BBpolyml}, given in \cref{fig:polyml}.
 %
 \parcomment {Boxing}
 %
@@ -1082,7 +1093,7 @@ extended typing environment that binds the generalized scheme. The
 Hindley-Milner algorithm $\mathcal{J}$, its variants $\mathcal{W}$ or
 $\mathcal{M}$~\citep* {Lee_Yi/algoM@toplas1998}, or more flexible
 constraint-based type inference implementations~\citep*
-{Remy/mleth,Remy/thesis, Odersky-Sulzmann-Wehr@tpos, Pottier-Remy/emlti} all
+{Remy/mleth,Remy/thesis, Odersky-Sulzmann-Wehr@tpos, \BBemlti} all
 follow this strategy, to the best of our knowledge.
 
 \parcomment{Example of why this problematic}
@@ -2249,7 +2260,7 @@ approach cannot be stated precisely.
 
 We now introduce the syntax and semantics of our constraint language.
 Building atop the constraint-based inference framework of
-\citet*{Pottier-Remy/emlti}, we adopt a constraint language
+\citet*{\BBemlti}, we adopt a constraint language
 (\cref{fig:constraints}) that includes both term and type variables. Its
 semantics is given by a satisfiability judgment $\semenv \th \c$
 (\cref{fig:constraints}). The semantic environment $\semenv$ assigns to each
@@ -3212,7 +3223,7 @@ non-deterministic rewriting relation between \emph{unification problems} $\upa
 Unification problems $\up$
 (\cref{fig:unification-syntax-and-semantics}) are a restricted subset
 of constraints, extended with \emph{multi-equations}
-\citep*{Pottier-Remy/emlti}---a multi-set of types considered
+\citep*{\BBemlti}---a multi-set of types considered
 equal. These generalize binary equalities: $\semenv$ satisfies
 a multi-equation $\ueq$ if all of its members are mapped to a single
 ground type $\gt$ (\Rule{Multi-Unif}). Multi-equations are
@@ -3222,11 +3233,11 @@ The unification rules are listed in \cref{fig:unification-algorithm}. Rewriting
 proceeds under an arbitrary context $\Up$, modulo $\alpha$-equivalence and
 associativity and commutativity of conjunctions.
 %
-Our algorithm is largely standard~\citep*{Pottier-Remy/emlti}, with its main
+Our algorithm is largely standard~\citep*{\BBemlti}, with its main
 novelty being the use of \emph{canonical principal shapes} in place of type
 constructors. This uniform treatment of monotypes and polytypes simplifies
 unification and improves on the previous treatment of polytype unification
-\citep{Garrigue-Remy/poly-ml}.
+\citep{\BBpolyml}.
 
 \parcomment{Explanation of the rules}
 
@@ -3348,7 +3359,7 @@ constraints are discharged.
 \parcomment{Recall the standard solving form for let-constraints}
 
 As is standard in constraint-based formulations of \ML type inference
-\citep{Pottier-Remy/emlti}, generalization-related rules operate on constraints
+\citep{\BBemlti}, generalization-related rules operate on constraints
 of the form $\clet \x \tv {\exi \tvs \ca} \cb$. The outermost existentially
 quantified variables $\tvs$ correspond to the \emph{potentially generalizable}
 variables.
@@ -3416,7 +3427,7 @@ solved by copying constraints:
 {\DefTirName{S-Let-App-Beta}}
 \end{mathpar}
 %
-This rule, due to \citet*{Pottier-Remy/emlti}, resembles $\beta$-reduction in
+This rule, due to \citet*{\BBemlti}, resembles $\beta$-reduction in
 some presentations of explicit substitutions. While this rule is sound
 when $\ca$ is a \emph{simple} constraint, it becomes unsound for abstractions
 containing suspended constraints.
@@ -3496,7 +3507,7 @@ is unsound in the presence of suspended constraints.
 \parcomment{What about treating let-constraints monomorphically?}
 
 A tempting alternative, used in
-\citet*{Vytiniotis-Peyton-Jones-Schrijvers-Sulzmann/outsidein@jfp2011} and
+\citet*{\BBoutsidein} and
 \citet*{benevs2025simple}, is to treat the let-bindings \emph{monomorphically},
 sharing $\tvp$ directly between both applications. However, this is incomplete
 with respect to \OML's type system: it forbids local let-polymorphism (commonly 
@@ -3517,7 +3528,7 @@ and instantiation steps of \ML inference algorithms such as $\mathcal{W}$:
 $\cabsr \tv \tvs \ueqs$ corresponds to the type scheme $\tfor \tvs
 {\sub(\tv)}$, where $\sub$ is the most general unifier of $\ueqs$.
 %
-\citet*{Pottier-Remy/emlti} formalize this connection, and the optimized
+\citet*{\BBemlti} formalize this connection, and the optimized
 treatment is naturally expressed as a strategy on top of their
 \Rule{S-Let-App-Beta} rule.
 
@@ -4540,7 +4551,7 @@ type information, we can say that their semantics enforces that only
 \emph{known} information from outside GADT clauses can be used inside.
 %
 Later work on \OutsideIn, namely
-\OutsideInX~\citep*{Vytiniotis-Peyton-Jones-Schrijvers-Sulzmann/outsidein@jfp2011},
+\OutsideInX~\citep*{\BBoutsidein},
 argues that delayed implication constraints make local let-generalization all
 but unmanageable, both in theory and implementation. Their proposed fix is to
 abandon local let-generalization altogether. By contrast, our work shows that
@@ -7259,7 +7270,7 @@ generally in our system.
   If $\upa \unif \upb$, then $\upa \equiv \upb$
   \begin{proof}
     By induction on the given derivation $\upa \unif \upb$.
-    See \citet*{Pottier-Remy/emlti} for more details.
+    See \citet*{\BBemlti} for more details.
   \end{proof}
 \end{lemma}
 
@@ -7693,7 +7704,7 @@ generally in our system.
   \begin{llproof}
     \begin{tabular}{l}
     Similar argument. Use \cref{lem:simple-ctxt-equiv}. \\
-    The simple equivalences are standard, see \citet*{Pottier-Remy/emlti}.
+    The simple equivalences are standard, see \citet*{\BBemlti}.
     \end{tabular}
   \end{llproof}
   \end{proofcases}
@@ -7708,7 +7719,7 @@ generally in our system.
     \item $\up$ is $\cfalse$.
     \end{enumerate}
   \begin{proof}
-    This is a standard result. See \citet*{Pottier-Remy/emlti}.
+    This is a standard result. See \citet*{\BBemlti}.
   \end{proof}
 \end{lemma}
 
@@ -8008,7 +8019,7 @@ rules that are not inherently destructive.
   only be applied finitely many times when taken together. The
   fragment without discharge rules and incremental instantiation is
   also extremely similar to the constraint language of
-  \citet*{Pottier-Remy/emlti}, so their termination proof applies
+  \citet*{\BBemlti}, so their termination proof applies
   directly.
 
   \paragraph{Discharge rules} The discharge rules strictly decrease
@@ -8366,7 +8377,7 @@ and $\sub(\tvs) = \tys$.
   Then $\cabs \tv \c$ is equivalent to $\cabs \tv \sigma \leq \tv$ under $\sub$, where $\ts = \tfor \tvbs \subp(\tv)$ and
   $\tvbs = \fvs {\subp(\tv)} \setminus \rng \sub$. We write this equivalent constraint abstraction as $\csem {\cabs \tv \c}_\sub$.
   \begin{proof}
-    See \citet*{Pottier-Remy/emlti}.
+    See \citet*{\BBemlti}.
   \end{proof}
 \end{lemma}
 
