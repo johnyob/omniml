@@ -527,15 +527,30 @@ As with static overloading in \cref{sec/default-rules}, \OCaml employs a
 defaulting rule for polytypes: when a polytype cannot be inferred as
 \emph{known}, it is defaulted to a monomorphic polytype. 
 %
-This is particularly useful, as we would still like to typecheck functions such
-as \ocaml{fun l x -> l#mem x} without annotations. Here, the method invocation
-$\ttlab l \esend \ttlab {mem}$ introduces an unboxing operation, becoming
-$\einst {\texttt{l} \esend \texttt{mem}}$. At this point, the defaulting rule
-assigns \ocaml{l}'s \ocaml{mem} field the \emph{monomorphic} polytype 
+This is particularly useful, as it allows to typecheck functions such
+as \ocaml{fun bag x -> bag#mem x} without annotations. Here, the method
+invocation 
+$\ttlab {bag} \esend \ttlab {mem}$ introduces an unboxing operation, becoming
+$\einst {\texttt{bag} \esend \texttt{mem}}$. At this point, the defaulting rule
+assigns \ocaml{bag}'s \ocaml{mem} field the \emph{monomorphic} polytype 
 $\tpoly {\tva \to \tvb}$.
 
-While such defaulting is relatively uncommon with polymorphic methods, it
-becomes essential for more recent features such as polymorphic parameters
+\XDR {BEWARE! This is not correct: we do not know whether methods are
+polymorphic, so all methods are considered to be polymorphic,
+i.e. polytypes. At introduction, they is no need for default, since we
+require an annotation.  Hence, in the absence of annotation, we know
+\emph{syntactically} that this is a monomorphic polytype.  By contrats,
+elimination does not require an annotation, so we do not know
+syntactically. If it is a polymorphic node, then we known the
+information. If it is a monomorphic node, then we default to a monomorphic
+polytype. Since few methods are polymorphic, we actually use the defaulting
+in most cases. The nice property is that for elimination of polytypes, the
+default rule remains principal, as it is the only possible solution.  This
+would not be the case if we also used defaulting at polytype introductions.}
+
+While such defaulting is relatively uncommon
+with polymorphic methods, it becomes essential for more recent features such
+as polymorphic parameters
 \citep*{\BBpolyparams}, which introduce polytype boxing and unboxing
 at every function application.
 
