@@ -538,15 +538,18 @@ $\tpoly {\tva \to \tvb}$.
 \XDR {BEWARE! This is not correct: we do not know whether methods are
 polymorphic, so all methods are considered to be polymorphic,
 i.e. polytypes. At introduction, they is no need for default, since we
-require an annotation.  Hence, in the absence of annotation, we know
-\emph{syntactically} that this is a monomorphic polytype.  By contrats,
-elimination does not require an annotation, so we do not know
-syntactically. If it is a polymorphic node, then we known the
-information. If it is a monomorphic node, then we default to a monomorphic
-polytype. Since few methods are polymorphic, we actually use the defaulting
-in most cases. The nice property is that for elimination of polytypes, the
-default rule remains principal, as it is the only possible solution.  This
-would not be the case if we also used defaulting at polytype introductions.}
+require an annotation.  Hence, in the absence of an annotation, we know
+\emph{syntactically} that this is a monomorphic polytype.  By contrast,
+elimination does not require any annotation, so we cannot tell
+syntactically.  If it is a polymorphic node ($\epsilon$), then we trust the
+polytyped is know and we use it. Otherwise, the node is monomorphic, and we
+default to a monomorphic polytype. The nice property is that for elimination
+of polytypes, the default rule remains principal, as it is the only possible
+solution. This would not be the case if we also used defaulting at polytype
+introductions.  Since few methods are polymorphic, we actually use the
+defaulting in most cases. So we have to change the text below. I don't know
+how much we wish to explain though.}
+
 
 While such defaulting is relatively uncommon
 with polymorphic methods, it becomes essential for more recent features such
