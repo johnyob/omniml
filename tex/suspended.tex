@@ -979,16 +979,14 @@ let ex_6_3 = rev_app pid (fun p -> <p>) °\ocamlflags 00°
 \end{program}
 %
 Under \geninst-directionality, both terms are ill-typed; under \OCaml's
-bidirectional approach\footnote{In this example, we
-use the options
+bidirectional approach,\footnote {In this example, we use the options
 \code{-no-principal -w +41+18 -warn-error +41+18}.
-to enable let-directionality in addition to $\pi$-directionalirty.},
-},
-only \code{ex_6_2} 
-is rejected. Yet both terms have a principal type---it is merely a question of
-propagating type information in the right order. Omnidirectional type inference
-typechecks both: since it allows the typing of either side to proceed first,
-suspending the other until the relevant type information is \emph{known}.
+to enable let-directionality in addition to $\pi$-directionalirty.} only
+\code{ex_6_2} is rejected. Yet both terms have a principal type---it is
+merely a question of propagating type information in the right
+order. Omnidirectional type inference typechecks both: since it allows the
+typing of either side to proceed first, suspending the other until the
+relevant type information is \emph{known}.
 
 \paragraph{To be or not to be known}
 \label{sec/overview/omni/unicity}
@@ -1052,7 +1050,7 @@ match constraints}.
 A match constraint $(\cmatch \t {{\overline{\cbranch \cpat \c}}})$ pairs a
 (typically unknown) matchee type $\t$ with a finite series of shape-pattern
 branches $\overline{\cbranch \cpat \c}$. Such constraints remain
-\emph{suspended} until the \textit{shape} of $\t$ (\ie its top-level
+\emph{suspended} until the \textit{shape} of~$\t$ (\ie its top-level
 constructor) is known. Then, they are \emph{discharged}: a unique branch is
 selected and its associated constraint has to be solved. A match constraint
 that is never discharged is considered unsatisfiable.
@@ -1062,8 +1060,9 @@ that is never discharged is considered unsatisfiable.
 For now, it suffices to think of shapes as parts of types (\eg the record type constructor 
 $\T$ in ($\trcd \T \tys$)%
 \footnote{
-  For readability in shape patterns, record type constructors are written in 
-  prefix form and prefixed with \textsf{rcd}. This prefix is omitted in \OCaml code, 
+  For readability in shape patterns, type constructors are written in 
+  prefix form and record type constructors are prefixed with
+  \textsf{rcd}. This prefix is omitted in \OCaml code,  
   where type constructors appear in postfix position.
 })
 while shape patterns $\cpat$ act as type `destructors', binding parts of the type
@@ -1100,7 +1099,6 @@ we generate the typing constraint:
   {{\labfrom \elab \ct \leq (\tlab \tv \t)}}}
       }
 \end{mathpar}
-
 This constraint introduces the unification variable $\tv$, unifying it
 with the type of $\e$ (via $\cinfer \e \tv$), and suspends resolution
 of the return type $\t$ until the type $\tv$ of $\e$ becomes
@@ -1153,7 +1151,7 @@ generalizing it into a type scheme, and finally typing the body under the
 extended typing environment that binds the generalized scheme. The
 Hindley-Milner algorithm $\mathcal{J}$, its variants $\mathcal{W}$ or
 $\mathcal{M}$~\citep* {Lee_Yi/algoM@toplas1998}, or more flexible
-constraint-based type inference implementations~\citep*
+constraint-based type-inference implementations~\citep*
 {Remy/mleth,Remy/thesis, Odersky-Sulzmann-Wehr@tpos, \BBemlti} all
 follow this strategy, to the best of our knowledge.
 
@@ -1178,10 +1176,11 @@ since the type of \code{p.x} is still not yet known. Instead, we must typecheck
 the body first, where the call \code{getx (diag 42)} reveals that \code{p} has
 type \code{'a gpoint}.
 %
-Failing to do so would make inference incomplete, since the program is clearly
-well-typed. Nor can we treat the let-binding as monomorphic, since both calls
-to \code{getx} use different instantiations of \code{'a}: $\tv \is \tint$ in \code{getx (diag
-42)} and $\tv \is \tfloat$ in \code{(getx gp : float)}.
+Failing to do so would make inference incomplete, since the program is
+clearly well-typed. Nor can we treat the let-binding as monomorphic, since
+both calls to \code{getx} use different instantiations of \code{'a}: indeed,
+$\tv$ is $\tint$ in \code{getx (diag 42)} while $\tv$ is $\tfloat$ in
+\code{(getx gp : float)}.
 
 \parcomment{Our solution}
 
