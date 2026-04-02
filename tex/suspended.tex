@@ -677,7 +677,9 @@ generalized type scheme $\all \av {\tapoly {\tsb} \av}$. This is by
 design---the explicit annotation in $\epoly[\ts] \e$ records that the polytype
 is known. We also require that the type of $\e$ be $\tsa$, another copy of $\ts$
 with (typically different fresh) annotations, rather than $\ts$ itself, so
-that the user need not care about node annotations in $\ts$. 
+that the user need not care about node annotations in $\ts$.
+
+\XDR{We never say that polytypes are closed}
 
 \parcomment {Unboxing (principality restriction and \geninst-directionality)}
 
@@ -704,6 +706,25 @@ because the explicit annotation introduces a fresh annotation variable~$\ava$
 for $\eannot \x {} {\tpoly \ts}$, which can then be generalized, yielding 
 $\tfor \ava {\tannot {\tpoly \ts} \ava}$ for the type of the let-bound variable 
 $\x$.
+
+\XDR{We never say that polytypes are closed. Would we like simple types to
+alos be closed \eg. ground types. That would be odd.  In any case we must
+be clear about the status of free type variables of $\t$ in $\eannot \e
+{}\t$. If we allow free type variables in $\t$, we can no longer separate
+the two copies of $\t$. There is no huge differenece between two occurrences
+of the unitary predicate and one occurrence of a binary predicates
+$\ta \Leftarrow \t \Rightarrow \tb$. If we explicitly mention the free
+variables of $\t$ as $\exi \tvs \t$, we could write
+$\ta \Leftarrow \t \Rightarrow \tb$ to just copy the annotation nodes and
+them write \def \SU{\where {\tvs \is \ts}} $\ta \SU$ and $\tb \SU$ on the
+two judgements:
+$$
+  \infer[PolyML-Annot]
+    {\G \th \e : \ta \SU \\ \ta \Leftarrow \t \Rightarrow \tb \\ \G \th \ts}
+    {\G \th \eannot \e {\tvs} \t : \tb \SU}
+$$
+}
+
 
 \parcomment {Who uses this?}
 % This paragraph also performs the duty of linking PolyML and OCaml in the
@@ -1532,8 +1553,9 @@ following expressions:
   belong to the record type $\T$.
 
 \end{itemize}
-All annotations in \OML are closed \ie their quantified variables $\tvs$ are
-exactly the free variables of the type $\t$ or type scheme $\ts$.
+All annotations in \OML are closed \ie their existentially quantified
+variables $\tvs$ are exactly the free variables of the type $\t$ or type
+scheme $\ts$.
 %
 We use $\e^i$ to range over fragile, implicit terms (\eg $\efield \e \elab$) and
 $\e^x$ for their explicit counterparts (\eg $\exfield \e \T \elab$).
