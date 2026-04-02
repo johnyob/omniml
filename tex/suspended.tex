@@ -675,7 +675,9 @@ at polytypes (see \Rule{Annot-Poly}). Because $\ts$ is supplied by the
 programmer, the polytype is treated as known: $\epoly[\ts] \e$ also has the
 generalized type scheme $\all \av {\tapoly {\tsb} \av}$. This is by
 design---the explicit annotation in $\epoly[\ts] \e$ records that the polytype
-is known.
+is known. We also require that the type of $\e$ be $\tsa$, another copy of $\ts$
+with (typically different fresh) annotations, rather than $\ts$ itself, so
+that the user need not care about node annotations in $\ts$. 
 
 \parcomment {Unboxing (principality restriction and \geninst-directionality)}
 
