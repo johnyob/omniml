@@ -26,8 +26,8 @@
 \renewcommand{\lstlistingname}{Example}
 \newcommand{\lvl}{{\ensuremath n}}
 
-\newcommand{\lstsize}{}
-\let \lstsize \relax
+\RequirePackage{checkfontsize}
+\newcommand{\lstsize}{\NormalsizeFontBool{\small}{}}
 
 \lstdefinelanguage{ocaml}[Objective]{Caml}{
   % Fix errors in the default definition of ocaml.

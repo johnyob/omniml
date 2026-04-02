@@ -88,8 +88,12 @@
   once it becomes available, using \emph{suspended match constraints}. This
   approach is straightforward for simply typed systems, but extending it to \ML
   is challenging due to \emph{let-generalization}. Existing \ML inference
-  algorithms type let-bindings $\elet \x \ea \eb$ in a fixed order---type
-  $\ea$, generalize its type, and then type $\eb$. To overcome this, we
+  algorithms type let-bindings
+  \XDR{We should avoid maths in abstracts, I propose the following change}\XDR[
+  $\elet \x \ea \eb$ in a fixed order---type
+  $\ea$, generalize its type, and then type $\eb$]{in a fixed order---type
+  the bound expression first, generalize its type, and then type the binding
+  body}. To overcome this, we
   introduce \emph{incremental instantiation}, allowing partially solved type
   schemes containing suspended constraints to be instantiated, with a mechanism
   to incrementally update instances as the scheme is refined.
@@ -106,6 +110,8 @@
 
 \end{abstract}
 \maketitle
+
+\Meaning \@tempdima
 
 \section{Introduction}
 \label{sec/introduction}

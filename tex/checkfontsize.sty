@@ -1,0 +1,35 @@
+
+\usepackage{boolean}
+
+\AtBeginDocument
+  {\begingroup
+   \large \@tempdima 1em \xdef \cfz@large {\the \@tempdima}\relax
+   \normalsize \@tempdima 1em \xdef \cfz@normalsize {\the \@tempdima}\relax
+   \small \@tempdima 1em \xdef \cfz@small {\the \@tempdima}\relax
+   \footnotesize \@tempdima 1em \xdef \cfz@footnotesize {\the \@tempdima}\relax
+   \tiny \@tempdima 1em \xdef \cfz@tiny {\the \@tempdima}\relax
+   \endgroup}
+
+\def \cfz@iflarge {\@tempdima 1em\ifdim \@tempdima=\cfz@large}
+\def \cfz@ifnormalsize {\@tempdima 1em\ifdim \@tempdima=\cfz@normalsize}
+\def \cfz@ifsmall {\@tempdima 1em\ifdim \@tempdima=\cfz@small}
+\def \cfz@iffootnotesize {\@tempdima 1em\ifdim \@tempdima=\cfz@footnotesize}
+\def \cfz@iftiny {\@tempdima 1em\ifdim \@tempdima=\cfz@tiny}
+
+\newcommand {\cfz@bool}[1]
+    {\@tempdima 1em
+     \ifdim \@tempdima=#1\let \bln@do \bln@true
+     \else \let \bln@do \bln@false\fi
+     \bln@do}
+
+\newcommand \LargeFontBool
+  {\cfz@bool \cfz@large}
+\newcommand \NormalsizeFontBool
+  {\cfz@bool \cfz@normalsize}
+\newcommand \SmallFontBool
+  {\cfz@bool \cfz@small}
+\newcommand \FootnotesizeFontBool
+  {\cfz@bool \cfz@footnotesize}
+\newcommand \TinyFontBool
+  {\cfz@bool \cfz@tiny}
+   
