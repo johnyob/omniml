@@ -376,7 +376,7 @@ even though both \code{point} and \code{gray_point} define the fields
 This is because \OCaml performs \emph{closed-world reasoning}: the
 typechecker is able to unambiguously
 infer the type of \ocaml{one} as \code{point}, since it is the only record type
-whose domain is \ocaml!$\{$ x, y $\}$!. Similarly,
+whose domain is $\set{\mathtt{x}, \mathtt{y}}$. Similarly,
 \code{r.color} necessarily infers \code{gray_point} for the type of \code{r}.
 
 \parcomment{Examples}
@@ -480,7 +480,7 @@ must be explicitly unboxed at use sites. The syntax of polytypes is given in
 We write $\epoly[\ts] \e$ to box a term $\e$ with the scheme $\ts$. This
 returns an expression whose type is the polytype $\tpoly \ts$.  Since
 polytypes are boxed, they cannot be be freely instantiated, by
-contrast with regular type scheme. An expression~$\e$ of a polytype $\tpoly
+contrast with regular type schemes. An expression~$\e$ of a polytype $\tpoly
 \ts$ must first be unboxed with the construct $\einst \e$, in order to be
 seen at any type instance $\t$ of $\ts$ and used accordingly.  Since they
 are boxed, polytypes can be treated as regular (mono)types, thereby enabling
@@ -541,10 +541,12 @@ $\einst {\texttt{bag} \esend \texttt{mem}}$. At this point, the defaulting rule
 assigns \ocaml{bag}'s \ocaml{mem} field the \emph{monomorphic} polytype 
 $\tpoly {\tva \to \tvb}$.
 
-\XDR {BEWARE! This is not correct: we do not know whether methods are
-polymorphic, so all methods are considered to be polymorphic,
-i.e. polytypes. At introduction, they is no need for default, since we
-require an annotation.  Hence, in the absence of an annotation, we know
+\XDR {BEWARE! The paragraph below is not correct---unless we consider that
+method calls are uncommon (but this is not what is suggested): we do not
+know whether methods are polymorphic, so all methods are considered to be
+polymorphic, i.e. polytypes. At introduction, they is no need for default,
+since we require an annotation.  Hence, in the absence of an annotation, we
+know
 \emph{syntactically} that this is a monomorphic polytype.  By contrast,
 elimination does not require any annotation, so we cannot tell
 syntactically.  If it is a polymorphic node ($\epsilon$), then we trust the
@@ -567,14 +569,14 @@ at every function application.
 \label{sec/overview/polytypes}
 
 % Polytypes are semi-explicit (not implicit nor explicit)
+
 Polytypes, introduced by \citet{\BBpolyml}, allow so-called
 \emph{semi-explicit first-class polymorphism}. Polytypes require
-explicit introduction and elimination forms, but only an explicit type
-scheme annotation at their introduction, the type instantiation at their
+explicit introduction and elimination forms, but only explicit type
+scheme annotations at their introduction, type instantiations at their
 elimination being left implicit. Therefore, polytypes stand in contrast to
 \emph{implicit} higher-rank or first-class polymorphism, provided by systems
-such as
-\DK~\citep*{dunfield-krishnaswami-bidirectional-poly},
+such as \DK~\citep*{dunfield-krishnaswami-bidirectional-poly},
 \QuickLook~\citep*{journals/pacmpl/SerranoHJV20}, and \Frost~\citep*{frost},
 which are unboxed. At the same time, they are less explicit than \emph{fully
 explicit} polymorphism (\eg System-$\F$), where both quantification and
@@ -619,16 +621,19 @@ expressions must be typed before their \textbf{i}nstances.
 \parcomment{Annotation variables. Why?}
 
 To make this notion precise, we annotate types with \emph{annotation variables}
-$\av$. We write $\tannot \t \av$ for a type $\t$ annotated with the variable
+$\av$. We write $\tannot \t \av$ for a type~$\t$ annotated with the variable
 $\av$. These variables record the origins of types and may themselves be
-generalized, yielding type schemes such as $\tfor \av {\tannot \t \av}$
+generalized, yielding type schemes such as $\tfor \av \t$
+where $\av$ appears free in $\t$ or as a special case $\tfor \av {\tannot \t
+\avp}$ where $\av$ is an annotation on the topmost node. 
 %
 \parcomment{What is a known type?}
 %
-A type $\tannot \t \av$ is considered \emph{known} if its annotation variable
-$\av$ is eligible for generalization (\eg $\tfor \av {\tannot \t \av}$). Conversely,
-types with monomorphic annotation variables are considered \emph{not-yet-known}
-and cannot be relied on for disambiguation.
+Actually, a type $\tannot \t \av$ is considered \emph{known} if its (topmost)
+annotation variable $\av$ is eligible for generalization (\eg $\tfor \av
+{\tannot \t \av}$). Conversely, types with monomorphic annotation variables,
+\ie that cannot be generalized in the current context, are considered
+\emph{not-yet-known} and cannot be relied on for disambiguation.
 
 
 \begin{mathparfig}[htpb!]
@@ -691,7 +696,7 @@ that the user need not care about node annotations in $\ts$.
 
 Conversely, to instantiate a polytype expression (\Rule{PolyML-Inst}), one must
 use an explicit unboxing operator $\einst \e$, which requires no accompanying
-type annotation. However, the operator requires $\e$ to have a \emph{known}
+type annotation. However, the operator requires~$\e$ to have a \emph{known}
 polytype scheme 
 of the form $\tfor \av {\tapoly \ts \av}$ and then assigns $\einst \e$ the
 type~$\ts$. If, by contrast, $\e$ has the type $\tapoly \ts \av$ for some 
@@ -708,9 +713,9 @@ preventing unwanted sharing of annotation variables that could otherwise
 block generalization.  
 For example, $\efun {\x : \tpoly \ts} {\einst \x}$, which is syntactic sugar for 
 $\efun \x {\elet \x {\eannot \x {} {\tpoly \ts}}} {\einst \x}$, is well-typed 
-because the explicit annotation introduces a fresh annotation variable~$\ava$ 
+because the explicit annotation introduces a fresh annotation variable~$\av$ 
 for $\eannot \x {} {\tpoly \ts}$, which can then be generalized, yielding 
-$\tfor \ava {\tannot {\tpoly \ts} \ava}$ for the type of the let-bound variable 
+$\tfor \av {\tannot {\tpoly \ts} \av}$ for the type of the let-bound variable 
 $\x$.
 
 \XDR{We never say that polytypes are closed. Would we like simple types to
@@ -723,7 +728,7 @@ $\ta \Leftarrow \t \Rightarrow \tb$. If we explicitly mention the free
 variables of $\t$ as $\exi \tvs \t$, we could write
 $\ta \Leftarrow \t \Rightarrow \tb$ to just copy the annotation nodes and
 them write \def \SU{\where {\tvs \is \ts}} $\ta \SU$ and $\tb \SU$ on the
-two judgements:
+two judgments:
 $$
   \infer[PolyML-Annot]
     {\G \th \e : \ta \SU \\ \ta \Leftarrow \t \Rightarrow \tb \\ \G \th \ts}
@@ -874,7 +879,7 @@ typically preferred.
 
 Cruicially, the assignment of modes determines how type information flows
 through the program. In particular, types become available either as inputs to
-checking judgements or as outputs of synthesizing judgements. We call such
+checking judgments or as outputs of synthesizing judgments. We call such
 types \emph{known}. 
 %
 Formally, a type $\t$ is \emph{known} when it is either:
@@ -935,7 +940,7 @@ propagation, the term \ocaml[angles]{<p>} would be ambiguous, as no polymorphic 
 thus \emph{known}) type can be ascribed to \code{p}. \OCaml resolves this by
 supplementing \geninst-directional inference with a form of bidirectional
 propagation: the expected type of \code{g}'s parameter (\code{[ 'a. 'a -> 'a ] -> int}) is
-bidirectionally propagated to the application of \code{g}, assigning
+bidirectionally propagated to the application of~\code{g}, assigning
 \code{p} to have the \emph{known} type \code{[ 'a. 'a -> 'a ]} and thereby
 disambiguating \ocaml[angles]{<p>}.
 
@@ -966,14 +971,20 @@ inference.
 
 \parcomment{Example: dynamic order types more programs}
 %
-Consider again \code{ex_6_2, ex_6_3} from \cref{sec/overview/directional}:
+Consider again \code{ex_6_2} and \code{ex_6_3} from
+\cref{sec/overview/directional}: 
 \begin{program}[input,angles]
-let ex_6_2 = app (fun p -> <p>) pid  °\Ocamlcomment{\ocamlFlag {\OML}0}°
-let ex_6_3 = rev_app pid (fun p -> <p>) °\Ocamlcomment{\ocamlFlag {\OML}0}°
+let ex_6_2 = app (fun p -> <p>) pid     °\ocamlflags 10°
+let ex_6_3 = rev_app pid (fun p -> <p>) °\ocamlflags 00°
 \end{program}
 %
 Under \geninst-directionality, both terms are ill-typed; under \OCaml's
-bidirectional approach\footnote{\TODO{Give ocamlc flags to check this}}, only \code{ex_6_2}
+bidirectional approach\footnote{In this example, we
+use the options
+\code{-no-principal -w +41+18 -warn-error +41+18}.
+to enable let-directionality in addition to $\pi$-directionalirty.},
+},
+only \code{ex_6_2} 
 is rejected. Yet both terms have a principal type---it is merely a question of
 propagating type information in the right order. Omnidirectional type inference
 typechecks both: since it allows the typing of either side to proceed first,

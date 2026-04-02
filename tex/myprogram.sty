@@ -195,13 +195,13 @@
 \newcommand\smashcolorbox[2] {\smash{\fboxsep 1pt\colorbox{#1}{#2}}}
 \newif \ifocamlwarnings
 \newcommand \ocamlFlag[2]
-  {\ifcase #2\relax
+  {\ifx #2-\else\ifcase #2\relax
      \smashcolorbox{welltyped}{#1}\or
      \smashcolorbox{illtyped}{#1}\or
      \ifocamlwarnings
        \smashcolorbox{warning}{#1}\else
        \smashcolorbox{illtyped}{#1}\fi
-   \else \fi}
+   \else \fi\fi}
 %% \newcommand \ocamlFlag[2]
 %%   {\ifcase #2\relax
 %%      \textcolor{green!50!black}{#1}\or
