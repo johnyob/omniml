@@ -4526,6 +4526,13 @@ At present, our prototype supports only basic error reporting, attaching source
 locations to constraints. That said, we see no obstacle to adopting the
 approach of \citet*{journals/pacmpl/BhanukaPBB23}.
 
+
+\paragraph{Integration into OCaml} We were asked whether we plan to integrate this work in the OCaml type system. There are two questions here: whether suspended constraints could integrate nicely with the current OCaml type theory, and whether implementations of the OCaml type system could be extended to support it.
+
+For the type theory, we are confident that suspended constraints and incremental generalization would be compatible with the various features of the OCaml type system. Some other features of OCaml could benefit from being elaborated into suspended constraints, and in certain cases such as GADTs this could be a research topic of its own, but it is always possible to leave them as-is at first and suspend them later.
+
+For the implementation, the current OCaml type-checker codebase is not a clean constraint-based system, it evolved from a one-pass algorithm mutating types in-place and has grown complex over the decade. Our current expert opinion is that implementing suspended constraints within the type-inference engine would be possible (there is already a tree of inference regions, and we would add callbacks to revisit certain subterms when guards are discharged). But one would have to evaluate carefully whether the complexity of the resulting code, mixing mutable updates with non-trivial control flow, remains manageable; it could be rejected to preserve maintainability. There are independent plans to consider clean-room or incremental reimplementations of the type-checker to become constraint-based, which would ease the integration of our work.
+
 \section{Related work}
 \label{sec:related-work}
 
