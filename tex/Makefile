@@ -21,6 +21,17 @@ wits-submit: wits.submit.pdf
 
 toplascl: toplascl.pdf
 
+LATEXDIFF=latexdiff --allow-spaces --type=CCHANGEBAR --config "PICTUREENV=(?:picture|tikzpicture|DIFnomarkup|verbatim|tabular|figure|mathpar|mathparfig|program|thebibliography)[\w\d*@]*" --exclude-safecmd="ocaml" --exclude-textcmd="llabel" --exclude-textcmd="lref"
+
+toplas-diff.tex: suspended.tex
+	cp suspended.tex /tmp/suspended-new.tex
+	git show before-toplas-reviews-1:tex/suspended.tex > /tmp/suspended-old.tex
+	sed -i 's/\\jobname.cfg/suspended.final.cfg/' /tmp/suspended-{new,old}.tex
+	# Didier's "\llabel A", "lref C" etc. confuse latexdiff; get rid of them
+	sed -i 's/\\llabel \([A-Za-z]*\)/\\llabel{\1}/' /tmp/suspended-{new,old}.tex
+	sed -i 's/\\lref \([A-Za-z]*\)/\lref{\1}/' /tmp/suspended-{new,old}.tex
+	$(LATEXDIFF) /tmp/suspended-old.tex /tmp/suspended-new.tex > toplas-diff.tex
+
 all: $(addsuffix .pdf,${PRJ})
 
 %.log: %.pdf
