@@ -1,6 +1,7 @@
 PRJ = suspended suspended.final suspended.draft wits
 
 LATEXMK = latexmk -bibtex -pdf -outdir=_build -auxdir=_build
+LATEXMK_WATCH = $(LATEXMK) -pvc -interaction=nonstopmode
 
 SOURCES=$(shell find . -name '*.tex' -or -name '*.bib' -or -name '*.sty' -or -name '*.cfg')
 
@@ -43,7 +44,7 @@ all: $(addsuffix .pdf,${PRJ})
 	cp $(BUILD)/$@ .
 
 %.wpdf: %.tex ${SOURCES}
-	$(LATEXMK) -pvc $<
+	$(LATEXMK_WATCH) $<
 
 %.view: %.pdf
 	open $< &
