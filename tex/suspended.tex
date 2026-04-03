@@ -465,28 +465,28 @@ System-$\F$-like expressiveness to \OCaml by supporting first-class
 polymorphism (impredicative higher-rank polymorphism) while preserving
 principal type inference.
 
-\paragraph{From polymorphic methods to polytypes}
+\paragraph{From polymorphic methods to \polytypes}
 \label{sec/overview/polymethods-reduction}
 
 \parcomment{Idea and syntax}
 
 Polymorphic methods can be translated into ordinary methods that carry a
-\emph{polytype}: a polytype is a \emph{boxed} type scheme $\tpoly \ts$ that
-must be explicitly unboxed at use sites. The syntax of polytypes is given in
+\emph{\polytype}, that is, a \emph{boxed} type scheme $\tpoly \ts$ that
+must be explicitly unboxed at use sites. The syntax of \polytypes is given in
 \cref{fig:polyml-syntax}.
 %
 We write $\epoly[\ts] \e$ to box a term $\e$ with the scheme $\ts$. This
-returns an expression whose type is the polytype $\tpoly \ts$.  Since
+returns an expression whose type is the \polytype $\tpoly \ts$. Since
 polytypes are boxed, they cannot be be freely instantiated, by
-contrast with regular type schemes. An expression~$\e$ of a polytype $\tpoly
+contrast with regular type schemes. An expression~$\e$ of a \polytype $\tpoly
 \ts$ must first be unboxed with the construct $\einst \e$, in order to be
-seen at any type instance $\t$ of $\ts$ and used accordingly.  Since they
+seen at any type instance $\t$ of $\ts$ and used accordingly. Since they
 are boxed, polytypes can be treated as regular (mono)types, thereby enabling
 impredicativity.
 
 \begin{bnffig}[tb]
   {fig:polyml-syntax}
-  {Selected syntax for polytypes \citep*{\BBpolyml}.}
+  {Selected syntax for \polytypes \citep*{\BBpolyml}.}
      \entry[Terms]{\e}{
        \epoly[\ts] \e
        \and \einst \e
@@ -516,10 +516,9 @@ This reduction is useful for two reasons:
 \begin{enumerate*}
   \item Inference for \OCaml's object layer is largely governed by row-polymorphism,
     which is \emph{robust} and does not threaten principality; it is therefore
-    orthogonal to our concerns. In contrast, polytypes are \emph{fragile}.
+    orthogonal to our concerns. In contrast, \polytypes are \emph{fragile}.
 
-
-  \item Polytypes underpin other features in \OCaml, notably the recent
+  \item \Polytypes underpin other features in \OCaml, notably the recent
     addition of polymorphic function parameters \citep*{\BBpolyparams}.
 
 \end{enumerate*}
@@ -528,8 +527,8 @@ This reduction is useful for two reasons:
 \label{sec/default-rules/poly}
 
 As with static overloading in \cref{sec/default-rules}, \OCaml employs a
-defaulting rule for polytypes: when a polytype cannot be inferred as
-\emph{known}, it is defaulted to a monomorphic polytype. 
+defaulting rule for \polytypes: when a polytype cannot be inferred as
+\emph{known}, its polymorphic scheme is defaulted to a monomorphic type. 
 %
 This is particularly useful, as it allows to typecheck functions such
 as \ocaml{fun bag x -> bag#mem x} without annotations. Here, the method
@@ -568,11 +567,11 @@ at every function application.
 
 % Polytypes are semi-explicit (not implicit nor explicit)
 
-Polytypes, introduced by \citet{\BBpolyml}, allow so-called
-\emph{semi-explicit first-class polymorphism}. Polytypes require
+\Polytypes, introduced by \citet{\BBpolyml}, allow so-called
+\emph{semi-explicit first-class polymorphism}. \Polytypes require
 explicit introduction and elimination forms, but only explicit type
 scheme annotations at their introduction, type instantiations at their
-elimination being left implicit. Therefore, polytypes stand in contrast to
+elimination being left implicit. Therefore, \polytypes stand in contrast to
 \emph{implicit} higher-rank or first-class polymorphism, provided by systems
 such as \DK~\citep*{dunfield-krishnaswami-bidirectional-poly},
 \QuickLook~\citep*{journals/pacmpl/SerranoHJV20}, and \Frost~\citep*{frost},
@@ -582,7 +581,7 @@ instantiation must be explicitly and fully specified.
 
 % Ward off comments that polytypes aren't as good as implicit first-class 
 % polymorphism.
-We focus on polytypes in the remainder of this work for two reasons. First,
+We focus on \polytypes in the remainder of this work for two reasons. First,
 they are used in \OCaml, notably for polymorphic methods and polymorphic
 function parameters. Second, they expose the subtle interaction with
 principality that is of interest. 
@@ -597,7 +596,7 @@ default rules---a mechanism also used in bidirectional systems, \eg \DK's
 \label{sec/overview/directional}
 
 We now discuss the two main directional inference approaches:
-\geninst-directional and bidirectional, illustrated using polytypes as a
+\geninst-directional and bidirectional, illustrated using \polytypes as a
 running example. We then discuss limitations of both approaches, providing us
 with the motivation for omnidirectional type inference.
 
@@ -636,7 +635,7 @@ annotation variable $\av$ is eligible for generalization (\eg $\tfor \av
 
 \begin{mathparfig}[htpb!]
   {fig:polyml}
-  {\Geninst-directional syntax and typing rules for polytypes from \PolyML~\citep*{\BBpolyml}.}
+  {\Geninst-directional syntax and typing rules for \polytypes from \PolyML~\citep*{\BBpolyml}.}
 \begin{bnfgrammar}[\def\bnfsep{\;}]
      \entry[Types]{\t}{
         \tannot \t \av
@@ -668,19 +667,21 @@ annotation variable $\av$ is eligible for generalization (\eg $\tfor \av
 
 \parcomment{\PolyML typing rules}
 
-Using this approach, we can give typing rules for polytypes; this yields
-precisely the formulation introduced in
-\PolyML~\citep*{\BBpolyml}, given in \cref{fig:polyml}.
+Using this approach, we can give typing rules for polytypes; this
+yields precisely the formulation introduced in
+\PolyML~\citep*{\BBpolyml}, given in \cref{fig:polyml}.\Xgabriel{In the
+  grammar of types in that figure, I would expect $\tpoly \ts$ to be
+  listed. Why is it not done?}
 %
 \parcomment {Boxing}
 %
-The introduction form (\Rule{PolyML-Poly}) for polytypes is a boxing operator
+The introduction form (\Rule{PolyML-Poly}) for \polytypes is a boxing operator
 $\epoly[\ts] \e$ with an explicit polytype annotation $\ts$.
 %
 The resulting expression has type $\tapoly {\tsb} \av$ where $\av$ is an
 arbitrary (typically fresh) annotation variable and $\tsb$ is a \emph{freshened
 copy} of $\ts$, \ie a variant of $\ts$ with fresh annotation variables placed
-at polytypes (see \Rule{Annot-Poly}). Because $\ts$ is supplied by the
+at \polytypes (see \Rule{Annot-Poly}). Because $\ts$ is supplied by the
 programmer, the polytype is treated as known: $\epoly[\ts] \e$ also has the
 generalized type scheme $\all \av {\tapoly {\tsb} \av}$. This is by
 design---the explicit annotation in $\epoly[\ts] \e$ records that the polytype
@@ -688,18 +689,18 @@ is known. We also require that the type of $\e$ be $\tsa$, another copy of $\ts$
 with (typically different fresh) annotations, rather than $\ts$ itself, so
 that the user need not care about node annotations in $\ts$.
 
-\XDR{We never say that polytypes are closed}
+\XDR{We never say that \polytypes are closed}
 
 \parcomment {Unboxing (principality restriction and \geninst-directionality)}
 
-Conversely, to instantiate a polytype expression (\Rule{PolyML-Inst}), one must
+Conversely, to instantiate a \polytype expression (\Rule{PolyML-Inst}), one must
 use an explicit unboxing operator $\einst \e$, which requires no accompanying
 type annotation. However, the operator requires~$\e$ to have a \emph{known}
 polytype scheme 
 of the form $\tfor \av {\tapoly \ts \av}$ and then assigns $\einst \e$ the
 type~$\ts$. If, by contrast, $\e$ has the type $\tapoly \ts \av$ for some 
 non-generalizable annotation variable $\av$, then $\e$ is considered as a
-\emph{not-yet-known} polytype, and therefore $\einst \e$ is ill-typed. This
+\emph{not-yet-known} \polytype, and therefore $\einst \e$ is ill-typed. This
 restriction enforces principality, preventing instantiation on \emph{guessed}
 polytypes.
 
@@ -716,7 +717,7 @@ for $\eannot \x {} {\tpoly \ts}$, which can then be generalized, yielding
 $\tfor \av {\tannot {\tpoly \ts} \av}$ for the type of the let-bound variable 
 $\x$.
 
-\XDR{We never say that polytypes are closed. Would we like simple types to
+\XDR{We never say that \polytypes are closed. Would we like simple types to
 alos be closed \eg. ground types. That would be odd.  In any case we must
 be clear about the status of free type variables of $\t$ in $\eannot \e
 {}\t$. If we allow free type variables in $\t$, we can no longer separate
@@ -763,7 +764,7 @@ let ex_5 = let p = pid in <p> °\ocamlflags 00°
 let ex_6 = (fun p -> <p>) pid °\ocamlflags 10°
 \end{program}
 At first glance, \code{ex_5} and \code{ex_6} appear equivalent: both simply
-instantiate the polytype bound to~\code{p}. Yet, \OCaml accepts \code{ex_5} and
+instantiate the \polytype bound to~\code{p}. Yet, \OCaml accepts \code{ex_5} and
 rejects \code{ex_6}. This is because the let-binding in \code{ex_5}
 allows \code{p} to have type scheme $\tfor \av {\tapoly {\tfor \tv \tv \to
 \tv} \av}$, and thus its type is considered \emph{known}---permitting unboxing
@@ -838,7 +839,7 @@ typically preferred.
 
 \begin{mathparfig}[htpb!]
   {fig:bidir-poly}
-  {Bidirectional typing rules for polytypes.}
+  {Bidirectional typing rules for \polytypes.}
   \infer[Syn-Var]
     {\x : \t \in \G}
     {\G \th \x \Rightarrow \t}
@@ -888,10 +889,10 @@ Formally, a type $\t$ is \emph{known} when it is either:
   \item produced by a synthesizing premise ($\G \th \e \Rightarrow \t$)
 \end{enumerate*}.
 
-\parcomment{Polytype rules}
+\parcomment{\Polytype rules}
 
 Using this notion of known types, we can give a \emph{principal} type system
-for polytypes, shown in \cref{fig:bidir-poly}. This system eliminates two
+for \polytypes, shown in \cref{fig:bidir-poly}. This system eliminates two
 artifacts needed in the \geninst-directional presentation: explicit annotations
 on boxing and annotation variables. Since $\eannot \e {} \t$ already propagates
 known information, $\epoly \e$ requires no attached annotation; and because
@@ -900,7 +901,7 @@ annotation variables are unnecessary.
 
 \parcomment{Limitations}
 
-While this approach yields a remarkably clean account of polytypes, it suffers
+While this approach yields a remarkably clean account of \polytypes, it suffers
 from the fundamental limitation of bidirectional typing: there is generally no
 optimal assignment of modes. For any choice of modes, some programs will
 typecheck successfully, while others will fail unnecessarily. Yet, the typing
@@ -1111,7 +1112,7 @@ of the projection of the label $\elab$ at type $\T$ in the global
 record-declaration environment can be instantiated into
 $(\tlab \tv \t)$.
 
-\parcomment{Polytypes}
+\parcomment{\Polytypes}
 
 When typechecking the polytype unboxing operator $\einst \e$, if $\e$ is
 already known to have the type $\tpoly \ts$, then we can simply
@@ -1462,12 +1463,12 @@ community.
     {{\labfrom \elab \T} \leq (\trcd \T \tys \to \t\where{\tvs \is \tys})}
 \end{mathparfig}
 
-\parcomment {Running example: polytypes}
+\parcomment {Running example: \polytypes}
 
 \parcomment {We need a spec, but this itself is hard}
 
 % SPJ didn't like 'surface' language here, since OCaml doesn't have
-% polytypes in the concrete syntax (though it has them in the abstract syntax,
+% \polytypes in the concrete syntax (though it has them in the abstract syntax,
 % but this is an implementation artifact and arguably something I'd like to
 % remove).
 To prove correctness of type inference, we must define a language and
@@ -1506,7 +1507,7 @@ $\efield \e \elab$ into its robust explicit counterpart $\exfield \e \T \elab$.
 \subsection{Syntax}
 
 \OML (\cref{fig/oml/syntax-xtyping}) extends \ML with two fragile constructs:
-polytypes and nominal records.  Variants are not treated formally in \OML, but
+\polytypes and nominal records.  Variants are not treated formally in \OML, but
 behave analogously to records.
 
 \paragraph{Notation for collections}
@@ -1525,7 +1526,7 @@ of $\overline X$ and $\overline X'$. We often write $X$ for the singleton set
 
 Monotypes (or just types) include, as usual, type variables $\tv$, the unit
 type $\tunit$, arrow types, but also nominal record types $\trcd \T \tys$, and
-polytypes $\tpoly \ts$. We use a non-standard syntax $\trcd \T \tys$ for record
+\polytypes $\tpoly \ts$. We use a non-standard syntax $\trcd \T \tys$ for record
 types, where $\T$ is a \emph{record name} and $\tys$ a list of type
 parameters.%
 %
@@ -1554,7 +1555,7 @@ following expressions:
 \begin{itemize}
 
 \item
-  For polytypes, we introduce implicit and explicit boxing and unboxing
+  For \polytypes, we introduce implicit and explicit boxing and unboxing
   forms: $\epoly \e$, $\expoly \e \tvs \ts$, and $\einst \e$, $\exinst \e
   \tvs \ts$ respectively.
 
@@ -1601,15 +1602,15 @@ resulting annotation matches the type of $\e$. For instance, the term $(\efun
 substitution $\where {\tv \is \tint}$.
 
 
-\paragraph {Explicit polytypes}
+\paragraph {Explicit \polytypes}
 
 % We do *not* write Rule \Rule{X}. X is a noun.
 \Rule{Poly-X} serves as the introduction rule: given the (closed) type
-scheme~$\ts$, it forms a first-class polytype $\tpoly \ts$, requiring the
+scheme~$\ts$, it forms a first-class \polytype $\tpoly \ts$, requiring the
 expression
 $\e$ to be at least as polymorphic as $\ts$. \Rule {Use-X} is the
 corresponding
-elimination rule, unpacking an expression of polytype $\tpoly \ts$ into
+elimination rule, unpacking an expression of \polytype $\tpoly \ts$ into
 one of polymorphic type $\ts$,
 which may be freely instantiated (via \Rule{Inst}). Both rules also allow
 polytype annotations to be partial, \ie $\ts$ may have free type variables
@@ -1704,7 +1705,7 @@ We introduce \emph{shapes} as a generalization of type constructors.
 %% for suspended match constraints.  They would provide the same benefit in
 %% PolyML without match constraints.
 They provide a uniform treatment of both
-constructors and polytypes, and are useful in defining polytype
+constructors and \polytypes, and are useful in defining polytype
 unification (\Cref{sec:implementation}).
 
 \parcomment {Definition of shape}
@@ -1770,17 +1771,17 @@ Each non-variable type $\t$ has a unique canonical principal shape,
 written $\shape \t$. For example, $\shape {\trcd \T \tys}$ is
 $\any \tvcs \trcd \T \tvcs$.
 
-\parcomment {Polytypes are constructors}
+\parcomment {\Polytypes are constructors}
 
-Shapes are particularly interesting in the context of polytypes, since
-polytypes can be decomposed into shapes and thus treated analogously to
+Shapes are particularly interesting in the context of \polytypes,
+which can be decomposed into shapes and thus treated analogously to
 type constructors.
 \begingroup
 \newcommand {\tsh}[1]%
   {\def \tsi {\all \tvb {{\parens{\tva \to #1}}} \tprod \tvb}
   \tpoly {\all \tva {\parens {\tpoly \tsi} \to \tva} \to \tva}}%
-For instance, the polytype $\tsh {\tint \tlist}$ has the principal shape
-$\sh$ equal to $\any \tvc {\tsh \tvc}$. The original polytype can thus be
+For instance, the \polytype $\tsh {\tint \tlist}$ has the principal shape
+$\sh$ equal to $\any \tvc {\tsh \tvc}$. The original \polytype can thus be
 represented as the shape application $\shapp (\tint \tlist)$.
 \endgroup
 
@@ -1988,9 +1989,9 @@ We first describe the framework, then present each feature separately.
     : \t$ as a premise.
 \end{enumerate}
 
-\paragraph{Implicit polytypes}
+\paragraph{Implicit \polytypes}
 
-Unboxing a polytype $\einst \e$ is an \emph{elimination form}. Following the
+Unboxing a \polytype $\einst \e$ is an \emph{elimination form}. Following the
 omnidirectional recipe, \Rule{Use-I} is a contextual rule (\emph{Step 1})
 requiring that the principal term $\e$ have the unique shape $\any \tvcs \tpoly
 \ts$ in the context $\E$ (\emph{Step 2}). In \emph{Step 3}, we then elaborate
@@ -2919,9 +2920,8 @@ Shape patterns include:
     The parameters $\tys$ are not bound, since record
     field overloading depends only on the name $\T$.
 
-  \item Polytype patterns $\cpatpoly \cscm$, which match polytypes $\tpoly \ts$ and
+  \item \Polytype patterns $\cpatpoly \cscm$, which match polytypes $\tpoly \ts$ and
     bind the scheme variable $\cscm$ to $\ts$.
-
 \end{enumerate}
 
 Each new kind of pattern introduces corresponding constraint formers:
@@ -2972,13 +2972,13 @@ types that $\e$ admits. Annotations bind their flexible type variables and
 enforce the equality of the annotated type $\tp$ and the expected type $\t$.
 
 
-\parcomment{Polytypes}
+\parcomment{\Polytypes}
 
-For polytypes, explicit boxing asserts that $\e$ has the polymorphic type $\ts$
-(using universal quantification) and that the expected type is the polytype
+Explicit boxing asserts that $\e$ has the polymorphic type $\ts$
+(using universal quantification) and that the expected type is the \polytype
 $\tpoly \ts$. Conversely, explicit unboxing requires that $\t$ be an instance
 of $\ts$. These cases introduce no suspended match constrains because the
-annotations contain the required type information: the polytype $\tpoly \ts$.
+annotations contain the required type information: the \polytype $\tpoly \ts$.
 
 By contrast, implicit unboxing suspends until the inferred type of $\e$ is
 known to be some non-variable type $\tz$. At that point, the suspended match
@@ -2998,7 +2998,7 @@ at least as general as $\cscm$, via the constraint $\x \leq \cscm$ (\ie $\x
 
 % Records
 Record constructs are handled in a similar way, but their matching patterns
-concern record shapes rather than polytypes. A record projection generate a
+concern record shapes rather than \polytypes. A record projection generate a
 fresh variable $\tv$ for the record type and constrain $\e$ to this type,
 suspending until the type of $\e$ ($\tv$) resolves to some type $\tz$. When
 $\tz = \trcd \T \tys$, the shape pattern $(\cpatrcd \ct)$ matches successfully,
@@ -3294,8 +3294,8 @@ associativity and commutativity of conjunctions.
 %
 Our algorithm is largely standard~\citep*{\BBemlti}, with its main
 novelty being the use of \emph{canonical principal shapes} in place of type
-constructors. This uniform treatment of monotypes and polytypes simplifies
-unification and improves on the previous treatment of polytype unification
+constructors. This uniform treatment of monotypes and \polytypes simplifies
+unification and improves on the previous treatment of \polytype unification
 \citep{\BBpolyml}.
 
 \parcomment{Explanation of the rules}
@@ -3783,7 +3783,7 @@ instantiation, let-binding, or suspended constraint.
 
 \parcomment{\OML constraints do not need dedicated rules}
 
-\OML-specific constraints, such as the label and polytype instantiation
+\OML-specific constraints, such as the label and \polytype instantiation
 constraints ($\labfrom \elab \ct \leq \ta \to \tb$, $\cleq \cscm \t$,
 \etc), require no special treatment in our solver. Once their pattern variables
 are substituted---after solving a match constraint---they are desugared into
@@ -4700,14 +4700,14 @@ particular, systems for implicit first-class polymorphisms require
 
 \paragraph{First-class polymorphism}
 
-Polytypes provide a form of \emph{semi-explicit} first-class polymorphism and
+\Polytypes provide a form of \emph{semi-explicit} first-class polymorphism and
 are of particular interest due to their role in \OCaml's inference of
 polymorphic methods. Many systems for first-class polymorphism exist; here we
 highlight a few in the context of \ML.
 
 \MLF is an extension of \ML that supports first-class polymorphism that goes
 beyond the power of System $\mathsf{F}$, while retaining type inference. It
-is a generalization of polytypes, relying on \geninst-directionality.  It
+is a generalization of \polytypes, relying on \geninst-directionality.  It
 would therefore be intersting to explore the appplicability of
 omnidirectionality to \MLF, which would hopefully solve the few annoying
 examples where \MLF fails to take into account known type information
@@ -4718,20 +4718,20 @@ engineering than of feasability.}
 
 \FreezeML is an impredicative type inference system in which polymorphic
 variables can be \emph{frozen}, written $\lceil x \rceil$, and only allowing
-instantiation on ordinary (unfrozen) variables $x$. Unlike polytypes,
+instantiation on ordinary (unfrozen) variables $x$. Unlike \polytypes,
 \FreezeML permits higher-rank types directly in the syntax of types, though these
-can be encoded back into a minor extension of polytypes.\footnote{% 
+can be encoded back into a minor extension of \polytypes.\footnote{% 
 Each let-binding $\elet \x \ea \eb$ introduces a boxed polytype $\elet \x
 {\epoly \ea} {\eb}$,  with each variable occurrence of $\x$ implicitly
 unboxing it $\einst \x$. Freezing disables this implicit unboxing.
-This requires a new semi-implicit introduction of polytypes $\epoly \ea$,
+This requires a new semi-implicit introduction of \polytypes $\epoly \ea$,
 which means $\expoly \ea \tvs \ts$ where $\ts$ is the principal type scheme
 of $\ea$  and $\tvs$ its free type variables---when no explicit annotation
 is provided.}  
 %
 The essential difference is that generalization of higher-rank types is
 implicit, inferring the most-general type\XDR[(if one exists)]{One always
-exist, no?}, whereas polytypes require an explicit type annotation $\expoly
+exist, no?}, whereas \polytypes require an explicit type annotation $\expoly
 \e \tvs \ts$. 
 
 \QuickLook \citep{journals/pacmpl/SerranoHJV20}, \Haskell's latest approach at
@@ -4919,11 +4919,11 @@ presence of modular implicits, in collaboration with Samuel
 Vivien. Didier R\'emy implemented a second prototype of delayed
 constraint based on semi-unification, which is fairly different from
 the prototype described in the present paper, and brought the idea of
-handling polytypes as suspended constraints\XDR{
+handling \polytypes as suspended constraints\XDR{
 and the need for back-propagation}.
 %
 % He worked out the implementation, and with Alistair O'Brien the
-% formal presentation of polytypes (semi-explicit
+% formal presentation of \polytypes (semi-explicit
 % first-class polymorphism) using our suspended constraints, which
 % became one of our main examples. Didier and Alistair also introduced
 % proper treatment of back-propagation. 
