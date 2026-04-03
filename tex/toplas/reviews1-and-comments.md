@@ -94,7 +94,12 @@ Referee: 1
 >   incremental instantiation for let-generalization. Making these two pillars
 >   more explicit at the beginning would help clarify the unique nature of
 >   'omnidirectional' inference for the reader.
-> 
+
+TODO: try to clarify a bit the idea of "dynamic order".
+
+(Gabriel: "dynamic ordering" (implementation) vs. "taking information
+from all sides" (behavior).)
+
 > - The background section could be more streamlined:
 > 
 >   + The flow of Section 2.1. is somewhat confusing. The same set of examples is
@@ -106,7 +111,9 @@ Referee: 1
 >   rules here. You could keep the footnote 2 to mention that while OCaml has a
 >   default resolution strategy, its behavior is unpredictable and out of scope
 >   for this paper. Keep the "no defaults, by default" discussion in Section 2.5.
-> 
+
+TODO have a look
+
 >   + Section 2.2, Semi-explicit first-class polymorphism
 > 
 >   I found the connection between the "annotation variables" in Figure 1 and the
@@ -124,7 +131,10 @@ Referee: 1
 >   the discussion on bidirectional type checking suffices. A brief mention of
 >   𝜋-directionality within the broader discussion of the "limitations of
 >   directional type inference" would likely suffice.
-> 
+
+This referee is not comfortable with polytypes.
+We want to keep them in the paper, and we have to accept that not everyone will understand them. (But: make sure it is as pleasant as possible, and possibly make them more clearly skippable.)
+
 > - Section 5.2 and 5.3 on incremental instantiation
 > 
 >   This is a complex part of the paper with mysterious notations that I took a
@@ -132,20 +142,49 @@ Referee: 1
 > 
 >   Showing an example of incremental instantiation in Section 5.2 and continuing
 >   its resolution in Section 5.3 would make the mechanism much more accessible.
-> 
+
+TODO show an example.
+
 > - Section 6, Implementations
 > 
 >   It is unclear why two separate implementations are mentioned here, especially
 >   since the second isn't mentioned again until the very end (Section 7, page
 >   39). I suggest focusing on your primary implementation in Section 6 and refer
 >   to the second implementation as in Section 7.
-> 
+
+Two options:
+- forget about the second implementation, or
+- streamline the presentation to discuss it entirely separately
+
+[Didier] it bothers people because we mention it too early.
+If it was only at the end in its own section, people would be fine with it.
+
 > - The paper would be strengthened by a discussion on the feasibility of
 >   integrating this technique into OCaml. Specifically, how might this system
 >   interact with existing OCaml features, and what unique engineering or
 >   theoretical challenges should be anticipated during such an integration?
-> 
-> 
+
+TODO: good idea.
+
+[Gabriel] I am mostly worried about the complexity cost in an
+already-complex type checker.
+
+[Didier] the original goal of Alistair was to implement constraint-solving for OCaml.
+
+Two separate questions:
+- compatiblity with the OCaml *type system*
+- compatibility with the OCaml *current implementation*
+
+Didier asks Gabriel for random opinions.
+- moving OCaml to a clean type-constraint-based implementation: several years
+- adding OmniML on top of a clean constraint-based implementation: relatively-easy
+- adding OmniML on top of the current type-checker: doable (~1yr), but maybe unreasonable
+
+Gabriel streamlined answer:
+- if you have a constraint-based implementation, it is reasonably doable
+- the current OCaml type-checker is not, and somewhat messy,
+  it is probably doable but maybe not reasonable due to the extra complexity
+
 > # Detailed comments
 > 
 > Below are the notes I took while reading the paper. Most of these are minor
@@ -523,7 +562,13 @@ Referee: 2
 >    polymorphism that does not require boxes for polytypes and
 >    explicit syntax for generalisation and instantiation. Bidirectional
 >    type systems support the latter.
-> 
+
+[Didier] We do better than bidirectionality in the context of ML.
+Not in the context of other features, in particular subtyping.
+
+Note: we are _not_ comparing polytypes with HMF or
+Dunfield-Krishnaswami / claiming that it is better.
+
 > ### Similarities between omnidirectional type inference and bidirectional type inference
 > 
 > Though I have the above complaints, I do see some similarities between
@@ -543,7 +588,22 @@ Referee: 2
 >    directions: the first condition asks the mode to determine the
 >    shape of a term (like inference), and the second condition asks the
 >    mode to determine the shape of a hole (like checking).
-> 
+
+[Alistair] the omnidirectional recipe is rather reminiscent of the
+Pfenning recipe for bidirectional design. Yes! We should write that
+down if it is not done already.
+
+[Gabriel] in the constraint world there are no directions, this is the
+primitive form of the unicity rule; suspended constraints are not
+fundamentally directional. The directions from the term-former of the
+source language that force their outer or inner types.
+
+[Alistair] I'm interested in their comment that one-hole term context
+is the most precise notion of "mode" for directional checking.
+
+[Didier] ok, they do a form of omnidirectionality on applications, and
+only there.
+
 > ### Semi-explicit first-class polymorphism with bidirectional typing
 > 
 > On page 7 line 24, the paper introduces how to switch from
@@ -566,12 +626,17 @@ Referee: 2
 > I understand that the point here is to demonstrate the restrictions of
 > static order, but including a problematic or underspecified
 > hypothetical type system may not be a good idea.
-> 
+
+[Alistair] we have the obvious/naive bidirectional system in mind when were write this, where unannotated lambdas can only be checked. The referee has possibly richer type systems in mind where there are principality issues.
+
+TODO say somewhere that we consider only _simple_ bidirectional systems in our discussion, as implemented in the OCaml compiler. We will compare to various richer extensions in the Related Work.
+
 > ### Principal Shapes
 > 
 > On page 15 line 38, why the principal shape is not `ν γ . [∀a . γ -> a -> a]`?
-> 
-> 
+
+TODO look
+
 > ### Terminology of "polytypes"
 > 
 > It's a bit confusing to me that the paper uses the term "polytypes" to
@@ -580,8 +645,11 @@ Referee: 2
 > the terminology used in Garrigue and Rémy 1999. I would appreciate if
 > the paper can explicitly use something like ``boxed polytypes''. Feel
 > free to ignore this comment if you'd like to keep "polytypes".
-> 
-> 
+
+[Gabriel, Alistair] Yes, TODO make that change.
+
+[Didier] grumpy, we used the name first!
+
 > ### Related work
 > 
 > 1. Page 8 line 9: "so some well-typed programs are rejected as ill-typed (e.g. ex62, ex63)."
@@ -590,14 +658,17 @@ Referee: 2
 > does not have polymorphism. In their POPL26 paper on local contextual
 > type inference which supports polymorphism, I think ex62 fails but
 > ex63 succeeds, because their approach is order sensitive.
-> 
+
+TODO think
+
 > 2. Page 8 line 11 and page 37 line 19
 > 
 > It's probably worth mentioning that QuickLook and Frost focuses on
 > implicit first-class polymorphism instead of semi-explicit first-class
 > polymorphism, which is a more challenging problem.
-> 
-> 
+
+TODO think
+
 > ## Minor Comments and Typos
 > 
 > * Page 5 line 46: considered of => considered as
@@ -658,6 +729,10 @@ Fixed in 0bf7384.
 > In section 2, I think the colours you use for success and warnings
 > can be challenging to distinguish for colour-blind readers. I would
 > suggest using colour-blind safe colours.
+
+TODO: could we combine the colors with a pass/fail/warn mark?
+
+TODO Didier
 
 Referee: 3
 ==========
@@ -723,7 +798,9 @@ Referee: 3
 > that are hard to understand.  In particular, regional let-constraints, partial
 > type schemes, and incremental instantiation (found on pp.28-30) are
 > hard to understand.  I'd suggest the authors improve the presentation.
-> 
+
+TODO consider clarifying this part
+
 > Also, the second implementation, which is (somewhat strangely)
 > discussed in the related work section, is not very clear, either.
 > 
@@ -733,7 +810,13 @@ Referee: 3
 > lead to a better experience of what is wrong in an (ill-typed)
 > program.  I'm wondering if the authors could give some informal
 > experience report.
-> 
+
+TODO say that we have not worked on type errors yet? We expect the
+"getting into the flow" technique to work okay in our setting.
+
+We believe that omnidirectional typing will result in _less_
+situations where users are confused about errors.
+
 > Finally, I could only skim proofs and not investigate them in detail.
 > The theory is rather complicated (by necessity), and its correctness is
 > far from trivial, but the main text provides only the main theorems.
@@ -862,3 +945,4 @@ Fixed in 5bc1b6a
 > the omni-directional inference or a second implementation.  I think
 > more elaboration is needed.
 
+TODO
