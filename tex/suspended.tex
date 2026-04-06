@@ -1154,7 +1154,7 @@ generalizing it into a type scheme, and finally typing the body under the
 extended typing environment that binds the generalized scheme. The
 Hindley-Milner algorithm $\mathcal{J}$, its variants $\mathcal{W}$ or
 $\mathcal{M}$~\citep* {Lee_Yi/algoM@toplas1998}, or more flexible
-constraint-based type-inference implementations~\citep*
+constraint-based type inference implementations~\citep*
 {Remy/mleth,Remy/thesis, Odersky-Sulzmann-Wehr@tpos, \BBemlti} all
 follow this strategy, to the best of our knowledge.
 
@@ -4535,7 +4535,7 @@ approach of \citet*{journals/pacmpl/BhanukaPBB23}.
 
 For the type theory, we are confident that suspended constraints and incremental generalization would be compatible with the various features of the OCaml type system. Some other features of OCaml could benefit from being elaborated into suspended constraints, and in certain cases such as GADTs this could be a research topic of its own, but it is always possible to leave them as-is at first and suspend them later.
 
-For the implementation, the current OCaml type-checker codebase is not a clean constraint-based system, it evolved from a one-pass algorithm mutating types in-place and has grown complex over the decade. Our current expert opinion is that implementing suspended constraints within the type-inference engine would be possible (there is already a tree of inference regions, and we would add callbacks to revisit certain subterms when guards are discharged). But one would have to evaluate carefully whether the complexity of the resulting code, mixing mutable updates with non-trivial control flow, remains manageable; it could be rejected to preserve maintainability. There are independent plans to consider clean-room or incremental reimplementations of the type-checker to become constraint-based, which would ease the integration of our work.
+For the implementation, the current OCaml type-checker codebase is not a clean constraint-based system, it evolved from a one-pass algorithm mutating types in-place and has grown complex over the decade. Our current expert opinion is that implementing suspended constraints within the type inference engine would be possible (there is already a tree of inference regions, and we would add callbacks to revisit certain subterms when guards are discharged). But one would have to evaluate carefully whether the complexity of the resulting code, mixing mutable updates with non-trivial control flow, remains manageable; it could be rejected to preserve maintainability. There are independent plans to consider clean-room or incremental reimplementations of the type-checker to become constraint-based, which would ease the integration of our work.
 
 \section{Related work}
 \label{sec:related-work}
