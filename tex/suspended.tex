@@ -559,6 +559,9 @@ introductions.  Since few methods are polymorphic, we actually use the
 defaulting in most cases. So we have to change the text below. I don't know
 how much we wish to explain though.}
 
+\Xalistair{My claim is that we rarely default in \OCaml since most object 
+types are known in \OCaml due to annotations. At least in comparison to 
+defaulting with overloaded constructors.}
 
 While such defaulting is relatively uncommon
 with polymorphic methods, it becomes essential for more recent features such
@@ -643,6 +646,7 @@ annotation variable $\av$ is eligible for generalization (\eg $\tfor \av
 \begin{bnfgrammar}[\def\bnfsep{\;}]
      \entry[Types]{\t}{
         \tannot \t \av
+        \and \tpoly \ts
         \and \dots
      }\\
      \entry[Type schemes]{\ts}{
@@ -675,12 +679,14 @@ Using this approach, we can give typing rules for polytypes; this
 yields precisely the formulation introduced in
 \PolyML~\citep*{\BBpolyml}, given in \cref{fig:polyml}.\Xgabriel{In the
   grammar of types in that figure, I would expect $\tpoly \ts$ to be
-  listed. Why is it not done?}
+  listed. Why is it not done?}\Xalistair{This was given in \cref{fig:polyml-syntax}.
+  I've added here again now, but do you think we should include it twice?}
 %
 \parcomment {Boxing}
 %
 The introduction form (\Rule{PolyML-Poly}) for \polytypes is a boxing operator
-$\epoly[\ts] \e$ with an explicit polytype annotation $\ts$.
+$\epoly[\ts] \e$ with an explicit \emph{closed} polytype annotation $\ts$ 
+(\ie $\ts$ contains no free type or annotation variables).
 %
 The resulting expression has type $\tapoly {\tsb} \av$ where $\av$ is an
 arbitrary (typically fresh) annotation variable and $\tsb$ is a \emph{freshened
@@ -690,10 +696,7 @@ programmer, the polytype is treated as known: $\epoly[\ts] \e$ also has the
 generalized type scheme $\all \av {\tapoly {\tsb} \av}$. This is by
 design---the explicit annotation in $\epoly[\ts] \e$ records that the polytype
 is known. We also require that the type of $\e$ be $\tsa$, another copy of $\ts$
-with (typically different fresh) annotations, rather than $\ts$ itself, so
-that the user need not care about node annotations in $\ts$.
-
-\XDR{We never say that \polytypes are closed}
+with (typically different fresh) annotations.
 
 \parcomment {Unboxing (principality restriction and \geninst-directionality)}
 
@@ -710,15 +713,16 @@ polytypes.
 
 \parcomment {Annotations}
 
-\Rule{PolyML-Annot} can be used to freshen annotation variables.
-Intuitively, $\ta$ and $\tb$ are two \emph{fresh copies} of the annotation $\t$, 
-preventing unwanted sharing of annotation variables that could otherwise
-block generalization.  
-For example, $\efun {\x : \tpoly \ts} {\einst \x}$, which is syntactic sugar for 
-$\efun \x {\elet \x {\eannot \x {} {\tpoly \ts}}} {\einst \x}$, is well-typed 
-because the explicit annotation introduces a fresh annotation variable~$\av$ 
-for $\eannot \x {} {\tpoly \ts}$, which can then be generalized, yielding 
-$\tfor \av {\tannot {\tpoly \ts} \av}$ for the type of the let-bound variable 
+\Rule{PolyML-Annot} can be used to introduce fresh annotation variables.
+Intuitively, $\ta$ and $\tb$ are two \emph{fresh copies} of the same closed
+annotation $\t$, preventing unwanted sharing of annotation variables that could
+otherwise block generalization.  For example, $\efun {\x : \tpoly \ts} {\einst
+\x}$, which is syntactic sugar for 
+%
+$\efun \x {\elet \x {\eannot \x {} {\tpoly \ts}}} {\einst \x}$, is well-typed
+because the explicit annotation introduces a fresh annotation variable~$\av$
+for $\eannot \x {} {\tpoly \ts}$, which can then be generalized, yielding
+$\tfor \av {\tannot {\tpoly \ts} \av}$ for the type of the let-bound variable
 $\x$.
 
 \XDR{We never say that \polytypes are closed. Would we like simple types to
@@ -738,6 +742,7 @@ $$
     {\G \th \eannot \e {\tvs} \t : \tb \SU}
 $$
 }
+\Xalistair{I think I've made it clearer that annotations are now closed.}
 
 
 \parcomment {Who uses this?}
