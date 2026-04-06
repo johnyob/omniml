@@ -93,7 +93,11 @@
   $\elet \x \ea \eb$ in a fixed order---type
   $\ea$, generalize its type, and then type $\eb$]{in a fixed order---type
   the bound expression first, generalize its type, and then type the binding
-  body}. To overcome this, we
+  body}
+  \Xalistair{I find the proposed wording harder to find read than the original. 
+  Is this really worth it? We've had no comments regarding the abstract that suggest 
+  this needs changing.}
+  . To overcome this, we
   introduce \emph{incremental instantiation}, allowing partially solved type
   schemes containing suspended constraints to be instantiated, with a mechanism
   to incrementally update instances as the scheme is refined.
