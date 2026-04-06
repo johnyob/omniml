@@ -4372,9 +4372,9 @@ let-region at the same level that is unrelated to the suspended one---neither it
 ancestor nor its descendant---breaking the linear assumption that allowed
 the representation of variable scopes by integer levels.
 
-We must instead use a \emph{tree} of nested let-regions to represent scopes,
+We must instead use a \emph{tree} of nested let-regions to represent scopes\Xalistair[,
 similar to the binding tree of $G$-nodes in
-\MLF~\cite{Remy-Yakobowski/mlf-type-inference@icfp08}. Under this scheme,
+\MLF~\cite{Remy-Yakobowski/mlf-type-inference@icfp08}]{Is this relevant? We didn't use \MLF to come up with the idea of a tree of regions. And I don't see how drawing the similarity makes the idea clearer?}. Under this scheme,
 levels no longer uniquely determine a variable's region.  Instead, we
 interpret a level relative to a path in the region tree from the root. When
 two variables are unified, they must always lie on some shared path---by
@@ -4395,10 +4395,10 @@ categories:
   \let \Item \item
   \renewcommand \item [1][]{\Item[(\textbf{#1})]}
   \item[I] Variables are yet to be generalized. \\
-    \emph{Introduced by instantiations or source types in constraints}
+    \emph{Introduced by instantiations or source types in constraints.}
 
   \item[G] Variables that are generalized. \\
-    \emph{Not accessible from any instance type. Definitely polymorphically.}
+    \emph{Not accessible from any instance type. Definitely polymorphic.}
 
   \item[PG] Variables that are partially generalizable. \\
     \emph{Generalizable variables mentioned by suspended match constraint or partial
@@ -4406,15 +4406,8 @@ categories:
 
   \item[PI] Variables that were previously partially generalized
     but have since been updated.  \\
-    \emph{Awaiting re-generalization. Introduced by the unification of partial
-    generics.}\XDR {generics does not mean anything in our paper. It should
-    be replaced (here ann all occurrences below) or explicitly
-    defined. Besides generics has a java connotation (it refers to
-    introduction of polymorphism in Java) and has never been used in an \ML
-    context, so we should avoid reusing this name. It 
-    seems to mean by partial type schemes (given the occurrences below),
-    but we it is strange to say that we  unify ``(partial) type schemes'',
-    so there may be a better formulation or substitute.} 
+    \emph{Awaiting re-generalization. Introduced by the unification of partially
+    generalized types.}
 \end{itemize}
 \XDR{The free following paragraphs are difficult to understand. I think we
 need just a few more details, probaly using maths letters to describe the
@@ -4730,7 +4723,8 @@ examples where \MLF fails to take into account known type information
 because of directionality.
 \XDR[even though it remains unclear how to effectively scale \MLF to the
 rest of \OCaml's features]{I cut this, which is in fact more a matter of
-engineering than of feasability.}
+engineering than of feasability.}\Xalistair{Engineering is just as important 
+as feasability}
 
 \FreezeML is an impredicative type inference system in which polymorphic
 variables can be \emph{frozen}, written $\lceil x \rceil$, and only allowing
@@ -4746,9 +4740,8 @@ of $\ea$  and $\tvs$ its free type variables---when no explicit annotation
 is provided.}  
 %
 The essential difference is that generalization of higher-rank types is
-implicit, inferring the most-general type\XDR[(if one exists)]{One always
-exist, no?}, whereas \polytypes require an explicit type annotation $\expoly
-\e \tvs \ts$. 
+implicit, inferring the most-general type, whereas \polytypes require an
+explicit type annotation $\expoly \e \tvs \ts$. 
 
 \QuickLook \citep{journals/pacmpl/SerranoHJV20}, \Haskell's latest approach at
 first-class polymorphism, uses bidirectional propagation to take
