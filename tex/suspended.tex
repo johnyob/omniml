@@ -4097,14 +4097,12 @@ derivable (Appendix~\cref{lem:unicity-completeness}).
 Let us consider the (simplified) constraint generation for \ocaml{ex_8} discussed in \cref{sec/solving/admin}. 
 We begin by factoring out the following invariant two-hole constraint context $\C$ for readability:
 \begin{mathpar}
-  \C\where{\hole_1, \hole_2} \quad \eqdef \quad   \begin{array}{rl}
+  \C\Where{\hole_1, \hole_2} \quad \eqdef \quad   \begin{array}{rl}
   \cexists {\tvgp, \tvd}
     &\Let \xgetx = \cabs \tvgetx
   {\cexists {\tvp, \tvgetxret}
-    {\bigwedge \PARENS {
-      \cunif \tvgetx {\tvp \to \tvgetxret} \\
-      \hole_1}}}
-  \\[2ex]
+    { \cunif \tvgetx {\tvp \to \tvgetxret} \cand \hole_1 }}
+  \\[1ex]
     & \In {\hole_2
       \cand \capp \xgetx \parens{\tvgp \to \tfloat}}
   \end{array}
@@ -4123,7 +4121,7 @@ The initial constraint is:
   \\[2ex]
     & \In {\capp \xgetx \parens{\trcd \tgpoint \tint \to \tvd}
       \cand \capp \xgetx \parens{\tvgp \to \tfloat}} \\[3ex]
-    \equiv &\C\where{
+    \equiv &\C\Where{
         \cmatch \tvp {\cbranch {(\cpatrcd \ct)}
          {\labfrom {\ttlab \x} \ct \leq \tvp \to \tvgetxret}},
         \capp \xgetx \parens{\trcd \tgpoint \tint \to \tvd}
@@ -4132,19 +4130,22 @@ The initial constraint is:
 \end{mathpar}
 We now reduce the constraint step by step using the rules 
 outlined above. 
+{
+\def \arraystretch{1.2}
+\small
 \begin{mathpar}
-  \begin{array}{lll}
-  &\C\where{
+  \begin{array}{@{}l l l@{}}
+  &\C\Where{
         \cmatch \tvp {\cbranch {(\cpatrcd \ct)}
          {\labfrom {\ttlab \x} \ct \leq \tvp \to \tvgetxret}}\qcommaq
         \capp \xgetx \parens{\trcd \tgpoint \tint \to \tvd}
-      }\\[2ex]
+      }\\[3ex]
 \csolve 
-  &\C\where{
+  &\C\Where{
         \ldots \commaq
         \cexistsi {\tvcgetx, \inst} \xgetx \cpinst \inst \tvgetx \tvcgetx \cand \cunif {\tvcgetx} {\trcd \tgpoint \tint \to \tvd}
        }
-    & \Rule{S-Let-AppR}\\[2ex]
+    & \Rule{S-Let-AppR}\\[3ex]
 \csolve
   &\C\Where{
       \ldots \commaq
@@ -4153,31 +4154,31 @@ outlined above.
           { \cunif \tvcgetx {\tvpc \to \tvcgetxret} \cand \cpinst \inst \tvp \tvpc \cand \cpinst \inst \tvc \tvcgetxret \\ 
           \cunif {\tvcgetx} {\trcd \tgpoint \tint \to \tvd} }}
   }
-  & \Rule{S-Inst-Copy}\\[2ex]
+  & \Rule{S-Inst-Copy}\\[3ex]
 \csolve^+
   &\C\Where{
       \ldots \commaq
       \cexistsi {\tvcgetx, \tvpc, \tvcgetxret, \inst} \xgetx 
         {\bigwedge \PARENS 
-          { \cpinst \inst \tvp \tvpc \cand \cpinst \inst \tvc \tvcgetxret \\ 
-          \cunif {\tvcgetx} {\tvpc \to \tvcgetxret} \cand \cunif \tvpc {\trcd \tgpoint \tint} \cand \cunif \tvcgetxret \tvd }}
+          { \cpinst \inst \tvp \tvpc \cand \cpinst \inst \tvc \tvcgetxret \cand  \cunif {\tvcgetx} {\tvpc \to \tvcgetxret}\\ 
+            \cunif \tvcgetxret \tvd \cand \cunif \tvpc {\trcd \tgpoint \tint}  }}
   }
-  & \Rule{U-Merge}\\[2ex]
+  & \Rule{U-Merge}\\[3ex]
 \csolve
-  &\C\where{
+  &\C\Where{
     \cmatched \tvp {\any \eta {\trcd \tgpoint \eta}} {\cbranch {(\cpatrcd \ct)}
          {\labfrom {\ttlab \x} \ct \leq \tvp \to \tvgetxret}}\qcommaq
       \ldots
   }
   & \Rule{S-Match-Ctx}\\[2ex]
 \csolve^+
-  &\C\where{
+  &\C\Where{
     {\labfrom {\ttlab \x} \tgpoint \leq \tvp \to \tvgetxret} \qcommaq
     \ldots
   }
   & \\[2ex]
 \csolve^+
-  &\C\where{
+  &\C\Where{
     \cunif \tvp {\trcd \tgpoint \tvgetxret} \qcommaq
     \ldots
   }\\[2ex]
@@ -4186,25 +4187,25 @@ outlined above.
         \ldots \commaq
         \cexistsi {\tvcgetx, \tvpc, \tvcgetxret, \tvcgetxret', \inst} \xgetx 
           {\bigwedge \PARENS 
-            {\cpinst \inst \tvgetxret \tvcgetxret \cand \cpinst \inst \tvgetxret {\tvcgetxret'} \\ 
-            \cunif {\tvcgetx} {\tvpc \to \tvcgetxret} \cand \cunif \tvpc {\trcd \tgpoint \tint} \cand \cunif \tvcgetxret \tvd \\ 
+            {\cpinst \inst \tvgetxret \tvcgetxret \cand \cpinst \inst \tvgetxret {\tvcgetxret'} \cand \cunif {\tvcgetx} {\tvpc \to \tvcgetxret}\\ 
+              \cunif \tvcgetxret \tvd \cand \cunif \tvpc {\trcd \tgpoint \tint} \\ 
             \cunif {\tvpc} {\trcd \tgpoint {\tvcgetxret'}}}}
     }
     & \Rule{S-Inst-Copy} \\[2ex]
 \end{array}
 \end{mathpar}
 \begin{mathpar}
-\begin{array}{lll}
+\begin{array}{@{}l l l@{}}
 \csolve 
     &\C\Where{
         \ldots \commaq
         \cexistsi {\tvcgetx, \tvpc, \tvcgetxret, \tvcgetxret', \inst} \xgetx 
           {\bigwedge \PARENS 
-            {\cpinst \inst \tvgetxret \tvcgetxret  \\ 
-            \cunif {\tvcgetx} {\tvpc \to \tvcgetxret} \cand \cunif \tvpc {\trcd \tgpoint \tint} \cand \cunif \tvcgetxret \tvd \\ 
+            {\cpinst \inst \tvgetxret \tvcgetxret \cand  \cunif {\tvcgetx} {\tvpc \to \tvcgetxret}\\ 
+              \cunif \tvcgetxret \tvd \cand \cunif \tvpc {\trcd \tgpoint \tint} \\ 
             \cunif {\tvpc} {\trcd \tgpoint {\tvcgetxret'}} \cand \cunif {\tvcgetxret} {\tvcgetxret'}}}
     }
-    & \Rule{S-Inst-Unif} \\[2ex]
+    & \Rule{S-Inst-Unif} \\[5ex]
 \csolve^+
     &\C\Where{
         \ldots \commaq
@@ -4214,7 +4215,7 @@ outlined above.
             \cunif {\tvcgetx} {\tvpc \to \tvcgetxret} \cand \cunif \tvpc {\trcd \tgpoint \tvcgetxret} \\ 
             \cunif {\tvcgetxret} {\cunif \tvd {\cunif \tvcgetxret' \tint}}}}
     }
-    & \\[2ex]
+    & \\[5ex]
 \csolve
     &\C\Where{
         \ldots \commaq
@@ -4223,9 +4224,10 @@ outlined above.
             {\cunif {\tvcgetx} {\tvpc \to \tvcgetxret} \cand \cunif \tvpc {\trcd \tgpoint \tvcgetxret} \\ 
             \cunif {\tvcgetxret} {\cunif \tvd {\cunif \tvcgetxret' \tint}}}}
     }
-    & \Rule{S-Inst-Poly}
+    & \Rule{S-Inst-Poly}\\[3ex]
   \end{array}
 \end{mathpar}
+}
 
 We begin by applying \Rule{S-Let-AppR} to the application of $\xgetx$,
 introducing a fresh instantiation $\inst$. We then apply \Rule{S-Inst-Copy},
@@ -4251,8 +4253,6 @@ Finally, applying \Rule{U-Merge} and \Rule{U-Decomp} simplifies the remaining
 equalities on $\tvcgetxret$ and $\tvpc$,  and \Rule{S-Inst-Poly} removes the
 last instantiation constraint on $\tvgetxret$, since it is
 polymorphic.
-
-\Xalistair{@Didier any suggestions for improving the \LaTeX here?}
 
 \end{local}
 \end{example}
