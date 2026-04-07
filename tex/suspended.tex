@@ -93,11 +93,12 @@
   $\elet \x \ea \eb$ in a fixed order---type
   $\ea$, generalize its type, and then type $\eb$]{in a fixed order---type
   the bound expression first, generalize its type, and then type the binding
-  body}
-  \Xalistair{I find the proposed wording harder to find read than the original. 
-  Is this really worth it? We've had no comments regarding the abstract that suggest 
-  this needs changing.}
-  . To overcome this, we
+  body}\Xalistair{I find the proposed wording harder to find read than the
+  original.  
+  Is this really worth it? We've had no comments regarding the abstract that
+  suggest this needs changing.}\XDR{No we had no comment: this is based on
+  my experience with math in abtracts that are often annoying and useless.
+  Don't tell me that the English is unclear.}. To overcome this, we
   introduce \emph{incremental instantiation}, allowing partially solved type
   schemes containing suspended constraints to be instantiated, with a mechanism
   to incrementally update instances as the scheme is refined.
@@ -475,11 +476,13 @@ principal type inference.
 \parcomment{Idea and syntax}
 
 Polymorphic methods can be translated into ordinary methods that carry a
-\emph{\polytype}, that is, a \emph{boxed} type scheme $\tpoly \ts$ that
+\emph{\polytype}.
+A \polytype is
+a \emph{boxed} type scheme $\tpoly \ts$ that
 must be explicitly unboxed at use sites. The syntax of \polytypes is given in
 \cref{fig:polyml-syntax}.
 %
-We write $\epoly[\ts] \e$ to box a term $\e$ with the scheme $\ts$. This
+We write $\epoly[\ts] \e$ to box a term~$\e$ with the scheme $\ts$. This
 returns an expression whose type is the \polytype $\tpoly \ts$. Since
 polytypes are boxed, they cannot be be freely instantiated, by
 contrast with regular type schemes. An expression~$\e$ of a \polytype $\tpoly
@@ -562,6 +565,9 @@ how much we wish to explain though.}
 \Xalistair{My claim is that we rarely default in \OCaml since most object 
 types are known in \OCaml due to annotations. At least in comparison to 
 defaulting with overloaded constructors.}
+
+\XDR{I am not sure that your claim is true for methods calls. That is all
+the point of polymorphic method accesses.}
 
 While such defaulting is relatively uncommon
 with polymorphic methods, it becomes essential for more recent features such
@@ -743,6 +749,11 @@ $$
 $$
 }
 \Xalistair{I think I've made it clearer that annotations are now closed.}
+\XDR{For simple types, closed type, a should then be ground type.
+For me restricting type annotations to ground types is very odd.
+I know we previously agrred on this change, but I know dislike it.
+(As I would dislike reading someone else paper the does the same thing.)
+}
 
 
 \parcomment {Who uses this?}
@@ -4374,7 +4385,15 @@ the representation of variable scopes by integer levels.
 
 We must instead use a \emph{tree} of nested let-regions to represent scopes\Xalistair[,
 similar to the binding tree of $G$-nodes in
-\MLF~\cite{Remy-Yakobowski/mlf-type-inference@icfp08}]{Is this relevant? We didn't use \MLF to come up with the idea of a tree of regions. And I don't see how drawing the similarity makes the idea clearer?}. Under this scheme,
+\MLF~\cite{Remy-Yakobowski/mlf-type-inference@icfp08}]{Is this relevant? We
+didn't use \MLF to come up with the idea of a tree of regions. And I don't
+see how drawing the similarity makes the idea clearer?}\XDR{I this it is for
+several reasons: (1) the binding-tree of \MLF is really the same idea as
+ours and it is anterior. (2) People who retell the story of levels ignore
+their use in \MLF (3) you did not think of MLF when using a tree structure,
+but I did when doing so in my prototype. (Even if the idea of using a tree
+structure was certainly the obvious thing to do, just as levels where the
+obvious thing to start with, indeed)}. Under this scheme,
 levels no longer uniquely determine a variable's region.  Instead, we
 interpret a level relative to a path in the region tree from the root. When
 two variables are unified, they must always lie on some shared path---by
