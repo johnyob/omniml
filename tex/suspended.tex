@@ -2074,34 +2074,37 @@ We now illustrate the typing of implicit constructs with a few examples.
 
   Formally, we derive:
 \begin{mathpar}
-\def \ONTOP #1#2{\begingroup
-  \newdimen \dima
-  \newdimen \dimb
-  \newbox \mybox
-  \setbox0 \hbox {$#2$}\dimb \wd0
-  \setbox0 \hbox {$#1$}\dima \wd0
-  \ifdim \dima>\dimb \dima 0em\else
-    \advance \dima by -\dimb \dima 0.5\dima
-  \fi
-  \hskip \dima
-  {\underbrace {\box0}_{\Strut\smash {\textstyle \overbrace {#2}}}}
-  \hskip \dima
-  \endgroup
-  }
+\newcommand{\ONTOP}[4]{%
+  #1\,
+  \underbrace{#2}_{%
+    \Strut\smash{%
+      \lower0.6ex\hbox{% 
+        $\mathclap{%
+        \displaystyle
+        \mathllap{#1\,}%
+        \overbrace{#3}%
+        \mathrlap{\,#4}%
+      }$%
+    }}
+  }%
+  \,#4%
+}
 \infer* [Right=Rcd-Proj-I]{
    \eshape \E {\eannot r {} \ttpoint} {\ttpoint} \\
    \hskip -4em
+   \vspace{10em}
    \infer* [Left=Rcd-Proj-I]{
         \eshape \Ep r \ttpoint \\ 
           \eset \th \Ep \where{\exfield r \ttpoint \ttx} :
           \ttpoint \to \tint \tprod \tint
     }{% -----------------------------------------
-        \eset \th
-          \ONTOP {\Ep\where{\efield r \ttx}}
-                  {\E\where{\exfield r \ttpoint \tty}}
-          : \ttpoint \to \tint \tprod \tint
+      \ONTOP
+          {\eset \th} 
+          {\Ep\where{\efield r \ttx}}
+          {\E\where{\exfield r \ttpoint \tty}}
+          {: \ttpoint \to \tint \tprod \tint}
      }
-   \hskip -10em
+   \hskip -4em
 }{%-------------------------------------------------------------------------
       \eset \th \E\where{\efield {\eannot r {} \ttpoint} \tty} :
       \ttpoint \to \tint \tprod \tint
@@ -2116,9 +2119,6 @@ We now illustrate the typing of implicit constructs with a few examples.
       \Ep &\eqdef& \efun r {\etuple {\square, \exfield r \ttpoint \tty}}
     \end{array}
   \end{mathpar}
-
-  \Xalistair{@Didier / @Gabriel, any better suggestions for how to typeset this derivations? I find the underbrace rather ugly}
-
 
   We have $\eset \th \Ep\where{\exfield r \ttpoint \ttx} : \ttpoint \to \tint
   \tprod \tint$, indeed.
