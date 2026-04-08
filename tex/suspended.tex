@@ -88,17 +88,8 @@
   once it becomes available, using \emph{suspended match constraints}. This
   approach is straightforward for simply typed systems, but extending it to \ML
   is challenging due to \emph{let-generalization}. Existing \ML inference
-  algorithms type let-bindings
-  \XDR{We should avoid maths in abstracts, I propose the following change}\XDR[
-  $\elet \x \ea \eb$ in a fixed order---type
-  $\ea$, generalize its type, and then type $\eb$]{in a fixed order---type
-  the bound expression first, generalize its type, and then type the binding
-  body}\Xalistair{I find the proposed wording harder to find read than the
-  original.  
-  Is this really worth it? We've had no comments regarding the abstract that
-  suggest this needs changing.}\XDR{No we had no comment: this is based on
-  my experience with math in abtracts that are often annoying and useless.
-  Don't tell me that the English is unclear.}. To overcome this, we
+  algorithms type let-bindings in a fixed order---type the let-bound expression 
+  first, generalize its type, and then type the let-body. To overcome this, we
   introduce \emph{incremental instantiation}, allowing partially solved type
   schemes containing suspended constraints to be instantiated, with a mechanism
   to incrementally update instances as the scheme is refined.
@@ -571,6 +562,9 @@ the point of polymorphic method accesses. We could say that objects and
 method calls are rarely used, but not that method accesses are rarely of an
 unknown object type.}
 
+\Xalistair{My experience with using objects is that methods/functions 
+operating on them often annotate the object type.}
+
 While such defaulting is relatively uncommon
 with polymorphic methods, it becomes essential for more recent features such
 as polymorphic parameters
@@ -756,6 +750,17 @@ For me restricting type annotations to ground types is very odd.
 I know we previously agrred on this change, but I know dislike it.
 (As I would dislike reading someone else paper the does the same thing.)
 }
+\Xalistair{I find the proposed rule harder to read. Additionally, closed 
+annotations are used for symmetry with the bidirectional system (which 
+cannot have open annotations). 
+It's worth noting that these two systems are purely for illustrative 
+purposes, the rules we give here can be simplifications / a subset of a more 
+complex and complete system. 
+
+Also, I'd rather this section focus on the important stuff (explaining how 
+\geninst-directionality works), and not unnecessary formalism for an 
+edgecase (open annotations). If you feel strongly against this, I suggest 
+@Gabriel weighs in to break this stalemate.}
 
 
 \parcomment {Who uses this?}
@@ -1000,9 +1005,9 @@ let ex_6_3 = rev_app pid (fun p -> <p>) °\ocamlflags 00°
 \end{program}
 %
 Under \geninst-directionality, both terms are ill-typed; under \OCaml's
-bidirectional approach,\footnote {In this example, we use the options
-\code{-no-principal -w +41+18 -warn-error +41+18}.
-to enable let-directionality in addition to $\pi$-directionalirty.} only
+bidirectional approach,\footnote {In this example, we use the option
+\code{-no-principal} to enable bidirectional propagation in 
+addition to \geninst-directionality} only
 \code{ex_6_2} is rejected. Yet both terms have a principal type---it is
 merely a question of propagating type information in the right
 order. Omnidirectional type inference typechecks both: since it allows the
@@ -2005,6 +2010,12 @@ We first describe the framework, then present each feature separately.
     the shape from the \emph{principal term} $\e$ (the term whose type
     contains the connective we're eliminating): $\eshape[\es] \E \e \sh$.
 
+    %
+    This division of terms is reminiscent of the \emph{Pfenning recipe} for
+    bidirectional typechecking~\citep*{conf/popl/DunfieldP04}, where $\Eshape
+    \E \es \sh$ can be viewed as a checking mode, and $\eshape[\es] \E \e \sh$
+    as an inference mode for shapes.
+
   \item[\emph{Step 3}:] \emph{Elaborate.}
     The uniquely inferred shape $\sh$ is used to elaborate $\e^i$ into its
     explicit counterpart~$\e^x$, and the rule asserts $\G \th \E\where{\e^x}
@@ -2068,8 +2079,8 @@ We now illustrate the typing of implicit constructs with a few examples.
       {\eshape \E {\eannot r {} \ttpoint} {\ttpoint} \\
        \infer* [Right=Rcd-Proj-I]
         { \eshape \Ep r \ttpoint \\ 
-          \eset \th \Ep \where{\efield r \ttx} : \ttpoint \to \tint \tprod \tint }
-        {\eset \th \E\where{\exfield r \ttpoint \tty} : \ttpoint \to \tint \tprod \tint}
+          \eset \th \Ep \where{\exfield r \ttpoint \ttx} : \ttpoint \to \tint \tprod \tint }
+        {\eset \th \underbrace{\Ep\where{\efield r \ttx}}_{\E\where{\exfield r \ttpoint \tty}} : \ttpoint \to \tint \tprod \tint}
       }
       %--------------------------------------------------------------------------------------
       {\eset \th \E\where{\efield {\eannot r {} \ttpoint} \tty} : \ttpoint \to \tint \tprod \tint }
@@ -2084,6 +2095,8 @@ We now illustrate the typing of implicit constructs with a few examples.
       \Ep &\eqdef& \efun r {\etuple {\square, \exfield r \ttpoint \tty}}
     \end{array}
   \end{mathpar}
+
+  \Xalistair{@Didier / @Gabriel, any better suggestions for how to typeset this derivations? I find the underbrace rather ugly}
 
 
   We have $\eset \th \Ep\where{\exfield r \ttpoint \ttx} : \ttpoint \to \tint
@@ -2411,13 +2424,14 @@ which consist of:
 \item
 
   A list of branches $\cbrs$ of the form $\cbranch \cpat \c$, where
-  $\cpat$ is a shape pattern.\footnote{The match constraints in this
-    paper only use a single branch; but in a larger language there
-    would be use-cases for having several branches; for example,
-    record projection could be overloaded to work both on nominal
-    records and on tuples (or objects, modules, etc.), requiring
-    several branches in its generated constraint. So we kept the
-    general syntax.} The constraint $\c$ is solved in the extended
+  $\cpat$ is a shape pattern.\footnote{%
+    The match constraints considered in this paper only use a single branch.
+    In a richer language, however, multiple branches would be useful; for 
+    instance, record projection could be overloaded to operate on
+    nominal records as well as tuples (or objects, modules, \etc), requiring
+    several branches in the generated constraint. We therefore kept the general
+    syntax.%
+  } The constraint $\c$ is solved in the extended
   context produced by the matching pattern.
 
   For example, the wildcard pattern $\cpatwild$ matches any shape,
@@ -4385,23 +4399,15 @@ let-region at the same level that is unrelated to the suspended one---neither it
 ancestor nor its descendant---breaking the linear assumption that allowed
 the representation of variable scopes by integer levels.
 
-We must instead use a \emph{tree} of nested let-regions to represent scopes\Xalistair[,
+We must instead use a \emph{tree} of nested let-regions to represent scopes,
 similar to the binding tree of $G$-nodes in
-\MLF~\cite{Remy-Yakobowski/mlf-type-inference@icfp08}]{Is this relevant? We
-didn't use \MLF to come up with the idea of a tree of regions. And I don't
-see how drawing the similarity makes the idea clearer?}\XDR{I this it is for
-several reasons: (1) the binding-tree of \MLF is really the same idea as
-ours and it is anterior. (2) People who retell the story of levels ignore
-their use in \MLF (3) you did not think of MLF when using a tree structure,
-but I did when doing so in my prototype. (Even if the idea of using a tree
-structure was certainly the obvious thing to do, just as levels where the
-obvious thing to start with, indeed)}. Under this scheme,
-levels no longer uniquely determine a variable's region.  Instead, we
-interpret a level relative to a path in the region tree from the root. When
-two variables are unified, they must always lie on some shared path---by
-scoping invariants---so computing their minimum level (along this path)
-still suffices to determine the least common ancestor: we keep the efficient
-integer comparisons.
+\MLF~\cite{Remy-Yakobowski/mlf-type-inference@icfp08}. Under this scheme,
+levels no longer uniquely determine a variable's region.  Instead, we interpret
+a level relative to a path in the region tree from the root. When two variables
+are unified, they must always lie on some shared path---by scoping
+invariants---so computing their minimum level (along this path) still suffices
+to determine the least common ancestor: we keep the efficient integer
+comparisons.
 
 \paragraph{Partial generalization}
 
@@ -4781,28 +4787,23 @@ highlight a few in the context of \ML.
 
 \MLF is an extension of \ML that supports first-class polymorphism that goes
 beyond the power of System $\mathsf{F}$, while retaining type inference. It
-is a generalization of \polytypes, relying on \geninst-directionality.  It
-would therefore be intersting to explore the appplicability of
-omnidirectionality to \MLF, which would hopefully solve the few annoying
-examples where \MLF fails to take into account known type information
-because of directionality.
-\XDR[even though it remains unclear how to effectively scale \MLF to the
-rest of \OCaml's features]{I cut this, which is in fact more a matter of
-engineering than of feasability.}\Xalistair{Engineering is just as important 
-as feasability}
-
+is a generalization of \polytypes, relying on \geninst-directionality, 
+but it remains unclear how to effectively scale \MLF to the rest of \OCaml's 
+features. Nevertheless, it would be interesting to explore whether the 
+directional sensitivity of \MLF could be removed by omnidirectionality.
+%
 \FreezeML is an impredicative type inference system in which polymorphic
 variables can be \emph{frozen}, written $\lceil x \rceil$, and only allowing
 instantiation on ordinary (unfrozen) variables $x$. Unlike \polytypes,
 \FreezeML permits higher-rank types directly in the syntax of types, though these
 can be encoded back into a minor extension of \polytypes.\footnote{% 
 Each let-binding $\elet \x \ea \eb$ introduces a boxed polytype $\elet \x
-{\epoly \ea} {\eb}$,  with each variable occurrence of $\x$ implicitly
+{\epoly \ea} {\eb}$, with each variable occurrence of $\x$ implicitly
 unboxing it $\einst \x$. Freezing disables this implicit unboxing.
-This requires a new semi-implicit introduction of \polytypes $\epoly \ea$,
-which means $\expoly \ea \tvs \ts$ where $\ts$ is the principal type scheme
-of $\ea$  and $\tvs$ its free type variables---when no explicit annotation
-is provided.}  
+%
+By default, the implicit boxing operator $\epoly \ea$ infers a polytype 
+$\tpoly \ts$, where $\ts$ is the principal type of $\ea$ when it 
+is not already known from the surrounding context.}  
 %
 The essential difference is that generalization of higher-rank types is
 implicit, inferring the most-general type, whereas \polytypes require an
