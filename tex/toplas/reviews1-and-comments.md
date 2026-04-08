@@ -112,7 +112,9 @@ from all sides" (behavior).)
 >   default resolution strategy, its behavior is unpredictable and out of scope
 >   for this paper. Keep the "no defaults, by default" discussion in Section 2.5.
 
-TODO have a look
+I concluded that reviewer 1 is wrong here. We need the discussion on default rules 
+in the introduction to also properly discuss the limitations of omnidirectionality 
+(no defaults by default). 
 
 >   + Section 2.2, Semi-explicit first-class polymorphism
 > 
@@ -133,7 +135,9 @@ TODO have a look
 >   directional type inference" would likely suffice.
 
 This referee is not comfortable with polytypes.
-We want to keep them in the paper, and we have to accept that not everyone will understand them. (But: make sure it is as pleasant as possible, and possibly make them more clearly skippable.)
+We want to keep them in the paper, and we have to accept that not everyone will 
+understand them. (But: make sure it is as pleasant as possible, and possibly 
+make them more clearly skippable.)
 
 > - Section 5.2 and 5.3 on incremental instantiation
 > 
@@ -143,7 +147,7 @@ We want to keep them in the paper, and we have to accept that not everyone will 
 >   Showing an example of incremental instantiation in Section 5.2 and continuing
 >   its resolution in Section 5.3 would make the mechanism much more accessible.
 
-TODO show an example.
+Added an example at the end of 5.3. THis continues the example used in 5.2.
 
 > - Section 6, Implementations
 > 
@@ -159,12 +163,12 @@ Two options:
 [Didier] it bothers people because we mention it too early.
 If it was only at the end in its own section, people would be fine with it.
 
+We have moved the discussion on semi-unification to a new 'Discussion' section.
+
 > - The paper would be strengthened by a discussion on the feasibility of
 >   integrating this technique into OCaml. Specifically, how might this system
 >   interact with existing OCaml features, and what unique engineering or
 >   theoretical challenges should be anticipated during such an integration?
-
-TODO: good idea.
 
 [Gabriel] I am mostly worried about the complexity cost in an
 already-complex type checker.
@@ -184,6 +188,8 @@ Gabriel streamlined answer:
 - if you have a constraint-based implementation, it is reasonably doable
 - the current OCaml type-checker is not, and somewhat messy,
   it is probably doable but maybe not reasonable due to the extra complexity
+
+This has since been fixed, added in the new `Discussion` section
 
 > # Detailed comments
 > 
@@ -341,14 +347,15 @@ is the explicit form, with the rule:
    -------------------------------------------------------- [App-X]
     Γ |- (e : ∃ɣs. ∀𝛼s. 𝜏s -> 𝜏)@es : 𝜏[ɣs:=𝜏s', 𝛼s:=𝜏s'']
 
-TODO: @Didier, @Gabriel, we could add a footnote or something to clarify that
-our rules are just an instance of the omnidirectional recipe?
 
 > 
 > - page 17, line 21, the omnidirectional recipe
 > 
 > The distinction between introduction and elimination forms here feels
 > reminiscent of bidirectional typing.
+
+Added a remark on the similarity between our recipe and the Pfenning recipe.
+
 > 
 > - page 17, line 49, `𝜆𝑟.(𝑟.x,𝑟.point.y)` from §2.1.
 > 
@@ -629,13 +636,16 @@ only there.
 
 [Alistair] we have the obvious/naive bidirectional system in mind when were write this, where unannotated lambdas can only be checked. The referee has possibly richer type systems in mind where there are principality issues.
 
-TODO say somewhere that we consider only _simple_ bidirectional systems in our discussion, as implemented in the OCaml compiler. We will compare to various richer extensions in the Related Work.
+Say somewhere that we consider only _simple_ bidirectional systems in our discussion, as implemented in the OCaml compiler. We will compare to various richer extensions in the Related Work.
+
+We fixed this by explicitly giving the rules for the bidirectional system we have in mind.
 
 > ### Principal Shapes
 > 
 > On page 15 line 38, why the principal shape is not `ν γ . [∀a . γ -> a -> a]`?
 
-TODO look
+The reviewer is correct here. But we meant the type to have the shape given 
+in the paper. It has been fixed now.
 
 > ### Terminology of "polytypes"
 > 
@@ -646,9 +656,15 @@ TODO look
 > the paper can explicitly use something like ``boxed polytypes''. Feel
 > free to ignore this comment if you'd like to keep "polytypes".
 
-[Gabriel, Alistair] Yes, TODO make that change.
+[Gabriel, Alistair] Yes, make that change.
 
 [Didier] grumpy, we used the name first!
+
+-  Alistair first simplified and changed the polytype section.
+-  Didier did a few more changes to emphasize the boxed aspect of polytypes
+-  Didier & Alistair also discussed it and agreed that we first clearly explain that polytypes are boxed and then keep the word polytypes rather than "boxed polytypes".  Polytypes were already called polytypes in the original paper by Jacques & Didier much before boxy  types were introduced. Boxy types are different from polytypes and the notion of boxy types is still in use. Calling polytypes "boxed polytypes" would introduce confusion (and would be quite a heavy name).
+-  Gabriel ignored this and introduced a macro "boxed poltypes"
+-  Didier reset the macro to polytypes
 
 > ### Related work
 > 
@@ -659,7 +675,9 @@ TODO look
 > type inference which supports polymorphism, I think ex62 fails but
 > ex63 succeeds, because their approach is order sensitive.
 
-TODO think
+Added a footnote stating that to typecheck ex62 and ex63 using contextual
+typing, one must inline `app` and `rev_app`. The reviewer correctly points out
+that the original contextual typing paper doesn't have polymorphism.
 
 > 2. Page 8 line 11 and page 37 line 19
 > 
@@ -667,7 +685,8 @@ TODO think
 > implicit first-class polymorphism instead of semi-explicit first-class
 > polymorphism, which is a more challenging problem.
 
-TODO think
+Added a paragraph on semi-explicit vs implicit polymorphism. 
+Indeed, implicit polymorphism is more challenging.
 
 > ## Minor Comments and Typos
 > 
@@ -799,11 +818,15 @@ Referee: 3
 > type schemes, and incremental instantiation (found on pp.28-30) are
 > hard to understand.  I'd suggest the authors improve the presentation.
 
-TODO consider clarifying this part
+We added an example to help readers see incremental instantiation in action.
+Unfortunately the complexity of the section is somewhat an unavoidable 
+part of this work.
 
 > Also, the second implementation, which is (somewhat strangely)
 > discussed in the related work section, is not very clear, either.
-> 
+
+Moved to discussion section.
+
 > What I'd miss is a comparison with bidirectional typing from the
 > viewpoint of (typing) errors.  One of the often claimed benefits of
 > bidirectional typing is its predictability and locality, which may
@@ -816,6 +839,8 @@ TODO say that we have not worked on type errors yet? We expect the
 
 We believe that omnidirectional typing will result in _less_
 situations where users are confused about errors.
+
+Added a paragraph about errors.
 
 > Finally, I could only skim proofs and not investigate them in detail.
 > The theory is rather complicated (by necessity), and its correctness is
@@ -830,9 +855,6 @@ situations where users are confused about errors.
 
 I split the footnotes and clarified the reference to footnote 2. 
 Fixed in 46f21cf
-
-@Gabriel, @Didier: I feel like footnote 2 just repeats what we 
-later say about 'Default rules' later. Should we keep it?
 
 > 
 > p.6, L32, "For OCaml, ...":  It wasn't very clear what you meant.
@@ -945,4 +967,5 @@ Fixed in 5bc1b6a
 > the omni-directional inference or a second implementation.  I think
 > more elaboration is needed.
 
-TODO
+Moved to discussion section, hopefully its relation is now clearer (semi-unification 
+is an alternative implementation of incremental instantiation)
