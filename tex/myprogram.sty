@@ -192,15 +192,29 @@
 \lstdefinestyle{algo}
     {}
 
+\usepackage{pifont}
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}\hskip .2ex}
+\newcommand{\dmark}{\tikz[
+  line cap=but,
+  line join=round,
+  x=.5em,
+  thick,
+  y=1*(height("Z")-\pgflinewidth)*(1-sin(10)),
+  rotate=-10,
+  rounded corners=1.5pt,
+]
+\draw (1, 0) -- (0, 0) -- (1, 1) -- (0, 1);}
+
 \newcommand\smashcolorbox[2] {\smash{\fboxsep 1pt\colorbox{#1}{#2}}}
 \newif \ifocamlwarnings
 \newcommand \ocamlFlag[2]
   {\ifx #2-\else\ifcase #2\relax
-     \smashcolorbox{welltyped}{#1}\or
-     \smashcolorbox{illtyped}{#1}\or
+     \smashcolorbox{welltyped}{#1 \cmark}\or
+     \smashcolorbox{illtyped}{#1 \xmark}\or
      \ifocamlwarnings
-       \smashcolorbox{warning}{#1}\else
-       \smashcolorbox{illtyped}{#1}\fi
+       \smashcolorbox{warning}{#1 \dmark}\else
+       \smashcolorbox{illtyped}{#1 \xmark}\fi
    \else \fi\fi}
 %% \newcommand \ocamlFlag[2]
 %%   {\ifcase #2\relax
