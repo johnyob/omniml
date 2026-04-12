@@ -7,6 +7,17 @@
 
 \usepackage{mathpartir}
 
+\newcommand{\phantomontop}[3][0em]
+   {\setbox0 \hbox {$#3$}%
+    \vbox {\hbox to \wd0 {\hss $#2$\hss}\vskip #1\hbox {\box0}}}
+
+\newcommand{\topinfer}[3][]
+   {\setbox0 \hbox {$#3$}
+    \hbox to \wd0
+       {\hss \hbox to 0em {\hss$\infer*[#1]{#2}{\box0}$\hss}\hss}}
+
+
+
 \newcommand{\mathparinit}{%
 % spacing below and above mathpar blocks
 \abovedisplayskip .5em plus .1em minus .1ex

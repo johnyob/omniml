@@ -2074,42 +2074,28 @@ We now illustrate the typing of implicit constructs with a few examples.
 
   Formally, we derive:
 \begin{mathpar}
-\newcommand{\ONTOP}[4]{%
-  #1\,
-  \underbrace{#2}_{%
-    \Strut\smash{%
-      \lower0.6ex\hbox{% 
-        $\mathclap{%
-        \displaystyle
-        \mathllap{#1\,}%
-        \overbrace{#3}%
-        \mathrlap{\,#4}%
-      }$%
-    }}
-  }%
-  \,#4%
-}
-\infer* [Right=Rcd-Proj-I]{
+\newcommand{\reinferonbraces}[4]
+   {\mprontop[-1.4ex]
+     {#1 \underbrace{#2} {#4}}
+     {#1 \overbrace {#3} {#4}}}
+
+\infer* [right=Rcd-Proj-I]{
    \eshape \E {\eannot r {} \ttpoint} {\ttpoint} \\
-   \hskip -4em
-   \vspace{10em}
-   \infer* [Left=Rcd-Proj-I]{
+   \topinfer [Left=Rcd-Proj-I]{
         \eshape \Ep r \ttpoint \\ 
           \eset \th \Ep \where{\exfield r \ttpoint \ttx} :
-          \ttpoint \to \tint \tprod \tint
-    }{% -----------------------------------------
-      \ONTOP
-          {\eset \th} 
-          {\Ep\where{\efield r \ttx}}
-          {\E\where{\exfield r \ttpoint \tty}}
-          {: \ttpoint \to \tint \tprod \tint}
-     }
-   \hskip -4em
+    \ttpoint \to \tint \tprod \tint
+}{% ---------------------------------------------------------------------
+    \reinferonbraces
+            {\eset \th}
+            {\Ep\where{\efield r \ttx}}
+            {\E\where{\exfield r \ttpoint \tty}}
+            {: \ttpoint \to \tint \tprod \tint}
+   }%/topinfer
 }{%-------------------------------------------------------------------------
       \eset \th \E\where{\efield {\eannot r {} \ttpoint} \tty} :
       \ttpoint \to \tint \tprod \tint
 }
-\hskip 8em\null
 \end{mathpar}
   %
   where the contexts $\E$ and $\Ep$ are:
