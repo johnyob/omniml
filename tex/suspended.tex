@@ -2125,10 +2125,6 @@ We now illustrate the typing of implicit constructs with a few examples.
   Since $\efield {\eannot r {} \ttpoint} \tty$ requires $r$ to have the type
   $\ttpoint$ (due to \Rule{Annot}), it follows that there is no other choice
   but to take $\ttpoint$ for $\gt$, which proves~\lref A.
-
-  \Xalistair{There is some nasty line breaking of the inline math here. Not too 
-  sure what to do}\XDR{Where?}
-
 \end{example}
 
 % Unicity is good
@@ -4445,16 +4441,16 @@ categories:
     \emph{Awaiting re-generalization. Introduced by the unification of partially
     generalized types.}
 \end{itemize}
-\XDR{The free following paragraphs are difficult to understand. I think we
-need just a few more details, probaly using maths letters to describe the
-guards, dependencies, etc. We do not have a page limit, so we should really
-take 10 more lines here: there is a really well-thought efficient
-implementation that is worth describing here.}  At generalization time, we
-conservatively approximate whether a variable may be updated in the future
-using \emph{guards}. A guard is a mark on a variable that indicates the
-variable is captured by some suspended constraint that has not yet been
-solved. Guarded variables are generalized as partial generics (\textbf{PG});
-unguarded ones are fully generalized (\textbf{G}).
+\XDR{The next three paragraphs are a bit difficult to understand. I think we
+need just a few more details, probably using a little of maths to describe
+the guards, dependencies, etc. We do not have a page limit, so we should
+really take 10 more lines if need be here: there is a really well-thought
+efficient implementation that is worth making more easily understandable.}  At
+generalization time, we conservatively approximate whether a variable may be
+updated in the future using \emph{guards}. A guard is a mark on a variable
+that indicates the variable is captured by some suspended constraint that
+has not yet been solved. Guarded variables are generalized as partial
+generics (\textbf{PG}); unguarded ones are fully generalized (\textbf{G}).
 
 When an instance is taken from a partial generic, we retain a forward reference
 from the partial generic (\textbf{PG}) to the instance. This enables the
