@@ -4477,44 +4477,46 @@ need just a few more details, probably using a little of maths to describe
 the guards, dependencies, etc. We do not have a page limit, so we should
 really take 10 more lines if need be here: there is a really well-thought
 efficient implementation that is worth making more easily understandable.}
-\XDR{I kept the old version inlined and attempted a new version below}
-\begin{version}[See old version inlined]{}
-At generalization time, we conservatively approximate whether a variable may
-be updated in the future using \emph{guards}. A guard is a mark on a
-variable that indicates the variable is captured by some suspended
-constraint that has not yet been solved. Guarded variables are generalized
-as partial generics (\textbf{PG}); unguarded ones are fully generalized
-(\textbf{G}).
+%\XDR{I kept the old version inlined and attempted a new version below}
+%\begin{version}[See old version inlined]{}
+%At generalization time, we conservatively approximate whether a variable may
+%be updated in the future using \emph{guards}. A guard is a mark on a
+%variable that indicates the variable is captured by some suspended
+%constraint that has not yet been solved. Guarded variables are generalized
+%as partial generics (\textbf{PG}); unguarded ones are fully generalized
+%(\textbf{G}).
+%
+%When an instance is taken from a partial generic, we retain a forward reference
+%from the partial generic (\textbf{PG}) to the instance. This enables the
+%generic to notify the instance that it has been updated, propagating the
+%updated type structure to all instances. This mirrors, in reverse, the way our
+%formalized solver uses incremental instantiation constraints to track copies. In
+%addition, the instance remains guarded by the partial generic until the latter
+%is either lowered or fully generalized.
+%
+%Once a suspended match constraint is solved, it removes the guards it
+%introduced. This may enable previously partial generics to become fully
+%generalizable. Conversely, if a partially generalized variable is lowered (\eg
+%by \Rule{S-Exists-Lower}), it must be unified with all its instances.
+%\end{version}
 
-When an instance is taken from a partial generic, we retain a forward reference
-from the partial generic (\textbf{PG}) to the instance. This enables the
-generic to notify the instance that it has been updated, propagating the
-updated type structure to all instances. This mirrors, in reverse, the way our
-formalized solver uses incremental instantiation constraints to track copies. In
-addition, the instance remains guarded by the partial generic until the latter
-is either lowered or fully generalized.
+At generalization time, we conservatively approximate whether a variable may be
+updated in the future using \emph{guards}. A guard is a mark on a variable that
+indicates the variable is captured by some suspended constraint that has not
+yet been solved. \XDR{This is the case for \textbf{PG}, but \textbf{G} should
+then not be considered as a mark. So there is a some confusion on the status of
+I, PI, G, PG: there are called categories, then, marks, the guards.  Thus
+\emph{A guard is a mark} is wrong/misleading.} \Xalistair{I don't see the
+confusion. Statuses, guards, etc are all just marks that we add to variables. I
+think you're interpreting this too precisely. This is a rough description of
+the implementation.} Guarded variables are partially generalized (\textbf{PG});
+unguarded ones are fully generalized (\textbf{G}).
 
-Once a suspended match constraint is solved, it removes the guards it
-introduced. This may enable previously partial generics to become fully
-generalizable. Conversely, if a partially generalized variable is lowered (\eg
-by \Rule{S-Exists-Lower}), it must be unified with all its instances.
-\end{version}
-
-At generalization time, we conservatively approximate whether a variable may
-be updated in the future using \emph{guards}. A guard is a mark on a
-variable that indicates the variable is captured by some suspended
-constraint that has not yet been solved.
-\XDR{This is the case for \textbf{PG}, but \textbf{G} should then not be
-considered as a mark. So there is a some confusion on the status of I, PI,
-G, PG: there are called categories, then, marks, the guards.  Thus \emph{A
-guard is a mark} is wrong/misleading.}  Guarded variables are marked as
-partially generalized (\textbf{PG}); unguarded ones are fully generalized
-(\textbf{G}).
-
-When an instance $\tvb$ is taken from a partially generalized variable $\tv$
-marked \textbf{PG}, we retain a forward reference from $\tv$ to $\tvb$. This
-enables $\tv$ to notify $\tvb$ when $\tv$ will later be updated (and thus
-marked \textbf {PI}), propagating the updated type structure to $\tvb$---and all of its other instances.
+When an instance is taken from a partially generalized variable $\tv$
+(\textbf{PG}), we retain a forward reference from $\tv$ to the instance $\tvb$.
+This enables $\tv$ to notify $\tvb$ if it is later updated, at which point
+$\tv$ becomes a partial instance (\textbf{PI}) and propagates its updates to
+$\tvb$.
 %
 This mirrors, in reverse, the way our formalized solver uses incremental
 instantiation constraints to track copies. In addition, the instance $\tvb$
@@ -4522,13 +4524,11 @@ remains guarded by $\tv$ until the latter is either lowered or fully
 generalized.
 
 Once a suspended match constraint is solved, it removes the guards it
-introduced.  This may enable previously partially generalized type variables
-$\tv$ marked \textbf{PG} to become fully generalized and marked
-\textbf{G}. Conversely, if a partially generalized variable $\tv$ is lowered
-(\eg by
-\Rule{S-Exists-Lower}), it must be unified with all its instances $\tvb$'s
-obtained by following the forward references. \XDR{I do not know what do we
-he mark: mark is as $I$, i.e. to be generalized at the lower level?}
+introduced.  This may enable previously partially generalized variables $\tv$
+(\textbf{PG}) to become fully generalized (\textbf{G}). Conversely, if a
+partially generalized variable $\tv$ is lowered (\eg by \Rule{S-Exists-Lower})
+becoming an instance (\textbf{PI} or \textbf{I}), it is unified with all its
+instances $\tvbs$ obtained via its forward references.
 
 \paragraph{Lazy generalization}
 
