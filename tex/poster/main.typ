@@ -22,7 +22,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 // Configuration: "a2" or "custom" (for Jane Street's GRF 4:3 ratio)
-#let poster-config = "a2" 
+#let poster-config = "custom" 
 
 // Text sizes based on configuration
 #let default-text-size = if poster-config == "custom" { 16.5pt } else { 20pt }
@@ -110,14 +110,14 @@
   authors: (x: 323, y: 15, width: 141, height: 30),
   // Three columns below header
   // Column 1: Introduction (left)
-  introduction: (x: 12, y: 45, width: 150, height: 34),
-  overloading: (x: 12, y: 150, width: 150, height: 278),
+  introduction: (x: 12, y: 48, width: 150, height: 34),
+  overloading: (x: 12, y: 153, width: 150, height: 278),
   // Column 2: Description + Methods (middle)
-  bidir: (x: 170, y: 45, width: 150, height: 157),
-  constraints: (x: 170, y: 210, width: 150, height: 133),
+  bidir: (x: 170, y: 48, width: 150, height: 157),
+  constraints: (x: 170, y: 210, width: 150, height: 128),
   // Column 3: Illustration + Outlook (right)
-  omni: (x: 327, y: 45, width: 141, height: 291),
-  contributions: (x: 327, y: 315, width: 141, height: 15),
+  omni: (x: 327, y: 48, width: 141, height: 291),
+  contributions: (x: 327, y: 318, width: 141, height: 15),
   // Unused (needed by poster-syndrome)
   cover-image: (x: 0, y: 0, width: 0, height: 0),
   subtitle: (x: 0, y: 0, width: 0, height: 0),
@@ -519,10 +519,11 @@
         import draw
 
         let scalar = if poster-config == "custom" { 0.8 } else { 1 }
+        let gap-scalar = if poster-config == "custom" { 0.9 } else { 1 }
 
         let box-w = scalar * 7.5
         let box-h = scalar * 1.8
-        let gap = 1.25
+        let gap = gap-scalar * 1.25
         let radius = scalar * 0.15
         let label-size = scalar * 0.7
 
@@ -627,7 +628,9 @@
       })
     ]
   ]
-  #v(8pt)
+
+  #let gap = if poster-config == "custom" { 0pt } else { 8pt }
+  #v(gap)
 
   #comparison-table(table-fill: rgb("#0F1115"), true, false, true)
 ]
