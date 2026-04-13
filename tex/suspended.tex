@@ -527,65 +527,25 @@ This reduction is useful for two reasons:
 % Defaulting rules for polytypes
 
 As with static overloading in \cref{sec/default-rules}, \OCaml employs a
-defaulting rule for \polytypes: when a polytype cannot be inferred as
+default rule for \polytypes: when a polytype cannot be inferred as
 \emph{known}, its polymorphic scheme is defaulted to a monomorphic type. 
 %
-This is particularly useful, as it allows to typecheck method calls on an
-object on yet-unknown class such as
-\ocaml{fun bag x -> bag#mem x} without annotations. Here, the method
-invocation 
-$\ttlab {bag} \esend \ttlab {mem}$ introduces an unboxing operation, becoming
-$\einst {\texttt{bag} \esend \texttt{mem}}$. At this point, the defaulting rule
-assigns \ocaml{bag}'s \ocaml{mem} field the \emph{monomorphic} polytype 
-$\tpoly {\tva \to \tvb}$.
-
-\XDR {BEWARE! The paragraph below is not correct---unless we consider that
-method calls are uncommon (but this is not what is suggested): we do not
-know whether methods are polymorphic, so all methods are considered to be
-polymorphic, i.e. polytypes. At introduction, they is no need for default,
-since we require an annotation.  Hence, in the absence of an annotation, we
-know
-\emph{syntactically} that this is a monomorphic polytype.  By contrast,
-elimination does not require any annotation, so we cannot tell
-syntactically.  If it is a polymorphic node ($\epsilon$), then we trust the
-polytyped is know and we use it. Otherwise, the node is monomorphic, and we
-default to a monomorphic polytype. The nice property is that for elimination
-of polytypes, the default rule remains principal, as it is the only possible
-solution. This would not be the case if we also used defaulting at polytype
-introductions.  Since few methods are polymorphic, we actually use the
-defaulting in most cases. So we have to change the text below. I don't know
-how much we wish to explain though.}
-
-\Xalistair{My claim is that we rarely default in \OCaml since most object 
-types are known in \OCaml due to annotations. At least in comparison to 
-defaulting with overloaded constructors.}
-
-\XDR{I am not sure that your claim is true for methods calls. That is all
-the point of polymorphic method accesses. We could say that objects and
-method calls are rarely used, but not that method accesses are rarely of an
-unknown object type.}
-
-\Xalistair{My experience with using objects is that methods/functions 
-operating on them often annotate the object type.}
-
-\XDR{Just the wording below is incorrect: defaulting on polymorphic methods
-will always fail, since defaulting treat the method as monomorphic...}
-
-\XDR{If you wish to say, that in practice, defaulting will only be used
-for method calls to objects of yet-unknown class, you should explicitly say
-so, but then it should be said that this is still an important use-case, as
-this is why rows have been invented for!}
-
-\Xalistair{Clarrified. Does this work for you?}
+This is particularly useful, as it allows method calls such as \ocaml{fun bag x -> bag#mem x} 
+to typecheck without annotating \ocaml{bag}. Here, the method
+invocation $\ttlab {bag} \esend \ttlab {mem}$ introduces an unboxing operation,
+becoming $\einst {\texttt{bag} \esend \texttt{mem}}$. Since the type of this
+expression is not yet known, the default rule applies, assigning \ocaml{bag}'s
+\ocaml{mem} field the \emph{monomorphic} polytype $\tpoly {\tva \to \tvb}$.
 
 % Defaulting rules are not so useful for objects, but very useful for 
-% polyparams.
+% polyparams. This is future work.
 
-While such defaulting is relatively uncommon with (polymorphic) method
-calls---since objects are rarely used and calls are typically made on
-already-known instances---it becomes essential for more recent features such as
-polymorphic parameters \citep*{\BBpolyparams}, which introduce polytype boxing
-and unboxing at every function application.
+In practice, many users restrict their use of objects to method calls on
+annotated instances; consequently, defaulting rarely arises and is not
+considered in our work. By contrast, defaulting appears essential for more
+recent features such as polymorphic parameters \citep*{\BBpolyparams}, which
+introduce polytype boxing and unboxing at every function application and are
+therefore deferred to future work. 
 
 \paragraph{Semi-explicit first-class polymorphism}
 \label{sec/overview/polytypes}
