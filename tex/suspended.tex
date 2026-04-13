@@ -540,9 +540,11 @@ expression is not yet known, the default rule applies, assigning \ocaml{bag}'s
 % Defaulting rules are not so useful for objects, but very useful for 
 % polyparams. This is future work.
 
-In practice, many users restrict their use of objects to method calls on
-annotated instances; consequently, defaulting rarely arises and is not
-considered in our work. By contrast, defaulting appears essential for more
+Defaulting is not considered in our work.  In practice, many users restrict
+their use of objects to method calls on objects of known types. In such
+cases, defaulting never arises.
+%
+By contrast, defaulting appears essential for more
 recent features such as polymorphic parameters \citep*{\BBpolyparams}, which
 introduce polytype boxing and unboxing at every function application and are
 therefore deferred to future work. 
@@ -658,9 +660,9 @@ yields precisely the formulation introduced in
 The introduction form (\Rule{PolyML-Poly}) for \polytypes is a boxing operator
 $\epoly[\ts] \e$ with an explicit \emph{closed} polytype annotation%
 \footnote{%
-  For simplicity, \PolyML annotations are restricted to closed types. Both
-  \citet{\BBpolyml} and our work support a more general form with existentially 
-  quantified type variables, as commonly used in \OCaml. 
+  For simplicity, we here restrict \PolyML annotations to closed types. Both
+  \citet{\BBpolyml} and our work support a more general form with
+  existentially quantified type variables, as commonly used in \OCaml.
   \label{fn/polyml-closed-annotations}
 }
 $\ts$ (\ie $\ts$ contains no free type or annotation variables).
@@ -4396,15 +4398,15 @@ During solving, we track a set of \emph{guards} for each type variable. Each
 guard indicates that the variable is captured by a suspended constraint and may
 therefore be updated when that constraint is discharged. At generalization
 time, these guards conservatively approximate whether a variable may still be
-updated in the future. Variables with at least on guard are  partially
+updated in the future. Variables with at least one guard are  partially
 generalized (\textbf{PG}); those without guards are fully generalized
 (\textbf{G}).
 
 When an instance is taken from a partially generalized variable $\tv$
 (\textbf{PG}), we retain a forward reference from $\tv$ to the instance $\tvb$.
-This enables $\tv$ to notify $\tvb$ if it is later updated, at which point
-$\tv$ becomes a partial instance (\textbf{PI}) and propagates its updates to
-$\tvb$.
+This enables $\tv$ to notify $\tvb$ if it is later updated, at which
+point~$\tv$ becomes a partial instance (\textbf{PI}) and propagates its
+updates to $\tvb$ (and to its other instances).
 %
 This mirrors, in reverse, the way our formalized solver uses incremental
 instantiation constraints to track copies. In addition, the instance $\tvb$
@@ -4966,7 +4968,10 @@ the prototype described in the present paper, and brought the idea of
 handling \polytypes as suspended constraints\XDR{
 and the need for back-propagation}\Xalistair{IIRC both of us introduced 
 back-propagation (using different approaches). The commented out paragraph 
-below also suggests this.}.
+below also suggests this.}\XDR{We earlier agreed on this and either you or
+Gabriel erased it. I really did not want to get into such a discussion, but
+why was it changed after beeing agreed on? I don't want to discuss this on
+github. We may call one another to solve it}.
 %
 % He worked out the implementation, and with Alistair O'Brien the
 % formal presentation of \polytypes (semi-explicit
