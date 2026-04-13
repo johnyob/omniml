@@ -574,11 +574,13 @@ for method calls to objects of yet-unknown class, you should explicitly say
 so, but then it should be said that this is still an important use-case, as
 this is why rows have been invented for!}
 
-While such defaulting is relatively uncommon with polymorphic methods,
-it becomes essential for more recent features such
-as polymorphic parameters
-\citep*{\BBpolyparams}, which introduce polytype boxing and unboxing
-at every function application.
+\Xalistair{Clarrified. Does this work for you?}
+
+While such defaulting is relatively uncommon with (polymorphic) method
+calls---since objects are rarely used and calls are typically made on
+already-known instances---it becomes essential for more recent features such as
+polymorphic parameters \citep*{\BBpolyparams}, which introduce polytype boxing
+and unboxing at every function application.
 
 \paragraph{Semi-explicit first-class polymorphism}
 \label{sec/overview/polytypes}
@@ -770,13 +772,16 @@ Also, I'd rather this section focus on the important stuff (explaining how
 \geninst-directionality works), and not unnecessary formalism for an 
 edgecase (open annotations). If you feel strongly against this, I suggest 
 @Gabriel weighs in to break this stalemate.}\XDR{Voting is not necessarily
-the best way to resolve issues.} 
+the best way to resolve issues.}\Xalistair{This was the protocol we agreed 
+on.}
 
 \XDR{If we wish to technically restrict to the monomorphic case, we should
 explain that we do so, that this is odd, not ML-ish, and that we do so just
 to simplify the exposition. The problem is that we cannot say that
 this is not the focus of our work, since it is largely about propagating
-type annotations...}
+type annotations...}\Xalistair{Yes, but you could still do omnidirectional 
+type inference with annotations that are closed. The annotations being 
+open or closed is orthogonal to the problem of propagation here.}
 
 
 \parcomment {Who uses this?}
