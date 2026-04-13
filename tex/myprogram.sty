@@ -193,18 +193,15 @@
     {}
 
 \usepackage{pifont}
-\newcommand{\cmark}{\ding{51}}
-\newcommand{\xmark}{\ding{55}\hskip .2ex}
-\newcommand{\dmark}{\tikz[
-  line cap=but,
-  line join=round,
-  x=.5em,
-  thick,
-  y=1*(height("Z")-\pgflinewidth)*(1-sin(10)),
-  rotate=-10,
-  rounded corners=1.5pt,
-]
-\draw (1, 0) -- (0, 0) -- (1, 1) -- (0, 1);}
+% Normalize symbol height/depth for colored boxes
+% Sets height to 'X' and depth to 'g', with a small vertical adjustment to center marks.
+\newcommand{\normalizemark}[1]{\makebox[1em][c]{\raisebox{-0.5pt}[\fontcharht\font`X][\fontchardp\font`g]{#1}}}
+\newcommand{\cmark}{\normalizemark{\ding{51}}}
+\newcommand{\xmark}{\normalizemark{\ding{55}}}
+\newcommand{\dmark}{\normalizemark{\tikz[baseline=-0.85em]{
+    \fill[black, thick, rounded corners=1.5pt] (0,-0.95em) -- (0.45em,-0.1em) -- (0.9em,-0.95em) -- cycle;
+    \node[overlay, white] at (0.45em,-0.6em) {\tiny!};
+  }}}
 
 \newcommand\smashcolorbox[2] {\smash{\fboxsep 1pt\colorbox{#1}{#2}}}
 \newif \ifocamlwarnings
