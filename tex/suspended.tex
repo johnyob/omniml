@@ -524,6 +524,8 @@ This reduction is useful for two reasons:
 \paragraph{Default rules}
 \label{sec/default-rules/poly}
 
+% Defaulting rules for polytypes
+
 As with static overloading in \cref{sec/default-rules}, \OCaml employs a
 defaulting rule for \polytypes: when a polytype cannot be inferred as
 \emph{known}, its polymorphic scheme is defaulted to a monomorphic type. 
@@ -576,6 +578,9 @@ this is why rows have been invented for!}
 
 \Xalistair{Clarrified. Does this work for you?}
 
+% Defaulting rules are not so useful for objects, but very useful for 
+% polyparams.
+
 While such defaulting is relatively uncommon with (polymorphic) method
 calls---since objects are rarely used and calls are typically made on
 already-known instances---it becomes essential for more recent features such as
@@ -601,18 +606,12 @@ instantiation must be explicitly and fully specified.
 
 % Ward off comments that polytypes aren't as good as implicit first-class 
 % polymorphism.
+
 We focus on \polytypes in the remainder of this work for two reasons. First,
-they are used in \OCaml, notably for polymorphic methods and polymorphic
-function parameters. Second, they expose the subtle interaction with
-principality that is of interest. 
-
-
-\TODO{Move this to related work.}
-By contrast, for implicit first-class polymorphism, it remains unclear
-whether inference using omnidirectionality can be achieved \emph{without}
-default rules---a mechanism also used in bidirectional systems, \eg \DK's
-``\textsf{$\hat\tv$App}'' rule~\cite [Fig 11]
-{dunfield-krishnaswami-bidirectional-poly}.
+our work is grounded in the features of \OCaml, where \polytypes are used for
+polymorphic methods and polymorphic function parameters. Second, \polytypes
+expose the subtle interaction with principality that is of interest. We discuss
+approaches for implicit first-class polymorphism in \cref{sec:related-work}.
 
 \subsection{Directional type inference}
 \label{sec/overview/directional}
@@ -4853,10 +4852,21 @@ is left to future work.
 
 \paragraph{First-class polymorphism}
 
+% Polytypes are semi-explicit first-class polymorphism. 
+
 \Polytypes provide a form of \emph{semi-explicit} first-class polymorphism and
 are of particular interest due to their role in \OCaml's inference of
-polymorphic methods. Many systems for first-class polymorphism exist; here we
-highlight a few in the context of \ML.
+polymorphic methods and polymorphic function parameters. 
+% Implicit first-class poly is harder
+Fully implicit first-class polymorphism is more challenging: inference must
+determine when to introduce and eliminate polytypes. It remains unclear whether
+such inference can be achieved using omnidirectionality \emph{without} default
+rules (\cref{sec/default-rules/poly})---a mechanism also used in bidirectional
+systems, \eg \DK's ``\textsf{$\hat\tv$App}'' rule~\cite [Fig 11]
+{dunfield-krishnaswami-bidirectional-poly}.
+%
+Many systems for implicit first-class polymorphism exist; here we highlight a
+few in the context of \ML.
 
 \MLF is an extension of \ML that supports first-class polymorphism that goes
 beyond the power of System $\mathsf{F}$, while retaining type inference. It
@@ -4875,7 +4885,7 @@ Each let-binding $\elet \x \ea \eb$ introduces a boxed polytype $\elet \x
 unboxing it $\einst \x$. Freezing disables this implicit unboxing.
 %
 By default, the implicit boxing operator $\epoly \ea$ infers a polytype 
-$\tpoly \ts$, where $\ts$ is the principal type of $\ea$ when it 
+$\tpoly \ts$, where $\ts$ is the most general type of $\ea$ when it 
 is not already known from the surrounding context.}  
 %
 The essential difference is that generalization of higher-rank types is
