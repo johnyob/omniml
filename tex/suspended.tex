@@ -149,11 +149,13 @@ higher-rank (\ie first-class) polymorphism, exposed by \emph{polymorphic
 methods}~\citep{\BBpolyml} (\smashcolorbox{welltyped}{green (\cmark)} indicates
 typechecking success and \smashcolorbox{illtyped}{red (\xmark)} indicates
 failure):
-%
+
+% Some vspace hacking to avoid the red and blue touching
+\vspace{1ex}
 \begin{program}[input]
 let self x = x#f x °\Ocamlcomment{\ocamlFlag {\OCaml}1}°
 \end{program}
-%
+
 In \OCaml, objects are defined as a collection of methods within
 \code{object ... end}, and accessed using $\e \esend m$. Unlike Java or C++,
 \OCaml uses \emph{structural typing} for objects: object types are a list of

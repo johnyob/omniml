@@ -173,7 +173,6 @@
       {\lst@true \lst@moreLiteratekey}
       {\lst@false\lst@moreLiteratekey}#1\@nil@}
 
-
 \lstdefinestyle{inputnumbers}
     {numbers=right,numberstyle=\tiny}
 \lstdefinestyle{program}
@@ -278,15 +277,22 @@
    {\ifKV@lst@hide \let \lst@hide \True\else \let \lst@hide \False\fi}
 
 \newcommand{\lstprogramsize}{\small}
+\newcommand{\lstprogrampar}{\par}
 \lstnewenvironment{program}[1][language=ocaml]
    {\let \lstsize \lstprogramsize
+    \lstprogrampar
+    \vspace{\medskipamount}%
+    \noindent\minipage{\linewidth}%
     \lstset{%
        language=ocaml,%
-       aboveskip=\smallskipamount,%
-       belowskip=\smallskipamount,%
+       aboveskip=0pt,%
+       belowskip=0pt,%
        #1}%
     \lst@hide{\setbox0 \vbox \bgroup}{}}
-   {\lst@hide{\egroup \setbox0 \null}{}}
+   {\lst@hide{\egroup \setbox0 \null}{}%
+    \endminipage%
+    \vspace{\medskipamount}%
+    \lstprogrampar}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Highlighting in programs
