@@ -281,17 +281,20 @@
 \lstnewenvironment{program}[1][language=ocaml]
    {\let \lstsize \lstprogramsize
     \lstprogrampar
-    \vspace{\medskipamount}%
-    \noindent\minipage{\linewidth}%
     \lstset{%
        language=ocaml,%
-       aboveskip=0pt,%
-       belowskip=0pt,%
-       #1}%
-    \lst@hide{\setbox0 \vbox \bgroup}{}}
-   {\lst@hide{\egroup \setbox0 \null}{}%
-    \endminipage%
-    \vspace{\medskipamount}%
+       aboveskip=\z@,%
+       belowskip=\z@,%
+       #1,%
+       }%
+    \lst@hide{\setbox0 \vbox \bgroup}{}%
+    \vskip \smallskipamount
+    \vskip \medskipamount
+    \noindent  \minipage{\linewidth}%
+    }
+   {\endminipage
+    \vskip \medskipamount
+    \lst@hide{\egroup \setbox0 \null}{}%
     \lstprogrampar}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -416,12 +416,11 @@ If local type information and closed-world reasoning are insufficient, \OCaml
 falls back to a syntactic default: it selects the most recently defined
 compatible type. For example, \OCaml accepts the following expression, when
 \smashcolorbox{warning}{\strut warnings (\dmark)} are not turned into
-\smashcolorbox{illtyped}{\strut errors (\xmark)} (\ie without the
-\code{-warn-error} flag\footnotecref{fn/principal})
+{\lower 0pt\hbox{\strut}}\smashcolorbox{illtyped}{\strut errors (\xmark)},
+\ie without the \code{-warn-error} flag\footnotecref{fn/principal}:
 %
 % This prevents the color boxes of `warnings` and `errors` from touching
 % the code block by increasing the depth of the current line.
-\lower 4pt \hbox{\strut}:
 \begin{program}[input,checkocaml=true]
 let ex_1 r = r.x                                      °\ocamlflags 21°
 \end{program}
@@ -1212,7 +1211,6 @@ Omnidirectional inference is powerful, but not omnipotent:
 
 \paragraph{Not too hot, not too cold} Some expressions
 must be rejected even though their elaboration would be unambiguous. Consider:
-
 \begin{program}[input,checkocaml]
 type cie_color = { x : int; y : int; z : int }
 type cie_point = { x : int; y : int; color : cie_color }
