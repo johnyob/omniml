@@ -30,7 +30,7 @@ simplify the presentation of pi-directional inference:
 
 - We removed the technically heavy judgement `(𝜎1 : 𝜎 : 𝜎2)` by dropping
   support for existentially quantified type variables in annotations. As a
-  result, we replace it with a simplier judgement `𝜎1 =>ann 𝜎2` which inserts
+  result, we replace it with a simpler judgement `𝜎1 =>ann 𝜎2` which inserts
   fresh annotation variables on boxed polytypes `[ 𝜎 ]`.
 
 - We added all the rules for the simple bidirectional system used in comparisons, 
@@ -38,21 +38,26 @@ simplify the presentation of pi-directional inference:
 
 # New section: Discussion 
 
-We have moved the discussion of the semi-unification-based implementation
-entirely into a dedicated 'Discussion' section. In this section, we: 
+We added a new 'Discussion' section as a new home for our discussion
+of the semi-unification-based implementation, and other practical
+considerations highlighted by reviews 1 and 3:
 
-- Present semi-unification more clearly as an alternative approach for
-  implementing incremental instantiation. 
+- A discussion of error reporting: we did not work on this yet, but
+  we believe that our work would be compatible and in fact play nicely
+  with a "getting into the flow" approach.
 
-- Expand the discussion to cover partical considerations highlighted by reviews
-  1 and 3, including the integration of omnidirectionality into OCaml and
-  implications on error reporting.
+- A discussion of integrability into OCaml, separating the OCaml type
+  system abstractly and its current implementation in the OCaml
+  compiler.
+
+- A discussion of semi-unificatio as an alternative approach for
+  implementing incremental instantiation.
 
 # Incremental instantiation (Section 5.2-5.3)
 
 All reviewers noted that the presentation of incremental instantiation was
 difficult to follow. While some of this complexity is inherent, we have
-improved the exposition: 
+improved the exposition:
 
 - We added a new, dedicated in Section 5.3 that continues the running example
   from Section 5.2 and demonstrates incremental instantiation in action, which
@@ -71,7 +76,7 @@ subsection on directionality:
 - We clarify our position that omnidirectionality subsumes contextual typing in
   terms of expressiveness. Concretely, we have implemented a prototype (OmniF)
   that supports implicit first-class polymorphism in the style of local type
-  inference.Our experience with this system suggests that it subsumes local
+  inference. Our experience with this system suggests that it subsumes local
   contextual typing in practice.
 
 - At the same time, we now explicitly restate an important limitation:
