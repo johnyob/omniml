@@ -70,6 +70,10 @@
 %% \crefformat{figure}{#2figure~#1#3}
 %% \Crefformat{Figure}{#2Figure~#1#3}
 
+% A manual link to the a footnote. \cref prints something that
+% looks like a section reference (not a footnote).
+\newcommand{\footnotecref}[1]{\hyperref[#1]{\textsuperscript{\ref*{#1}}}}
+
 \newenvironment{local}{}{\ignorespacesafterend}
 
 \RequirePackage{subcaption}

@@ -414,10 +414,8 @@ If local type information and closed-world reasoning are insufficient, \OCaml
 falls back to a syntactic default: it selects the most recently defined
 compatible type. For example, \OCaml accepts the following expression, when
 \smashcolorbox{warning}{\strut warnings (\dmark)} are not turned into
-\smashcolorbox{illtyped}{\strut errors (\xmark)} (\ie without the \code{-warn-error} flag%
-% A manual link to the fn/principal footnote. \cref prints something that
-% looks like a section reference (not a footnote).
-\hyperref[fn/principal]{\textsuperscript{\ref*{fn/principal}}})
+\smashcolorbox{illtyped}{\strut errors (\xmark)} (\ie without the
+\code{-warn-error} flag\footnotecref{fn/principal})
 %
 % This prevents the color boxes of `warnings` and `errors` from touching
 % the code block by increasing the depth of the current line.
@@ -651,16 +649,19 @@ annotation variable $\av$ is eligible for generalization (\eg $\tfor \av
 
 Using this approach, we can give typing rules for polytypes; this
 yields precisely the formulation introduced in
-\PolyML~\citep*{\BBpolyml}, given in \cref{fig:polyml}.\Xgabriel{In the
-  grammar of types in that figure, I would expect $\tpoly \ts$ to be
-  listed. Why is it not done?}\Xalistair{This was given in \cref{fig:polyml-syntax}.
-  I've added here again now, but do you think we should include it twice?}
+\PolyML~\citep*{\BBpolyml}, given in \cref{fig:polyml}.
 %
 \parcomment {Boxing}
 %
 The introduction form (\Rule{PolyML-Poly}) for \polytypes is a boxing operator
-$\epoly[\ts] \e$ with an explicit \emph{closed} polytype annotation $\ts$ 
-(\ie $\ts$ contains no free type or annotation variables).
+$\epoly[\ts] \e$ with an explicit \emph{closed} polytype annotation%
+\footnote{%
+  For simplicity, \PolyML annotations are restricted to closed types. Both
+  \citet{\BBpolyml} and our work support a more general form with existentially 
+  quantified type variables, as commonly used in \OCaml. 
+  \label{fn/polyml-closed-annotations}
+}
+$\ts$ (\ie $\ts$ contains no free type or annotation variables).
 %
 The resulting expression has type $\tapoly {\tsb} \av$ where $\av$ is an
 arbitrary (typically fresh) annotation variable and $\tsb$ is a \emph{freshened
@@ -688,62 +689,17 @@ polytypes.
 \parcomment {Annotations}
 
 \Rule{PolyML-Annot} can be used to introduce fresh annotation variables.
-Intuitively, $\ta$ and $\tb$ are two \emph{fresh copies} of the same closed
-annotation $\t$, preventing unwanted sharing of annotation variables that could
-otherwise block generalization.  For example, $\efun {\x : \tpoly \ts} {\einst
-\x}$, which is syntactic sugar for 
+Intuitively, $\ta$ and $\tb$ are two \emph{fresh copies} of the same
+closed annotation\footnotecref{fn/polyml-closed-annotations} $\t$, preventing
+unwanted sharing of annotation variables that could otherwise block
+generalization.  For example, $\efun {\x : \tpoly \ts} {\einst \x}$, which is
+syntactic sugar for 
 %
 $\efun \x {\elet \x {\eannot \x {} {\tpoly \ts}}} {\einst \x}$, is well-typed
 because the explicit annotation introduces a fresh annotation variable~$\av$
 for $\eannot \x {} {\tpoly \ts}$, which can then be generalized, yielding
 $\tfor \av {\tannot {\tpoly \ts} \av}$ for the type of the let-bound variable
 $\x$.
-
-\XDR{We never say that \polytypes are closed. Would we like simple types to
-alos be closed \eg. ground types. That would be odd.  In any case we must
-be clear about the status of free type variables of $\t$ in $\eannot \e
-{}\t$. If we allow free type variables in $\t$, we can no longer separate
-the two copies of $\t$. There is no huge differenece between two occurrences
-of the unitary predicate and one occurrence of a binary predicates
-$\ta \Leftarrow \t \Rightarrow \tb$. If we explicitly mention the free
-variables of $\t$ as $\exi \tvs \t$, we could write
-$\ta \Leftarrow \t \Rightarrow \tb$ to just copy the annotation nodes and
-them write \def \SU{\where {\tvs \is \ts}} $\ta \SU$ and $\tb \SU$ on the
-two judgments:
-$$
-  \infer[PolyML-Annot]
-    {\G \th \e : \ta \SU \\ \ta \Leftarrow \t \Rightarrow \tb \\ \G \th \ts}
-    {\G \th \eannot \e {\tvs} \t : \tb \SU}
-$$
-}
-\Xalistair{I think I've made it clearer that annotations are now closed.}
-\XDR{For simple types, closed type, a should then be ground type.
-For me restricting type annotations to ground types is very odd.
-I know we previously agrred on this change, but I know dislike it.
-(As I would dislike reading someone else paper the does the same thing.)
-}
-\Xalistair{I find the proposed rule harder to read. Additionally, closed 
-annotations are used for symmetry with the bidirectional system (which 
-cannot have open annotations). 
-It's worth noting that these two systems are purely for illustrative 
-purposes, the rules we give here can be simplifications / a subset of a more 
-complex and complete system. 
-
-Also, I'd rather this section focus on the important stuff (explaining how 
-\geninst-directionality works), and not unnecessary formalism for an 
-edgecase (open annotations). If you feel strongly against this, I suggest 
-@Gabriel weighs in to break this stalemate.}\XDR{Voting is not necessarily
-the best way to resolve issues.}\Xalistair{This was the protocol we agreed 
-on.}
-
-\XDR{If we wish to technically restrict to the monomorphic case, we should
-explain that we do so, that this is odd, not ML-ish, and that we do so just
-to simplify the exposition. The problem is that we cannot say that
-this is not the focus of our work, since it is largely about propagating
-type annotations...}\Xalistair{Yes, but you could still do omnidirectional 
-type inference with annotations that are closed. The annotations being 
-open or closed is orthogonal to the problem of propagation here.}
-
 
 \parcomment {Who uses this?}
 % This paragraph also performs the duty of linking PolyML and OCaml in the
