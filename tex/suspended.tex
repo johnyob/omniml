@@ -4445,12 +4445,15 @@ categories:
 need just a few more details, probably using a little of maths to describe
 the guards, dependencies, etc. We do not have a page limit, so we should
 really take 10 more lines if need be here: there is a really well-thought
-efficient implementation that is worth making more easily understandable.}  At
-generalization time, we conservatively approximate whether a variable may be
-updated in the future using \emph{guards}. A guard is a mark on a variable
-that indicates the variable is captured by some suspended constraint that
-has not yet been solved. Guarded variables are generalized as partial
-generics (\textbf{PG}); unguarded ones are fully generalized (\textbf{G}).
+efficient implementation that is worth making more easily understandable.}
+\XDR{I kept the old version inlined and attempted a new version below}
+\begin{version}[See old version inlined]{}
+At generalization time, we conservatively approximate whether a variable may
+be updated in the future using \emph{guards}. A guard is a mark on a
+variable that indicates the variable is captured by some suspended
+constraint that has not yet been solved. Guarded variables are generalized
+as partial generics (\textbf{PG}); unguarded ones are fully generalized
+(\textbf{G}).
 
 When an instance is taken from a partial generic, we retain a forward reference
 from the partial generic (\textbf{PG}) to the instance. This enables the
@@ -4464,6 +4467,37 @@ Once a suspended match constraint is solved, it removes the guards it
 introduced. This may enable previously partial generics to become fully
 generalizable. Conversely, if a partially generalized variable is lowered (\eg
 by \Rule{S-Exists-Lower}), it must be unified with all its instances.
+\end{version}
+
+At generalization time, we conservatively approximate whether a variable may
+be updated in the future using \emph{guards}. A guard is a mark on a
+variable that indicates the variable is captured by some suspended
+constraint that has not yet been solved.
+\XDR{This is the case for \textbf{PG}, but \textbf{G} should then not be
+considered as a mark. So there is a some confusion on the status of I, PI,
+G, PG: there are called categories, then, marks, the guards.  Thus \emph{A
+guard is a mark} is wrong/misleading.}  Guarded variables are marked as
+partially generalized (\textbf{PG}); unguarded ones are fully generalized
+(\textbf{G}).
+
+When an instance $\tvb$ is taken from a partially generalized variable $\tv$
+marked \textbf{PG}, we retain a forward reference from $\tv$ to $\tvb$. This
+enables $\tv$ to notify $\tvb$ when $\tv$ will later be updated (and thus
+marked \textbf {PI}), propagating the updated type structure to $\tvb$---and all of its other instances.
+%
+This mirrors, in reverse, the way our formalized solver uses incremental
+instantiation constraints to track copies. In addition, the instance $\tvb$
+remains guarded by $\tv$ until the latter is either lowered or fully
+generalized.
+
+Once a suspended match constraint is solved, it removes the guards it
+introduced.  This may enable previously partially generalized type variables
+$\tv$ marked \textbf{PG} to become fully generalized and marked
+\textbf{G}. Conversely, if a partially generalized variable $\tv$ is lowered
+(\eg by
+\Rule{S-Exists-Lower}), it must be unified with all its instances $\tvb$'s
+obtained by following the forward references. \XDR{I do not know what do we
+he mark: mark is as $I$, i.e. to be generalized at the lower level?}
 
 \paragraph{Lazy generalization}
 
@@ -4472,7 +4506,8 @@ generalize on demand. We mark regions as ``stale'' when they may require
 re-generalization. When an instance is taken, we re-generalize the stale
 descendants of the region in the region tree.
 
-\parcomment{Lazy generalization is an optimization for a common case, it is not optimal}
+\parcomment{Lazy generalization is an optimization for a common case, it is
+not optimal} 
 
 Although this technique prevents premature re-generalization before
 instantiation, it only optimizes for a common case. In some situations,
