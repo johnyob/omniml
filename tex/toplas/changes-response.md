@@ -168,7 +168,6 @@ Added a remark on the similarity between our recipe and the Pfenning recipe.
 
 Correct, this appears to be an artefact of an earlier version of the proof. 
 
-> 
 > - page 62, line 39-40, "𝜙 ⊢𝒞2 [match 𝜏 := 𝜍 with¯ 𝜒,𝐶2] By i.h."
 > 
 > Should it be `𝜙 ⊢𝒞2 [𝐶2] By i.h.`?
@@ -213,18 +212,18 @@ Correct! However, we ended up fixing the type to get the desired shape.
 > refer to polymorphic types with boxes. Polytypes to me are just
 > abbreviations for polymorphic types. I understand that this is also
 > the terminology used in Garrigue and Rémy 1999. I would appreciate if
-> the paper can explicitly use something like ``boxed polytypes''. Feel
+> the paper can explicitly use something like "boxed polytypes". Feel
 > free to ignore this comment if you'd like to keep "polytypes".
 
 We carefully considered this suggestion. While it is true that the term
-``polytype'' dates back to Milner's (1978) _A Theory of Type Polymorphism in
-Programming_, in modern ML settings it has largely been supplanted by ``type
-scheme''. In this paper, we ended up following the terminology of Garrigue and
+"polytype" dates back to Milner's (1978) _A Theory of Type Polymorphism in
+Programming_, in modern ML settings it has largely been supplanted by "type
+scheme". In this paper, we ended up following the terminology of Garrigue and
 Rémy (1999).
 
-We experimented with the term ``boxed polytypes'', but found it to be overly
+We experimented with the term "boxed polytypes", but found it to be overly
 explicit and somewhat verbose, without providing additional clarity to justify
-the added ``boxed'' qualifier.
+the added "boxed" qualifier.
 
 > 1. Page 8 line 9: "so some well-typed programs are rejected as ill-typed (e.g. ex62, ex63)."
 > 
@@ -257,10 +256,12 @@ as well as in black-and-white print.
 > condition (for expressions without fragile constructs) can be
 > explained and defined before presenting Fig. 3.
 
-When revisiting this part of the paper, we concluded htat the primary
-difficulty is not with the well-foundedness of the definition (which follows
-relatively directly), but with building intuition for what the unicity
-condition enforces and why it is needed. Accordingly, rather than introducing a
-second typing relation (which would require this explaination upfront), we have
-left the presentation as is.
+We initially had a presentation in that style, with a "|-{simple}"
+judgment and a full judgment. When revisiting this part of the paper,
+we concluded that the primary difficulty is not with the
+well-foundedness of the definition (which follows relatively
+directly), but with building intuition for what the unicity condition
+enforces and why it is needed. Accordingly, rather than introducing a
+second typing relation (which would require this explaination
+upfront), we have left the presentation as is.
 
