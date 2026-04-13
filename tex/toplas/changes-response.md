@@ -50,7 +50,7 @@ considerations highlighted by reviews 1 and 3:
   system abstractly and its current implementation in the OCaml
   compiler.
 
-- A discussion of semi-unificatio as an alternative approach for
+- A discussion of semi-unification as an alternative approach for
   implementing incremental instantiation.
 
 # Incremental instantiation (Section 5.2-5.3)
