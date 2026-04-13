@@ -4,18 +4,18 @@ feedback! We have revised the paper accordingly.
 We begin by summarizing the main changes, and then provide detailed responses
 to the individual comments of each review.
 
-# Improved presentation of polytypes 
+# Improved presentation of (boxed) polytypes
 
-The presentation of polytypes was identified as a challenging aspect of the
+The presentation of boxed polytypes was identified as a challenging aspect of the
 paper by all reviews. We have therefore significantly reworked this part of
 the exposition. In particular, we now:
 
-- Introduce polytypes *without* annotation variables first, in the context of
+- Introduce boxed polytypes *without* annotation variables first, in the context of
   discussing OCaml's polymorphic methods. This separates the discussion of
   polytypes from existing directional approaches (such as pi-directional
   inference), resulting in two clearer and more focused sections.
 
-- Expand and clarify the relationship between polytypes and explicit / implicit
+- Expand and clarify the relationship between boxed polytypes and explicit / implicit
   first-class polymorphism. We now explicitly state that inference for
   polytypes is *easier* than for implicit first-class polymorphism.
 
