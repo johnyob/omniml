@@ -19,9 +19,13 @@ the exposition. In particular, we now:
   first-class polymorphism. We now explicitly state that inference for
   polytypes is *easier* than for implicit first-class polymorphism.
 
-- Add an explicit point explaining that we do not currently know how to support
-  omnidirectional inference for implicit first-class polymorphism *without*
-  default rules, which are beyond the scope of this work. 
+- We explicitly note that we do not know how to support omnidirectional 
+  inference for expressive _implicit_ first-class polymorphism without  
+  default rules, which are beyond the scope of this work. This limitation 
+  applies only to implicit first-class polymorphism; our treatment of 
+  semi-explicit first-class polymorphism (boxed polytypes) does not 
+  rely on defaulting. This point is discussed in related work, with a forward 
+  reference from Section 2.2.
 
 # Improved presentation of pi-directionality
 
