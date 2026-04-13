@@ -229,6 +229,13 @@
   {\Ocamlcomment
       {\ocamlFlag{\textsf{\footnotesize \OCaml}}{#1}\space
        \ocamlFlag{\textsf{\footnotesize \OML}}{#2}}}
+\newcommand \ocamlvflags[3][t]
+  {\Ocamlcomment
+      {\ifx #1t\let \tmpbox\vtop \else\let \tmpbox \vbox\fi
+       \setbox0 \tmpbox
+         {\hbox{\ocamlFlag{\textsf{\footnotesize \OCaml}}{#2}}%
+          \hbox{\ocamlFlag{\textsf{\footnotesize \OML}}{#3}}}\ht0 0em\dp0 0em
+       \box0}}
 \newcommand \polysmlflags[2]
   {\Ocamlcomment
       {\ocamlFlag{\textsf{\footnotesize \PolySML}}{#1}\space

@@ -1201,10 +1201,10 @@ follow this strategy, to the best of our knowledge.
 
 Consider the following program:
 \begin{program}[input]
-type 'a gpoint = { x : 'a; y : 'a }
+type 'a gpoint = { x : 'a; y : 'a }                     °\ocamlflags 20°
 let diag (n : 'a) : 'a gpoint = { x = n; y = n }
 °\halfline°
-let ex_8 gp = let getx p = p.x in getx (diag 42), (getx gp : float) °\ocamlflags 20°
+let ex_8 gp = let getx p = p.x in getx (diag 42), (getx gp : float)
 \end{program}
 We introduce a new parameterized record type \code{'a gpoint}, whose
 fields \code{x} and \code{y} are overloaded---recall that both \code{point} and
