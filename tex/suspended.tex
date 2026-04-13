@@ -528,8 +528,9 @@ As with static overloading in \cref{sec/default-rules}, \OCaml employs a
 defaulting rule for \polytypes: when a polytype cannot be inferred as
 \emph{known}, its polymorphic scheme is defaulted to a monomorphic type. 
 %
-This is particularly useful, as it allows to typecheck functions such
-as \ocaml{fun bag x -> bag#mem x} without annotations. Here, the method
+This is particularly useful, as it allows to typecheck method calls on an
+object on yet-unknown class such as
+\ocaml{fun bag x -> bag#mem x} without annotations. Here, the method
 invocation 
 $\ttlab {bag} \esend \ttlab {mem}$ introduces an unboxing operation, becoming
 $\einst {\texttt{bag} \esend \texttt{mem}}$. At this point, the defaulting rule
@@ -565,8 +566,16 @@ unknown object type.}
 \Xalistair{My experience with using objects is that methods/functions 
 operating on them often annotate the object type.}
 
-While such defaulting is relatively uncommon
-with polymorphic methods, it becomes essential for more recent features such
+\XDR{Just the wording below is incorrect: defaulting on polymorphic methods
+will always fail, since defaulting treat the method as monomorphic...}
+
+\XDR{If you wish to say, that in practice, defaulting will only be used
+for method calls to objects of yet-unknown class, you should explicitly say
+so, but then it should be said that this is still an important use-case, as
+this is why rows have been invented for!}
+
+While such defaulting is relatively uncommon with polymorphic methods,
+it becomes essential for more recent features such
 as polymorphic parameters
 \citep*{\BBpolyparams}, which introduce polytype boxing and unboxing
 at every function application.
@@ -760,7 +769,14 @@ complex and complete system.
 Also, I'd rather this section focus on the important stuff (explaining how 
 \geninst-directionality works), and not unnecessary formalism for an 
 edgecase (open annotations). If you feel strongly against this, I suggest 
-@Gabriel weighs in to break this stalemate.}
+@Gabriel weighs in to break this stalemate.}\XDR{Voting is not necessarily
+the best way to resolve issues.} 
+
+\XDR{If we wish to technically restrict to the monomorphic case, we should
+explain that we do so, that this is odd, not ML-ish, and that we do so just
+to simplify the exposition. The problem is that we cannot say that
+this is not the focus of our work, since it is largely about propagating
+type annotations...}
 
 
 \parcomment {Who uses this?}
