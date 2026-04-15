@@ -4459,7 +4459,7 @@ locations to constraints. That said, we see no obstacle to adopting the
 approach of \citet*{journals/pacmpl/BhanukaPBB23}.
 
 
-\paragraph{Integration into OCaml} 
+\paragraph{Integration into \OCaml} 
 
 Integrating suspended constraints into \OCaml's type checker raises two
 questions: their compatibility with \OCaml's existing type system, and the
@@ -4467,10 +4467,10 @@ feasibility of implementing them within \OCaml's current typechecker.
 
 From a type-theoretic perspective, we are confident that suspended constraints
 and incremental instantiation are compatible with the various features of the
-OCaml type system. Moreover, several other features of OCaml could benefit from
+\OCaml type system. Moreover, several other features of \OCaml could benefit from
 suspended constraints. In some cases, such as GADTs, this perspective could
 open up a new research topic of its own. Nevertheless, reformulating every
-feature to use omnidirectionality (if eneded) is not required for initial
+feature to use omnidirectionality (if eneded\XDR{ended?}) is not required for initial
 adoption in \OCaml: existing features could remain unchanged, with suspended
 constraints introduced selectively where it provides clear benefits. 
 
@@ -4486,7 +4486,7 @@ feasible.%
   Compared to the implementation described in \cref{sec:implementation}, \OCaml
   already maintains a tree of inference regions. One could introduce the
   additional data structures required for \emph{partial and lazy
-  generalization}, along with the secheduling mechanisms needed to implement
+  generalization}, along with the scheduling mechanisms needed to implement
   suspended constraints. 
 }
 %
@@ -4679,7 +4679,7 @@ of contextual typing can be viewed as an abstraction of the surrounding context
 $\E$ in our system; thus, omnidirectionality subsumes contextual typing. 
 %
 However, omnidirectionality alone cannot subsume all bidirectional systems. In
-particular, systems for implicit first-class polymorphisms require
+particular, systems for implicit first-class polymorphism require
 \emph{default rules}, as discussed in \cref{sec/default-rules/poly}.
 
 \paragraph{Overloading}
@@ -4859,7 +4859,7 @@ and \GHC 8.0.1 (2016) added \texttt{DuplicateRecordFields}, allowing distinct
 record types with overlapping field names in the same module.
 
 However, the \GHC developers found that type-based disambiguation using
-bidirectional type inference is not sufficiently predictible in practice
+bidirectional type inference is not sufficiently predictable in practice
 for users~\citep*{RFC-overloaded-record-fields}, and that the reliance on
 projection functions, rather than a dedicated projection syntax, further
 complicated the implementation by making all function calls potentially
@@ -4983,7 +4983,7 @@ Gooding, Micheal Lee, and Fran{\latexc{c}}ois Pottier for their helpful
 comments on earlier drafts. 
 %
 % OCSF funded my first year which mainly consisted of working on this :)
-This work was partially funded by the OCaml Software Foundation.
+This work was partially funded by the \OCaml Software Foundation.
 
 %% \bibliographystyle{ACM-Reference-Format}
 \begin{local}
@@ -8745,3 +8745,5 @@ Let $\e$ be an arbitrary closed well-typed term; that is, there exists a type
 % LocalWords:  DisambiguateRecordField DuplicateRecordFields typeclass emy
 % LocalWords:  OverloadedRecordDot Andreas Scherer Martinot Vivien Gundry
 % LocalWords:  Gooding ois homomorphic homomorphism ASUP omnidirectionally
+% LocalWords:  mem Pfenning bidir ness rcd postfix composable metatheory
+% LocalWords:  reimplementation parameterizing
