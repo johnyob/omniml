@@ -4583,7 +4583,7 @@ pattern unification~\citep*{Miller/pattern-unif@iclp91} where flexible-flexible
 pairs are delayed until at least one side becomes rigid.
 %
 Our contribution lies in combining constraint suspension with \ML-style
-implicit polymorphism--- largely absent from dependently typed systems---and in
+implicit polymorphism---largely absent from dependently typed systems---and in
 formulating a declarative constraint semantics.
 
 Conditional constraints \citep*{journals/njc/Pottier00} also delay resolution,
@@ -4634,7 +4634,7 @@ The fixed directionality of bidirectional type systems is a known limitation.
 Prior work has sought to mitigate this within the bidirectional setting by
 altering the order in which information flows. For instance,
 \citet*{conf/esop/XieO18}'s \emph{let arguments go first} typechecks
-applications $\eapp \ea \eb$ by checking the argument $\ea$ before the function
+applications $\eapp \ea \eb$ by checking the argument $\eb$ before the function
 $\ea$, allowing information to flow from argument to function (\cf
 \Rule{Chk-App}).
 
@@ -4646,10 +4646,12 @@ and \Rule{Chk-App} by parameterizing typing $\G \th_m \e : \t$
 with contextual information $m$.
 %
 This enables typing multiple arguments from right to left when sufficient
-contextual information is available, and thus successfully typechecks programs
-such as \code{ex_6} from \cref{sec/overview/directional}. Nevertheless, it
-still enforces a fixed order of propagation, so some well-typed programs are
-rejected as ill-typed (\eg \code{ex_6_2, ex_6_3}).\footnote{\let \code \Code%
+contextual information is available, and thus successfully typechecks
+programs such as~\code{ex_6}
+from~\cref{sec/overview/directional}. Nevertheless, it still enforces a
+fixed order of propagation and, consequently, some well-typed programs are
+rejected as ill-typed (\eg \code{ex_6_2, ex_6_3}).\footnote{\let \code
+\Code%
 %
 Readers wishing to verify
 that \code{ex_6_2} and \code{ex_6_3} are rejected under contextual typing must
@@ -4684,11 +4686,24 @@ inline \code{app} and \code{rev_app}, as the system lacks polymorphism. }
 Omnidirectionality removes this restriction, allowing information to flow
 without committing to a fixed propagation order. The contextual information $m$
 of contextual typing can be viewed as an abstraction of the surrounding context
-$\E$ in our system; thus, omnidirectionality subsumes contextual typing. 
+$\E$ in our system; thus, omnidirectionality conceptually subsumes
+contextual typing.  
 %
 However, omnidirectionality alone cannot subsume all bidirectional systems. In
 particular, systems for implicit first-class polymorphism require
-\emph{default rules}, as discussed in \cref{sec/default-rules/poly}.
+\emph{default rules}, as discussed in
+\cref{sec/default-rules/poly}.\XDR[There are deeper differences: contextual
+typing uses subtyping, \ie contravariant checking of polymorphic
+instantiation. I think we are unfair in our comparison, minimizing the
+differences and letting the reader think that if we had defaults we would
+always be better. This is not true---at least we do not provide any evidence
+for that while on the oppisite there is some evidence that this is likely
+not to be true. I propose the following (but the phrasing should probably be
+improved:]{ Another difference is that typing uses contravariant subtyping
+in checking mode, while our current approach with (boxed) polytypes is based
+on unification and does not allow for deep instantiation. In
+fact, it remains to see how omnidirectional type inference could be combined
+with impredicative instantiation of unboxed polymorphic types.} 
 
 \paragraph{Overloading}
 
