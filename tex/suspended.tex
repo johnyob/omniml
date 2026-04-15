@@ -4470,18 +4470,25 @@ and incremental instantiation are compatible with the various features of the
 \OCaml type system. Moreover, several other features of \OCaml could benefit from
 suspended constraints. In some cases, such as GADTs, this perspective could
 open up a new research topic of its own. Nevertheless, reformulating every
-feature to use omnidirectionality (if eneded\XDR{ended?}) is not required for initial
+feature to use omnidirectionality\XDR[I don't understand]{ (if eneded)} is
+not required for initial 
 adoption in \OCaml: existing features could remain unchanged, with suspended
 constraints introduced selectively where it provides clear benefits. 
 
 For the implementation perspective, the situation is more delicate. The current
 \OCaml has grown organically over more than two decades. The underlying
-inference algorithm (\citet{journals/jcss/Milner78}'s algorithm $\mathscr{J}$)
-uses a single-pass architecture implemented with global mutable state and few
-abstraction boundaries. As a result, the typechecker is large, intricate and
-increasingly difficult to maintain. Our current expert opinion is that
-extending the existing implementation to support suspended constraints is
-feasible.%
+inference algorithm\XDR[ (\citet{journals/jcss/Milner78}'s
+algorithm~$\mathscr{J}$)]{I would not say that the underlying \OCaml
+algorithm is $J$ (1) Algorithm $J$ does not use levels, polytypes, etc.  (2)
+there are a lot of sterile discussion between W and J where you want to show
+the differences, the differences are minor and a matter of engineering and
+hiding the fact that there are both bad, as one should rather use a strategy
+on top of a constraint solver that would have much more freedom on the order
+in which constraints are solved.} uses a single-pass architecture
+implemented with global mutable state and few abstraction boundaries. As a
+result, the typechecker is large, intricate and increasingly difficult to
+maintain. Our current expert opinion is that extending the existing
+implementation to support suspended constraints is feasible.%
 \footnote{%
   Compared to the implementation described in \cref{sec:implementation}, \OCaml
   already maintains a tree of inference regions. One could introduce the
@@ -4506,7 +4513,7 @@ suspended constraints and could significantly simplify their integration.
 
 Semi-unification \citep*{Henglein/phd,Henglein/tiasu@toplas93}, introduced in
 the late 1980's, is a generalization of unification that solves a collection
-$\bigwedge_{i \in I} \ti \leq \tip$ of \emph{instantiation inequalities},
+ of \emph{instantiation inequalities} $\bigwedge_{i \in I} \ti \leq \tip$,
 meaning that there exist a unifier $\theta$ and a collection of
 substitutions $\bar\rho$ such that $\rho_i(\theta(\ti)) = \theta(\tip)$.
 %
@@ -4521,7 +4528,8 @@ problems involving polymorphic recursion.%
   of such examples, the specific class of examples of non-terminating cases was
   only characterized later by
   \citet*{Figueiredo-Camarao/semiunif-ptm@unpub2004}. 
-  These use extremely complex patterns, suggesting that they are unlikely to
+  These examples use extremely complex patterns, suggesting that they are
+  unlikely to 
   appear in practice, unless crafted deliberately.
 }
 %
