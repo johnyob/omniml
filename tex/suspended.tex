@@ -2851,19 +2851,18 @@ $\t$ is a type variable and $\C$ is satisfiable.
   {\!\begin{cases}
     \cinfer {\exrecord \T {\overline{\elab = \e}}} \t
     \\
-    \cexists \tvs \cAnd\iton \cinfer \ei \tvi
+    \cexists \tvs \cAnd\iton \cinfer \ei \tvi \uad \cand
     \\
-    \uad\cand\uad 
-        \cmatch \t {\\ \hskip 4.4em
+    \qquad
+        \cmatch \t {%\\ \hskip 4.4em
                 \cbranch {\cpatrcd \ct}
       {\parens{\dom \ct = \elabs \cand
                \cAnd\iton \labfrom \elabi \ct \leq \t \to \tvi}}}
-      \hskip -2em
+      \hskip -8em
    \end{cases}}
    {\begin{aligned}
-    &\text{if } \labsuni \elabs \T \\
+    &\text{if } \labsuni \elabs \T \\[.2ex]
     &\text{otherwise}\\
-    &\\
     &\\
   \end{aligned}}
 \\
