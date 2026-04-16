@@ -3867,7 +3867,7 @@ Incremental instantiation constraints are reduced using the following rules:
 \begin{enumerate}
 
 \item
-    \indent\DefRule{S-Inst-Copy} copies the shape of a type to the
+    \Rule{S-Inst-Copy} copies the shape of a type to the
     instantiation site, 
     introducing fresh variables for each subcomponents and marking them with
     corresponding instantiation constraints.
@@ -3876,18 +3876,19 @@ Incremental instantiation constraints are reduced using the following rules:
     when $\inst$ is bound with $\exists \inst^\x$ in the context. To ensure
     termination, the abstraction must contain acyclic types.
 
-  \item\indent \DefRule{S-Inst-Unify} unifies two instantiations if they both refer to the
-    same source variable $\tvb$ at the same instantiation site $\inst$.
+  \item
+    \Rule{S-Inst-Unify} unifies two instantiations if they both
+    refer to the same source variable $\tvb$ at the same instantiation site
+    $\inst$. 
+    
 \end{enumerate}
 There are three cases in which an instantiation constraint is eliminated:
 \begin{enumerate}
   \item
-   \begin{local}\sloppy
+   \sloppy
     A base type (\ie a nullary shape) is copied and no further
     instantiations are needed (\Rule{S-Inst-Copy}).
     
-   \end{local}
-
   \item
     The copied variable $\tvp$ is polymorphic, and thus the instantiation
     constraint imposes no restriction (\Rule{S-Inst-Poly}), provided no
@@ -3898,6 +3899,10 @@ There are three cases in which an instantiation constraint is eliminated:
     The copy is monomorphic and in scope, so we unify it directly
     (\Rule{S-Inst-Mono}).
 \end{enumerate}
+
+
+%% \Meaning \infer
+%% \csMeaning {\string\mpr@inferrule@}
 
 \parcomment{S-Let-AppR}
 
@@ -4191,7 +4196,7 @@ outlined above.
               \cunif \tvcgetxret \tvd \cand \cunif \tvpc {\trcd \tgpoint \tint} \\ 
             \cunif {\tvpc} {\trcd \tgpoint {\tvcgetxret'}} \cand \cunif {\tvcgetxret} {\tvcgetxret'}}}
     }
-    & \Rule{S-Inst-Unif} \\[5ex]
+    & \Rule{S-Inst-Unify} \\[5ex]
 \csolve^+
     &\C\Where{
         \ldots \commaq
@@ -4233,7 +4238,7 @@ forcing $\tvp$ to be $\trcd \tgpoint \tvgetxret$.
 %
 We next apply \Rule{S-Inst-Copy} to this equality on $\tvp$, which introduces a
 duplicate instantiation constraints on $\tvgetxret$. This is eliminated using
-\Rule{S-Inst-Unif}. 
+\Rule{S-Inst-Unify}. 
 %
 Finally, applying \Rule{U-Merge} and \Rule{U-Decomp} simplifies the remaining
 equalities on $\tvcgetxret$ and $\tvpc$,  and \Rule{S-Inst-Poly} removes the
@@ -7618,7 +7623,7 @@ generally in our system.
 	\end{proofcases}
 
     \proofcaserewrite
-      {S-Inst-Unif}
+      {S-Inst-Unify}
       {\cpinst \inst \tv \tvca \cand \cpinst \inst \tv \tvcb}
       {\cpinst \inst \tv \tvca \cand \cunif \tvca \tvcb}
 
