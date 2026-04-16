@@ -2769,8 +2769,8 @@ $\t$ is a type variable and $\C$ is satisfiable.
   [htpb!]
   {fig/constraint-gen}
   {The constraint generation translation for \OML.}
-\newcommand {\Crule}[2]{#1 &\eqdef& #2 &}
-\newcommand {\CruleCond}[3]{#1 &\eqdef& #2 & #3}
+\newcommand {\Crule}    [2]{#1 &\eqdef& #2 &}
+\newcommand {\CruleCond}[3]{\Crule{#1}{#2}#3}
 \def \arraystretch{1.1}%4
 \begin{tabular}{.L;C;;L;L.}
 \Crule
@@ -2854,10 +2854,10 @@ $\t$ is a type variable and $\C$ is satisfiable.
     \cexists \tvs \cAnd\iton \cinfer \ei \tvi
     \\
     \uad\cand\uad 
-        \cmatch \t {\\ \hskip5.1em \cbranch {\cpatrcd \ct}
+        \cmatch \t {\\ \hskip 4.4em
+                \cbranch {\cpatrcd \ct}
       {\parens{\dom \ct = \elabs \cand
                \cAnd\iton \labfrom \elabi \ct \leq \t \to \tvi}}}
-      
       \hskip -2em
    \end{cases}}
    {\begin{aligned}
@@ -2869,7 +2869,9 @@ $\t$ is a type variable and $\C$ is satisfiable.
 \\
 \Crule
   {\cinfer {\exrecord \T {\overline{\elab = \e}}} \t}
-  {\cexists \tvs \cAnd\iton \cinfer \ei \tvi \cand \dom {\T} = \elabs \cand \cAnd\iton \labfrom \elabi \T \leq \t \to \tvi }
+  {\cexists \tvs \cAnd\iton \cinfer \ei \tvi
+   \cand \dom {\T} = \elabs
+   \cand \cAnd\iton \labfrom \elabi \T \leq \t \to \tvi }
 \\
 \Crule
   {\cinfer {\emagic \es} \t}
