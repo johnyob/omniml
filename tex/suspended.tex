@@ -2772,7 +2772,7 @@ $\t$ is a type variable and $\C$ is satisfiable.
 \newcommand {\Crule}    [2]{#1 &\eqdef& #2 &}
 \newcommand {\CruleCond}[3]{\Crule{#1}{#2}#3}
 \def \arraystretch{1.1}%4
-\begin{tabular}{;;;L;C;;L;L.}
+\begin{tabular*}{\linewidth}{;;;L=;C;;L~L.}
 \Crule
    {\cinfer x \t}
    {\cinst x \t}
@@ -2833,10 +2833,9 @@ $\t$ is a type variable and $\C$ is satisfiable.
     \cexists \tv \cinfer \e \tv \cand
     \cmatch \tv
       {\cbranch {\cpatrcd \ct} {\labfrom \elab \ct \leq \tv \to \t}}
-      \hskip 6ex
   \end{cases}}
   {\begin{aligned}
-    &\text{if} \labuni \elab \T
+    &\text{if\space} \labuni \elab \T
     \\
     &\text{otherwise}
   \end{aligned}}
@@ -2861,7 +2860,7 @@ $\t$ is a type variable and $\C$ is satisfiable.
       \hskip -8em
    \end{cases}}
    {\begin{aligned}
-    &\text{if } \labsuni \elabs \T \\[.2ex]
+    &\text{if\space} \labsuni \elabs \T \\[.2ex]
     &\text{otherwise}\\
     &\\
   \end{aligned}}
@@ -2879,7 +2878,7 @@ $\t$ is a type variable and $\C$ is satisfiable.
 \Crule
   {\cinfer \e {\tfor \tvs \t}}
   {\cfor \tvs \cinfer \e \t}
-\end{tabular}
+\end{tabular*}
 \end{mathparfig}
 
 
@@ -3868,7 +3867,8 @@ Incremental instantiation constraints are reduced using the following rules:
 \begin{enumerate}
 
 \item
-  \Rule{S-Inst-Copy} copies the shape of a type to the instantiation site,
+    \indent\DefRule{S-Inst-Copy} copies the shape of a type to the
+    instantiation site, 
     introducing fresh variables for each subcomponents and marking them with
     corresponding instantiation constraints.
     %
@@ -3876,14 +3876,17 @@ Incremental instantiation constraints are reduced using the following rules:
     when $\inst$ is bound with $\exists \inst^\x$ in the context. To ensure
     termination, the abstraction must contain acyclic types.
 
-  \item \Rule{S-Inst-Unify} unifies two instantiations if they both refer to the
+  \item\indent \DefRule{S-Inst-Unify} unifies two instantiations if they both refer to the
     same source variable $\tvb$ at the same instantiation site $\inst$.
 \end{enumerate}
 There are three cases in which an instantiation constraint is eliminated:
 \begin{enumerate}
   \item
+   \begin{local}\sloppy
     A base type (\ie a nullary shape) is copied and no further
     instantiations are needed (\Rule{S-Inst-Copy}).
+    
+   \end{local}
 
   \item
     The copied variable $\tvp$ is polymorphic, and thus the instantiation
@@ -4116,12 +4119,12 @@ The initial constraint is:
   \end{array}
 \end{mathpar}
 We now reduce the constraint step by step using the rules 
-outlined above. 
-{
+outlined above.
+\begin{local}
 \def \arraystretch{1.2}
 \small
 \begin{mathpar}
-  \begin{array}{@{}l l l@{}}
+\begin{tabular*}{\linewidth}{;;L;;L~R}
   &\C\Where{
         \cmatch \tvp {\cbranch {(\cpatrcd \ct)}
          {\labfrom {\ttlab \x} \ct \leq \tvp \to \tvgetxret}}\qcommaq
@@ -4208,9 +4211,9 @@ outlined above.
             \cunif {\tvcgetxret} {\cunif \tvd {\cunif \tvcgetxret' \tint}}}}
     }
     & \Rule{S-Inst-Poly}\\[3ex]
-  \end{array}
+\end{tabular*}
 \end{mathpar}
-}
+\end{local}
 
 We begin by applying \Rule{S-Let-AppR} to the application of $\xgetx$,
 introducing a fresh instantiation $\inst$. We then apply \Rule{S-Inst-Copy},
@@ -5056,104 +5059,104 @@ paper to save space. It can serve as a useful cheatsheet to understand a
 definition in full, or when studying the meta-theory of the system.
 
 \begin{mathpar}
-\begin{bnfgrammar}%
+\begin{bnfgrammar}[\noleftfill\negrightfill]%\relax
 \entryset[Type variables]{\tva, \tvb, \tvc}{\TyVars}{}
 \\
 %% \entryset[Types]{\t}{\Types}\\
 \entry[Types]{\t}{
-    \tv \and
-    \tunit \and
-    \ta \to \tb \and
-    \Pi \iton \ti \and
-    \trcd \T \tys \and
-    \tpoly \ts
+\tv \and
+\tunit \and
+\ta \to \tb \and
+\Pi \iton \ti \and
+\trcd \T \tys \and
+\tpoly \ts
 }\\
 \entry[Type schemes]{\ts}{
-    \t \and
-    \all \tv \ts
+\t \and
+\all \tv \ts
 }\\[1ex]
 \entry[Ground types]{\gt}{}{}\\
 \entry[Ground region]{\gr}{\greg \gt \semenv}\\
 \entrysubseteq[Sets of ground types]{\gabs}{\Ground}{}{}\\
 \entrysubseteq[Sets of ground regions]{\gabsr}{\GroundRegion}{}\\
 \entry[Constraints]{\c}{
-        \ctrue
-  \and  \cfalse
-  \and  \ca \cand \cb
-  \and  \cexists \tv \c
-  \and 	\cfor \tv \c
-  \and  \cunif \ta \tb
-  \nextline
-  \and  \clet \x \tv \ca \cb
-  \and  \capp \x \t
-  \nextline
-  \and  \cmatch \t \cbrs
-  \nextline
-  \and \ueq
-  \and \cletr \x \tv \tvs \ca \cb
-  \and \cexistsi \inst \x \c
-  \and \cpinst \inst \tv \t
-  \nextline
-  \and \labfrom \elab \ct \leq \ta \to \tb
-  \and \dom \ct = \elabs
-  \and \cscm \leq \t \mid \x \leq \cscm
+\ctrue
+\and  \cfalse
+\and  \ca \cand \cb
+\and  \cexists \tv \c
+\and 	\cfor \tv \c
+\and  \cunif \ta \tb
+\nextline
+\and  \clet \x \tv \ca \cb
+\and  \capp \x \t
+\nextline
+\and  \cmatch \t \cbrs
+\nextline
+\and \ueq
+\and \cletr \x \tv \tvs \ca \cb
+\and \cexistsi \inst \x \c
+\and \cpinst \inst \tv \t
+\nextline
+\and \labfrom \elab \ct \leq \ta \to \tb
+\and \dom \ct = \elabs
+\and \cscm \leq \t \mid \x \leq \cscm
 }\\[1ex]
 \entry[Branches]{\cbr}{\cbranch \cpat \c} \\
 \entry[Shape patterns]{\cpat}{
-  \cpatwild \and \cpatprod \tv j \and \cpatrcd \ct \and \cpatpoly \cscm
+\cpatwild \and \cpatprod \tv j \and \cpatrcd \ct \and \cpatpoly \cscm
 } \\[1ex]
 \entry[Semantic environment]{\semenv}{
-  \eset \and \semenv\where{\tv := \gt}
-  \and \semenv\where{\x := \gabs}
-  \and \semenv\where{\x := \gabsr}
-  \and \semenv\where{\inst := \semenvp}
+\eset \and \semenv\where{\tv := \gt}
+\and \semenv\where{\x := \gabs}
+\and \semenv\where{\x := \gabsr}
+\and \semenv\where{\inst := \semenvp}
 }\\[1ex]
 \entry[Unification problems]{\up}{
-  \ctrue \and \cfalse \and \upa \cand \upb \and \cexists \tv \up \and \ueq
+\ctrue \and \cfalse \and \upa \cand \upb \and \cexists \tv \up \and \ueq
 } \\
 \entry[Multi-equations]{\ueq}{
-  \eset \mid \cunif \t \ueq
+\eset \mid \cunif \t \ueq
 } \\[1ex]
 \entry[Constraint contexts]{\C}{
-  \hole
-  \and \C \cand \c
-  \and \c \cand \C
-  \and \cexists \tv \C
-  \and \cfor \tv \C
-  \nextline
-  \and \clet \x \tv \C \c
-  \and \clet \x \tv \c \C
-  \nextline
-  \and \cletr \x \tv \tvs \C \c
-  \and \cletr \x \tv \tvs \c \C
-  \and \cexistsi \inst \x \C
+\hole
+\and \C \cand \c
+\and \c \cand \C
+\and \cexists \tv \C
+\and \cfor \tv \C
+\nextline
+\and \clet \x \tv \C \c
+\and \clet \x \tv \c \C
+\nextline
+\and \cletr \x \tv \tvs \C \c
+\and \cletr \x \tv \tvs \c \C
+\and \cexistsi \inst \x \C
 } \\
 \entry[Shapes] {\Sh} {
-  \any \tvcs \t
+\any \tvcs \t
 }
 \\
 \entry[\llap{Canonical} principal shapes] {\sh} {} {}\\
 \entry[Terms]{\e}{
-  x \and
-  () \and
-  \efun x e \and
-  \eapp \ea \eb \and
-  \elet x \ea \eb \and
-  \eannot \e \tvs \t \andcr
-  \erecord {\overline{\elab = \e} } \and
-  \efield e \elab \and
-  \exrecord \T {\overline{\elab = \e}} \and
-  \exfield \e \T \elab
-  \andcr
-   (\ea, \ldots, \en) \and
-   \efield e j \and
-   \exfield e n j \andcr
-   \epoly e \and
-   \expoly e \tvs \ts \and
-   \einst e \and
-   \exinst e \tvs \ts
-   \nextline
-   \and \emagic \es
+x \and
+() \and
+\efun x e \and
+\eapp \ea \eb \and
+\elet x \ea \eb \and
+\eannot \e \tvs \t \andcr
+\erecord {\overline{\elab = \e} } \and
+\efield e \elab \and
+\exrecord \T {\overline{\elab = \e}} \and
+\exfield \e \T \elab
+\andcr
+(\ea, \ldots, \en) \and
+\efield e j \and
+\exfield e n j \andcr
+\epoly e \and
+\expoly e \tvs \ts \and
+\einst e \and
+\exinst e \tvs \ts
+\nextline
+\and \emagic \es
 }\\
 \entry[Term contexts]{\E}{
   \hole
