@@ -4476,11 +4476,10 @@ feasibility of implementing them within \OCaml's current typechecker.
 
 From a type-theoretic perspective, we are confident that suspended constraints
 and incremental instantiation are compatible with the various features of the
-\OCaml type system. Moreover, several other features of \OCaml could benefit from
-suspended constraints. In some cases, such as GADTs, this perspective could
-open up a new research topic of its own. Nevertheless, reformulating every
-feature to use omnidirectionality\XDR[I don't understand]{ (if eneded)} is
-not required for initial 
+\OCaml type system. Moreover, several other features of \OCaml could benefit
+from suspended constraints. In some cases, such as GADTs, this perspective
+could open up a new research topic of its own. Nevertheless, reformulating
+every fragile feature to use omnidirectionality is not required for initial
 adoption in \OCaml: existing features could remain unchanged, with suspended
 constraints introduced selectively where it provides clear benefits. 
 
