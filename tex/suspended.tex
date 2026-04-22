@@ -4492,9 +4492,11 @@ there are a lot of sterile discussion between W and J where you want to show
 the differences, the differences are minor and a matter of engineering and
 hiding the fact that there are both bad, as one should rather use a strategy
 on top of a constraint solver that would have much more freedom on the order
-in which constraints are solved.} \Xalistair{My intention behind citing algorithm J 
+in which constraints are solved.}\Xalistair{My intention behind citing algorithm J 
 was to give the read some intuition on the inference algorithm e.g. unification is 
-implemented using effects / mutable state.} uses a single-pass architecture
+implemented using effects / mutable state.}\XDR{That's not specific to J, it
+would be the same with W. And you say so explicitly next. So I asume we can
+just cut the reference to J.} uses a single-pass architecture
 implemented with global mutable state and few abstraction boundaries. As a
 result, the typechecker is large, intricate and increasingly difficult to
 maintain. Our current expert opinion is that extending the existing
@@ -4701,7 +4703,8 @@ contextual typing and omnidirectionality. At the same time, contextual typing
 can continue to guide inference even when no contextual information is
 available (\ie $m = 0$). This is analogous to the role of \emph{default rules}
 in our setting: inference may proceed on the basis of the absence of contextual 
-information. A more precise account of the relationship between omnidirectionality 
+information. A more precise account of the relationship between
+omnidirectionality  
 and contextual typing would therefore need to incorporate defaulting. 
 
 For this reason, omnidirectionality as presented here does not by itself 
@@ -4709,21 +4712,33 @@ subsume all existing bidirectional systems. In particular, we do not treat
 subtyping, although such an extension appears possible; for example, 
 unsolved subtyping constraints could be defaulted to unification constraints. 
 
-\XDR[There are deeper differences: contextual
-typing uses subtyping, \ie contravariant checking of polymorphic
-instantiation. I think we are unfair in our comparison, minimizing the
-differences and letting the reader think that if we had defaults we would
-always be better. This is not true---at least we do not provide any evidence
-for that while on the oppisite there is some evidence that this is likely
-not to be true. I propose the following (but the phrasing should probably be
-improved:]{ Another difference is that typing uses contravariant subtyping
-in checking mode, while our current approach with (boxed) polytypes is based
-on unification and does not allow for deep instantiation. In
-fact, it remains to see how omnidirectional type inference could be combined
-with impredicative instantiation of unboxed polymorphic types.} 
+\begin{version}{\Xxx}%\False
+To remember: There are deeper differences: contextual typing uses subtyping,
+\ie contravariant checking of polymorphic instantiation.
+Hence a fair compratison between omnidirectionality and contextual typing
+would probably need to also incorporate subtyping.
+
 \Xalistair{I've removed polytypes / mention of polymorphism: this comes later. 
-I've instead focused on default rules / subtyping and made it less clear whether 
-we would subsume contextual typing or not. Does this work for you?}
+I've instead focused on default rules / subtyping and made it less clear
+whether we would subsume contextual typing or not. Does this work for you?}
+
+This is better, but it seems biased, as we avoid elements of comparison in
+favor of contextual typing (subtyping, unboxed types, deep instantiation). 
+\begin{itemize}
+
+\item 
+  Contextual typing uses contravariant subtyping in checking mode, while our
+  current approach with (boxed) polytypes is based on unification and does
+  not allow for deep instantiation.  This seems a clear limitation of our
+  \emph{current} approach---even if we could hopefully do better in the
+  future. 
+
+\item
+  It is still unclear how omnidirectional type inference could enable
+  with impredicative instantiation of unboxed polymorphic types.
+
+\end{itemize}
+\end{version}
 
 \paragraph{Overloading}
 
