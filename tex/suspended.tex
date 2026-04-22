@@ -4496,8 +4496,10 @@ in which constraints are solved.}\Xalistair{My intention behind citing algorithm
 was to give the read some intuition on the inference algorithm e.g. unification is 
 implemented using effects / mutable state.}\XDR{That's not specific to J, it
 would be the same with W. And you say so explicitly next. So I asume we can
-just cut the reference to J.} uses a single-pass architecture
-implemented with global mutable state and few abstraction boundaries. As a
+just cut the reference to J.}\Xalistair{Can we keep a citation to Milner? 
+If so, then I'll cut the bit about J} 
+uses a single-pass architecture implemented with global mutable state and 
+few abstraction boundaries. As a
 result, the typechecker is large, intricate and increasingly difficult to
 maintain. Our current expert opinion is that extending the existing
 implementation to support suspended constraints is feasible.%
@@ -4733,9 +4735,20 @@ favor of contextual typing (subtyping, unboxed types, deep instantiation).
   \emph{current} approach---even if we could hopefully do better in the
   future. 
 
+  \Xalistair{Contextual typing does not permit deep subtyping (at least 
+    if we want to talk about first-class polymorphism). LCTI is 
+    restricted to Rank-1 instantiations.}
+
 \item
   It is still unclear how omnidirectional type inference could enable
   with impredicative instantiation of unboxed polymorphic types.
+
+    \Xalistair{This is mentioned later in the paragraph for 
+    frist-class polymorphism. I wanted to keep this 
+    bit on contextual typing vs omnidirectionality rather 
+    feature agnostic, since we cannot compare apples to apples here. 
+    Both systems attempted to achieve different things and 
+    neither is clearly better than the other  yet.}
 
 \end{itemize}
 \end{version}
