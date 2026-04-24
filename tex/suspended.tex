@@ -4485,24 +4485,11 @@ constraints introduced selectively where it provides clear benefits.
 
 For the implementation perspective, the situation is more delicate. The current
 \OCaml has grown organically over more than two decades. The underlying
-inference algorithm\XDR[ (\citet{journals/jcss/Milner78}'s
-algorithm~$\mathscr{J}$)]{I would not say that the underlying \OCaml
-algorithm is $J$ (1) Algorithm $J$ does not use levels, polytypes, etc.  (2)
-there are a lot of sterile discussion between W and J where you want to show
-the differences, the differences are minor and a matter of engineering and
-hiding the fact that there are both bad, as one should rather use a strategy
-on top of a constraint solver that would have much more freedom on the order
-in which constraints are solved.}\Xalistair{My intention behind citing algorithm J 
-was to give the read some intuition on the inference algorithm e.g. unification is 
-implemented using effects / mutable state.}\XDR{That's not specific to J, it
-would be the same with W. And you say so explicitly next. So I asume we can
-just cut the reference to J.}\Xalistair{Can we keep a citation to Milner? 
-If so, then I'll cut the bit about J} 
-uses a single-pass architecture implemented with global mutable state and 
-few abstraction boundaries. As a
-result, the typechecker is large, intricate and increasingly difficult to
-maintain. Our current expert opinion is that extending the existing
-implementation to support suspended constraints is feasible.%
+inference algorithm uses a single-pass architecture implemented with global
+mutable state and few abstraction boundaries. As a result, the typechecker is
+large, intricate and increasingly difficult to maintain. Our current expert
+opinion is that extending the existing implementation to support suspended
+constraints is feasible.%
 \footnote{%
   Compared to the implementation described in \cref{sec:implementation}, \OCaml
   already maintains a tree of inference regions. One could introduce the
