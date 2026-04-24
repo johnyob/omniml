@@ -250,6 +250,13 @@ indispensable feature of \OCaml\footnote{In contrast, \Haskell only supports
 top-level implicit let-generalization.}---but one that makes suspended
 constraints uniquely difficult to implement and specify declaratively.
 
+\parcomment {Omnidirectionality is not bidirectionality }
+
+Note that omnidirectionality is not an extension of a bidirectional system. It
+is a global-inference approach for fragile features that rely on the
+propagation of known type information, as typically found in bidirectional
+systems.
+
 \subsection* {Contributions}
 
 Section \cref{sec/overview} introduces our setting: \OCaml's static overloading
@@ -4684,61 +4691,40 @@ inline \code{app} and \code{rev_app}, as the system lacks polymorphism. }
 
 \parcomment{Comparisons}
 
+% Direct comparison between OmniML and CT
 Omnidirectionality removes this restriction, allowing information to flow
 without committing to a fixed propagation order. The contextual information $m$
 of contextual typing can be viewed as an abstraction of the surrounding context
 $\E$ in our system, suggesting a close conceptual relationship between
-contextual typing and omnidirectionality. At the same time, contextual typing
-can continue to guide inference even when no contextual information is
-available (\ie $m = 0$). This is analogous to the role of \emph{default rules}
-in our setting: inference may proceed on the basis of the absence of contextual 
-information. A more precise account of the relationship between
-omnidirectionality  
-and contextual typing would therefore need to incorporate defaulting. 
+contextual typing and omnidirectionality. Therefore, omnidirectionality is able
+to propagate more information as its context is more precise. 
 
-For this reason, omnidirectionality as presented here does not by itself 
-subsume all existing bidirectional systems. In particular, we do not treat 
-subtyping, although such an extension appears possible; for example, 
-unsolved subtyping constraints could be defaulted to unification constraints. 
+% Defaulting
+However, contextual typing can continue to guide inference even when no
+contextual information is available (\ie $m = \blacksquare$). This is analogous to the
+role of \emph{default rules} in our setting: inference may proceed on the basis
+of the absence of contextual information. 
+% Talk about subtyping
+In particular, in the subtyping relation of contextual typing, we can view the
+\Rule{DS-Refl} \citep*{} as a default rule for subtyping that degenerates to unification.
+%
+\begin{mathpar}
+  \infer[DS-Refl]
+    { }
+    {\G \th_\blacksquare A \leq A}
+\end{mathpar}
+As in our setting, defaulting may result in rejecting programs that the programmer 
+would otherwise be well-typed. \TODO{Add precise example.}
 
-\begin{version}{\Xxx}%\False
-To remember: There are deeper differences: contextual typing uses subtyping,
-\ie contravariant checking of polymorphic instantiation.
-Hence a fair compratison between omnidirectionality and contextual typing
-would probably need to also incorporate subtyping.
-
-\Xalistair{I've removed polytypes / mention of polymorphism: this comes later. 
-I've instead focused on default rules / subtyping and made it less clear
-whether we would subsume contextual typing or not. Does this work for you?}
-
-This is better, but it seems biased, as we avoid elements of comparison in
-favor of contextual typing (subtyping, unboxed types, deep instantiation). 
-\begin{itemize}
-
-\item 
-  Contextual typing uses contravariant subtyping in checking mode, while our
-  current approach with (boxed) polytypes is based on unification and does
-  not allow for deep instantiation.  This seems a clear limitation of our
-  \emph{current} approach---even if we could hopefully do better in the
-  future. 
-
-  \Xalistair{Contextual typing does not permit deep subtyping (at least 
-    if we want to talk about first-class polymorphism). LCTI is 
-    restricted to Rank-1 instantiations.}
-
-\item
-  It is still unclear how omnidirectional type inference could enable
-  with impredicative instantiation of unboxed polymorphic types.
-
-    \Xalistair{This is mentioned later in the paragraph for 
-    frist-class polymorphism. I wanted to keep this 
-    bit on contextual typing vs omnidirectionality rather 
-    feature agnostic, since we cannot compare apples to apples here. 
-    Both systems attempted to achieve different things and 
-    neither is clearly better than the other  yet.}
-
-\end{itemize}
-\end{version}
+% Hard to compare CT and OmniML
+Thus, a more precise account of the relationship between omnidirectionality
+and contextual typing must account for incorporate defaulting. It must
+additionally account for the fact that the two systems target different
+features: contextual typing has thus far targeted intersection types and
+first-class polymorphism, whereas omnidirectionality has focused on static
+overloading and semi-explicit first-class polymorphism. The latter is less 
+expressive than full first-class polymorphism, and correspondingly makes 
+inference easier due to the explicit boxing and unboxing.
 
 \paragraph{Overloading}
 
