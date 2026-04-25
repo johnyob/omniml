@@ -201,11 +201,11 @@ indirect algorithmic flavor in order to preserve principality and completeness.
 
 \parcomment {Existing approaches: all rely on a static order of inference}
 
-The two dominant approaches thus far are \emph{bidirectional} type inference
-\citep*{conf/popl/PierceT98} and \emph{\geninst-directional}
-inference~\citep*{\BBpolyml}. Each impose some \emph{static}
-ordering of inference, using it to propagate inferred types and user-provided
-annotations as \emph{known} information.
+The two dominant approaches thus far are \emph{bidirectional} typechecking
+\citep*{conf/popl/PierceT98} and \emph{\geninst-directional} \citep*{\BBpolyml}
+type inference. Each impose some \emph{static} ordering of inference, using it
+to propagate inferred types and user-provided annotations as \emph{known}
+information.
 
 \parcomment {Static orders have limitations}
 
@@ -224,21 +224,27 @@ let self_1_2 x = if true then x#f x else (x : <f : 'a. 'a -> 'a>) °
 
 \parcomment {Our solution: a dynamic order}
 
-We propose \emph{omnidirectional} type inference, which relies on a
-\emph{dynamic} order of inference. The solving of inference constraints
-may proceed in any order, suspending whenever progress requires \emph{known}
-type information. Other constraints may continue to be solved; once the
-missing information becomes available (typically via unification), the
+We propose \emph{omnidirectional} type inference, a global inference approach
+that relies on a \emph{dynamic} order of inference. The solving of inference
+constraints may proceed in any order, suspending whenever progress requires
+\emph{known} type information. Other constraints may continue to be solved;
+once the missing information becomes available (typically via unification), the
 suspended typing constraints are resumed.
 
 \parcomment {Omnidirectionality is a framework}
 
 We present omnidirectionality as a general framework for inference in the
 presence of fragile features. While this paper instantiates our framework for
-two concrete features in \OCaml---static overloading and polymorphic object
-methods---its scope is broader: we expect it to extend to more richer features
-such as GADTs, polymorphic parameters \citep{\BBpolyparams}, and
-more generalized static overloading \ala Swift.
+two concrete features in \OCaml---static overloading of constructors and record
+fields, and polymorphic object methods---its scope is broader: we expect it to
+extend to richer features such as GADTs, polymorphic parameters
+\citep{\BBpolyparams}, and more general forms of static overloading \ala Swift.
+
+Despite the name, omnidirectionality is not an extension of bidirectional
+typechecking. Fragile features are often handled by \emph{local} inference
+methods, most notably bidirectional typechecking, because they rely on the
+propagation of known type information; omnidirectionality addresses this same
+need using \emph{global} inference.
 
 \parcomment {Scaling to ML / let-generalization}
 
@@ -249,13 +255,6 @@ suspended constraints can coexist with \ML \emph{local let-generalization}---an
 indispensable feature of \OCaml\footnote{In contrast, \Haskell only supports
 top-level implicit let-generalization.}---but one that makes suspended
 constraints uniquely difficult to implement and specify declaratively.
-
-\parcomment {Omnidirectionality is not bidirectionality }
-
-Note that omnidirectionality is not an extension of a bidirectional system. It
-is a global-inference approach for fragile features that rely on the
-propagation of known type information, as typically found in bidirectional
-systems.
 
 \subsection* {Contributions}
 
@@ -783,7 +782,7 @@ let self_2_2 x = <x> (x : [ 'a. 'a -> 'a ]) °\ocamlflags 10°
 
 \paragraph{Bidirectional type inference}
 
-Bidirectional type inference is a standard alternative to unification for
+Bidirectional typechecking is a standard alternative to unification for
 propagating type information. It is typically formulated by splitting typing
 rules into two modes: \emph{checking mode} ($\G \th \e \Leftarrow \t$), which
 typechecks a term $\e$ against a type $\t$ in a given context, and
@@ -887,7 +886,7 @@ rules of \cref{fig:bidir-poly}.
 
 \paragraph{Limitations of directional type inference}
 
-Bidirectional type inference is lightweight, practical, and well-suited for
+Bidirectional typechecking is lightweight, practical, and well-suited for
 complex language features such as higher-rank polymorphism, dependent types, or
 subtyping. It supports the propagation of type information with minimal
 annotations. Its main downside lies in the need to fix an often arbitrary flow
@@ -3127,41 +3126,6 @@ such that:
 \end{enumerate*}
 \end{restatable}
 
-\begin{version}{}
-It is also interesting to discuss the stability of typing by common program
-transformations.
-
-\paragraph{Application equi-typability does hold}
-
-\newcommand {\eswap}{{\mathprefix {swap}}}
-The expressions $\eappp f \ea \eb$ and $\eappp {\eswap f} \eb \ea$ are
-equitypable where $\eswap$ is
-$\efun f {\efun \xa {\efun \xb {\eappp f \xb \ea}}}$. We also have
-that $\eapp f \e$ and $\eappp {\mathsf{app}} f \e$ and
-$\eappp {\mathsf{rev\_app}} \e f$ are equitypable.
-It is well-known that
-bidirectional types inference breaks application
-equitypability. Both \geninst-directional and omnidirectional
-type inference preserve it.
-
-\paragraph{Factorization does not hold} If $\G \th \e \where {\x \is {\e_0}}
-: \t$ with $\x$ appearing in $\e$, we do not necessarily have $\G \th \elet \x
-\ez \e : \t$. This is not a defect of our system, but a general property of
-all systems that support static overloading: the expanded term $\e \where {x
-\is \e_0}$ can pick a different overloading choice for each occurrence of
-$\e_0$, and if they are incompatible the factored form may not typecheck.
-
-\paragraph{Inlining does not hold} If $\G \th \elet \x \ez \e : \t$, we do
-not necessarily have $\G \th \e \where {\x \is {\e_0}} : \t$. This is
-specific to our support for \emph{backpropagation}: the let-form will use
-information from all occurrences of $\x$ in $\e$ to resolve fragile
-constructs in $e_0$, but in the inlined form each copy of $\e$ must resolve
-its implicit constructs independently, and it has access to less information
-to establish unicity. As a result, the implicit \OML calculus does not
-preserve typability in its operational semantics.
-
-\end{version}
-
 \section{Constraint solving}
 \label{sec:solving}
 
@@ -4919,7 +4883,7 @@ and \GHC 8.0.1 (2016) added \texttt{DuplicateRecordFields}, allowing distinct
 record types with overlapping field names in the same module.
 
 However, the \GHC developers found that type-based disambiguation using
-bidirectional type inference is not sufficiently predictable in practice
+bidirectional typechecking is not sufficiently predictable in practice
 for users~\citep*{RFC-overloaded-record-fields}, and that the reliance on
 projection functions, rather than a dedicated projection syntax, further
 complicated the implementation by making all function calls potentially
