@@ -478,14 +478,13 @@ a \emph{boxed} type scheme $\tpoly \ts$ that
 must be explicitly unboxed at use sites. The syntax of \polytypes is given in
 \cref{fig:polyml-syntax}.
 %
-We write $\epoly[\ts] \e$ to box a term~$\e$ with the scheme $\ts$. This
-returns an expression whose type is the \polytype $\tpoly \ts$. Since
-polytypes are boxed, they cannot be be freely instantiated, by
-contrast with regular type schemes. An expression~$\e$ of a \polytype $\tpoly
-\ts$ must first be unboxed with the construct $\einst \e$, in order to be
-seen at any type instance $\t$ of $\ts$ and used accordingly. Since they
-are boxed, polytypes can be treated as regular (mono)types, thereby enabling
-impredicativity.
+We write $\epoly[\ts] \e$ to box a term~$\e$ with the scheme $\ts$, yielding
+an expression whose type is the \polytype $\tpoly \ts$. Since polytypes are
+boxed, they cannot be be freely instantiated, unlike ordinary type schemes. An
+expression~$\e$ of a \polytype $\tpoly \ts$ must first be unboxed using the
+construct $\einst \e$ before it can be typed at any instance $\t$ of $\ts$. 
+Because they are boxed, polytypes can be treated as regular
+(mono)types, thereby enabling impredicativity.
 
 \begin{bnffig}[tb]
   {fig:polyml-syntax}
@@ -549,10 +548,10 @@ Defaulting is not considered in our work.  In practice, many users restrict
 their use of objects to method calls on objects of known types. In such
 cases, defaulting never arises.
 %
-By contrast, defaulting appears essential for more
-recent features such as polymorphic parameters \citep*{\BBpolyparams}, which
-introduce polytype boxing and unboxing at every function application and are
-therefore deferred to future work. 
+By contrast, defaulting appears essential for polymorphic parameters
+\citep*{\BBpolyparams}: they introduce polytype boxing and unboxing at every
+function application, with the default corresponding to the common monomorphic
+case. We therefore defer them to future work. 
 
 \paragraph{Semi-explicit first-class polymorphism}
 \label{sec/overview/polytypes}
@@ -560,16 +559,15 @@ therefore deferred to future work.
 % Polytypes are semi-explicit (not implicit nor explicit)
 
 \Polytypes, introduced by \citet{\BBpolyml}, allow so-called
-\emph{semi-explicit first-class polymorphism}. \Polytypes require
-explicit introduction and elimination forms, but only explicit type
-scheme annotations at their introduction, type instantiations at their
-elimination being left implicit. Therefore, \polytypes stand in contrast to
-\emph{implicit} higher-rank or first-class polymorphism, provided by systems
-such as \DK~\citep*{dunfield-krishnaswami-bidirectional-poly},
+\emph{semi-explicit first-class polymorphism}, requiring explicit boxing an
+unboxing, but permit instantiations to be implicit. They therefore stand
+in contrast to \emph{implicit} higher-rank or first-class polymorphism,
+provided by systems such as
+\DK~\citep*{dunfield-krishnaswami-bidirectional-poly},
 \QuickLook~\citep*{journals/pacmpl/SerranoHJV20}, and \Frost~\citep*{frost},
-which are unboxed. At the same time, they are less explicit than \emph{fully
-explicit} polymorphism (\eg System-$\F$), where both quantification and
-instantiation must be explicitly and fully specified.
+where polymorphic values are unboxed. At the same time, they are less explicit
+than \emph{fully explicit} polymorphism (\eg System-$\F$), where both
+quantification and instantiation must be explicitly and fully specified.
 
 % Ward off comments that polytypes aren't as good as implicit first-class 
 % polymorphism.
@@ -596,29 +594,29 @@ Most \ML type inference algorithms proceed in a fixed order when typechecking
 let-bindings $\elet \x \ea \eb$: first typecheck the definition $\ea$,
 generalize its type, and then typecheck the body $\eb$ under the extended
 environment. \Geninst-directionality leverages this ordering to resolve
-overloaded or ambiguous constructs in a \emph{principal} way. The key idea is
-that this ordering reveals which types are \emph{known}, namely types that are
-fixed by generalization---and therefore stable enough to guide disambiguation.
-We call this approach \geninst-directional (read as
-``\textbf{pi}-directional'') type inference, reflecting that \textbf{p}olymorphic
-expressions must be typed before their \textbf{i}nstances. 
+ambiguous constructs in a \emph{principal} way. The key idea is that this
+ordering reveals which types are \emph{known}, namely types that are fixed by
+generalization---and therefore stable enough to guide disambiguation. We call
+this approach \geninst-directional (read as ``\textbf{pi}-directional'') type
+inference, reflecting that \textbf{p}olymorphic expressions must be typed
+before their \textbf{i}nstances. 
 
 \parcomment{Annotation variables. Why?}
 
 To make this notion precise, we annotate types with \emph{annotation variables}
 $\av$. We write $\tannot \t \av$ for a type~$\t$ annotated with the variable
-$\av$. These variables record the origins of types and may themselves be
-generalized, yielding type schemes such as $\tfor \av \t$
-where $\av$ appears free in $\t$ or as a special case $\tfor \av {\tannot \t
-\avp}$ where $\av$ is an annotation on the topmost node. 
+$\av$. Annotation variables record the origins of types and may themselves be
+generalized, yielding type schemes such as $\tfor \av \t$, where $\av$ appears
+free in $\t$; in particular, we may have a scheme $\tfor \av {\tannot \t \av}$,
+where $\av$ annotates the topmost structure of $\t$.
 %
 \parcomment{What is a known type?}
 %
-Actually, a type $\tannot \t \av$ is considered \emph{known} if its (topmost)
+A type $\tannot \t \av$ is considered \emph{known} when its (topmost)
 annotation variable $\av$ is eligible for generalization (\eg $\tfor \av
-{\tannot \t \av}$). Conversely, types with monomorphic annotation variables,
-\ie that cannot be generalized in the current context, are considered
-\emph{not-yet-known} and cannot be relied on for disambiguation.
+{\tannot \t \av}$). Conversely, a type whose topmost annotation variable is
+monomorphic---that is, it cannot be generalized in the current context---is
+considered \emph{not-yet-known} and cannot be relied on for disambiguation.
 
 
 \begin{mathparfig}[htpb!]
@@ -672,15 +670,14 @@ $\epoly[\ts] \e$ with an explicit \emph{closed} polytype annotation%
 }
 $\ts$ (\ie $\ts$ contains no free type or annotation variables).
 %
-The resulting expression has type $\tapoly {\tsb} \av$ where $\av$ is an
-arbitrary (typically fresh) annotation variable and $\tsb$ is a \emph{freshened
-copy} of $\ts$, \ie a variant of $\ts$ with fresh annotation variables placed
-at \polytypes (see \Rule{Annot-Poly}). Because $\ts$ is supplied by the
-programmer, the polytype is treated as known: $\epoly[\ts] \e$ also has the
-generalized type scheme $\all \av {\tapoly {\tsb} \av}$. This is by
-design---the explicit annotation in $\epoly[\ts] \e$ records that the polytype
-is known. We also require that the type of $\e$ be $\tsa$, another copy of $\ts$
-with (typically different fresh) annotations.
+The body $\e$ is checked against $\tsa$, a \emph{freshened copy} of $\ts$, \ie
+a variant of $\ts$ with fresh annotation variables placed at \polytypes
+(\Rule{Annot-Poly}). The resulting expression has type $\tapoly {\tsb} \av$
+where $\av$ is an arbitrary (typically fresh) annotation variable and $\tsb$ is
+another copy of $\ts$. Because $\ts$ is supplied by the programmer, the
+polytype is treated as known: $\epoly[\ts] \e$ also has the generalized type
+scheme $\all \av {\tapoly {\tsb} \av}$. This is by design---the explicit
+annotation in $\epoly[\ts] \e$ records that the polytype is known. 
 
 \parcomment {Unboxing (principality restriction and \geninst-directionality)}
 
@@ -740,7 +737,7 @@ let ex_6 = (fun p -> <p>) pid °\ocamlflags 10°
 At first glance, \code{ex_5} and \code{ex_6} appear equivalent: both simply
 instantiate the \polytype bound to~\code{p}. Yet, \OCaml accepts \code{ex_5} and
 rejects \code{ex_6}. This is because the let-binding in \code{ex_5}
-allows \code{p} to have type scheme $\tfor \av {\tapoly {\tfor \tv \tv \to
+assigns \code{p} the type scheme $\tfor \av {\tapoly {\tfor \tv \tv \to
 \tv} \av}$, and thus its type is considered \emph{known}---permitting unboxing
 (\Rule{PolyML-Inst}).
 In \code{ex_6}, by contrast, \code{p} is monomorphic at the point of
@@ -780,7 +777,7 @@ let self_2_1 x = <(x : [ 'a. 'a -> 'a ])> x °\ocamlflags 00°
 let self_2_2 x = <x> (x : [ 'a. 'a -> 'a ]) °\ocamlflags 10°
 \end{program}
 
-\paragraph{Bidirectional type inference}
+\paragraph{Bidirectional typechecking}
 
 Bidirectional typechecking is a standard alternative to unification for
 propagating type information. It is typically formulated by splitting typing
@@ -834,7 +831,7 @@ typically preferred.
     {\G \th \e \Leftarrow \ts \\ \tv \notin \fvs \G}
     {\G \th \e \Leftarrow \tfor \tv \ts}
 
-  \infer[Syn-Inst]
+  \infer[Chk-Inst]
     {\G \th \e \Rightarrow \ts \\ \ts \leq \t}
     {\G \th \e \Leftarrow \t}
 
@@ -1754,8 +1751,8 @@ type constructors.
 \newcommand {\tsh}[1]%
   {\def \tsi {\all \tvb {{\parens{\tva \to #1}}} \tprod \tvb}
   \tpoly {\all \tva {\parens {\tpoly \tsi} \to \tva} \to \tva}}%
-For instance, consider the \polytype $\tsh {\tint \tlist}$. Its 
-principal shape $\sh$ is $\any \tvc {\tsh \tvc}$. The original \polytype
+For instance, consider the \polytype $\tsh {\tint \tlist}$. Since its 
+principal shape $\sh$ is $\any \tvc {\tsh \tvc}$, the original \polytype
 can therefore be represented as the shape application $\shapp (\tint \tlist)$.
 \endgroup
 
@@ -2067,10 +2064,10 @@ We now illustrate the typing of implicit constructs with a few examples.
   {\eannot r {} \ttpoint} \ttpoint$.
   
   % Proof of A
-  For \lref A, assume $\eset \th \E\where{\emagic {\eannot r {} \gt}}
+  For \lref A, assume $\eset \th \Ep\where{\emagic {\eannot r {} \gt}}
   : \t$. 
-  Since $\efield {\eannot r {} \ttpoint} \tty$ requires $r$ to have the type
-  $\ttpoint$ (due to \Rule{Annot}), it follows that there is no other choice
+  Since $\exfield r \ttpoint \tty$ requires $r$ to have the type
+  $\ttpoint$ (due to \Rule{Rcd-Proj-X}), it follows that there is no other choice
   but to take $\ttpoint$ for $\gt$, which proves~\lref A.
 \end{example}
 
@@ -2915,7 +2912,7 @@ Shape patterns include:
 % over enumerate*)
 \begin{enumerate}
 
-  \item Record type patterns $\cpatrcd \ct$, which match record types $\trcd \T \tys$, 
+  \item Record type patterns $\cpatrcd \ct$ which match record types $\trcd \T \tys$
     and bind the record variable $\ct$ to the name $\T$. 
     The parameters $\tys$ are not bound, since record
     field overloading depends only on the name $\T$.
@@ -2974,7 +2971,7 @@ enforce the equality of the annotated type $\tp$ and the expected type $\t$.
 
 \parcomment{\Polytypes}
 
-Explicit boxing asserts that $\e$ has the polymorphic type $\ts$
+Explicit \polytype boxing asserts that $\e$ has the polymorphic type $\ts$
 (using universal quantification) and that the expected type is the \polytype
 $\tpoly \ts$. Conversely, explicit unboxing requires that $\t$ be an instance
 of $\ts$. These cases introduce no suspended match constrains because the
@@ -3288,7 +3285,8 @@ $\up = \Up\where{\cunif \tvb {\cunif \t \ueq}}$,
 $\tv \in \fvs \t$, $\t \notin \TyVars$ and $\tv, \tvb \disjoint \bvs \Up$.
 %
 A unification problem $\up$ is said to be cyclic, written $\cyclic \up$, if
-$\tv \prec_\up^+ \tv$ for some $\tv$.
+$\tv \prec_\up^+ \tv$ for some $\tv$, where $\prec_\up^+$ denotes the 
+transitive closure of $\prec_\up$. 
 
 % Something fishy appears to be happening here.
 % DR: It was detected here, when the page is flushed, but the origin is the
@@ -3535,8 +3533,8 @@ A tempting alternative, used in
 \citet*{\BBoutsidein} and
 \citet*{benevs2025simple}, is to treat the let-bindings \emph{monomorphically},
 sharing $\tvp$ directly between both applications. However, this is incomplete
-with respect to \OML's type system: it forbids local let-polymorphism (commonly 
-used in \OCaml) and fails to typecheck \code{ex_8}, where the two calls to
+with respect to \OML's type system. It forbids local let-polymorphism (commonly 
+used in \OCaml) and fails to typecheck \code{ex_8}: the two calls to
 \code{getx} require different instantiations of $\tvp$---\code{int gpoint} and
 \code{float gpoint}, respectively.
 
@@ -4036,10 +4034,10 @@ other shape would render the instantiation unsatisfiable. This rule is
 well-founded because the regional depth of the hole strictly decreases
 in the premise.
 
-For a normalized context $\hat\C$ (\cref{def/normal-forms}), this syntactic is
-moreover sound and complete with respect to the semantic definition of unicity:
-$\Cshape \C \tau \sh$ holds if and only if $\th \Cshape \C \tau \sh$ is
-derivable (Appendix~\cref{lem:unicity-completeness}).
+For a normalized context $\hat\C$ (\cref{def/normal-forms}), this syntactic
+condition exactly characterizes the semantic definition of unicity: $\Cshape \C
+\tau \sh$ holds if and only if $\th \Cshape \C \tau \sh$ is derivable
+(Appendix~\cref{lem:unicity-completeness}).
 
 \begin{example}
 \begin{local}
@@ -4058,10 +4056,10 @@ derivable (Appendix~\cref{lem:unicity-completeness}).
 \def \tvcpgetxret {\tvcb}
 \def \tgpoint {\ttlab {gpoint}}
 \def \qcommaq {\quad,\quad}
-\def \commaq {\quad}
+\def \commaq {,\quad}
 
-Let us consider the (simplified) constraint generation for \ocaml{ex_8} discussed in \cref{sec/solving/admin}. 
-We begin by factoring out the following invariant two-hole constraint context $\C$ for readability:
+Let us consider the (simplified) constraint generated for \ocaml{ex_8}, discussed in \cref{sec/solving/admin}. 
+For readability, we begin by factoring out the following invariant two-hole constraint context $\C$:
 \begin{mathpar}
   \C\Where{\hole_1, \hole_2} \quad \eqdef \quad   \begin{array}{rl}
   \cexists {\tvgp, \tvd}
@@ -4073,7 +4071,7 @@ We begin by factoring out the following invariant two-hole constraint context $\
       \cand \capp \xgetx \parens{\tvgp \to \tfloat}}
   \end{array}
 \end{mathpar}
-The initial constraint is:
+The initial constraint can then be written as follows:
 \begin{mathpar}
   \begin{array}{cl}
   \cexists {\tvgp, \tvd}
@@ -4129,7 +4127,7 @@ outlined above.
           { \cpinst \inst \tvp \tvpc \cand \cpinst \inst \tvc \tvcgetxret \cand  \cunif {\tvcgetx} {\tvpc \to \tvcgetxret}\\ 
             \cunif \tvcgetxret \tvd \cand \cunif \tvpc {\trcd \tgpoint \tint}  }}
   }
-  & \Rule{U-Merge}\\[3ex]
+  & \\[3ex]
 \csolve
   &\C\Where{
     \cmatched \tvp {\any \eta {\trcd \tgpoint \eta}} {\cbranch {(\cpatrcd \ct)}
@@ -4175,7 +4173,7 @@ outlined above.
           {\bigwedge \PARENS 
             {\cpinst \inst \tvgetxret \tvcgetxret  \\ 
             \cunif {\tvcgetx} {\tvpc \to \tvcgetxret} \cand \cunif \tvpc {\trcd \tgpoint \tvcgetxret} \\ 
-            \cunif {\tvcgetxret} {\cunif \tvd {\cunif \tvcgetxret' \tint}}}}
+            \cunif {\tvcgetxret} {\cunif \tvd {\cunif {\tvcgetxret'} \tint}}}}
     }
     & \\[5ex]
 \csolve
@@ -4184,7 +4182,7 @@ outlined above.
         \cexistsi {\tvcgetx, \tvpc, \tvcgetxret, \tvcgetxret', \inst} \xgetx 
           {\bigwedge \PARENS 
             {\cunif {\tvcgetx} {\tvpc \to \tvcgetxret} \cand \cunif \tvpc {\trcd \tgpoint \tvcgetxret} \\ 
-            \cunif {\tvcgetxret} {\cunif \tvd {\cunif \tvcgetxret' \tint}}}}
+            \cunif {\tvcgetxret} {\cunif \tvd {\cunif {\tvcgetxret'} \tint}}}}
     }
     & \Rule{S-Inst-Poly}\\[3ex]
 \end{tabular*}
@@ -4192,10 +4190,9 @@ outlined above.
 \end{local}
 
 We begin by applying \Rule{S-Let-AppR} to the application of $\xgetx$,
-introducing a fresh instantiation $\inst$. We then apply \Rule{S-Inst-Copy},
-which copies the arrow shape of $\tvgetx$ and introduces two incremental
-instantiation constraints on the parameter $\tvp$ and return $\tvgetxret$
-types. 
+introducing a fresh instantiation $\inst$. Applying \Rule{S-Inst-Copy} then
+copies the arrow shape of $\tvgetx$ and introduces two incremental
+instantiation constraints on the parameter type $\tvp$ and return type $\tvgetxret$. 
 %
 Using \Rule{U-Merge} and \Rule{U-Decomp}, we combine the two equations on
 $\tvcgetx$, from which the solver deduces that $\tvpc$ must be the record type
@@ -4207,12 +4204,12 @@ From this equality on $\tvpc$, it follows that $\tvpc$ has the shape $\any \eta
 constraint is then discharged, yielding a label instantiation constraint
 forcing $\tvp$ to be $\trcd \tgpoint \tvgetxret$.
 %
-We next apply \Rule{S-Inst-Copy} to this equality on $\tvp$, which introduces a
-duplicate instantiation constraints on $\tvgetxret$. This is eliminated using
+We next apply \Rule{S-Inst-Copy} to this equality on $\tvp$, introducing a
+duplicate instantiation constraint on $\tvgetxret$, which is eliminated using
 \Rule{S-Inst-Unif}. 
 %
 Finally, applying \Rule{U-Merge} and \Rule{U-Decomp} simplifies the remaining
-equalities on $\tvcgetxret$ and $\tvpc$,  and \Rule{S-Inst-Poly} removes the
+equalities on $\tvcgetxret$ and $\tvpc$, and \Rule{S-Inst-Poly} removes the
 last instantiation constraint on $\tvgetxret$, since it is
 polymorphic.
 
@@ -4349,7 +4346,7 @@ comparisons.
 Generalization is the process of determining which type variables are
 polymorphic and which are monomorphic (\ie implementing
 \Rule{S-Exists-Lower}).  \emph{Partial generalization} arises when a region
-cannot be fully generalized due to suspended constraints that may still
+cannot be fully generalized due to suspended constraints that may 
 update its variables. To manage this, we classify type variables into four
 categories:
 \begin{itemize}
@@ -4373,10 +4370,10 @@ categories:
 \end{itemize}
 
 During solving, we track a set of \emph{guards} for each type variable. Each
-guard indicates that the variable is captured by a suspended constraint and may
+guard indicates that the variable is captured by a suspended constraint, and may
 therefore be updated when that constraint is discharged. At generalization
-time, these guards conservatively approximate whether a variable may still be
-updated in the future. Variables with at least one guard are  partially
+time, these guards conservatively approximate whether a variable may be
+updated in the future. Variables with at least one guard are partially
 generalized (\textbf{PG}); those without guards are fully generalized
 (\textbf{G}).
 
@@ -4479,7 +4476,7 @@ the \OCaml typechecker. Such designs would provide a more natural setting for
 suspended constraints and could significantly simplify their integration.
 
 
-\paragraph{Semi-unification}
+\paragraph{Incremental instantiation via semi-unification}
 
 \parcomment{What is semi-unification? And it's relation to \ML}
 
@@ -4511,25 +4508,26 @@ terminate.
 
 \parcomment{Semi-unification is omnidirectionally-ready}
 
-Semi-unification constraints can be solved \emph{incrementally}, in any order,
-making them a natural foundation for scaling omnidirectional type inference to
-\ML-style polymorphism. Although it offered little advantage for traditional
-\ML inference, \citeauthor{Henglein/phd}'s algorithm was
-\emph{omnidirectionally-ready}, merely waiting for fragile constructs to give
-it new life!
+For our purposes, semi-unification offers an alternative foundation for
+incremental instantiation. Because semi-unification constraints can be
+solved \emph{incrementally}, in any order, making them a natural fit for
+scaling omnidirectional type inference to \ML-style polymorphism. Although it
+offered little advantage for traditional \ML inference,
+\citeauthor{Henglein/phd}'s algorithm was \emph{omnidirectionally-ready},
+merely waiting for fragile constructs to give it new life!
 
 \parcomment{What we did}
 
 Motivated by this observation, we explored a second prototype that implements
-let-generalization via semi-unification. To enable a more direct encoding of
-type inference problems and improve solving efficiency, we enriched
-semi-unification constraints with a notion of \emph{scope}, forming the same
-tree-like structure as regions in our \emph{generalization tree}
-(\cref{sec:implementation}). This extends the formalization of semi-unification
-with \emph{unknowns} proposed by~\citet {Lushman-Cormack/subti@tr2008}, and
-allows for more efficient handling of \emph{monomorphization}---that is,
-instantiations that collapse into unification constraints (akin to
-\Rule{S-Inst-Mono} in our constraint solver).
+let-generalization and incremental instantiation via semi-unification. To
+enable a more direct encoding of type inference problems and improve solving
+efficiency, we enriched semi-unification constraints with a notion of
+\emph{scope}, forming the same tree-like structure as regions in our
+\emph{generalization tree} (\cref{sec:implementation}). This extends the
+formalization of semi-unification with \emph{unknowns} proposed by~\citet
+{Lushman-Cormack/subti@tr2008}, and allows for more efficient handling of
+\emph{monomorphization}---that is, instantiations that collapse into
+unification constraints (akin to \Rule{S-Inst-Mono} in our constraint solver).
 
 \parcomment{The solutions coincide}
 
@@ -4541,10 +4539,6 @@ could be enriched to cope with polymorphic recursion.
 
 \section{Related work}
 \label{sec:related-work}
-
-
-Finally, we review prior work on suspended constraints, directional typing
-approaches, and the features we consider.
 
 \paragraph{Suspended constraints}
 
@@ -4676,7 +4670,6 @@ contextual information is available (\ie $m = \Blacksquare$). In particular,
     {\G \th_\Blacksquare A \leq A}
 \end{mathpar}
 %
-
 Within inference, this amounts to resolving subtyping with unification. This
 mechanism is analogous to the idea of \emph{default
 rules}~(\cref{sec/default-rules/poly}) in our setting.
