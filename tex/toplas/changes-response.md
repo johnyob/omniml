@@ -77,24 +77,19 @@ subsection on directionality:
   and contextual typing) in the setting of bidirectional typing. 
 
 - We incorporate the insightful connections to contextual typing from review 2.
-  We also discuss an interesting connection between defaulting rules and contextual type inference.
-
-- We clarify our position that omnidirectionality subsumes contextual typing in
-  terms of expressiveness. Concretely, we have implemented a prototype (OmniF)
-  that supports implicit first-class polymorphism in the style of local type
-  inference. Our experience with this system suggests that it subsumes local
-  contextual typing in practice.
+  We also discuss an interesting connection between defaulting rules and 
+  contextual type inference.
 
 Review 2 found the name a bit misleading as "omnidirectional" could suggest
 that we subsume existing bidirectional type inference systems. We tried to
-avoid the confusion early in the paper, adding a clarifying sentence in the
+avoid the confusion early in the paper, adding a clarifying paragraph in the
 introduction:
 
-> Note that omnidirectionality is not an extension of a bidirectional system. It
-> is a global-inference approach for fragile features that rely on the
-> propagation of known type information, as typically found in bidirectional
-> systems.
-
+> Despite the name, omnidirectionality is not an extension of bidirectional
+> typechecking. Fragile features are often handled by *local* inference
+> methods, most notably bidirectional typechecking, because they rely on the
+> propagation of known type information; omnidirectionality addresses this same
+> need using *global* inference.
 
 # Local comments
 
