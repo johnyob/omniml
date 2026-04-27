@@ -4944,26 +4944,24 @@ field names.
 
 \paragraph{Making of}
 
-\begin{version}{\Acknowledgments}
-
-The unsatisfactory situation of type-directed propagation in \OCaml has
+The unsatisfactory situation of type-directed disambiguation in \OCaml has
 been on our mind for years; a first concrete step to which this work
-can be traced to a specific
+can be traced is a specific
 example\footnote{\url{https://github.com/ocaml/ocaml/issues/7388}} of
 inconvenient order of propagation (between pattern and expression in
 a let-binding) presented by Andreas Rossberg as part of general
 feedback on the use of \OCaml in the \texttt{wasm} reference
-interpreter \citep*{rossberg-wasm}. Gabriel Scherer proposed to delay
+interpreter \citep*{rossberg-wasm}. Gabriel Scherer proposed delaying
 the resolution of ambiguous constraints and advised Olivier Martinot
 as an intern on this topic in Summer
-2020~\citep*{frozen-constraints-2021}. Together they
+2020~\citep*{frozen-constraints-2021}. Together, they
 identified the implementation and specification difficulties; their
 implementation would only handle simple cases where no incremental
-generalization is necessary (in particular it did not support
+generalization was necessary (in particular, it did not support
 backpropagation), and they did not have a precise declarative
 specification. Gabriel Scherer kept working on this infrequently until
 2024, identified the need for incremental generalization and
-instantiation, but its implementations and declarative specifications
+instantiation, but its implementation and declarative specifications
 remained incomplete.
 
 Alistair O'Brien started working on suspended constraints in Fall
@@ -4971,23 +4969,19 @@ Alistair O'Brien started working on suspended constraints in Fall
 checking---suspended constraints could delay the checking of GADT
 patterns until the equalities to be introduced are known to be between
 rigid types. He proposed an alternative declarative semantics,
-and implemented a working prototype of incremental generalization
-instantiation, described in the present paper.
+and implemented a working prototype of incremental instantiation, 
+described in the present paper.
 
 Didier R\'emy started working on suspended constraints in Winter
-2024-2025, coming from questions of principal type inference in
-presence of modular implicits, in collaboration with Samuel
-Vivien. Didier R\'emy implemented a second prototype of delayed
-constraint based on semi-unification, which is fairly different from
+2024--2025, coming from questions of principal type inference in
+the presence of modular implicits, in collaboration with Samuel
+Vivien. Didier R\'emy implemented a second prototype for incremental 
+instantiation based on semi-unification, which is fairly different from
 the prototype described in the present paper, and brought the idea of
 handling \polytypes as suspended constraints.
 
 All co-authors contributed to the writing and metatheory, with
-Alistair O'Brien the main contributor at every step.
-\end{version}
-
-\Acknowledgments{}{This work builds on a work-in-progress presentation of
-  suspended constraints by \citet*{frozen-constraints-2021}.}
+Alistair O'Brien as the main contributor at every step.
 
 \paragraph{Thanks}
 
