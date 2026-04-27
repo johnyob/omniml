@@ -1,6 +1,6 @@
 \RequirePackage{xspace}
 
-\newcommand{\Lang}[1]{\textsf{#1}\xspace}
+\newcommand{\Lang}[1]{{\textsf{#1}}\xspace}
 \newcommand{\ML}{\Lang{ML}}
 \newcommand{\OCaml}{\Lang{OCaml}}
 \newcommand{\PolyML}{\Lang{PolyML}}
@@ -26,7 +26,7 @@
 
 \newcommand{\ATF}
     {\nobreak\hskip -0.7ex\nobreak\raise 0.3ex\hbox {\small \textsf F}}
-\newcommand{\MLF}{\textrm{\ML\ATF}\xspace}
+\newcommand{\MLF}{\textrm{\hbox{\ML\ATF}}\xspace}
 \newcommand{\PolySML}{\Lang{Poly/ML}}
 
 
