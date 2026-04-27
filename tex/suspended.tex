@@ -4668,12 +4668,12 @@ well-typed programs.
 
 % Defaulting (in the context of subtyping)
 However, contextual typing can continue to guide inference even when no
-contextual information is available (\ie $m = \blacksquare$). In particular,
+contextual information is available (\ie $m = \Blacksquare$). In particular,
 \emph{contextual subtyping} may default to reflexivity:
 \begin{mathpar}
   \infer[DS-Refl]
     { }
-    {\G \th_\blacksquare A \leq A}
+    {\G \th_\Blacksquare A \leq A}
 \end{mathpar}
 %
 
@@ -4691,7 +4691,7 @@ let ex_1_2 = (choose id : (($$'a. 'a -> 'a) -> 'a. 'a -> 'a) -> _) °\Ocamlcomme
 \end{program}
 %
 This program is rejected because \ocaml{id} must be inferred ($m =
-\blacksquare$) before the outer annotation can guide the instantiation of
+\Blacksquare$) before the outer annotation can guide the instantiation of
 \ocaml{choose}. With no contextual information available, this instantiation of
 \ocaml{id} must proceed via \Rule{DS-Refl}. As a result, \ocaml{choose} is
 instantiated with \ocaml{'a. 'a -> 'a}, yielding a type incomparable with the
