@@ -1,8 +1,13 @@
 We thank the reviewers for their careful reading and thoughtful, constructive
 feedback! We have revised the paper accordingly. 
 
-We begin by summarizing the main changes, and then provide detailed responses
-to the individual comments of each review.
+In addition to the revised manuscript, we have submitted a latexdiff version
+comparing the revised version with the original submission. While this diff is
+not perfect due to the limitations of latexdiff, we hope it serves as a useful
+aid for identifying the sections of the paper that have changed most.
+
+Our response begins by summarizing the main changes, and then we provide detailed
+responses to the individual comments of each review.
 
 # Improved presentation of (boxed) polytypes
 
