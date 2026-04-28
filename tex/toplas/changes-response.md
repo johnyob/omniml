@@ -68,7 +68,7 @@ All reviewers noted that the presentation of incremental instantiation was
 difficult to follow. While some of this complexity is inherent, we have
 improved the exposition:
 
-- We added a new, dedicated in Section 5.3 that continues the running example
+- We added a new example in Section 5.3 that continues the running example
   from Section 5.2 and demonstrates incremental instantiation in action, which
   we hope should make the mechanism more concrete and easier to understand.
 
@@ -85,10 +85,10 @@ subsection on directionality:
   We also discuss an interesting connection between defaulting rules and 
   contextual type inference.
 
-Review 2 found the name a bit misleading as "omnidirectional" could suggest
-that we subsume existing bidirectional type inference systems. We tried to
-avoid the confusion early in the paper, adding a clarifying paragraph in the
-introduction:
+Review 2 found the name "omnidirectional" a bit misleading as "omnidirectional"
+could suggest that we subsume existing bidirectional type inference systems. We
+tried to avoid the confusion early in the paper, adding a clarifying paragraph
+in the introduction:
 
 > Despite the name, omnidirectionality is not an extension of bidirectional
 > typechecking. Fragile features are often handled by *local* inference
@@ -98,7 +98,7 @@ introduction:
 
 # Local comments
 
-We address review-specific comments in detail below.
+We now address review-specific comments in detail below.
 
 ### Review 1
 
@@ -121,7 +121,7 @@ annotations for ML-like systems. e.g. PolyML uses a similar rule using the
 
 Canonical principal shapes have a rather complex structure. Whereas the
 properties of being canonical and principal are rather intuitive, hence why we
-introduce shapes, principal shapes and canonical principal shapes.
+introduce shapes, principal shapes and then canonical principal shapes.
 
 > 
 > - page 15, line 37-39, `𝜈𝛾.[∀𝛼.([∀𝛽.(𝛽 →𝛾)∗ 𝛽])→𝛼 →𝛼].`
@@ -130,8 +130,8 @@ introduce shapes, principal shapes and canonical principal shapes.
 > bound variables (e.g. `𝛼` and `𝛽`). I think this is a crucial detail worth
 > stating explicitly.
 
-This just a property of the substitution being capture avoiding wrt to
-universal quantifiers.
+This is just a property of the substitution being capture avoiding wrt to
+universal quantifiers in type schemes.
 
 > 
 > - page 16, Fig 3, `ℰ [𝑒 ⊳ 𝜍 | 𝑒s] `
