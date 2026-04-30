@@ -119,7 +119,7 @@ arrow_type:
       { type_ }
   | type1 = arrow_arg_type
     ; "->"
-    ; type2 = arrow_type
+    ; type2 = arrow_ret_type
       { Type.arrow ~range:(range_of_lex $loc) type1 type2 }
 
 
@@ -128,9 +128,19 @@ arrow_arg_type:
       { Type.Function_param.mono ~range:(range_of_lex $loc) type_ }
   | "("
     ; "forall" 
-    ; scheme = core_scheme
+    ; scheme = poly_core_scheme
     ; ")"
       { Type.Function_param.poly ~range:(range_of_lex $loc) scheme }
+
+
+arrow_ret_type:
+    type_ = arrow_type 
+      { Type.Function_return.mono ~range:(range_of_lex $loc) type_ }
+  | "("
+    ; "forall" 
+    ; scheme = poly_core_scheme
+    ; ")"
+      { Type.Function_return.poly ~range:(range_of_lex $loc) scheme }
 
 tuple_type:
     type_ = atom_type
@@ -269,9 +279,10 @@ expression:
       { Expression.if_ ~range:(range_of_lex $loc) cond ~then_ ~else_ }
   | "fun"
     ; pats = nonempty_list(function_param)
+    ; rtype = option(function_ret_type_annot)
     ; "->"
     ; exp = seq_expression
-      { Expression.fun_ ~range:(range_of_lex $loc) pats exp }
+      { Expression.fun_ ~range:(range_of_lex $loc) pats ?return_type:rtype exp }
   | "exists"
     ; "("
     ; "type"
@@ -428,6 +439,20 @@ function_param:
           pat 
           scheme
       }
+
+function_ret_type_annot:
+    ":"
+    ; rtype = atom_arrow_ret_type
+      { rtype }
+
+atom_arrow_ret_type:
+    type_ = atom_type
+      { Type.Function_return.mono ~range:(range_of_lex $loc) type_ }
+  | "("
+    ; "forall"
+    ; scheme = poly_core_scheme
+    ; ")"
+      { Type.Function_return.poly ~range:(range_of_lex $loc) scheme }
 
 pattern:
     pat = construct_pattern

@@ -16,20 +16,40 @@ module Env = struct
     if with_poly_params then Type.poly (Type.Scheme.create type_) else type_
   ;;
 
-  let bool_bop ~with_poly_params =
-    Type.(arg_type ~with_poly_params bool @-> arg_type ~with_poly_params bool @-> bool)
+  let ret_type ~with_poly_params type_ =
+    if with_poly_params then Type.poly (Type.Scheme.create type_) else type_
   ;;
 
-  let bool_uop ~with_poly_params = Type.(arg_type ~with_poly_params bool @-> bool)
+  let bool_bop ~with_poly_params =
+    Type.(
+      arg_type ~with_poly_params bool
+      @-> ret_type
+            ~with_poly_params
+            (arg_type ~with_poly_params bool @-> ret_type ~with_poly_params bool))
+  ;;
+
+  let bool_uop ~with_poly_params =
+    Type.(arg_type ~with_poly_params bool @-> ret_type ~with_poly_params bool)
+  ;;
 
   let int_bop ~with_poly_params =
-    Type.(arg_type ~with_poly_params int @-> arg_type ~with_poly_params int @-> int)
+    Type.(
+      arg_type ~with_poly_params int
+      @-> ret_type
+            ~with_poly_params
+            (arg_type ~with_poly_params int @-> ret_type ~with_poly_params int))
   ;;
 
-  let int_uop ~with_poly_params = Type.(arg_type ~with_poly_params int @-> int)
+  let int_uop ~with_poly_params =
+    Type.(arg_type ~with_poly_params int @-> ret_type ~with_poly_params int)
+  ;;
 
   let int_comparator ~with_poly_params =
-    Type.(arg_type ~with_poly_params int @-> arg_type ~with_poly_params int @-> bool)
+    Type.(
+      arg_type ~with_poly_params int
+      @-> ret_type
+            ~with_poly_params
+            (arg_type ~with_poly_params int @-> ret_type ~with_poly_params bool))
   ;;
 
   let type_def name arity ident =

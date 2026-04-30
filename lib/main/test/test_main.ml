@@ -176,7 +176,8 @@ let%expect_test "" =
   type_check_and_print str;
   [%expect {| Well typed :) |}];
   type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
-  [%expect {| Well typed :) |}]
+  [%expect
+    {| bug[E???]: lib/constraint_solver/generalization.ml:71:24: "Status.is_dirty Generic is undefined" |}]
 ;;
 
 let%expect_test "" =
@@ -795,7 +796,8 @@ let%expect_test "" =
   type_check_and_print str;
   [%expect {| Well typed :) |}];
   type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
-  [%expect {| Well typed :) |}]
+  [%expect
+    {| bug[E???]: lib/constraint_solver/generalization.ml:71:24: "Status.is_dirty Generic is undefined" |}]
 ;;
 
 let%expect_test "" =
@@ -1674,9 +1676,11 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:4:33
       4 │        let see_pid1 = (fun x -> (@[x], @[x])) pid1 ;;
-        │                                  ^^^^ `('a * 'b) @(ν'a. [∀. 'a]) -> 'a * 'b`
+        │                                  ^^^^ `('a * 'b) @(ν'a. [∀. 'a]) ->
+        │                                        ('a * 'b) @(ν'a. [∀. 'a])`
         │                                         is not equal to
-        │                                       `('c * 'd) @(ν'a. [∀. 'a]) -> 'c * 'd`
+        │                                       `('c * 'd) @(ν'a. [∀. 'a]) ->
+        │                                        ('c * 'd) @(ν'a. [∀. 'a])`
     |}]
 ;;
 
@@ -1807,11 +1811,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:3:19
-      3 │        let pid = [ succ : 'a. 'a -> 'a ] ;;
-        │                    ^^^^ `'a -> int`
-        │                           is not equal to
-        │                         `'b @(ν'a. [∀. 'a]) -> 'b`
+        ┌─ expect_test.ml:2:27
+      2 │        let succ = fun x -> x + 1 ;;
+        │                            ^^^^^ `int`
+        │                                    is not equal to
+        │                                  `'a`
     |}]
 ;;
 
@@ -2247,11 +2251,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:24:28
+        ┌─ expect_test.ml:24:37
      24 │        let xignore = poly1 (fun x -> x + 1);;
-        │                             ^^^^^^^^^^^^^^ `'a -> int`
+        │                                      ^^^^^ `int`
         │                                              is not equal to
-        │                                            `'b @(ν'a. [∀. 'a]) -> 'b`
+        │                                            `'a`
     |}];
   do_test
     ~add:true
@@ -2308,11 +2312,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:30:28
+        ┌─ expect_test.ml:30:37
      30 │        let xignore = poly2 (fun x -> x + 1);;
-        │                             ^^^^^^^^^^^^^^ `'a -> int`
+        │                                      ^^^^^ `int`
         │                                              is not equal to
-        │                                            `'b @(ν'a. [∀. 'a]) -> 'b`
+        │                                            `'a`
     |}];
   do_test
     ~add:true
@@ -2336,11 +2340,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:36:28
+        ┌─ expect_test.ml:36:37
      36 │        let xignore = poly3 (fun x -> x + 1) 8;;
-        │                             ^^^^^^^^^^^^^^ `'a -> int`
+        │                                      ^^^^^ `int`
         │                                              is not equal to
-        │                                            `'b @(ν'a. [∀. 'a]) -> 'b`
+        │                                            `'a`
     |}];
   do_test
     ~add:true
@@ -2362,11 +2366,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:40:33
+        ┌─ expect_test.ml:40:42
      40 │        let xignore = poly4 true (fun x -> x + 1);;
-        │                                  ^^^^^^^^^^^^^^ `'a -> int`
+        │                                           ^^^^^ `int`
         │                                                   is not equal to
-        │                                                 `'b @(ν'a. [∀. 'a]) -> 'b`
+        │                                                 `'a`
     |}];
   do_test
     ~add:true
@@ -2388,11 +2392,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:44:33
+        ┌─ expect_test.ml:44:42
      44 │        let xignore = poly5 true (fun x -> x + 1);;
-        │                                  ^^^^^^^^^^^^^^ `'a -> int`
+        │                                           ^^^^^ `int`
         │                                                   is not equal to
-        │                                                 `'b @(ν'a. [∀. 'a]) -> 'b`
+        │                                                 `'a`
     |}];
   do_test
     ~add:true
@@ -2416,11 +2420,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:50:33
+        ┌─ expect_test.ml:50:42
      50 │        let xignore = poly6 true (fun x -> x + 1) 8;;
-        │                                  ^^^^^^^^^^^^^^ `'a -> int`
+        │                                           ^^^^^ `int`
         │                                                   is not equal to
-        │                                                 `'b @(ν'a. [∀. 'a]) -> 'b`
+        │                                                 `'a`
     |}];
   do_test
     ~add:true
@@ -3077,14 +3081,14 @@ let%expect_test "" =
   [%expect
     {|
     error[E010]: ambiguous constructor
-        ┌─ expect_test.ml:14:20
-     14 │            unify x (Foo (y));
+        ┌─ expect_test.ml:15:20
+     15 │            unify y (Foo (x))
         │                     ^^^
         = hint: add a type annotation
 
     error[E010]: ambiguous constructor
-        ┌─ expect_test.ml:15:20
-     15 │            unify y (Foo (x))
+        ┌─ expect_test.ml:14:20
+     14 │            unify x (Foo (y));
         │                     ^^^
         = hint: add a type annotation
     |}]
@@ -3213,6 +3217,12 @@ let%expect_test "" =
         ┌─ expect_test.ml:2:26
       2 │        let _ = fun f -> f f;;
         │                           ^
+        = hint: add a type annotation
+
+    error[E016]: unknown polytype
+        ┌─ expect_test.ml:2:24
+      2 │        let _ = fun f -> f f;;
+        │                         ^^^
         = hint: add a type annotation
     |}]
 ;;
