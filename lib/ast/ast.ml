@@ -8,7 +8,7 @@ type core_type = core_type_desc With_range.t
 
 and core_type_desc =
   | Type_var of Type_var_name.With_range.t
-  | Type_arrow of param_type * core_type
+  | Type_arrow of param_type * return_type
   | Type_tuple of core_type list
   | Type_constr of core_type list * Type_name.With_range.t
   | Type_poly of core_scheme
@@ -18,6 +18,12 @@ and param_type = param_type_desc With_range.t
 and param_type_desc =
   | Param_mono_type of core_type
   | Param_poly_type of core_scheme
+
+and return_type = return_type_desc With_range.t
+
+and return_type_desc =
+  | Return_mono_type of core_type
+  | Return_poly_type of core_scheme
 
 and core_scheme = core_scheme_desc With_range.t
 
@@ -55,7 +61,7 @@ type expression = expression_desc With_range.t
 and expression_desc =
   | Exp_var of Var_name.With_range.t
   | Exp_const of constant
-  | Exp_fun of function_param list * expression
+  | Exp_fun of function_param list * return_type option * expression
   | Exp_app of expression * expression
   | Exp_let of value_binding * expression
   | Exp_exists of Type_var_name.With_range.t list * expression

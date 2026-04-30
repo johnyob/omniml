@@ -21,8 +21,13 @@ module type S = sig
       val poly : (core_scheme -> param_type) with_range_fn
     end
 
+    module Function_return : sig
+      val mono : (core_type -> return_type) with_range_fn
+      val poly : (core_scheme -> return_type) with_range_fn
+    end
+
     val var : (Type_var_name.With_range.t -> core_type) with_range_fn
-    val arrow : (param_type -> core_type -> core_type) with_range_fn
+    val arrow : (param_type -> return_type -> core_type) with_range_fn
     val tuple : (core_type list -> core_type) with_range_fn
     val constr : (core_type list -> Type_name.With_range.t -> core_type) with_range_fn
     val poly : (core_scheme -> core_type) with_range_fn
@@ -54,7 +59,11 @@ module type S = sig
 
     val var : (Var_name.With_range.t -> expression) with_range_fn
     val const : (constant -> expression) with_range_fn
-    val fun_ : (function_param list -> expression -> expression) with_range_fn
+
+    val fun_
+      : (function_param list -> ?return_type:return_type -> expression -> expression)
+          with_range_fn
+
     val app : (expression -> expression -> expression) with_range_fn
     val let_ : (value_binding -> in_:expression -> expression) with_range_fn
 
@@ -124,6 +133,11 @@ module Default : S with type 'a with_range_fn := range:Range.t -> 'a = struct
       let poly ~range poly_type = With_range.create ~range @@ Param_poly_type poly_type
     end
 
+    module Function_return = struct
+      let mono ~range mono_type = With_range.create ~range @@ Return_mono_type mono_type
+      let poly ~range poly_type = With_range.create ~range @@ Return_poly_type poly_type
+    end
+
     let var ~range type_var_name = With_range.create ~range @@ Type_var type_var_name
     let arrow ~range type1 type2 = With_range.create ~range @@ Type_arrow (type1, type2)
     let tuple ~range types = With_range.create ~range @@ Type_tuple types
@@ -165,7 +179,11 @@ module Default : S with type 'a with_range_fn := range:Range.t -> 'a = struct
 
     let var ~range var_name = With_range.create ~range @@ Exp_var var_name
     let const ~range const = With_range.create ~range @@ Exp_const const
-    let fun_ ~range pats exp = With_range.create ~range @@ Exp_fun (pats, exp)
+
+    let fun_ ~range pats ?return_type exp =
+      With_range.create ~range @@ Exp_fun (pats, return_type, exp)
+    ;;
+
     let app ~range exp1 exp2 = With_range.create ~range @@ Exp_app (exp1, exp2)
 
     let let_ ~range value_binding ~in_ =
@@ -243,6 +261,11 @@ module Make (R : Range) : S with type 'a with_range_fn := 'a = struct
     module Function_param = struct
       let mono = Type.Function_param.mono ~range:R.v
       let poly = Type.Function_param.poly ~range:R.v
+    end
+
+    module Function_return = struct
+      let mono = Type.Function_return.mono ~range:R.v
+      let poly = Type.Function_return.poly ~range:R.v
     end
 
     let var = Type.var ~range:R.v
