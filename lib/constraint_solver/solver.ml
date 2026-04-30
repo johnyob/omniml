@@ -208,7 +208,7 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
     [%log.global.debug
       "Instantiating scheme" (var : Constraint.Var.t) (var_gscheme : G.Scheme.t)];
     let actual_gtype = G.instantiate ~state ~curr_region:env.curr_region var_gscheme in
-    [%log.global.debug "Scheme instance" (actual_gtype : G.Type.t)];
+    [%log.global.debug "Scheme instance" (var_gscheme : G.Scheme.t) (actual_gtype : G.Type.t)];
     unify ~state ~env actual_gtype expected_gtype
   | Exists (type_var, cst) ->
     [%log.global.debug "Binding unification for type_var" (type_var : Type.Var.t)];

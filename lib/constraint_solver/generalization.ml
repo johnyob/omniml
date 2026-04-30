@@ -1001,7 +1001,9 @@ module Suspended_match = struct
     List.iter variables ~f:(Type.add_guard ~state);
     List.iter schemes ~f:(fun scheme ->
       (* TODO: We should propably force the generalization of the scheme here *)
-      Scheme.iter_instances_and_partial_generics scheme ~f:(Type.add_guard ~state))
+      [%log.global.debug "Guarding scheme" (scheme : Scheme.t)];
+      Scheme.iter_instances_and_partial_generics scheme ~f:(Type.add_guard ~state);
+      [%log.global.debug "Guarded scheme" (scheme : Scheme.t)])
   ;;
 
   let closure_remove_guard ~state ~shape_args { variables; schemes } =
@@ -1060,13 +1062,13 @@ module Suspended_match = struct
         { run =
             (fun shape ->
               let args = get_or_alloc_matchee_args () in
-              (* Remove guard from closure *)
-              closure_remove_guard ~state ~shape_args closure;
               (* Solve case *)
               case ~curr_region ~shape ~args;
               [%log.global.debug
                 "Generalization tree after solving case"
-                  (state.region_tree : Type.t Pool.t Tree.With_dirty.t)])
+                  (state.region_tree : Type.t Pool.t Tree.With_dirty.t)];
+              (* Remove guard from closure *)
+              closure_remove_guard ~state ~shape_args closure)
         ; default =
             (fun () ->
               [%log.global.debug
