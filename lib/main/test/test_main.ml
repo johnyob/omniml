@@ -176,8 +176,7 @@ let%expect_test "" =
   type_check_and_print str;
   [%expect {| Well typed :) |}];
   type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
-  [%expect
-    {| bug[E???]: lib/constraint_solver/generalization.ml:71:24: "Status.is_dirty Generic is undefined" |}]
+  [%expect {| Well typed :) |}]
 ;;
 
 let%expect_test "" =
@@ -796,8 +795,7 @@ let%expect_test "" =
   type_check_and_print str;
   [%expect {| Well typed :) |}];
   type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
-  [%expect
-    {| bug[E???]: lib/constraint_solver/generalization.ml:71:24: "Status.is_dirty Generic is undefined" |}]
+  [%expect {| Well typed :) |}]
 ;;
 
 let%expect_test "" =
@@ -3225,4 +3223,440 @@ let%expect_test "" =
         │                         ^^^
         = hint: add a type annotation
     |}]
+;;
+
+let%expect_test "" =
+  (* All examples from https://dl.acm.org/doi/pdf/10.1145/3408971 *)
+  let test =
+    Incremental_test.create
+      ~initial:
+        (include_list
+         ^ {|
+              external head : 'a. 'a list -> 'a;;
+              external tail : 'a. 'a list -> 'a list;;
+              external nil : 'a. 'a list;;
+              external cons : 'a. 'a -> 'a list -> 'a list;;
+              external single : 'a. 'a -> 'a list;;
+              external concat : 'a. 'a list -> 'a list -> 'a list;;
+              external length : 'a. 'a list -> int;;
+              external id : 'a. 'a -> 'a;;
+              external inc : int -> int;;
+              external choose : 'a. 'a -> 'a -> 'a;;
+              external poly : (forall 'a. 'a -> 'a) -> int * bool;;
+              external auto : (forall 'a. 'a -> 'a) -> (forall 'a. 'a -> 'a);;
+              external auto2 : 'b. (forall 'a. 'a -> 'a) -> 'b -> 'b;;
+              (* I've put ids in a polytype. Not too sure what we should do for this? *)
+              external ids : [ 'a. 'a -> 'a ] list;;
+              external map : 'a 'b. ('a -> 'b) -> 'a list -> 'b list;;
+              external app : 'a 'b. ('a -> 'b) -> 'a -> 'b;;
+              external revapp : 'a 'b. 'a -> ('a -> 'b) -> 'b;;
+              external flip : 'a 'b 'c. ('a -> 'b -> 'c) -> 'b -> 'a -> 'c;;
+
+              type ('s, 'a) st = 
+                | St 
+              ;;
+              
+              external run_st : 'v. (forall 's. ('s, 'v) st) -> 'v;;
+              external arg_st : 's. ('s, int) st;;
+           |}
+        )
+      (type_check_and_print ~with_poly_params:true ~defaulting:Unary)
+  in
+  let do_test = Incremental_test.run test in
+  (* A1 *)
+  do_test
+    {|
+      let const2 = fun x y -> y;;
+    |};
+  [%expect {| Well typed :) |}];
+  (* A2 *)
+  do_test
+    {|
+      let _ = choose id;;
+    |};
+  [%expect {| Well typed :) |}];
+  (* A3 : infers ['a. 'a -> 'a] list *)
+  do_test
+    {|
+      let _ = choose nil ids;;
+    |};
+  [%expect {| Well typed :) |}];
+  (* A4 *)
+  do_test
+    {|
+      let _ = fun (forall x : 'a. 'a -> 'a) -> x x;;
+    |};
+  [%expect {| Well typed :) |}];
+  (* A5 *)
+  do_test
+    {|
+      let _ = id auto;;
+    |};
+  [%expect {| Well typed :) |}];
+  (* A6 *)
+  do_test
+    {|
+      let _ = id auto2;;
+    |};
+  [%expect {| Well typed :) |}];
+  (* A7: fails because id actually has the type 'a. ['a] -> ['a]. *)
+  do_test
+    {|
+      let _ = choose id auto;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:34:25
+     34 │        let _ = choose id auto;;
+        │                          ^^^^ `@(ν.
+        │                                    [∀'a.
+        │                                       'a @(ν'a. [∀. 'a]) ->
+        │                                       'a @(ν'a. [∀. 'a])]) ->
+        │                                @(ν.
+        │                                    [∀'a.
+        │                                       'a @(ν'a. [∀. 'a]) ->
+        │                                       'a @(ν'a. [∀. 'a])])`
+        │                                 is not equal to
+        │                               `'a @(ν'a. [∀. 'a]) -> 'a @(ν'a. [∀. 'a])`
+    |}];
+  (* A8: fails for the same reason. *)
+  do_test
+    {|
+      let _ = choose id auto2;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:34:25
+     34 │        let _ = choose id auto2;;
+        │                          ^^^^^ `@(ν.
+        │                                     [∀'a.
+        │                                        'a @(ν'a. [∀. 'a]) ->
+        │                                        'a @(ν'a. [∀. 'a])]) ->
+        │                                 ('a @(ν'a. [∀. 'a]) ->
+        │                                  'a @(ν'a. [∀. 'a]))
+        │                                 @(ν'a. [∀. 'a])`
+        │                                  is not equal to
+        │                                `'b @(ν'a. [∀. 'a]) -> 'b @(ν'a. [∀. 'a])`
+    |}];
+  (* A9: fails because choose id becomes (['b] -> ['b]) -> (['b] -> ['b]). 
+         unifies 'a with ['b] -> ['b]. But ids is ['c. 'c -> 'c] list. 
+         'a cannot be unified with ['c. 'c -> 'c]. *)
+  do_test
+    {|
+      external f : 'a. ('a -> 'a) -> 'a list -> 'a;;
+      let _ = f (choose id) ids;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:35:29
+     35 │        let _ = f (choose id) ids;;
+        │                              ^^^ `(@(ν.
+        │                                        [∀'a.
+        │                                           'a @(ν'a. [∀. 'a]) ->
+        │                                           'a @(ν'a. [∀. 'a])]))
+        │                                   list`
+        │                                    is not equal to
+        │                                  `('a @(ν'a. [∀. 'a]) ->
+        │                                    'a @(ν'a. [∀. 'a]))
+        │                                   list`
+    |}];
+  (* A10 *)
+  do_test
+    {|
+      let _ = poly id;;
+    |};
+  [%expect {| Well typed :) |}];
+  (* A11 *)
+  do_test
+    {|
+      let _ = poly (fun x -> x);;
+    |};
+  [%expect {| Well typed :) |}];
+  (* A12 *)
+  do_test
+    {|
+      let _ = id poly (fun x -> x);;
+    |};
+  [%expect {| Well typed :) |}];
+  (* B1 *)
+  do_test
+    {|
+      let _ = fun f -> (f 1, f true);;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:34:27
+     34 │        let _ = fun f -> (f 1, f true);;
+        │                            ^ `int`
+        │                                is not equal to
+        │                              `bool`
+    |}];
+  do_test
+    {|
+      let _ = fun (forall f : 'a. 'a -> 'a) -> (f 1, f true);;
+    |};
+  [%expect {| Well typed :) |}];
+  (* B2 *)
+  do_test
+    {|
+      let _ = fun xs -> poly (head xs);;
+    |};
+  [%expect
+    {|
+    error[E012]: generic type variable escapes its scope
+        ┌─ expect_test.ml:34:31
+     34 │        let _ = fun xs -> poly (head xs);;
+        │                                ^^^^^^^
+    |}];
+  (* C1 *)
+  do_test
+    {|
+      let _ = length ids;;
+    |};
+  [%expect {| Well typed :) |}];
+  (* C2 *)
+  do_test
+    {|
+      let _ = tail ids;;
+    |};
+  [%expect {| Well typed :) |}];
+  (* C2 *)
+  do_test
+    {|
+      let _ = head ids;;
+    |};
+  [%expect {| Well typed :) |}];
+  (* C3 *)
+  do_test
+    {|
+      let _ = single id;;
+    |};
+  [%expect {| Well typed :) |}];
+  (* C4: fails because id is instantiated. *)
+  do_test
+    {|
+      let _ = cons id ids;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:34:23
+     34 │        let _ = cons id ids;;
+        │                        ^^^ `(@(ν.
+        │                                  [∀'a.
+        │                                     'a @(ν'a. [∀. 'a]) ->
+        │                                     'a @(ν'a. [∀. 'a])]))
+        │                             list`
+        │                              is not equal to
+        │                            `('a @(ν'a. [∀. 'a]) -> 'a @(ν'a. [∀. 'a]))
+        │                             list`
+    |}];
+  (* C5 *)
+  do_test
+    {|
+      let _ = cons (fun x -> x) ids;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:34:33
+     34 │        let _ = cons (fun x -> x) ids;;
+        │                                  ^^^ `(@(ν.
+        │                                            [∀'a.
+        │                                               'a @(ν'a. [∀. 'a]) ->
+        │                                               'a @(ν'a. [∀. 'a])]))
+        │                                       list`
+        │                                        is not equal to
+        │                                      `('a -> 'b) list`
+    |}];
+  (* C7 *)
+  do_test
+    {|
+      let _ = concat (single inc) (single id);;
+    |};
+  [%expect {| Well typed :) |}];
+  (* C8 *)
+  do_test
+    {|
+      external g : 'a. 'a list -> 'a list -> 'a;;
+      let _ = g (single id) ids;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:35:29
+     35 │        let _ = g (single id) ids;;
+        │                              ^^^ `(@(ν.
+        │                                        [∀'a.
+        │                                           'a @(ν'a. [∀. 'a]) ->
+        │                                           'a @(ν'a. [∀. 'a])]))
+        │                                   list`
+        │                                    is not equal to
+        │                                  `('a @(ν'a. [∀. 'a]) ->
+        │                                    'a @(ν'a. [∀. 'a]))
+        │                                   list`
+    |}];
+  (* C9 *)
+  do_test
+    {|
+      let _ = map poly (single id);;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:34:19
+     34 │        let _ = map poly (single id);;
+        │                    ^^^^ `@(ν.
+        │                              [∀'a.
+        │                                 'a @(ν'a. [∀. 'a]) -> 'a @(ν'a. [∀. 'a])]) ->
+        │                          (int * bool) @(ν'a. [∀. 'a])`
+        │                           is not equal to
+        │                         `'a @(ν'a. [∀. 'a]) -> 'b @(ν'a. [∀. 'a])`
+    |}];
+  (* C10 *)
+  do_test
+    {|
+      let _ = map head (single ids);;
+    |};
+  [%expect {| Well typed :) |}];
+  (* D0 *)
+  do_test
+    {|
+      let _ = poly id;;
+    |};
+  [%expect {| Well typed :) |}];
+  (* D1 *)
+  do_test
+    {|
+      let _ = app poly id;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:34:19
+     34 │        let _ = app poly id;;
+        │                    ^^^^ `@(ν.
+        │                              [∀'a.
+        │                                 'a @(ν'a. [∀. 'a]) -> 'a @(ν'a. [∀. 'a])]) ->
+        │                          (int * bool) @(ν'a. [∀. 'a])`
+        │                           is not equal to
+        │                         `'a @(ν'a. [∀. 'a]) -> 'b @(ν'a. [∀. 'a])`
+    |}];
+  (* D2 *)
+  do_test
+    {|
+      let _ = revapp id poly;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:34:25
+     34 │        let _ = revapp id poly;;
+        │                          ^^^^ `@(ν.
+        │                                    [∀'a.
+        │                                       'a @(ν'a. [∀. 'a]) ->
+        │                                       'a @(ν'a. [∀. 'a])]) ->
+        │                                (int * bool) @(ν'a. [∀. 'a])`
+        │                                 is not equal to
+        │                               `('a @(ν'a. [∀. 'a]) -> 'a @(ν'a. [∀. 'a]))
+        │                                @(ν'a. [∀. 'a]) -> 'b @(ν'a. [∀. 'a])`
+    |}];
+  (* D3 *)
+  do_test
+    {|
+      let _ = run_st arg_st;;
+    |};
+  [%expect {| Well typed :) |}];
+  (* D4 *)
+  do_test
+    {|
+      let _ = app run_st arg_st;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:34:19
+     34 │        let _ = app run_st arg_st;;
+        │                    ^^^^^^ `'a @(ν'b. [∀'a. ('a, 'b) st]) ->
+        │                            'a @(ν'a. [∀. 'a])`
+        │                             is not equal to
+        │                           `'b @(ν'a. [∀. 'a]) -> 'c @(ν'a. [∀. 'a])`
+    |}];
+  (* D5 *)
+  do_test
+    {|
+      let _ = revapp arg_st run_st;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:34:29
+     34 │        let _ = revapp arg_st run_st;;
+        │                              ^^^^^^ `'a @(ν'b. [∀'a. ('a, 'b) st]) ->
+        │                                      'a @(ν'a. [∀. 'a])`
+        │                                       is not equal to
+        │                                     `(('b, int) st) @(ν'a. [∀. 'a]) ->
+        │                                      'c @(ν'a. [∀. 'a])`
+    |}];
+  (* E1 *)
+  do_test
+    {|
+      external h : int -> (forall 'a. 'a -> 'a);;
+      external k : 'a. 'a -> 'a list -> 'a;;
+      external lst : ['a. int -> 'a -> 'a] list;;
+      let _ = k h lst;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:37:19
+     37 │        let _ = k h lst;;
+        │                    ^^^ `(((int) @(ν'a. [∀. 'a]))
+        │                          @(ν'b.
+        │                              [∀'a.
+        │                                 'b ->
+        │                                 ('a @(ν'a. [∀. 'a]) ->
+        │                                  'a @(ν'a. [∀. 'a]))
+        │                                 @(ν'a. [∀. 'a])]))
+        │                         list`
+        │                          is not equal to
+        │                        `((int) @(ν'a. [∀. 'a]) ->
+        │                          @(ν.
+        │                              [∀'a.
+        │                                 'a @(ν'a. [∀. 'a]) -> 'a @(ν'a. [∀. 'a])]))
+        │                         list`
+    |}];
+  do_test
+    {|
+      external h : int -> (forall 'a. 'a -> 'a);;
+      external k : 'a. 'a -> 'a list -> 'a;;
+      external lst : ['a. int -> 'a -> 'a] list;;
+      let _ = k (fun x -> h x) lst;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:37:32
+     37 │        let _ = k (fun x -> h x) lst;;
+        │                                 ^^^ `(((int) @(ν'a. [∀. 'a]))
+        │                                       @(ν'b.
+        │                                           [∀'a.
+        │                                              'b ->
+        │                                              ('a @(ν'a. [∀. 'a]) ->
+        │                                               'a @(ν'a. [∀. 'a]))
+        │                                              @(ν'a. [∀. 'a])]))
+        │                                      list`
+        │                                       is not equal to
+        │                                     `('a -> 'b) list`
+    |}];
+  do_test
+    {|
+      external r : (forall 'a. 'a -> (forall 'b. 'b -> 'b)) -> int;;
+      let _ = r (fun x -> fun y -> y);;
+    |};
+  [%expect {| Well typed :) |}]
 ;;
