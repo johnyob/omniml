@@ -170,6 +170,116 @@ let match_type
   | Sh_poly poly_shape -> env, Poly poly_shape.scheme
 ;;
 
+module Over_switch = struct
+  type t = { mutable remaining_overs : over Constraint.Var.Map.t }
+
+  and over =
+    { mutable over_handlers : Principal_shape.Var.Registered_handler.t list
+    ; over_root : G.Type.t
+    }
+
+  let create initial_overs =
+    { remaining_overs =
+        initial_overs
+        |> List.map ~f:(fun (over_var, over_root) ->
+          over_var, { over_root; over_handlers = [] })
+        |> Constraint.Var.Map.of_alist_exn
+    }
+  ;;
+
+  let remove_over t over =
+    Map.find t.remaining_overs over
+    |> Option.iter ~f:(fun { over_handlers; over_root = _ } ->
+      List.iter over_handlers ~f:Principal_shape.Var.Registered_handler.cancel_if_pending;
+      t.remaining_overs <- Map.remove t.remaining_overs over)
+  ;;
+
+  let ambiguous t = Map.length t.remaining_overs > 1
+
+  let unify_if_unique ~state ~env t expected_type =
+    if ambiguous t
+    then ()
+    else (
+      match Map.to_alist t.remaining_overs with
+      | [ (_over_var, over) ] -> unify ~state ~env over.over_root expected_type
+      | _ -> assert false)
+  ;;
+
+  let over_match ~(state : State.t) ~(env : Env.t) t ~over matchee ~closure ~with_ =
+    let range = Option.value_exn ~here:[%here] env.range in
+    match Map.find t.remaining_overs over with
+    | None ->
+      (* overload was already removed, no need to generate any subsequent constraints *)
+      ()
+    | Some over ->
+      let handler =
+        G.Suspended_match.match_or_yield
+          ~state
+          ~curr_region:env.curr_region
+          { matchee
+          ; closure = { variables = over.over_root :: closure; schemes = [] }
+          ; case = with_
+          ; else_ = (fun () -> Omniml_error.(raise @@ ambiguous_overloading ~range))
+          ; error = (fun _ -> Omniml_error.ambiguous_overloading ~range)
+          }
+      in
+      (match handler with
+       | Some handler -> over.over_handlers <- handler :: over.over_handlers
+       | None -> ())
+  ;;
+
+  let rec filter_over
+            ~(state : State.t)
+            ~(env : Env.t)
+            t
+            ~expected_type
+            ~over
+            over_type_p
+            expected_type_p
+    =
+    over_match
+      ~state
+      ~env
+      t
+      ~over
+      expected_type_p
+      ~closure:[ expected_type; over_type_p ]
+      ~with_:(fun ~shape:expected_type_p_shape ~args:expected_type_p_args ->
+        over_match
+          ~state
+          ~env
+          t
+          ~over
+          over_type_p
+          ~closure:([ expected_type ] @ expected_type_p_args)
+          ~with_:(fun ~shape:over_type_p_shape ~args:over_type_p_args ->
+            if Principal_shape.equal expected_type_p_shape over_type_p_shape
+            then
+              List.iter2_exn
+                expected_type_p_args
+                over_type_p_args
+                ~f:(fun expected_type_p_arg over_type_p_arg ->
+                  filter_over
+                    ~state
+                    ~env
+                    t
+                    ~expected_type
+                    ~over
+                    over_type_p_arg
+                    expected_type_p_arg)
+            else (
+              remove_over t over;
+              unify_if_unique ~state ~env t expected_type)))
+  ;;
+
+  let match_ ~state ~env t ~expected_type =
+    Map.iteri
+      t.remaining_overs
+      ~f:(fun ~key:over ~data:{ over_root; over_handlers = _ } ->
+        filter_over ~state ~env t ~expected_type ~over over_root expected_type)
+  ;;
+end
+
 let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
   fun ~state ~env cst ->
   [%log.global.debug
@@ -210,6 +320,18 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
     let actual_gtype = G.instantiate ~state ~curr_region:env.curr_region var_gscheme in
     [%log.global.debug "Scheme instance" (actual_gtype : G.Type.t)];
     unify ~state ~env actual_gtype expected_gtype
+  | Over_instance (vars, expected_type) ->
+    [%log.global.debug "Decoding expected_type" (expected_type : Type.t)];
+    let expected_gtype = gtype_of_type ~state ~env expected_type in
+    [%log.global.debug "Decoded expected_type" (expected_gtype : G.Type.t)];
+    let overs =
+      vars
+      |> List.map ~f:(fun over_var ->
+        let var_gscheme = Env.find_var env over_var in
+        over_var, G.instantiate ~state ~curr_region:env.curr_region var_gscheme)
+    in
+    let switch = Over_switch.create overs in
+    Over_switch.match_ ~state ~env switch ~expected_type:expected_gtype
   | Exists (type_var, cst) ->
     [%log.global.debug "Binding unification for type_var" (type_var : Type.Var.t)];
     let env = exists ~state ~env ~type_var in
@@ -250,7 +372,7 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
       else_ ()
     in
     [%log.global.debug "Suspending match..."];
-    let _ =
+    let _ : Principal_shape.Var.Registered_handler.t option =
       G.Suspended_match.match_or_yield
         ~state
         ~curr_region:env.curr_region

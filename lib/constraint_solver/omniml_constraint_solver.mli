@@ -222,6 +222,8 @@ module Constraint : sig
       bound to [x]. The variable [x] must be bound earlier by {!let_}. *)
   val inst : Var.t -> Type.t -> t
 
+  val over : Var.t list -> Type.t -> t
+
   module Match_error : sig
     type t =
       | Cannot_default

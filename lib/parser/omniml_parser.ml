@@ -22,6 +22,7 @@ module Token = struct
     | RIGHT_BRACE -> Fmt.pf ppf "Right_brace"
     | RIGHT_ARROW -> Fmt.pf ppf "Right_arrow"
     | QUOTE -> Fmt.pf ppf "Quote"
+    | QUESTION_MARK -> Fmt.pf ppf "Question_mark"
     | PLUS -> Fmt.pf ppf "Plus"
     | OF -> Fmt.pf ppf "Of"
     | MINUS -> Fmt.pf ppf "Minus"

@@ -75,6 +75,8 @@ rule read  =
       { UNDERSCORE }
   | "|"
       { BAR }
+  | "?"
+      { QUESTION_MARK }
 
   (* comments *)
   | "(*"

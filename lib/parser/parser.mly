@@ -232,6 +232,16 @@ core_scheme:
   id = "<ident>"
     { label_name ~range:(range_of_lex $loc) id }
 
+%inline over_name:
+  id = "<ident>"
+    { over_name ~range:(range_of_lex $loc) id }
+
+%inline over_path:
+  over_name = over_name
+  ; "?"
+  ; var_name = var_name
+    { over_path ~range:(range_of_lex $loc) over_name var_name }
+
 constant:
     int = "<int>"
       { Const_int int }
@@ -338,6 +348,8 @@ atom_expression:
       { Expression.const ~range:(range_of_lex $loc) const }
   | var_name = var_name
       { Expression.var ~range:(range_of_lex $loc) var_name }
+  | over_path = over_path
+      { Expression.over ~range:(range_of_lex $loc) over_path }
   | constr_name = constr_name
       { Expression.constr ~range:(range_of_lex $loc) constr_name None }
   | "("
@@ -451,6 +463,8 @@ atom_pattern:
       { Pattern.any ~range:(range_of_lex $loc) }
   | var_name = var_name
       { Pattern.var ~range:(range_of_lex $loc) var_name }
+  | over_path = over_path
+      { Pattern.over ~range:(range_of_lex $loc) over_path }
   | constr_name = constr_name
       { Pattern.constr ~range:(range_of_lex $loc) constr_name None }
   | "("
