@@ -301,6 +301,7 @@ module Var = struct
     type nonrec t =
       { run : t -> unit
       ; default : unit -> unit
+      ; cancel : unit -> unit
       ; error : unit -> Omniml_error.t
       }
     [@@deriving sexp_of]
@@ -310,25 +311,28 @@ module Var = struct
 
     let schedule_all ts shape =
       let scheduler = Scheduler.t () in
-      List.iter ts ~f:(fun t ->
+      Doubly_linked.iter ts ~f:(fun t ->
         let job = fun () -> t.run shape in
-        Scheduler.enqueue scheduler job)
+        Scheduler.enqueue scheduler job);
+      Doubly_linked.clear ts
     ;;
 
     let schedule_default_all ts =
       [%log.global.debug "Scheduling defaults"];
       let scheduler = Scheduler.t () in
-      List.iter ts ~f:(fun t ->
+      Doubly_linked.iter ts ~f:(fun t ->
         [%log.global.debug "Scheduling default"];
         Scheduler.enqueue scheduler t.default)
     ;;
 
-    let errors ts = List.map ts ~f:(fun t -> t.error ())
+    let errors ts =
+      Doubly_linked.fold_right ts ~init:[] ~f:(fun t acc -> t.error () :: acc)
+    ;;
   end
 
   module S = struct
     type desc =
-      | Empty of Handler.t list
+      | Empty of Handler.t Doubly_linked.t
       | Full of t
     [@@deriving sexp_of]
 
@@ -346,7 +350,9 @@ module Var = struct
 
     let merge_desc ~ctx:_ ~create:_ ~unify:_ ~type1:_ ~type2:_ t1 t2 =
       match t1, t2 with
-      | Empty hs1, Empty hs2 -> Empty (hs1 @ hs2)
+      | Empty hs1, Empty hs2 ->
+        Doubly_linked.transfer ~src:hs2 ~dst:hs1;
+        Empty hs1
       | Full s1, Full s2 -> if equal s1 s2 then Full s1 else raise Cannot_merge
       | Empty hs, Full s | Full s, Empty hs ->
         Handler.schedule_all hs s;
@@ -367,7 +373,7 @@ module Var = struct
       { id = Identifier.create id_source
       ; region
       ; guards = Guard_set.empty
-      ; desc = Empty []
+      ; desc = Empty (Doubly_linked.create ())
       }
     ;;
   end
@@ -392,10 +398,28 @@ module Var = struct
     | Full _ -> false
   ;;
 
+  module Registered_handler = struct
+    type t =
+      { wait_list : Handler.t Doubly_linked.t
+      ; handler : Handler.t Doubly_linked.Elt.t
+      }
+
+    let cancel_if_pending t =
+      if not (Doubly_linked.is_empty t.wait_list)
+      then (
+        (Doubly_linked.Elt.value t.handler).cancel ();
+        Doubly_linked.remove t.wait_list t.handler)
+    ;;
+  end
+
   let add_handler t handler =
     match desc t with
-    | Full s -> Handler.schedule handler s
-    | Empty handlers -> set_desc t (Empty (handler :: handlers))
+    | Full s ->
+      Handler.schedule handler s;
+      None
+    | Empty handlers ->
+      let handler = Doubly_linked.insert_first handlers handler in
+      Some { Registered_handler.wait_list = handlers; handler }
   ;;
 
   exception Empty

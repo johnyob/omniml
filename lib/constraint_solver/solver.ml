@@ -227,10 +227,12 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
     [%log.global.debug
       "Closure of suspended match" (gclosure : G.Suspended_match.closure)];
     (* Register match for the shape *)
-    let case ~curr_region ~shape ~args =
+    let case ~shape ~args =
       [%log.global.debug "Entered match handler" (shape : Principal_shape.t)];
       (* Enter region and construct env *)
-      let env = Env.of_gclosure gclosure ~closure ~curr_region ~range:env.range in
+      let env =
+        Env.of_gclosure gclosure ~closure ~curr_region:env.curr_region ~range:env.range
+      in
       [%log.global.debug "Handler env" (env : Env.t)];
       [%log.global.debug "Handler state" (state : State.t)];
       (* Solve *)
@@ -248,10 +250,13 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
       else_ ()
     in
     [%log.global.debug "Suspending match..."];
-    G.Suspended_match.match_or_yield
-      ~state
-      ~curr_region:env.curr_region
-      { matchee = gmatchee; closure = gclosure; case; else_; error }
+    let _ =
+      G.Suspended_match.match_or_yield
+        ~state
+        ~curr_region:env.curr_region
+        { matchee = gmatchee; closure = gclosure; case; else_; error }
+    in
+    ()
   | With_range (t, range) -> solve ~state ~env:(Env.with_range env ~range) t
 
 and solve_let_binding ~state ~env { type_vars; in_; bindings } =

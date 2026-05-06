@@ -34,11 +34,20 @@ module Var : sig
       { run : shape -> unit
         (** [run shape] runs the handler, where [shape] is the filled shape.  *)
       ; default : unit -> unit (** [default ()] is used to fill the variable (or fail). *)
+      ; cancel : unit -> unit (** [cancel ()] is used to cancel the handler. *)
       ; error : unit -> Omniml_error.t
         (** [error ()] is used to generate an error if the shape 
             variable cannot be defaulted. *)
       }
     [@@deriving sexp_of]
+  end
+
+  module Registered_handler : sig
+    type t
+
+    (** [cancel_if_pending t] removes the handler from its associated waitlist if 
+        it has not yet been scheduled. *)
+    val cancel_if_pending : t -> unit
   end
 
   (** A write-once cell containing a principal shape. *)
@@ -68,7 +77,7 @@ module Var : sig
   (** [add_handler t h] adds a handler to the shape var that is scheduled 
       once the variable is filled. If the shape is already filled, then 
       the handler is scheduled immediately. *)
-  val add_handler : t -> Handler.t -> unit
+  val add_handler : t -> Handler.t -> Registered_handler.t option
 
   exception Empty
 
