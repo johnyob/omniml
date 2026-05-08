@@ -196,23 +196,23 @@ module Constraint : sig
       this syntax. *)
 
   type unquantified_let_binding := t * binding list
-
-  type quantified_let_binding :=
-    (flexibility * Type.Var.t) list * unquantified_let_binding
+  type abstracted_let_binding := Type.t list * unquantified_let_binding
+  type quantified_let_binding := (flexibility * Type.Var.t) list * abstracted_let_binding
 
   val ( @=> ) : t -> binding list -> unquantified_let_binding
+  val ( @?-> ) : Type.t list -> unquantified_let_binding -> abstracted_let_binding
 
   val ( @. )
     :  (flexibility * Type.Var.t) list
-    -> unquantified_let_binding
+    -> abstracted_let_binding
     -> quantified_let_binding
 
   (** [mono_binding bindings] builds a monomorphic let binding.
       This is equivalent to [poly_binding ([] @. tt @=> bindings)]. *)
   val mono_binding : binding list -> let_binding
 
-  (** [poly_binding (vs @. c @=> bindings)] builds the constrained let binding
-      [forall vs. c => bindings]. *)
+  (** [poly_binding (vs @. ts @?> c @=> bindings)] builds the constrained let binding
+      [forall vs. ?ts -> c => bindings]. *)
   val poly_binding : quantified_let_binding -> let_binding
 
   (** [let_ binding ~in_:c] binds the variables in [binding] in [c]. *)
@@ -223,6 +223,8 @@ module Constraint : sig
   val inst : Var.t -> Type.t -> t
 
   val over : Var.t list -> Type.t -> t
+  val let_implicit : Var.t -> in_:t -> t
+  val implicit : Type.t -> t
 
   module Match_error : sig
     type t =

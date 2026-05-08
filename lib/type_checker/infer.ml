@@ -715,12 +715,13 @@ module Expression = struct
     let_
       (poly_binding
          (((Flexible, pat_type) :: pat_quantifiers)
-          @. (match_inst
-                ~id_source
-                ~range:pat.range
-                ~poly_type:param_type
-                ~mono_type:pat_type
-              &~ cpat)
+          @. []
+          @?-> (match_inst
+                  ~id_source
+                  ~range:pat.range
+                  ~poly_type:param_type
+                  ~mono_type:pat_type
+                &~ cpat)
           @=> bindings))
       ~in_:(in_ env)
   ;;
@@ -742,7 +743,8 @@ module Expression = struct
     &~ let_
          (poly_binding
             ((scheme_quantifiers @ pat_quantifiers)
-             @. (cpat &~ Type.(var pat_type =~ scheme.body))
+             @. []
+             @?-> (cpat &~ Type.(var pat_type =~ scheme.body))
              @=> bindings))
          ~in_:(in_ env)
   ;;
@@ -856,7 +858,8 @@ module Expression = struct
       let_
         (poly_binding
            (((Flexible, exp_type') :: rigid_type_vars)
-            @. c
+            @. []
+            @?-> c
             @=> [ x @: Type.var exp_type' ]))
         ~in_:(inst x (Type.var exp_type))
     | Exp_annot (exp, annot) ->
@@ -988,6 +991,10 @@ module Expression = struct
       @@ fun poly_type ->
       infer_exp ~env ~with_poly_params exp poly_type
       &~ match_inst ~id_source ~range:exp.range ~poly_type ~mono_type:exp_type
+    | Exp_let_implicit (var_name, exp) ->
+      infer_implicit_binding ~env var_name
+      @@ fun () -> infer_exp ~env ~with_poly_params exp exp_type
+    | Exp_implicit -> implicit Type.(var exp_type)
 
   and infer_exps ~env ~with_poly_params exps k =
     match exps with
@@ -1016,7 +1023,8 @@ module Expression = struct
     let_
       (poly_binding
          ([ Flexible, exp_type ]
-          @. infer_exp ~env ~with_poly_params exp exp_type
+          @. []
+          @?-> infer_exp ~env ~with_poly_params exp exp_type
           @=> [ cvar @: Type.var exp_type ]))
       ~in_:(k cvar)
 
@@ -1031,20 +1039,52 @@ module Expression = struct
     bind_mono_pat ~env ~with_poly_params pat lhs_type ~in_:(fun env ->
       infer_exp ~env ~with_poly_params exp rhs_type)
 
+  and infer_term ~env ~with_poly_params (term : term) exp_type =
+    match term.it with
+    | Term_exp exp -> [], [], infer_exp ~env ~with_poly_params exp exp_type
+    | Term_implicit_fun (pats, exp) ->
+      let pat_and_types =
+        List.map pats ~f:(fun pat ->
+          pat, Type.Var.create ~id_source:(Env.id_source env) ())
+      in
+      let rec bind_pats ~env pat_and_types ~in_ =
+        match pat_and_types with
+        | [] -> in_ env
+        | (pat, pat_type) :: pat_and_types ->
+          bind_mono_pat ~env ~with_poly_params pat pat_type ~in_:(fun env ->
+            bind_pats ~env pat_and_types ~in_)
+      in
+      let cexp =
+        bind_pats ~env pat_and_types ~in_:(fun env ->
+          infer_exp ~env ~with_poly_params exp exp_type)
+      in
+      let implicit_vars = List.map pat_and_types ~f:snd in
+      implicit_vars, List.map implicit_vars ~f:Type.var, cexp
+
   and infer_value_binding ~(env : Env.t) ~with_poly_params value_binding k =
-    let { value_binding_pat = pat; value_binding_exp = exp } = value_binding.it in
+    let { value_binding_pat = pat; value_binding_term = term } = value_binding.it in
     let exp_type = Type.Var.create ~id_source:(Env.id_source env) () in
-    let cexp = infer_exp ~env ~with_poly_params exp exp_type in
+    let implicit_bindings, implicits, cexp =
+      infer_term ~env ~with_poly_params term exp_type
+    in
     let env, bindings, exists_bindings, cpat =
       infer_pat ~env ~with_poly_params pat exp_type
     in
     let cin = k env in
     let_
       (poly_binding
-         (((Flexible, exp_type) :: List.map exists_bindings ~f:(fun v -> Flexible, v))
-          @. (cexp &~ cpat)
+         (((Flexible, exp_type)
+           :: List.map (exists_bindings @ implicit_bindings) ~f:(fun v -> Flexible, v))
+          @. implicits
+          @?-> (cexp &~ cpat)
           @=> bindings))
       ~in_:cin
+
+  and infer_implicit_binding ~(env : Env.t) var_name k =
+    let binding = find_var_binding ~env var_name in
+    match binding.var with
+    | None -> Omniml_error.(raise @@ unbound_variable ~range:var_name.range var_name.it)
+    | Some var -> let_implicit var ~in_:(k ())
   ;;
 end
 
@@ -1055,7 +1095,7 @@ module Structure = struct
     let quantifiers = List.map ~f:(fun q -> Flexible, q) quantifiers in
     Env.rename_var env ~var:value_name.it ~in_:(fun env cvar ->
       let c = k env in
-      let_ (poly_binding (quantifiers @. tt @=> [ cvar @: type_ ])) ~in_:c)
+      let_ (poly_binding (quantifiers @. [] @?-> tt @=> [ cvar @: type_ ])) ~in_:c)
   ;;
 
   let infer_type_decl
@@ -1159,5 +1199,9 @@ module Structure = struct
       with_range ~range
       @@ Expression.infer_value_binding ~env ~with_poly_params value_binding
       @@ fun env -> infer_str ~env ~with_poly_params str
+    | { it = Str_implicit var_name; range } :: str ->
+      with_range ~range
+      @@ Expression.infer_implicit_binding ~env var_name
+      @@ fun () -> infer_str ~env ~with_poly_params str
   ;;
 end

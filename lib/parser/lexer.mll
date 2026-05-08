@@ -22,6 +22,7 @@ let keywords =
   ; "as", AS 
   ; "of", OF 
   ; "external", EXTERNAL
+  ; "implicit", IMPLICIT
   ]
 ;;
 

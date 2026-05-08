@@ -27,6 +27,7 @@ module Env = struct
   type t =
     { type_vars : G.Type.t Type.Var.Map.t
     ; expr_vars : G.Scheme.t Constraint.Var.Map.t
+    ; implicit_vars : Constraint.Var.Set.t
     ; curr_region : G.Region.t
     ; range : Range.t option
     }
@@ -38,6 +39,7 @@ module Env = struct
   let empty ~range ~curr_region =
     { type_vars = Type.Var.Map.empty
     ; expr_vars = Constraint.Var.Map.empty
+    ; implicit_vars = Constraint.Var.Set.empty
     ; curr_region
     ; range
     }
@@ -50,6 +52,8 @@ module Env = struct
   let bind_var t ~var ~type_ =
     { t with expr_vars = Map.set t.expr_vars ~key:var ~data:type_ }
   ;;
+
+  let add_implicit_var t var = { t with implicit_vars = Set.add t.implicit_vars var }
 
   let find_type_var t type_var =
     try Map.find_exn t.type_vars type_var with
@@ -69,7 +73,9 @@ module Env = struct
     }
   ;;
 
-  let create_scheme t root = G.create_scheme ~curr_region:t.curr_region root
+  let create_scheme t ?implicits root =
+    G.create_scheme ~curr_region:t.curr_region ?implicits root
+  ;;
 
   let of_gclosure
         (gclosure : G.Suspended_match.closure)
@@ -170,57 +176,59 @@ let match_type
   | Sh_poly poly_shape -> env, Poly poly_shape.scheme
 ;;
 
-module Over_switch = struct
-  type t = { mutable remaining_overs : over Constraint.Var.Map.t }
+module Overload = struct
+  module Switch = struct
+    type t = { mutable remaining_overs : over Constraint.Var.Map.t }
 
-  and over =
-    { mutable over_handlers : Principal_shape.Var.Registered_handler.t list
-    ; over_scheme : G.Scheme.t
-    }
+    and over =
+      { mutable over_handlers :
+          (Principal_shape.Var.Registered_handler.t list[@sexp.opaque])
+      ; over_scheme : G.Scheme.t
+      }
+    [@@deriving sexp_of]
 
-  let create initial_overs =
-    { remaining_overs =
-        initial_overs
-        |> List.map ~f:(fun (over_var, over_scheme) ->
-          over_var, { over_scheme; over_handlers = [] })
-        |> Constraint.Var.Map.of_alist_exn
-    }
-  ;;
+    let create initial_overs =
+      { remaining_overs =
+          initial_overs
+          |> List.map ~f:(fun (over_var, over_scheme) ->
+            over_var, { over_scheme; over_handlers = [] })
+          |> Constraint.Var.Map.of_alist_exn
+      }
+    ;;
 
-  let remove_over t over =
-    Map.find t.remaining_overs over
-    |> Option.iter ~f:(fun { over_handlers; over_scheme = _ } ->
-      List.iter over_handlers ~f:Principal_shape.Var.Registered_handler.cancel_if_pending;
-      t.remaining_overs <- Map.remove t.remaining_overs over)
-  ;;
+    let remove_over t over =
+      Map.find t.remaining_overs over
+      |> Option.iter ~f:(fun { over_handlers; over_scheme = _ } ->
+        List.iter
+          over_handlers
+          ~f:Principal_shape.Var.Registered_handler.cancel_if_pending;
+        t.remaining_overs <- Map.remove t.remaining_overs over)
+    ;;
+  end
 
-  let ambiguous t = Map.length t.remaining_overs > 1
+  let is_ambiguous ~(switch : Switch.t) = Map.length switch.remaining_overs > 1
 
-  let unify_if_unique ~(state : State.t) ~(env : Env.t) t expected_type =
-    if ambiguous t
+  let if_unique ~(switch : Switch.t) ~do_ =
+    if is_ambiguous ~switch
     then ()
     else (
-      match Map.to_alist t.remaining_overs with
-      | [ (_over_var, over) ] ->
-        let actual_gtype =
-          G.instantiate ~state ~curr_region:env.curr_region over.over_scheme
-        in
-        unify ~state ~env actual_gtype expected_type
+      match Map.to_alist switch.remaining_overs with
+      | [ (_over_var, over) ] -> do_ over.over_scheme
       | _ -> assert false)
   ;;
 
-  let over_match
+  let match_
         ~(state : State.t)
         ~(env : Env.t)
+        ~(switch : Switch.t)
         ~curr_region
-        t
         ~over
         matchee
         ~closure
         ~with_
     =
     let range = Option.value_exn ~here:[%here] env.range in
-    match Map.find t.remaining_overs over with
+    match Map.find switch.remaining_overs over with
     | None ->
       (* overload was already removed, no need to generate any subsequent constraints *)
       ()
@@ -249,21 +257,24 @@ module Over_switch = struct
   let rec filter_over
             ~(state : State.t)
             ~(env : Env.t)
-            t
-            ~expected_type
+            ~(switch : Switch.t)
+            ~with_
+            ~closure
             ~over
             over_type_p
             expected_type_p
     =
-    over_match
+    match_
       ~state
       ~env
+      ~switch
       ~curr_region:`Env
-      t
       ~over
       expected_type_p
-      ~closure:[ expected_type ]
+      ~closure
       ~with_:(fun ~shape:expected_type_p_shape ~args:expected_type_p_args ->
+        (* If the current type in the overloaded scheme is generic and a variable, 
+           then don't register a match constraint on it *)
         if
           G.Type.is_generic over_type_p
           &&
@@ -272,14 +283,14 @@ module Over_switch = struct
           | _ -> false
         then ()
         else
-          over_match
+          match_
             ~state
             ~env
+            ~switch
             ~curr_region:`Over
-            t
             ~over
             over_type_p
-            ~closure:([ expected_type ] @ expected_type_p_args)
+            ~closure:(closure @ expected_type_p_args)
             ~with_:(fun ~shape:over_type_p_shape ~args:over_type_p_args ->
               if Principal_shape.equal expected_type_p_shape over_type_p_shape
               then
@@ -290,37 +301,74 @@ module Over_switch = struct
                     filter_over
                       ~state
                       ~env
-                      t
-                      ~expected_type
+                      ~switch
+                      ~closure
+                      ~with_
                       ~over
                       over_type_p_arg
                       expected_type_p_arg)
               else (
-                remove_over t over;
-                unify_if_unique ~state ~env t expected_type)))
+                Switch.remove_over switch over;
+                if_unique ~switch ~do_:with_)))
   ;;
 
-  let match_ ~state ~env t ~expected_type =
+  let match_ ~state ~env expected_type ~in_:overloads ~closure ~with_ =
+    let switch = Switch.create overloads in
     Map.iteri
-      t.remaining_overs
+      switch.remaining_overs
       ~f:(fun ~key:over ~data:{ over_scheme; over_handlers = _ } ->
-        filter_over ~state ~env t ~expected_type ~over over_scheme.root expected_type)
+        filter_over
+          ~state
+          ~env
+          ~switch
+          ~closure
+          ~with_
+          ~over
+          over_scheme.root
+          expected_type)
   ;;
 end
+
+let rec implicit_instantiate ~(state : State.t) ~(env : Env.t) gscheme expected_type =
+  let implicits, actual_type =
+    G.instantiate ~state ~curr_region:env.curr_region gscheme
+  in
+  unify ~state ~env actual_type expected_type;
+  match implicits with
+  | [] ->
+    (* Optimize for the common case *)
+    ()
+  | _ ->
+    let env_implicits =
+      env.implicit_vars
+      |> Set.to_list
+      |> List.map ~f:(fun var -> var, Env.find_var env var)
+    in
+    List.iter implicits ~f:(over_instantiate ~state ~env ~in_:env_implicits)
+
+and over_instantiate ~state ~env expected_type ~in_ =
+  Overload.match_
+    ~state
+    ~env
+    expected_type
+    ~in_
+    ~closure:[ expected_type ]
+    ~with_:(fun gscheme -> implicit_instantiate ~state ~env gscheme expected_type)
+;;
 
 let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
   fun ~state ~env cst ->
   [%log.global.debug
     "Solving constraint" (state : State.t) (env : Env.t) (cst : Constraint.t)];
-  let self ~state ?(env = env) cst = solve ~state ~env cst in
+  let self ~state ~env cst = solve ~state ~env cst in
   match cst with
   | True -> ()
   | False err -> Env.raise env @@ Unsatisfiable err
   | Conj (cst1, cst2) ->
     [%log.global.debug "Solving conj lhs"];
-    self ~state cst1;
+    self ~state ~env cst1;
     [%log.global.debug "Solving conj rhs"];
-    self ~state cst2
+    self ~state ~env cst2
   | Eq (type1, type2) ->
     [%log.global.debug "Decoding type1" (type1 : Type.t)];
     let gtype1 = gtype_of_type ~state ~env type1 in
@@ -345,16 +393,13 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
     let var_gscheme = Env.find_var env var in
     [%log.global.debug
       "Instantiating scheme" (var : Constraint.Var.t) (var_gscheme : G.Scheme.t)];
-    let actual_gtype = G.instantiate ~state ~curr_region:env.curr_region var_gscheme in
-    [%log.global.debug "Scheme instance" (actual_gtype : G.Type.t)];
-    unify ~state ~env actual_gtype expected_gtype
+    implicit_instantiate ~state ~env var_gscheme expected_gtype
   | Over_instance (vars, expected_type) ->
     [%log.global.debug "Decoding expected_type" (expected_type : Type.t)];
     let expected_gtype = gtype_of_type ~state ~env expected_type in
     [%log.global.debug "Decoded expected_type" (expected_gtype : G.Type.t)];
     let overs = List.map vars ~f:(fun over_var -> over_var, Env.find_var env over_var) in
-    let switch = Over_switch.create overs in
-    Over_switch.match_ ~state ~env switch ~expected_type:expected_gtype
+    over_instantiate ~state ~env expected_gtype ~in_:overs
   | Exists (type_var, cst) ->
     [%log.global.debug "Binding unification for type_var" (type_var : Type.Var.t)];
     let env = exists ~state ~env ~type_var in
@@ -402,9 +447,22 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
         { matchee = gmatchee; closure = gclosure; case; else_; error }
     in
     ()
+  | Let_implicit (var_name, in_) ->
+    let env = Env.add_implicit_var env var_name in
+    self ~state ~env in_
+  | Implicit expected_type ->
+    [%log.global.debug "Decoding expected_type" (expected_type : Type.t)];
+    let expected_gtype = gtype_of_type ~state ~env expected_type in
+    [%log.global.debug "Decoded expected_type" (expected_gtype : G.Type.t)];
+    let env_implicits =
+      env.implicit_vars
+      |> Set.to_list
+      |> List.map ~f:(fun var -> var, Env.find_var env var)
+    in
+    over_instantiate ~state ~env expected_gtype ~in_:env_implicits
   | With_range (t, range) -> solve ~state ~env:(Env.with_range env ~range) t
 
-and solve_let_binding ~state ~env { type_vars; in_; bindings } =
+and solve_let_binding ~state ~env { type_vars; implicits; in_; bindings } =
   let env = Env.enter_new_region ~state env in
   [%log.global.debug "Entered new region" (env : Env.t)];
   let env =
@@ -419,6 +477,9 @@ and solve_let_binding ~state ~env { type_vars; in_; bindings } =
       (env : Env.t)];
   [%log.global.debug "Solving scheme's constraint"];
   solve ~state ~env in_;
+  let gimplicits =
+    List.map implicits ~f:(fun implicit -> gtype_of_type ~state ~env implicit)
+  in
   let gbindings =
     List.map bindings ~f:(fun { binding_var; binding_type } ->
       [%log.global.debug
@@ -426,7 +487,7 @@ and solve_let_binding ~state ~env { type_vars; in_; bindings } =
       let binding_gtype = gtype_of_type ~state ~env binding_type in
       [%log.global.debug
         "Type of binding" (binding_var : Constraint.Var.t) (binding_gtype : G.Type.t)];
-      let gscheme = Env.create_scheme env binding_gtype in
+      let gscheme = Env.create_scheme env ~implicits:gimplicits binding_gtype in
       binding_var, gscheme)
   in
   [%log.global.debug "Bindings" (gbindings : (Constraint.Var.t * G.Scheme.t) list)];

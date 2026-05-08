@@ -424,6 +424,7 @@ end
 module Scheme = struct
   type t =
     { root : Type.t
+    ; implicits : Type.t list
     ; region : Region.t
     }
   [@@deriving sexp_of]
@@ -440,7 +441,8 @@ module Scheme = struct
         | Generic -> Type.inner type_ |> I.iter ~f:loop
         | Instance _ -> f type_)
     in
-    loop t.root
+    loop t.root;
+    List.iter t.implicits ~f:loop
   ;;
 end
 
@@ -519,53 +521,55 @@ let rec prune_structure ~(state : State.t) structure instances =
 (** [copy ~state type_ ~instance_id ~src_region ~dst_region] copies the type [type_] 
     in the [src_region] region to a fresh type in the [dst_region] region. Any 
     instantiation edges are associated with the instance id [instance_id].  *)
-and copy ~(state : State.t) type_ ~instance_id ~src_region ~dst_region =
+and copy ~(state : State.t) ~instance_id ~src_region ~dst_region =
   let generic_copies = Hashtbl.create (module Identifier) in
-  let rec visit type_ =
-    if Tree.compare_node_by_level (Type.region type_) src_region < 0
-    then type_
-    else (
-      match Type.status type_ with
-      | Generic -> find_or_alloc_generic_copy type_
-      | Instance _ ->
-        (* The type is an instance, but a member of the region. Meaning it 
+  fun type_ ->
+    let rec visit type_ =
+      if Tree.compare_node_by_level (Type.region type_) src_region < 0
+      then type_
+      else (
+        match Type.status type_ with
+        | Generic -> find_or_alloc_generic_copy type_
+        | Instance _ ->
+          (* The type is an instance, but a member of the region. Meaning it 
            could be generic in the future. So we create an instantiation 
            edge. *)
-        find_or_alloc_instance_copy type_)
-  and alloc_copy ~on_alloc type_ =
-    let copy = create_var ~state ~curr_region:dst_region () in
-    on_alloc copy;
-    let inner = Type.inner type_ in
-    let flexized_inner = if Type.is_generic type_ then inner else flexize_inner inner in
-    let inner_copy = I.map flexized_inner ~f:visit in
-    unify
-      ~state
-      ~curr_region:dst_region
+          find_or_alloc_instance_copy type_)
+    and alloc_copy ~on_alloc type_ =
+      let copy = create_var ~state ~curr_region:dst_region () in
+      on_alloc copy;
+      let inner = Type.inner type_ in
+      let flexized_inner = if Type.is_generic type_ then inner else flexize_inner inner in
+      let inner_copy = I.map flexized_inner ~f:visit in
+      unify
+        ~state
+        ~curr_region:dst_region
+        copy
+        (Type.create ~state ~curr_region:dst_region inner_copy);
       copy
-      (Type.create ~state ~curr_region:dst_region inner_copy);
-    copy
-  and find_or_alloc_generic_copy type_ =
-    let id = Type.id type_ in
-    try Hashtbl.find_exn generic_copies id with
-    | Not_found_s _ ->
-      alloc_copy
-        ~on_alloc:(fun copy -> Hashtbl.set generic_copies ~key:id ~data:copy)
-        type_
-  and find_or_alloc_instance_copy type_ =
-    try
-      let _from, instance = Map.find_exn (Type.instances type_) instance_id in
-      (* Invariant: [from = src_region] *)
-      instance
-    with
-    | Not_found_s _ ->
-      alloc_copy
-        ~on_alloc:(fun instance ->
-          [%log.global.debug "Adding instance guard" (type_ : Type.t) (instance : Type.t)];
-          Type.add_guard ~state instance;
-          Type.add_instance ~state type_ instance_id (src_region, instance))
-        type_
-  in
-  visit type_
+    and find_or_alloc_generic_copy type_ =
+      let id = Type.id type_ in
+      try Hashtbl.find_exn generic_copies id with
+      | Not_found_s _ ->
+        alloc_copy
+          ~on_alloc:(fun copy -> Hashtbl.set generic_copies ~key:id ~data:copy)
+          type_
+    and find_or_alloc_instance_copy type_ =
+      try
+        let _from, instance = Map.find_exn (Type.instances type_) instance_id in
+        (* Invariant: [from = src_region] *)
+        instance
+      with
+      | Not_found_s _ ->
+        alloc_copy
+          ~on_alloc:(fun instance ->
+            [%log.global.debug
+              "Adding instance guard" (type_ : Type.t) (instance : Type.t)];
+            Type.add_guard ~state instance;
+            Type.add_instance ~state type_ instance_id (src_region, instance))
+          type_
+    in
+    visit type_
 
 and unify ~(state : State.t) ~curr_region type1 type2 =
   let remove_guard_worklist = Queue.create () in
@@ -929,7 +933,10 @@ let update_and_generalize ~state (curr_region : Region.t) =
   [%log.global.debug "End generalization" (curr_region.id : Identifier.t)]
 ;;
 
-let create_scheme ~curr_region root : Scheme.t = { root; region = curr_region }
+let create_scheme ~curr_region ?(implicits = []) root : Scheme.t =
+  { root; implicits; region = curr_region }
+;;
+
 let run_scheduler () = Scheduler.(run (t ()))
 
 let force_generalization ~state region =
@@ -968,7 +975,7 @@ let force_root_generalization_and_return_unsolved_shape_var_errors ~state =
   collected_errors @ List.concat_map remaining_shape_vars ~f:Principal_shape.Var.errors
 ;;
 
-let instantiate ~state ~curr_region ({ root; region = src_region } : Scheme.t) =
+let instantiate ~state ~curr_region ({ root; implicits; region = src_region } : Scheme.t) =
   [%log.global.debug
     "Generalization tree @ instantiation"
       (state.region_tree : Type.t Pool.t Tree.With_dirty.t)];
@@ -976,8 +983,13 @@ let instantiate ~state ~curr_region ({ root; region = src_region } : Scheme.t) =
   force_generalization ~state src_region;
   (* Create an instance group *)
   let instance_id = Instance_identifier.create state.id_source in
-  (* Copy the type *)
-  copy ~state ~src_region ~dst_region:curr_region ~instance_id root
+  (* Create a new copy scope *)
+  let copy = copy ~state ~src_region ~dst_region:curr_region ~instance_id in
+  (* Copy the root *)
+  let root = copy root in
+  (* Copy the implicits *)
+  let implicits = List.map implicits ~f:copy in
+  implicits, root
 ;;
 
 module Suspended_match = struct

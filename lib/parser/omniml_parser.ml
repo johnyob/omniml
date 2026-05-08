@@ -35,6 +35,7 @@ module Token = struct
     | LEFT_BRACKET -> Fmt.pf ppf "Left_bracket"
     | LEFT_BRACE -> Fmt.pf ppf "Left_brace"
     | IN -> Fmt.pf ppf "In"
+    | IMPLICIT -> Fmt.pf ppf "Implicit"
     | IF -> Fmt.pf ppf "If"
     | IDENT ident -> Fmt.pf ppf "Ident(%s)" ident
     | GREATER_EQUAL -> Fmt.pf ppf "Greater_equal"

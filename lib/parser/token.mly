@@ -17,6 +17,7 @@
 %token AS "as"
 %token OF "of"
 %token EXTERNAL "external"
+%token IMPLICIT "implicit"
 %token SEMI_SEMI_COLON ";;"
 
 // operators

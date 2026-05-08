@@ -44,6 +44,8 @@ type t =
   | Let of let_binding * t
   | Instance of Var.t * Type.t
   | Over_instance of Var.t list * Type.t
+  | Let_implicit of Var.t * t
+  | Implicit of Type.t
   | Match of
       { matchee : Type.Var.t
       ; closure : Closure.t
@@ -60,6 +62,7 @@ and binding =
 
 and let_binding =
   { type_vars : (flexibility * Type.Var.t) list
+  ; implicits : Type.t list
   ; in_ : t
   ; bindings : binding list
   }
@@ -85,13 +88,20 @@ let exists type_var t = Exists (type_var, t)
 let exists_many vars in_ = List.fold_right vars ~init:in_ ~f:exists
 let forall type_vars t = Forall (type_vars, t)
 let ( @: ) x type_ = { binding_var = x; binding_type = type_ }
-let mono_binding bindings = { type_vars = []; in_ = tt; bindings }
+let mono_binding bindings = { type_vars = []; implicits = []; in_ = tt; bindings }
+let ( @?-> ) t1 t2 = t1, t2
 let ( @=> ) t1 t2 = t1, t2
 let ( @. ) t1 t2 = t1, t2
-let poly_binding (type_vars, (in_, bindings)) = { type_vars; in_; bindings }
+
+let poly_binding (type_vars, (implicits, (in_, bindings))) =
+  { type_vars; implicits; in_; bindings }
+;;
+
 let let_ binding ~in_ = Let (binding, in_)
 let inst x type_ = Instance (x, type_)
 let over xs type_ = Over_instance (xs, type_)
+let let_implicit var ~in_ = Let_implicit (var, in_)
+let implicit type_ = Implicit type_
 
 let match_ matchee ~closure ~with_ ~else_ ~error =
   Match { matchee; closure = Closure.of_list closure; case = with_; else_; error }

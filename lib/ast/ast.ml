@@ -56,10 +56,12 @@ type expression = expression_desc With_range.t
 and expression_desc =
   | Exp_var of Var_name.With_range.t
   | Exp_over of Over_path.t
+  | Exp_implicit
   | Exp_const of constant
   | Exp_fun of function_param list * expression
   | Exp_app of expression * expression
   | Exp_let of value_binding * expression
+  | Exp_let_implicit of Var_name.With_range.t * expression
   | Exp_exists of Type_var_name.With_range.t list * expression
   | Exp_forall of Type_var_name.With_range.t list * expression
   | Exp_annot of expression * core_type
@@ -79,8 +81,15 @@ and value_binding = value_binding_desc With_range.t
 
 and value_binding_desc =
   { value_binding_pat : pattern
-  ; value_binding_exp : expression
+  ; value_binding_term : term
   }
+[@@deriving sexp_of]
+
+and term = term_desc With_range.t
+
+and term_desc =
+  | Term_exp of expression
+  | Term_implicit_fun of pattern list * expression
 [@@deriving sexp_of]
 
 and case = case_desc With_range.t
@@ -128,6 +137,7 @@ type structure_item = structure_item_desc With_range.t
 
 and structure_item_desc =
   | Str_value of value_binding
+  | Str_implicit of Var_name.With_range.t
   | Str_primitive of value_description
   | Str_type of type_declaration list
 [@@deriving sexp_of]
