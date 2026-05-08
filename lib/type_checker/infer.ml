@@ -427,27 +427,55 @@ let inst_label ~(env : Env.t) ~(label_name : Label_name.With_range.t) ~label_typ
 
 module Pattern = struct
   module Fragment = struct
+    module Var_binding = struct
+      type t =
+        { var : Type.Var.t option
+        ; overloads : Type.Var.t Over_name.Map.t
+        }
+      [@@deriving sexp_of]
+
+      let empty = { var = None; overloads = Over_name.Map.empty }
+      let set t var = { t with var = Some var }
+
+      let set_overload t over_name var =
+        { t with overloads = Map.set t.overloads ~key:over_name ~data:var }
+      ;;
+
+      let merge t1 t2 =
+        { var = Option.merge t1.var t2.var ~f:(fun _ x -> x)
+        ; overloads =
+            Map.merge_skewed t1.overloads t2.overloads ~combine:(fun ~key:_ _ x -> x)
+        }
+      ;;
+    end
+
     type t =
-      { var_bindings : Type.Var.t Var_name.Map.t
+      { var_bindings : Var_binding.t Var_name.Map.t
       ; exist_bindings : Type.Var.t list
       }
     [@@deriving sexp_of]
 
     let empty = { var_bindings = Var_name.Map.empty; exist_bindings = [] }
 
-    let singleton var type_ =
-      { var_bindings = Var_name.Map.singleton var type_; exist_bindings = [] }
+    let singleton var binding =
+      { var_bindings = Var_name.Map.singleton var binding; exist_bindings = [] }
     ;;
 
-    let extend t ~var ~type_ =
-      { t with var_bindings = Map.set t.var_bindings ~key:var ~data:type_ }
+    let extend t ~var ~f =
+      { t with
+        var_bindings =
+          Map.update t.var_bindings var ~f:(fun binding ->
+            let binding = Option.value binding ~default:Var_binding.empty in
+            f binding)
+      }
     ;;
 
     let exists t type_var = { t with exist_bindings = type_var :: t.exist_bindings }
 
     let merge t1 t2 =
       { var_bindings =
-          Map.merge_skewed t1.var_bindings t2.var_bindings ~combine:(fun ~key:_ _ b -> b)
+          Map.merge_skewed t1.var_bindings t2.var_bindings ~combine:(fun ~key:_ b1 b2 ->
+            Var_binding.merge b1 b2)
       ; exist_bindings = t1.exist_bindings @ t2.exist_bindings
       }
     ;;
@@ -472,10 +500,7 @@ module Pattern = struct
     include Monad.Make (T)
 
     let perform_exists type_var = fun fragment -> Fragment.exists fragment type_var, ()
-
-    let perform_extend ~var ~type_ =
-      fun fragment -> Fragment.extend fragment ~var ~type_, ()
-    ;;
+    let perform_extend ~var ~f = fun fragment -> Fragment.extend fragment ~var ~f, ()
 
     let exists ~id_source f =
       let open Let_syntax in
@@ -515,11 +540,23 @@ module Pattern = struct
     match pat.it with
     | Pat_any -> return tt
     | Pat_var x ->
-      let%map () = perform_extend ~var:x.it ~type_:pat_type in
+      let%map () =
+        perform_extend ~var:x.it ~f:(fun binding ->
+          Fragment.Var_binding.set binding pat_type)
+      in
+      tt
+    | Pat_over over_path ->
+      let%map () =
+        perform_extend ~var:over_path.it.var.it ~f:(fun binding ->
+          Fragment.Var_binding.set_overload binding over_path.it.qualifier.it pat_type)
+      in
       tt
     | Pat_alias (pat, x) ->
       let%bind cpat = infer_pat ~env ~with_poly_params pat pat_type in
-      let%map () = perform_extend ~var:x.it ~type_:pat_type in
+      let%map () =
+        perform_extend ~var:x.it ~f:(fun binding ->
+          Fragment.Var_binding.set binding pat_type)
+      in
       cpat
     | Pat_const const -> return @@ Type.(var pat_type =~ infer_constant const)
     | Pat_tuple pats ->
@@ -634,10 +671,22 @@ module Expression = struct
     let env, bindings =
       var_bindings
       |> Map.to_alist
-      |> List.fold_map ~init:env ~f:(fun env (var, type_) ->
-        Env.rename_var env ~var ~in_:(fun env cvar -> env, cvar @: Type.var type_))
+      |> List.fold_map ~init:env ~f:(fun env (var, binding) ->
+        let in_ env =
+          binding.overloads
+          |> Map.to_alist
+          |> List.fold_map ~init:env ~f:(fun env (over_name, type_) ->
+            Env.rename_over_path env ~over_path:(over_name, var) ~in_:(fun env cvar ->
+              env, cvar @: Type.var type_))
+        in
+        match binding.var with
+        | None -> in_ env
+        | Some type_ ->
+          Env.rename_var env ~var ~in_:(fun env cvar ->
+            let env, bindings = in_ env in
+            env, (cvar @: Type.var type_) :: bindings))
     in
-    env, bindings, exist_bindings, cpat
+    env, List.concat bindings, exist_bindings, cpat
   ;;
 
   let bind_mono_pat ~env ~with_poly_params (pat : pattern) pat_type ~in_ =
@@ -716,6 +765,12 @@ module Expression = struct
         bind_params ~env ~with_poly_params params_and_types ~in_)
   ;;
 
+  let find_var_binding ~env (var : Var_name.With_range.t) =
+    match Env.find_var env var.it with
+    | Some binding -> binding
+    | None -> Omniml_error.(raise @@ unbound_variable ~range:var.range var.it)
+  ;;
+
   let rec infer_exp
             ~(env : Env.t)
             ~with_poly_params
@@ -727,9 +782,27 @@ module Expression = struct
     @@
     match exp.it with
     | Exp_var var ->
-      (match Env.find_var env var.it with
-       | Some var -> inst var (Type.var exp_type)
-       | None -> Omniml_error.(raise @@ unbound_variable ~range:var.range var.it))
+      let binding = find_var_binding ~env var in
+      (match binding.var with
+       | Some var -> inst var Type.(var exp_type)
+       | None ->
+         (if Map.is_empty binding.overloads
+          then
+            Omniml_error.(
+              raise
+              @@ bug_s
+                   ~here:[%here]
+                   [%message
+                     "Overloads is empty"
+                       (var : Var_name.With_range.t)
+                       (binding : Env.Var_binding.t)]));
+         let vars = Map.data binding.overloads in
+         over vars Type.(var exp_type))
+    | Exp_over over_path ->
+      let binding = find_var_binding ~env over_path.it.var in
+      (match Map.find binding.overloads over_path.it.qualifier.it with
+       | Some var -> inst var Type.(var exp_type)
+       | None -> Omniml_error.(raise @@ unbound_over_path over_path))
     | Exp_const const -> Type.(var exp_type =~ infer_constant const)
     | Exp_fun (params, exp) ->
       exists_many' ~id_source (List.length params)

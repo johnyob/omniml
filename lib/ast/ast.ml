@@ -32,6 +32,7 @@ type pattern = pattern_desc With_range.t
 and pattern_desc =
   | Pat_any
   | Pat_var of Var_name.With_range.t
+  | Pat_over of Over_path.t
   | Pat_alias of pattern * Var_name.With_range.t
   | Pat_const of constant
   | Pat_tuple of pattern list
@@ -54,6 +55,7 @@ type expression = expression_desc With_range.t
 
 and expression_desc =
   | Exp_var of Var_name.With_range.t
+  | Exp_over of Over_path.t
   | Exp_const of constant
   | Exp_fun of function_param list * expression
   | Exp_app of expression * expression

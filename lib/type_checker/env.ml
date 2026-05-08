@@ -2,6 +2,21 @@ open! Import
 open Ast_types
 open Adt
 
+module Var_binding = struct
+  type t =
+    { var : Constraint.Var.t option
+    ; overloads : Constraint.Var.t Over_name.Map.t
+    }
+  [@@deriving sexp_of]
+
+  let empty = { var = None; overloads = Over_name.Map.empty }
+  let set t var = { t with var = Some var }
+
+  let set_overload t over_name cvar =
+    { t with overloads = Map.set t.overloads ~key:over_name ~data:cvar }
+  ;;
+end
+
 type t =
   { id_source : Identifier.source
     (** [id_source] is the identifier source for any constraint variables
@@ -16,7 +31,7 @@ type t =
   ; type_vars : Type.Var.t Type_var_name.Map.t
     (** [type_vars] is a renaming from (user-defined) type variables to
       constraint type variables (unique). *)
-  ; vars : Constraint.Var.t Var_name.Map.t
+  ; vars : Var_binding.t Var_name.Map.t
     (** [vars] is a renaming from (user-defined) variable names to
       constraint variables (unique). *)
   }
@@ -93,10 +108,33 @@ let rename_type_var t ~type_var ~in_ =
   in_ t ctype_var
 ;;
 
-let rename_var t ~var ~in_ =
-  let cvar =
-    Constraint.Var.create ~id_source:t.id_source ~name:(var : Var_name.t :> string) ()
+let rename_var_binding ~name ~set_binding t ~var ~in_ =
+  let cvar = Constraint.Var.create ~id_source:t.id_source ~name () in
+  let t =
+    { t with
+      vars =
+        Map.update t.vars var ~f:(fun binding ->
+          let binding = Option.value binding ~default:Var_binding.empty in
+          set_binding binding cvar)
+    }
   in
-  let t = { t with vars = Map.set t.vars ~key:var ~data:cvar } in
   in_ t cvar
+;;
+
+let rename_var t ~var ~in_ =
+  rename_var_binding
+    ~name:(var : Var_name.t :> string)
+    ~set_binding:Var_binding.set
+    t
+    ~var
+    ~in_
+;;
+
+let rename_over_path t ~over_path:(over_name, var) ~in_ =
+  rename_var_binding
+    ~name:(Fmt.str "%a?%a" Over_name.pp over_name Var_name.pp var)
+    ~set_binding:(fun binding cvar -> Var_binding.set_overload binding over_name cvar)
+    t
+    ~var
+    ~in_
 ;;

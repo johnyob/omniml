@@ -48,6 +48,8 @@ let include_list =
       | Nil
       | Cons of 'a * 'a list
     ;;
+
+    external map_list : 'a 'b. ('a -> 'b) -> 'a list -> 'b list;;
   |}
 ;;
 
@@ -1924,8 +1926,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:25:27
-     25 │        let xignore = poly1 [(fun x -> x + 1)];;
+        ┌─ expect_test.ml:27:27
+     27 │        let xignore = poly1 [(fun x -> x + 1)];;
         │                            ^^^^^^^^^^^^^^^^^^ `int -> int`
         │                                                 is not equal to
         │                                               `'a -> 'a`
@@ -1956,8 +1958,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E012]: generic type variable escapes its scope
-        ┌─ expect_test.ml:28:35
-     28 │        let escape = fun f -> poly1 [(fun x -> f x; x)];;
+        ┌─ expect_test.ml:30:35
+     30 │        let escape = fun f -> poly1 [(fun x -> f x; x)];;
         │                                    ^^^^^^^^^^^^^^^^^^^
     |}];
   do_test
@@ -1981,8 +1983,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:33:27
-     33 │        let xignore = poly2 [(fun x -> x + 1)];;
+        ┌─ expect_test.ml:35:27
+     35 │        let xignore = poly2 [(fun x -> x + 1)];;
         │                            ^^^^^^^^^^^^^^^^^^ `int -> int`
         │                                                 is not equal to
         │                                               `'a -> 'a`
@@ -2011,8 +2013,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:41:27
-     41 │        let xignore = poly3 [(fun x -> x + 1)] [8];;
+        ┌─ expect_test.ml:43:27
+     43 │        let xignore = poly3 [(fun x -> x + 1)] [8];;
         │                            ^^^^^^^^^^^^^^^^^^ `int -> int`
         │                                                 is not equal to
         │                                               `'a -> 'a`
@@ -2039,8 +2041,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:47:34
-     47 │        let xignore = poly4 [true] [(fun x -> x + 1)];;
+        ┌─ expect_test.ml:49:34
+     49 │        let xignore = poly4 [true] [(fun x -> x + 1)];;
         │                                   ^^^^^^^^^^^^^^^^^^ `int -> int`
         │                                                        is not equal to
         │                                                      `'a -> 'a`
@@ -2067,8 +2069,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:53:34
-     53 │        let xignore = poly5 [true] [(fun x -> x + 1)];;
+        ┌─ expect_test.ml:55:34
+     55 │        let xignore = poly5 [true] [(fun x -> x + 1)];;
         │                                   ^^^^^^^^^^^^^^^^^^ `int -> int`
         │                                                        is not equal to
         │                                                      `'a -> 'a`
@@ -2098,8 +2100,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:62:34
-     62 │        let xignore = poly6 [true] [(fun x -> x + 1)] [8];;
+        ┌─ expect_test.ml:64:34
+     64 │        let xignore = poly6 [true] [(fun x -> x + 1)] [8];;
         │                                   ^^^^^^^^^^^^^^^^^^ `int -> int`
         │                                                        is not equal to
         │                                                      `'a -> 'a`
@@ -2120,8 +2122,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:67:33
-     67 │        let xignore = needs_magic [(fun x -> x)];;
+        ┌─ expect_test.ml:69:33
+     69 │        let xignore = needs_magic [(fun x -> x)];;
         │                                  ^^^^^^^^^^^^^^ `'a -> 'a`
         │                                                   is not equal to
         │                                                 `'b -> 'c`
@@ -2247,8 +2249,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:24:28
-     24 │        let xignore = poly1 (fun x -> x + 1);;
+        ┌─ expect_test.ml:26:28
+     26 │        let xignore = poly1 (fun x -> x + 1);;
         │                             ^^^^^^^^^^^^^^ `'a -> int`
         │                                              is not equal to
         │                                            `'b @(ν'a. [∀. 'a]) -> 'b`
@@ -2284,8 +2286,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E012]: generic type variable escapes its scope
-        ┌─ expect_test.ml:26:36
-     26 │        let escape = fun f -> poly1 (fun x -> f x; x);;
+        ┌─ expect_test.ml:28:36
+     28 │        let escape = fun f -> poly1 (fun x -> f x; x);;
         │                                     ^^^^^^^^^^^^^^^
     |}];
   do_test
@@ -2308,8 +2310,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:30:28
-     30 │        let xignore = poly2 (fun x -> x + 1);;
+        ┌─ expect_test.ml:32:28
+     32 │        let xignore = poly2 (fun x -> x + 1);;
         │                             ^^^^^^^^^^^^^^ `'a -> int`
         │                                              is not equal to
         │                                            `'b @(ν'a. [∀. 'a]) -> 'b`
@@ -2336,8 +2338,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:36:28
-     36 │        let xignore = poly3 (fun x -> x + 1) 8;;
+        ┌─ expect_test.ml:38:28
+     38 │        let xignore = poly3 (fun x -> x + 1) 8;;
         │                             ^^^^^^^^^^^^^^ `'a -> int`
         │                                              is not equal to
         │                                            `'b @(ν'a. [∀. 'a]) -> 'b`
@@ -2362,8 +2364,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:40:33
-     40 │        let xignore = poly4 true (fun x -> x + 1);;
+        ┌─ expect_test.ml:42:33
+     42 │        let xignore = poly4 true (fun x -> x + 1);;
         │                                  ^^^^^^^^^^^^^^ `'a -> int`
         │                                                   is not equal to
         │                                                 `'b @(ν'a. [∀. 'a]) -> 'b`
@@ -2388,8 +2390,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:44:33
-     44 │        let xignore = poly5 true (fun x -> x + 1);;
+        ┌─ expect_test.ml:46:33
+     46 │        let xignore = poly5 true (fun x -> x + 1);;
         │                                  ^^^^^^^^^^^^^^ `'a -> int`
         │                                                   is not equal to
         │                                                 `'b @(ν'a. [∀. 'a]) -> 'b`
@@ -2416,8 +2418,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:50:33
-     50 │        let xignore = poly6 true (fun x -> x + 1) 8;;
+        ┌─ expect_test.ml:52:33
+     52 │        let xignore = poly6 true (fun x -> x + 1) 8;;
         │                                  ^^^^^^^^^^^^^^ `'a -> int`
         │                                                   is not equal to
         │                                                 `'b @(ν'a. [∀. 'a]) -> 'b`
@@ -2458,42 +2460,44 @@ let%expect_test "" =
      17 │ │        | Cons of 'a * 'a list
      18 │ │      ;;
      19 │ │
-     20 │ │        let poly1 = fun (forall id : 'a. 'a -> 'a) ->
-     21 │ │          (id 1, id true)
-     22 │ │        ;;
-     23 │ │
-     24 │ │        let id = fun x -> x;;
+     20 │ │      external map_list : 'a 'b. ('a -> 'b) -> 'a list -> 'b list;;
+     21 │ │
+     22 │ │        let poly1 = fun (forall id : 'a. 'a -> 'a) ->
+     23 │ │          (id 1, id true)
+     24 │ │        ;;
      25 │ │
-     26 │ │        let poly2 = fun (forall id : 'a. 'a -> 'a) ->
-     27 │ │          ((id 1, id true) : int * bool)
-     28 │ │        ;;
-     29 │ │
-     30 │ │        let poly3 =
-     31 │ │          forall (type 'b) ->
-     32 │ │            fun (forall id : 'a. 'a -> 'a) (x : 'b) ->
-     33 │ │              ((id x, id (Some x)) : 'b * 'b option)
-     34 │ │        ;;
-     35 │ │
-     36 │ │        let poly4 = fix (fun poly4 p (forall id : 'a. 'a -> 'a) ->
-     37 │ │          if p then poly4 false id else (id 4, id true))
-     38 │ │        ;;
-     39 │ │
-     40 │ │        let poly5 = fix (fun poly5 (p : bool) (forall id : 'a. 'a -> 'a) ->
-     41 │ │          ((if p then poly5 false id else (id 5, id true)) : int * bool))
-     42 │ │        ;;
-     43 │ │
-     44 │ │        let poly6 = forall (type 'b) ->
-     45 │ │          fix (fun poly6 ->
-     46 │ │            fun (p : bool) (forall id : 'a. 'a -> 'a) (x : 'b) ->
-     47 │ │              ((if p then poly6 false id x else (id x, id (Some x))) : 'b * 'b option))
-     48 │ │        ;;
-     49 │ │
-     50 │ │        let needs_magic = fun (forall magic : 'a 'b. 'a -> 'b) ->
-     51 │ │          (magic 5 : bool)
-     52 │ │        ;;
-     53 │ │
-     54 │ │        let xignore = needs_magic (fun x -> x);;
+     26 │ │        let id = fun x -> x;;
+     27 │ │
+     28 │ │        let poly2 = fun (forall id : 'a. 'a -> 'a) ->
+     29 │ │          ((id 1, id true) : int * bool)
+     30 │ │        ;;
+     31 │ │
+     32 │ │        let poly3 =
+     33 │ │          forall (type 'b) ->
+     34 │ │            fun (forall id : 'a. 'a -> 'a) (x : 'b) ->
+     35 │ │              ((id x, id (Some x)) : 'b * 'b option)
+     36 │ │        ;;
+     37 │ │
+     38 │ │        let poly4 = fix (fun poly4 p (forall id : 'a. 'a -> 'a) ->
+     39 │ │          if p then poly4 false id else (id 4, id true))
+     40 │ │        ;;
+     41 │ │
+     42 │ │        let poly5 = fix (fun poly5 (p : bool) (forall id : 'a. 'a -> 'a) ->
+     43 │ │          ((if p then poly5 false id else (id 5, id true)) : int * bool))
+     44 │ │        ;;
+     45 │ │
+     46 │ │        let poly6 = forall (type 'b) ->
+     47 │ │          fix (fun poly6 ->
+     48 │ │            fun (p : bool) (forall id : 'a. 'a -> 'a) (x : 'b) ->
+     49 │ │              ((if p then poly6 false id x else (id x, id (Some x))) : 'b * 'b option))
+     50 │ │        ;;
+     51 │ │
+     52 │ │        let needs_magic = fun (forall magic : 'a 'b. 'a -> 'b) ->
+     53 │ │          (magic 5 : bool)
+     54 │ │        ;;
      55 │ │
+     56 │ │        let xignore = needs_magic (fun x -> x);;
+     57 │ │
         │ ╰─────^ `'a`
                  is not equal to
                `'b`
@@ -3213,6 +3217,438 @@ let%expect_test "" =
         ┌─ expect_test.ml:2:26
       2 │        let _ = fun f -> f f;;
         │                           ^
+        = hint: add a type annotation
+    |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let x = 1;;
+      let y = true;;
+      let z = ();; 
+
+
+      let f = 
+        let q?a = x in
+        let r?a = y in
+        let s?a = z in
+        (a : int)
+      ;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let include_array =
+  {|
+    type 'a array;; 
+
+    external map_array : 'a 'b. ('a -> 'b) -> 'a array -> 'b array;;
+  |}
+;;
+
+let include_float =
+  {|
+    type float;; 
+
+    external add_float : float -> float -> float;;
+    external sub_float : float -> float -> float;;
+    external div_float : float -> float -> float;;
+    external mul_float : float -> float -> float;;
+
+    external compare_float : float -> float -> int;;
+
+    external float_of_int : int -> float;;
+
+    let zero_float = float_of_int 0;;
+    let neg_float = fun n -> sub_float zero_float n;;
+  |}
+;;
+
+let include_string =
+  {|
+    type string;;
+
+    external empty_string : string;;
+    external concat_string : string -> string -> string;;
+    external length_string : string -> int;;
+  |}
+;;
+
+let%expect_test "" =
+  let test =
+    Incremental_test.create
+      ~initial:
+        (include_float
+         ^ include_array
+         ^ include_list
+         ^ include_string
+         ^ {|
+             let int?add = fun x y -> x + y;; 
+             let float?add = add_float;;
+
+             let int?mul = fun x y -> x * y;;
+             let float?mul = mul_float;;
+
+             let int?compare = fun x y -> 
+               if x < y then -1
+               else if x > y then 1
+               else 0
+             ;; 
+             let float?compare = compare_float;;
+
+             let int?zero = 0;; 
+             let float?zero = zero_float;;
+
+             let int?one = 1;; 
+             let float?one = float_of_int 1;;
+
+             let int?two = 2;;
+             let float?two = float_of_int 2;;  
+
+             let int?three = 3;;
+             let float?three = float_of_int 3;;
+
+             let int?four = 4;;
+             let float?four = float_of_int 4;;
+
+             let int?fourty_two = 42;;
+             let float?fourty_two = float_of_int 42;;
+           |}
+        )
+      type_check_and_print
+  in
+  let do_test = Incremental_test.run test in
+  do_test
+    {|
+      let ex1 = fun (x : int) (y : int) -> add x y;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let ex1_bad = fun (x : int) (y : float) -> add x y;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:64:56
+     64 │        let ex1_bad = fun (x : int) (y : float) -> add x y;;
+        │                                                         ^ `float`
+        │                                                             is not equal to
+        │                                                           `int`
+    |}];
+  do_test
+    {|
+      let ex2 = fun (x : float) (y : float) -> add x y;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let ex3 = (zero : int);; 
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let ex4 = fun (x : int) -> add x zero;; 
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let ex5 = fun (x : float) -> add x zero;; 
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let ex6 = (add (add three four) (add one (add zero two)) : float);; 
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let ambig = add;;
+    |};
+  [%expect
+    {|
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:64:19
+     64 │        let ambig = add;;
+        │                    ^^^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:64:19
+     64 │        let ambig = add;;
+        │                    ^^^
+        = hint: add a type annotation
+    |}];
+  do_test
+    {|
+      let ex7 = 
+        (add (add three four) (add one (add zero two)) : int)
+      ;; 
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let ex8 = fun (x : float) ->
+        if (compare x zero < 0) then 
+          add zero one 
+        else 
+          mul two x 
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let exlet1 = fun (f : int -> int) (g : int -> int) (x : int) -> 
+        (add (f (add x fourty_two)) (g (add (mul two x) fourty_two)) : int)
+      ;; 
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let exlet1' = fun (f : float -> float) (g : float -> float) x -> 
+        add (f (add x fourty_two)) (g (add (mul two x) fourty_two))
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let exlet1'' = fun (f : float -> float) g x -> 
+        add (f (add x fourty_two)) (g (add (mul two x) fourty_two))
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let exlet2 = fun (f : int -> int) (g : int -> int) (x : int) -> 
+        let op = fun n -> add n fourty_two in 
+        (add (f (op x)) (g (op (mul two x))) : int)
+      ;; 
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let exlet2' = fun (f : float -> float) (g : float -> float) x -> 
+        let op = fun (n : float) -> add n fourty_two in 
+        add (f (op x)) (g (op (mul two x)))
+      ;; 
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let list?map = map_list;;
+      let array?map = map_array;;
+
+      external d : float array;; 
+
+      let ex12 = 
+        map (fun x -> add (mul two x) one) d
+      ;; 
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let example_success =
+        let x = (zero : float) in 
+        let y = add one x in 
+        let z = (two : float) in 
+        let t = (add (add three y) (add four z) : float) in 
+        add (add four z) one 
+      ;; 
+    |};
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    include_string
+    ^ {|
+      let add = fun x y -> x + y;; 
+      let concat = (concat_string : string -> string -> string);; 
+
+      let g0 = fun x -> 
+        let int?f = add in 
+        let string?f = concat in
+        f 1 x 
+      ;;
+
+      let g1 = fun (x : int) -> 
+        let int?f = add in 
+        let string?f = concat in
+        let fx = f x in 
+        let int?a = 1 in 
+        let string?a = empty_string in 
+        let z = (f : int -> int -> int) a in 
+        (fx, z)
+      ;; 
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    include_float
+    ^ {|
+      let int?zero = 0;; 
+      let float?zero = zero_float;; 
+      
+      type not_int_or_float;;
+      let foo = 
+        (zero : not_int_or_float)
+      ;; 
+    |}
+  in
+  type_check_and_print str;
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:21:10
+     21 │          (zero : not_int_or_float)
+        │           ^^^^ `float`
+        │                  is not equal to
+        │                `not_int_or_float`
+    |}]
+;;
+
+let%expect_test "" =
+  let str =
+    include_float
+    ^ include_string
+    ^ {|
+      let int?x = 1;;
+      let string?x = empty_string;;
+
+      let float?y = float_of_int 1;;
+      let int?y = 1;;
+
+      let int?add = fun x y -> x + y;;
+      let float?add = add_float;;
+
+      let z = add x y;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect
+    {|
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:31:15
+     31 │        let z = add x y;;
+        │                ^^^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:31:15
+     31 │        let z = add x y;;
+        │                ^^^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:31:21
+     31 │        let z = add x y;;
+        │                      ^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:31:21
+     31 │        let z = add x y;;
+        │                      ^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:31:15
+     31 │        let z = add x y;;
+        │                ^^^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:31:15
+     31 │        let z = add x y;;
+        │                ^^^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:31:19
+     31 │        let z = add x y;;
+        │                    ^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:31:19
+     31 │        let z = add x y;;
+        │                    ^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:31:15
+     31 │        let z = add x y;;
+        │                ^^^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:31:15
+     31 │        let z = add x y;;
+        │                ^^^
+        = hint: add a type annotation
+    |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      type t;; 
+      type s;;
+      type r;;
+
+      external foo : t -> s -> r;;
+      external bar : r -> r -> r;;
+    
+      let foo?foo_bar = foo;;
+      let bar?foo_bar = bar;;
+
+      let z = fun x -> foo_bar x x;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect
+    {|
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:12:24
+     12 │        let z = fun x -> foo_bar x x;;
+        │                         ^^^^^^^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:12:24
+     12 │        let z = fun x -> foo_bar x x;;
+        │                         ^^^^^^^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:12:24
+     12 │        let z = fun x -> foo_bar x x;;
+        │                         ^^^^^^^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:12:24
+     12 │        let z = fun x -> foo_bar x x;;
+        │                         ^^^^^^^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:12:24
+     12 │        let z = fun x -> foo_bar x x;;
+        │                         ^^^^^^^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:12:24
+     12 │        let z = fun x -> foo_bar x x;;
+        │                         ^^^^^^^
         = hint: add a type annotation
     |}]
 ;;

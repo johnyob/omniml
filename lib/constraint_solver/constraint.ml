@@ -43,6 +43,7 @@ type t =
   | Forall of Type.Var.t list * t
   | Let of let_binding * t
   | Instance of Var.t * Type.t
+  | Over_instance of Var.t list * Type.t
   | Match of
       { matchee : Type.Var.t
       ; closure : Closure.t
@@ -90,6 +91,7 @@ let ( @. ) t1 t2 = t1, t2
 let poly_binding (type_vars, (in_, bindings)) = { type_vars; in_; bindings }
 let let_ binding ~in_ = Let (binding, in_)
 let inst x type_ = Instance (x, type_)
+let over xs type_ = Over_instance (xs, type_)
 
 let match_ matchee ~closure ~with_ ~else_ ~error =
   Match { matchee; closure = Closure.of_list closure; case = with_; else_; error }

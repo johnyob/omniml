@@ -984,7 +984,7 @@ module Suspended_match = struct
   type t =
     { matchee : Type.t
     ; closure : closure
-    ; case : curr_region:Region.t -> shape:Principal_shape.t -> args:Type.t list -> unit
+    ; case : shape:Principal_shape.t -> args:Type.t list -> unit
     ; else_ : unit -> Principal_shape.t
     ; error : Constraint.Match_error.t -> Omniml_error.t
     }
@@ -1055,54 +1055,59 @@ module Suspended_match = struct
     in
     let add_handler ~shape_args svar =
       [%log.global.debug "Adding handler" (svar : Principal_shape.Var.t)];
-      Principal_shape.Var.add_handler
-        svar
-        { run =
-            (fun shape ->
-              let args = get_or_alloc_matchee_args () in
-              (* Remove guard from closure *)
-              closure_remove_guard ~state ~shape_args closure;
-              (* Solve case *)
-              case ~curr_region ~shape ~args;
-              [%log.global.debug
-                "Generalization tree after solving case"
-                  (state.region_tree : Type.t Pool.t Tree.With_dirty.t)])
-        ; default =
-            (fun () ->
-              [%log.global.debug
-                "Default handler triggered" (svar : Principal_shape.Var.t)];
-              let default_shape = else_ () in
-              [%log.global.debug "Default shape" (default_shape : Principal_shape.t)];
-              (try
-                 Principal_shape.Var.fill_exn
-                   ~state:state.shape_var_state
-                   svar
-                   default_shape
-               with
-               | Principal_shape.Var.Not_empty ->
-                 let actual = Principal_shape.Var.peek_exn svar in
-                 let report =
-                   error (Inconsistent_default { actual; expected = default_shape })
-                 in
-                 raise (Inconsistent_defaults report));
-              [%log.global.debug
-                "Generalization tree running default handler"
-                  (state.region_tree : Type.t Pool.t Tree.With_dirty.t)])
-        ; error = (fun () -> error Cannot_default)
-        };
+      let handler =
+        Principal_shape.Var.add_handler
+          svar
+          { run =
+              (fun shape ->
+                let args = get_or_alloc_matchee_args () in
+                (* Remove guard from closure *)
+                closure_remove_guard ~state ~shape_args closure;
+                (* Solve case *)
+                case ~shape ~args;
+                [%log.global.debug
+                  "Generalization tree after solving case"
+                    (state.region_tree : Type.t Pool.t Tree.With_dirty.t)])
+          ; default =
+              (fun () ->
+                [%log.global.debug
+                  "Default handler triggered" (svar : Principal_shape.Var.t)];
+                let default_shape = else_ () in
+                [%log.global.debug "Default shape" (default_shape : Principal_shape.t)];
+                (try
+                   Principal_shape.Var.fill_exn
+                     ~state:state.shape_var_state
+                     svar
+                     default_shape
+                 with
+                 | Principal_shape.Var.Not_empty ->
+                   let actual = Principal_shape.Var.peek_exn svar in
+                   let report =
+                     error (Inconsistent_default { actual; expected = default_shape })
+                   in
+                   raise (Inconsistent_defaults report));
+                [%log.global.debug
+                  "Generalization tree running default handler"
+                    (state.region_tree : Type.t Pool.t Tree.With_dirty.t)])
+          ; cancel = (fun () -> closure_remove_guard ~state ~shape_args closure)
+          ; error = (fun () -> error Cannot_default)
+          }
+      in
       (* Add guard to closure *)
-      closure_add_guard ~state ~shape_args closure
+      closure_add_guard ~state ~shape_args closure;
+      handler
     in
     match Type.inner matchee with
     | Var ->
       let shape_var = create_shape_var ~state ~curr_region () in
       let shape_args = create_var ~state ~curr_region () in
-      add_handler ~shape_args shape_var;
+      let handler = add_handler ~shape_args shape_var in
       unify
         ~state
         ~curr_region
         matchee
-        (create_shape_app ~state ~curr_region shape_args shape_var)
+        (create_shape_app ~state ~curr_region shape_args shape_var);
+      handler
     | Structure (Structure (Shape_app { args = shape_args; shape_var })) ->
       add_handler ~shape_args shape_var
     | Structure (Structure (Shape_args _)) ->
@@ -1114,6 +1119,7 @@ module Suspended_match = struct
     | Structure Rigid_var -> raise (Cannot_match_on_rigid (error Matchee_is_rigid))
     | Structure (Structure (Structure { args; shape })) ->
       (* Optimisation: Immediately solve the case *)
-      case ~curr_region ~shape ~args
+      case ~shape ~args;
+      None
   ;;
 end

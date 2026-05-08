@@ -21,6 +21,7 @@
 
 // operators
 %token RIGHT_ARROW "->"
+%token QUESTION_MARK "?"
 %token COLON ":"
 %token EQUAL "="
 %token DOT "."

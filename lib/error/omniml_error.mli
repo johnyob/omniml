@@ -35,6 +35,7 @@ val unterminated_comment : range:Range.t -> t
 val unknown_start_of_token : range:Range.t -> char -> t
 val syntax_error : range:Range.t -> t
 val unbound_variable : range:Range.t -> Var_name.t -> t
+val unbound_over_path : Over_path.t -> t
 val unbound_type : range:Range.t -> Type_name.t -> t
 val unbound_type_variable : range:Range.t -> Type_var_name.t -> t
 val unbound_constructor : range:Range.t -> Constructor_name.t -> t
@@ -62,6 +63,7 @@ val constructor_arity_mismatch
 val mismatched_type : range:Range.t -> pp_type:'a Fmt.t -> 'a -> 'a -> t
 
 val ambiguous_constructor : range:Range.t -> t
+val ambiguous_overloading : range:Range.t -> t
 
 val disambiguation_mismatched_type
   :  range:Range.t

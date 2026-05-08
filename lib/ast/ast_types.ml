@@ -44,8 +44,25 @@ module Ident = struct
   end
 end
 
+module Over_name = Ident.Make ()
 module Var_name = Ident.Make ()
 module Type_var_name = Ident.Make ()
 module Type_name = Ident.Make ()
 module Constructor_name = Ident.Make ()
 module Label_name = Ident.Make ()
+
+module Over_path = struct
+  type t = desc With_range.t
+
+  and desc =
+    { var : Var_name.With_range.t
+    ; qualifier : Over_name.With_range.t
+    }
+  [@@deriving sexp_of]
+
+  let pp ppf (t : t) =
+    Fmt.pf ppf "%a/%a" Over_name.pp t.it.qualifier.it Var_name.pp t.it.var.it
+  ;;
+
+  let to_string = Fmt.to_to_string pp
+end

@@ -46,11 +46,27 @@ val find_label : t -> Label_name.t -> label_definition list
     empty list is returned. *)
 val find_type_def : t -> Type_name.t -> type_definition list
 
+module Var_binding : sig
+  type t =
+    { var : Constraint.Var.t option
+    ; overloads : Constraint.Var.t Over_name.Map.t
+    }
+  [@@deriving sexp_of]
+end
+
 (** [find_var t var_name] returns the constraint variable that [var_name] is renamed to. *)
-val find_var : t -> Var_name.t -> Constraint.Var.t option
+val find_var : t -> Var_name.t -> Var_binding.t option
 
 (** [rename_var t ~var ~in_] renames the variable [var] to some fresh [cvar] in [in_]. *)
 val rename_var : t -> var:Var_name.t -> in_:(t -> Constraint.Var.t -> 'a) -> 'a
+
+(** [rename_over_path t ~over_path ~in_] renames the qualified variable [over_path] to some 
+    fresh [cvar] in [in_]. *)
+val rename_over_path
+  :  t
+  -> over_path:Over_name.t * Var_name.t
+  -> in_:(t -> Constraint.Var.t -> 'a)
+  -> 'a
 
 (** [find_type_var t type_var_name] returns the type variable that [type_var_name]
     is renamed to. *)
