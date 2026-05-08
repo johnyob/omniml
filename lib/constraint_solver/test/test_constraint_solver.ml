@@ -289,7 +289,7 @@ let%expect_test "No suspended matches results in normal generalization" =
      (cst
       (Exists ((id 0) (name Type.Var))
        (Let
-        ((type_vars ((Flexible ((id 1) (name Type.Var)))))
+        ((type_vars ((Flexible ((id 1) (name Type.Var))))) (implicits ())
          (in_
           (Exists ((id 2) (name Type.Var))
            (Exists ((id 3) (name Type.Var))
@@ -298,7 +298,7 @@ let%expect_test "No suspended matches results in normal generalization" =
               (Arrow (Var ((id 2) (name Type.Var)))
                (Var ((id 3) (name Type.Var)))))
              (Let
-              ((type_vars ()) (in_ True)
+              ((type_vars ()) (implicits ()) (in_ True)
                (bindings
                 (((binding_var ((id 7) (name Constraint.Var)))
                   (binding_type (Var ((id 2) (name Type.Var))))))))
@@ -351,7 +351,7 @@ let%expect_test "Partial generic becomes instance" =
       (Exists ((id 0) (name Type.Var))
        (Exists ((id 1) (name Type.Var))
         (Let
-         ((type_vars ((Flexible ((id 2) (name Type.Var)))))
+         ((type_vars ((Flexible ((id 2) (name Type.Var))))) (implicits ())
           (in_
            (Match (matchee ((id 0) (name Type.Var)))
             (closure
@@ -400,7 +400,7 @@ let%expect_test "Partial generic becomes generic" =
      (cst
       (Exists ((id 0) (name Type.Var))
        (Let
-        ((type_vars ((Flexible ((id 1) (name Type.Var)))))
+        ((type_vars ((Flexible ((id 1) (name Type.Var))))) (implicits ())
          (in_
           (Match (matchee ((id 0) (name Type.Var)))
            (closure ((type_vars (((id 1) (name Type.Var)))) (vars ())))
@@ -471,7 +471,7 @@ let%expect_test "Propagating changes during partial generalization" =
       (Exists ((id 0) (name Type.Var))
        (Exists ((id 1) (name Type.Var))
         (Let
-         ((type_vars ((Flexible ((id 2) (name Type.Var)))))
+         ((type_vars ((Flexible ((id 2) (name Type.Var))))) (implicits ())
           (in_
            (Conj
             (Match (matchee ((id 0) (name Type.Var)))
@@ -575,7 +575,7 @@ let%expect_test "Partial ungeneralization (Partial<>Instance)" =
       (Exists ((id 0) (name Type.Var))
        (Exists ((id 1) (name Type.Var))
         (Let
-         ((type_vars ((Flexible ((id 2) (name Type.Var)))))
+         ((type_vars ((Flexible ((id 2) (name Type.Var))))) (implicits ())
           (in_
            (Match (matchee ((id 0) (name Type.Var)))
             (closure
@@ -638,10 +638,10 @@ let%expect_test "Partial ungeneralization (Partial<>Partial)" =
       (Exists ((id 0) (name Type.Var))
        (Exists ((id 1) (name Type.Var))
         (Let
-         ((type_vars ((Flexible ((id 2) (name Type.Var)))))
+         ((type_vars ((Flexible ((id 2) (name Type.Var))))) (implicits ())
           (in_
            (Let
-            ((type_vars ((Flexible ((id 3) (name Type.Var)))))
+            ((type_vars ((Flexible ((id 3) (name Type.Var))))) (implicits ())
              (in_
               (Match (matchee ((id 0) (name Type.Var)))
                (closure
@@ -707,6 +707,7 @@ let%expect_test "Partials propagate to same instance group" =
         ((type_vars
           ((Flexible ((id 1) (name Type.Var)))
            (Flexible ((id 2) (name Type.Var)))))
+         (implicits ())
          (in_
           (Match (matchee ((id 0) (name Type.Var)))
            (closure
@@ -777,6 +778,7 @@ let%expect_test "Detect SCC cycle accross regions" =
         ((type_vars
           ((Flexible ((id 1) (name Type.Var)))
            (Flexible ((id 2) (name Type.Var)))))
+         (implicits ())
          (in_
           (Conj
            (Conj
@@ -867,7 +869,7 @@ let%expect_test "" =
         (Exists ((id 5) (name Type.Var))
          (Exists ((id 6) (name Type.Var))
           (Let
-           ((type_vars ((Flexible ((id 1) (name Type.Var)))))
+           ((type_vars ((Flexible ((id 1) (name Type.Var))))) (implicits ())
             (in_
              (Conj
               (Match (matchee ((id 0) (name Type.Var)))
@@ -921,7 +923,8 @@ let%expect_test "" =
      (cst
       (Exists ((id 0) (name Type.Var))
        (Let
-        ((type_vars ((Flexible ((id 1) (name Type.Var))))) (in_ True)
+        ((type_vars ((Flexible ((id 1) (name Type.Var))))) (implicits ())
+         (in_ True)
          (bindings
           (((binding_var ((id 2) (name Constraint.Var)))
             (binding_type
@@ -970,10 +973,10 @@ let%expect_test "" =
      (cst
       (Exists ((id 0) (name Type.Var))
        (Let
-        ((type_vars ((Flexible ((id 1) (name Type.Var)))))
+        ((type_vars ((Flexible ((id 1) (name Type.Var))))) (implicits ())
          (in_
           (Let
-           ((type_vars ()) (in_ True)
+           ((type_vars ()) (implicits ()) (in_ True)
             (bindings
              (((binding_var ((id 3) (name Constraint.Var)))
                (binding_type (Var ((id 1) (name Type.Var))))))))
@@ -1019,10 +1022,10 @@ let%expect_test "" =
      (cst
       (Exists ((id 0) (name Type.Var))
        (Let
-        ((type_vars ((Flexible ((id 1) (name Type.Var)))))
+        ((type_vars ((Flexible ((id 1) (name Type.Var))))) (implicits ())
          (in_
           (Let
-           ((type_vars ()) (in_ True)
+           ((type_vars ()) (implicits ()) (in_ True)
             (bindings
              (((binding_var ((id 3) (name Constraint.Var)))
                (binding_type (Var ((id 1) (name Type.Var))))))))

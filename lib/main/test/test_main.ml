@@ -1031,7 +1031,7 @@ let%expect_test "" =
     Generated constraint:
     (With_range
      (Let
-      ((type_vars ((Flexible ((id 0) (name Type.Var)))))
+      ((type_vars ((Flexible ((id 0) (name Type.Var))))) (implicits ())
        (in_
         (Conj
          (With_range
@@ -1048,7 +1048,7 @@ let%expect_test "" =
                  (Reader
                   ((id 0) (name (expect_test.ml)) (length 34) (unsafe_get <fun>))))))
               (Let
-               ((type_vars ()) (in_ True)
+               ((type_vars ()) (implicits ()) (in_ True)
                 (bindings
                  (((binding_var ((id 3) (name x)))
                    (binding_type (Var ((id 1) (name Type.Var))))))))
