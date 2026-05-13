@@ -3549,6 +3549,8 @@ let%expect_test "" =
 ;;
 
 let%expect_test "" =
+  (* This demonstrates that we cannot use multiple 
+     match constraints together to solve the overloading. *)
   let str =
     {|
       type t;; 
@@ -3572,5 +3574,264 @@ let%expect_test "" =
      12 │        let z = fun x -> foo_bar x x;;
         │                         ^^^^^^^
         = hint: add a type annotation
+    |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let f = fun? x -> x + 1;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let value = 42;;
+      let implicit value;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let f = fun? x -> x;;
+      let value = 10;;
+      let implicit value;;
+      let result = f;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    include_string
+    ^ {|
+      external show_int : int -> string;;
+      let implicit show_int;;
+      let show = fun? showx -> fun x -> (showx x : string);;
+      let _ = show 42;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  let str =
+    include_option
+    ^ include_list
+    ^ {|
+      let some = fun x -> Some x;;
+      let implicit some;;
+
+      let singleton = fun x -> Cons (x, Nil);;
+      let implicit singleton;;
+
+      let wrap = fun? wrapper -> fun x -> wrapper x;;
+      let result = exists (type 'a) -> (wrap 42 : 'a option);;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let include_show =
+  {|
+    type 'a show = { show : 'a -> string };;
+    let show = fun ?showx -> fun x -> showx.show x;;
+  |}
+;;
+
+let include_show_int =
+  {|
+    external show_int : int -> string;;
+    let show_int = { show = show_int };;
+    let implicit show_int;;
+  |}
+;;
+
+let include_show_float =
+  {|
+    external show_float : float -> string;;
+    let show_float = { show = show_float };;
+    let implicit show_float;;
+  |}
+;;
+
+let%expect_test "" =
+  let str =
+    include_fix
+    ^ include_list
+    ^ include_float
+    ^ include_string
+    ^ include_show
+    ^ include_show_int
+    ^ include_show_float
+    ^ {|
+      external nil_string : string;;
+      external cons_string : string -> string -> string;;
+
+      let show_list = fun? showx ->
+        fix (fun show_list xs ->
+          match xs with (
+          | Nil -> nil_string
+          | Cons (x, xs) -> cons_string (showx.show x) (show_list xs)))
+      ;;
+      let show_list = { show = show_list };;
+      let implicit show_list;;
+
+      let _ = show (Cons (1, Cons (2, Nil)));;
+    |}
+  in
+  type_check_and_print str;
+  [%expect {| Well typed :) |}]
+;;
+
+let include_monoid =
+  {|
+    type 'a monoid = 
+      { unit : 'a
+      ; plus : 'a -> 'a -> 'a
+      }
+    ;;
+  |}
+;;
+
+let include_monoid_int =
+  {|
+    let monoid_int = 
+      { unit = 0
+      ; plus = fun x y -> x + y
+      }
+    ;;
+    let implicit monoid_int;;
+  |}
+;;
+
+let include_monoid_float =
+  {|
+    let monoid_float = 
+      { unit = zero_float
+      ; plus = add_float
+      }
+    ;;
+    let implicit monoid_float;;
+  |}
+;;
+
+let include_monoid_string =
+  {|
+    let monoid_string = 
+      { unit = empty_string
+      ; plus = concat_string
+      }
+    ;;
+    let implicit monoid_string;;
+  |}
+;;
+
+let%expect_test "" =
+  let test =
+    Incremental_test.create
+      ~initial:
+        (include_fix
+         ^ include_list
+         ^ include_float
+         ^ include_string
+         ^ include_monoid
+         ^ include_monoid_int
+         ^ include_monoid_float
+         ^ include_monoid_string)
+      type_check_and_print
+  in
+  let do_test = Incremental_test.run test in
+  do_test
+    ~add:true
+    {|
+      let sum = fun? m -> fix (fun sum xs -> 
+        match xs with
+        ( Nil -> m.unit
+        | Cons (x, xs) -> m.plus x (sum xs)))
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let _ = sum (Cons (1, Cons (2, Cons (3, Nil))));;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let _ = sum (Cons (float_of_int 1, Cons (float_of_int 42, Nil)));;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let _ = sum (Cons (empty_string, Nil));;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let _ = sum Nil;;
+    |};
+  [%expect
+    {|
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:62:15
+     62 │        let _ = sum Nil;;
+        │                ^^^
+        = hint: add a type annotation
+    |}];
+  do_test
+    {|
+      let monoid_pair = fun? mfst msnd -> 
+        { unit = (mfst.unit, msnd.unit)
+        ; plus = (fun (x11, x12) (x21, x22) -> (mfst.plus x11 x21, msnd.plus x21 x22))
+        }
+      ;;
+
+      let implicit monoid_pair;;
+      let _ = sum (Cons ((1, 42), Cons ((2, 1337), Cons ((3, 88), Nil))));;
+    |};
+  [%expect {| Well typed :) |}]
+;;
+
+let%expect_test "" =
+  (* The error message is poor here, but this fails because 'a is 
+     rigid and the expected argument type of `trans` is some shape 
+     variable with a match on. Unification fails. *)
+  let str =
+    {|
+      type 'a trans = { trans : 'a -> 'a };;
+
+      let trans_a = { trans = fun x -> x };;
+      let implicit trans_a;;
+
+      let trans_int = { trans = fun x -> x + 1 };; 
+      let implicit trans_int;;
+
+      let trans = fun ?transx -> fun x -> transx.trans x;;
+
+      let bad = forall (type 'a) -> fun (x : 'a) -> trans x;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:12:59
+     12 │        let bad = forall (type 'a) -> fun (x : 'a) -> trans x;;
+        │                                                            ^ `'a`
+        │                                                                is not equal to
+        │                                                              `'b`
     |}]
 ;;
