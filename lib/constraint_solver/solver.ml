@@ -200,7 +200,10 @@ module Overload = struct
     val try_resolve : t -> f:(G.Scheme.t -> 'a) -> 'a
     val iter : t -> f:(key:Constraint.Var.t -> data:G.Scheme.t -> unit) -> unit
   end = struct
-    type t = { mutable remaining_overs : over Constraint.Var.Map.t }
+    type t =
+      { mutable remaining_overs : over Constraint.Var.Map.t
+      ; mutable has_raised_error : bool
+      }
 
     and over =
       { mutable over_handlers :
@@ -219,12 +222,21 @@ module Overload = struct
         ~f:Principal_shape.Var.Registered_handler.cancel_if_pending
     ;;
 
+    let error t ~range =
+      if t.has_raised_error
+      then None
+      else (
+        t.has_raised_error <- true;
+        Some Omniml_error.(ambiguous_overloading ~range))
+    ;;
+
     let create initial_overs =
       { remaining_overs =
           initial_overs
           |> List.map ~f:(fun (over_var, over_scheme) ->
             over_var, { over_scheme; over_handlers = [] })
           |> Constraint.Var.Map.of_alist_exn
+      ; has_raised_error = false
       }
     ;;
 
@@ -276,7 +288,11 @@ module Overload = struct
           ; closure = { variables = closure; schemes = [ over.over_scheme ] }
           ; case = with_
           ; else_ = (fun () -> Omniml_error.(raise @@ ambiguous_overloading ~range))
-          ; error = (fun _ -> Omniml_error.ambiguous_overloading ~range)
+          ; error =
+              (function
+                | Cannot_default -> error in_ ~range
+                | Inconsistent_default _ -> assert false
+                | Matchee_is_rigid -> Some Omniml_error.(ambiguous_overloading ~range))
           }
         |> Option.iter ~f:(add_handler_over over)
     ;;
@@ -473,6 +489,7 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
       [%log.global.debug "Entered match default handler"];
       else_ ()
     in
+    let error e = Some (error e) in
     [%log.global.debug "Suspending match..."];
     let _ : Principal_shape.Var.Registered_handler.t option =
       G.Suspended_match.match_or_yield

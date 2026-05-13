@@ -302,7 +302,7 @@ module Var = struct
       { run : t -> unit
       ; default : unit -> unit
       ; cancel : unit -> unit
-      ; error : unit -> Omniml_error.t
+      ; error : unit -> Omniml_error.t option
       }
     [@@deriving sexp_of]
 
@@ -326,7 +326,10 @@ module Var = struct
     ;;
 
     let errors ts =
-      Doubly_linked.fold_right ts ~init:[] ~f:(fun t acc -> t.error () :: acc)
+      Doubly_linked.fold_right ts ~init:[] ~f:(fun t acc ->
+        match t.error () with
+        | None -> acc
+        | Some error -> error :: acc)
     ;;
   end
 

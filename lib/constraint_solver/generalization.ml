@@ -998,7 +998,7 @@ module Suspended_match = struct
     ; closure : closure
     ; case : shape:Principal_shape.t -> args:Type.t list -> unit
     ; else_ : unit -> Principal_shape.t
-    ; error : Constraint.Match_error.t -> Omniml_error.t
+    ; error : Constraint.Match_error.t -> Omniml_error.t option
     }
   [@@deriving sexp_of]
 
@@ -1096,6 +1096,7 @@ module Suspended_match = struct
                    let actual = Principal_shape.Var.peek_exn svar in
                    let report =
                      error (Inconsistent_default { actual; expected = default_shape })
+                     |> Option.value_exn ~here:[%here]
                    in
                    raise (Inconsistent_defaults report));
                 [%log.global.debug
@@ -1128,7 +1129,9 @@ module Suspended_match = struct
         [%message
           "Kind mismatch when adding matchee handler. Expected type, got args."
             (matchee : Type.t)]
-    | Structure Rigid_var -> raise (Cannot_match_on_rigid (error Matchee_is_rigid))
+    | Structure Rigid_var ->
+      raise
+        (Cannot_match_on_rigid (error Matchee_is_rigid |> Option.value_exn ~here:[%here]))
     | Structure (Structure (Structure { args; shape })) ->
       (* Optimisation: Immediately solve the case *)
       case ~shape ~args;

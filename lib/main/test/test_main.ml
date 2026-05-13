@@ -3375,12 +3375,6 @@ let%expect_test "" =
      64 │        let ambig = add;;
         │                    ^^^
         = hint: add a type annotation
-
-    error[E017]: ambiguous overloading
-        ┌─ expect_test.ml:64:19
-     64 │        let ambig = add;;
-        │                    ^^^
-        = hint: add a type annotation
     |}];
   do_test
     {|
@@ -3541,57 +3535,15 @@ let%expect_test "" =
         = hint: add a type annotation
 
     error[E017]: ambiguous overloading
-        ┌─ expect_test.ml:31:15
-     31 │        let z = add x y;;
-        │                ^^^
-        = hint: add a type annotation
-
-    error[E017]: ambiguous overloading
         ┌─ expect_test.ml:31:21
      31 │        let z = add x y;;
         │                      ^
         = hint: add a type annotation
 
     error[E017]: ambiguous overloading
-        ┌─ expect_test.ml:31:21
-     31 │        let z = add x y;;
-        │                      ^
-        = hint: add a type annotation
-
-    error[E017]: ambiguous overloading
-        ┌─ expect_test.ml:31:15
-     31 │        let z = add x y;;
-        │                ^^^
-        = hint: add a type annotation
-
-    error[E017]: ambiguous overloading
-        ┌─ expect_test.ml:31:15
-     31 │        let z = add x y;;
-        │                ^^^
-        = hint: add a type annotation
-
-    error[E017]: ambiguous overloading
         ┌─ expect_test.ml:31:19
      31 │        let z = add x y;;
         │                    ^
-        = hint: add a type annotation
-
-    error[E017]: ambiguous overloading
-        ┌─ expect_test.ml:31:19
-     31 │        let z = add x y;;
-        │                    ^
-        = hint: add a type annotation
-
-    error[E017]: ambiguous overloading
-        ┌─ expect_test.ml:31:15
-     31 │        let z = add x y;;
-        │                ^^^
-        = hint: add a type annotation
-
-    error[E017]: ambiguous overloading
-        ┌─ expect_test.ml:31:15
-     31 │        let z = add x y;;
-        │                ^^^
         = hint: add a type annotation
     |}]
 ;;
@@ -3615,36 +3567,6 @@ let%expect_test "" =
   type_check_and_print str;
   [%expect
     {|
-    error[E017]: ambiguous overloading
-        ┌─ expect_test.ml:12:24
-     12 │        let z = fun x -> foo_bar x x;;
-        │                         ^^^^^^^
-        = hint: add a type annotation
-
-    error[E017]: ambiguous overloading
-        ┌─ expect_test.ml:12:24
-     12 │        let z = fun x -> foo_bar x x;;
-        │                         ^^^^^^^
-        = hint: add a type annotation
-
-    error[E017]: ambiguous overloading
-        ┌─ expect_test.ml:12:24
-     12 │        let z = fun x -> foo_bar x x;;
-        │                         ^^^^^^^
-        = hint: add a type annotation
-
-    error[E017]: ambiguous overloading
-        ┌─ expect_test.ml:12:24
-     12 │        let z = fun x -> foo_bar x x;;
-        │                         ^^^^^^^
-        = hint: add a type annotation
-
-    error[E017]: ambiguous overloading
-        ┌─ expect_test.ml:12:24
-     12 │        let z = fun x -> foo_bar x x;;
-        │                         ^^^^^^^
-        = hint: add a type annotation
-
     error[E017]: ambiguous overloading
         ┌─ expect_test.ml:12:24
      12 │        let z = fun x -> foo_bar x x;;

@@ -35,9 +35,10 @@ module Var : sig
         (** [run shape] runs the handler, where [shape] is the filled shape.  *)
       ; default : unit -> unit (** [default ()] is used to fill the variable (or fail). *)
       ; cancel : unit -> unit (** [cancel ()] is used to cancel the handler. *)
-      ; error : unit -> Omniml_error.t
+      ; error : unit -> Omniml_error.t option
         (** [error ()] is used to generate an error if the shape 
-            variable cannot be defaulted. *)
+            variable cannot be defaulted. The error is optional 
+            (if the handler is silent) *)
       }
     [@@deriving sexp_of]
   end
