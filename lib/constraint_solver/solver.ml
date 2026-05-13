@@ -177,7 +177,29 @@ let match_type
 ;;
 
 module Overload = struct
-  module Switch = struct
+  module Switch : sig
+    type t [@@deriving sexp_of]
+
+    val create : (Constraint.Var.t * G.Scheme.t) list -> t
+
+    val match_
+      :  state:State.t
+      -> env:Env.t
+      -> in_:t
+      -> curr_region:[ `Env | `Over ]
+      -> over:Constraint.Var.t
+      -> G.Type.t
+      -> closure:G.Type.t list
+      -> with_:(shape:Principal_shape.t -> args:G.Type.t list -> unit)
+      -> unit
+
+    val remove : t -> Constraint.Var.t -> unit
+
+    exception Not_resolved
+
+    val try_resolve : t -> f:(G.Scheme.t -> 'a) -> 'a
+    val iter : t -> f:(key:Constraint.Var.t -> data:G.Scheme.t -> unit) -> unit
+  end = struct
     type t = { mutable remaining_overs : over Constraint.Var.Map.t }
 
     and over =
@@ -186,6 +208,16 @@ module Overload = struct
       ; over_scheme : G.Scheme.t
       }
     [@@deriving sexp_of]
+
+    let add_handler_over over handler =
+      over.over_handlers <- handler :: over.over_handlers
+    ;;
+
+    let cancel_over over =
+      List.iter
+        over.over_handlers
+        ~f:Principal_shape.Var.Registered_handler.cancel_if_pending
+    ;;
 
     let create initial_overs =
       { remaining_overs =
@@ -196,49 +228,47 @@ module Overload = struct
       }
     ;;
 
-    let remove_over t over =
-      Map.find t.remaining_overs over
-      |> Option.iter ~f:(fun { over_handlers; over_scheme = _ } ->
-        List.iter
-          over_handlers
-          ~f:Principal_shape.Var.Registered_handler.cancel_if_pending;
-        t.remaining_overs <- Map.remove t.remaining_overs over)
+    let remove t over_var =
+      Map.find t.remaining_overs over_var
+      |> Option.iter ~f:(fun over ->
+        cancel_over over;
+        t.remaining_overs <- Map.remove t.remaining_overs over_var)
     ;;
-  end
 
-  let is_ambiguous ~(switch : Switch.t) = Map.length switch.remaining_overs > 1
+    exception Not_resolved
 
-  let if_unique ~(switch : Switch.t) ~do_ =
-    if is_ambiguous ~switch
-    then ()
-    else (
-      match Map.to_alist switch.remaining_overs with
-      | [ (_over_var, over) ] -> do_ over.over_scheme
-      | _ -> assert false)
-  ;;
+    let try_resolve t ~f =
+      if Map.length t.remaining_overs <> 1
+      then raise Not_resolved
+      else (
+        match Map.to_alist t.remaining_overs with
+        | [ (_over_var, over) ] ->
+          cancel_over over;
+          f over.over_scheme
+        | _ -> assert false)
+    ;;
 
-  let match_
-        ~(state : State.t)
-        ~(env : Env.t)
-        ~(switch : Switch.t)
-        ~curr_region
-        ~over
-        matchee
-        ~closure
-        ~with_
-    =
-    let range = Option.value_exn ~here:[%here] env.range in
-    match Map.find switch.remaining_overs over with
-    | None ->
-      (* overload was already removed, no need to generate any subsequent constraints *)
-      ()
-    | Some over ->
-      let curr_region =
-        match curr_region with
-        | `Env -> env.curr_region
-        | `Over -> over.over_scheme.region
-      in
-      let handler =
+    let match_
+          ~(state : State.t)
+          ~(env : Env.t)
+          ~(in_ : t)
+          ~curr_region
+          ~over
+          matchee
+          ~closure
+          ~with_
+      =
+      let range = Option.value_exn ~here:[%here] env.range in
+      match Map.find in_.remaining_overs over with
+      | None ->
+        (* overload was already removed, no need to generate any subsequent constraints *)
+        ()
+      | Some over ->
+        let curr_region =
+          match curr_region with
+          | `Env -> env.curr_region
+          | `Over -> over.over_scheme.region
+        in
         G.Suspended_match.match_or_yield
           ~state
           ~curr_region
@@ -248,11 +278,14 @@ module Overload = struct
           ; else_ = (fun () -> Omniml_error.(raise @@ ambiguous_overloading ~range))
           ; error = (fun _ -> Omniml_error.ambiguous_overloading ~range)
           }
-      in
-      (match handler with
-       | Some handler -> over.over_handlers <- handler :: over.over_handlers
-       | None -> ())
-  ;;
+        |> Option.iter ~f:(add_handler_over over)
+    ;;
+
+    let iter t ~f =
+      Map.iteri t.remaining_overs ~f:(fun ~key ~data:over ->
+        f ~key ~data:over.over_scheme)
+    ;;
+  end
 
   let rec filter_over
             ~(state : State.t)
@@ -264,10 +297,10 @@ module Overload = struct
             over_type_p
             expected_type_p
     =
-    match_
+    Switch.match_
       ~state
       ~env
-      ~switch
+      ~in_:switch
       ~curr_region:`Env
       ~over
       expected_type_p
@@ -283,10 +316,10 @@ module Overload = struct
           | _ -> false
         then ()
         else
-          match_
+          Switch.match_
             ~state
             ~env
-            ~switch
+            ~in_:switch
             ~curr_region:`Over
             ~over
             over_type_p
@@ -308,15 +341,16 @@ module Overload = struct
                       over_type_p_arg
                       expected_type_p_arg)
               else (
-                Switch.remove_over switch over;
-                if_unique ~switch ~do_:with_)))
+                Switch.remove switch over;
+                try Switch.try_resolve switch ~f:with_ with
+                | Switch.Not_resolved -> ())))
   ;;
 
   let match_ ~state ~env expected_type ~in_:overloads ~closure ~with_ =
     let switch = Switch.create overloads in
-    Map.iteri
-      switch.remaining_overs
-      ~f:(fun ~key:over ~data:{ over_scheme; over_handlers = _ } ->
+    try Switch.try_resolve switch ~f:with_ with
+    | Switch.Not_resolved ->
+      Switch.iter switch ~f:(fun ~key:over ~data:over_scheme ->
         filter_over
           ~state
           ~env
