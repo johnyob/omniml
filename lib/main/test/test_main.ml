@@ -3835,3 +3835,39 @@ let%expect_test "" =
         │                                                              `'b`
     |}]
 ;;
+
+let%expect_test "" =
+  (* Check that implicit resolution terminates. It constructs a 
+     pathological implicit function:
+
+     {[ 
+       val bad : 'a list list => 'a list 
+     ]} 
+
+     Since this is unique in the implicit environment, OmniML will select [bad]
+     for resolution. As a result, it will try to resolve `'a list list`, 
+     which will [bad] again, and so on.
+  *)
+  let str =
+    include_list
+    ^ {|
+      let bad = 
+        fun? self -> exists (type 'a) -> 
+        let _ = (self : 'a list list) in (Nil : 'a list)
+      ;;
+
+      let implicit bad;;
+
+      let summon = fun? x -> x;;
+      let _ = (summon : int list);;
+    |}
+  in
+  type_check_and_print str;
+  [%expect
+    {|
+    error[E018]: resolution failed to terminate
+        ┌─ expect_test.ml:17:16
+     17 │        let _ = (summon : int list);;
+        │                 ^^^^^^
+    |}]
+;;

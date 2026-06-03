@@ -67,5 +67,8 @@ let check ?defaulting ?range cst =
               type1
               type2)
      | Rigid_variable_escape ->
-       Omniml_error.(raise @@ rigid_variable_escape ~range:(get_range range)))
+       Omniml_error.(raise @@ rigid_variable_escape ~range:(get_range range))
+     | Resolution_termination_check_failed ->
+       Omniml_error.(
+         raise @@ resolution_termination_check_failed ~range:(get_range range)))
 ;;

@@ -305,7 +305,54 @@ module Error : sig
         the given types [ty1] and [ty2]. *)
     | Cannot_discharge_match_constraints of Omniml_error.t list
     (** Some match constraints could not be discharged. *)
+    | Resolution_termination_check_failed
   [@@deriving sexp]
+end
+
+module Termination : sig
+  module Witness : sig
+    module Elab : Monad.S
+
+    (** A partial witness is a term of the form: 
+        {[ 
+           W ::= ? | s
+        ]} *)
+    type t
+
+    module Spine : sig
+      (** A witness spine is a partial term of the form: 
+          {[ 
+            s ::= x [tau1] ... [taun] W1 ... Wm
+          ]}
+
+          This represents a term inferred by an implicit hole.  *)
+      type witness := t
+
+      type t
+
+      val head : t -> Constraint.Var.t
+      val instantiation : t -> Decoded_type.t list Elab.t
+      val args : t -> witness list
+    end
+  end
+
+  module Check : sig
+    type t =
+      { recursive_occurrence_threshold : int
+        (** Number of recursive occurrences of the same variable 
+            after which we construct a candidate elaboration and 
+            run the termination checker. *)
+      ; rejects : Witness.t -> bool Witness.Elab.t
+        (** A predicate over candidate elaborations. 
+            
+            Returns [true] when the candidate exceeds the termination criterion. 
+
+            *Safety*: This function should be monotone with respect ot witnesses: 
+            If [rejects w] is true, then [rejects W[w]] is true where [W] is some 
+            one-hole witness context. *)
+      }
+    [@@deriving sexp_of]
+  end
 end
 
 (** [solve ?range c] solves the constraint [c]. 
@@ -317,5 +364,6 @@ end
 val solve
   :  ?range:Range.t
   -> ?defaulting:Omniml_options.Defaulting.t
+  -> ?termination_check:Termination.Check.t
   -> Constraint.t
   -> (unit, Error.t) result

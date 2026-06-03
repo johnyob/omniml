@@ -23,6 +23,7 @@ module Code = struct
     | Ambiguous_tuple
     | Ambiguous_polytype
     | Ambiguous_overloading
+    | Resolution_termination_check_failed
     | Unknown
   [@@deriving sexp]
 
@@ -44,6 +45,7 @@ module Code = struct
     | Ambiguous_tuple -> "E015"
     | Ambiguous_polytype -> "E016"
     | Ambiguous_overloading -> "E017"
+    | Resolution_termination_check_failed -> "E018"
     | Unknown -> "E???"
   ;;
 end
@@ -419,6 +421,16 @@ let ambiguous_polytype ~range =
        ~code:Code.Ambiguous_polytype
        Error
        "unknown polytype"
+;;
+
+let resolution_termination_check_failed ~range =
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ empty_primary_label ~range ]
+       ~notes:[]
+       ~code:Code.Resolution_termination_check_failed
+       Error
+       "resolution failed to terminate"
 ;;
 
 module For_testing = struct

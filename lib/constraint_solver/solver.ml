@@ -15,12 +15,104 @@ module Error = struct
     | Rigid_variable_escape
     | Cannot_unify of Decoded_type.t * Decoded_type.t
     | Cannot_discharge_match_constraints of Omniml_error.t list
+    | Resolution_termination_check_failed
   [@@deriving sexp]
 
   exception T of t
 
   let create ~range it = { it; range }
   let raise ~range it = raise @@ T { it; range }
+end
+
+module Termination = struct
+  module History = struct
+    type t = { seen : int Constraint.Var.Map.t } [@@deriving sexp_of]
+
+    let empty = { seen = Constraint.Var.Map.empty }
+
+    let mark t var =
+      { seen = Map.update t.seen var ~f:(Option.value_map ~default:1 ~f:Int.succ) }
+    ;;
+
+    let count t var =
+      try Map.find_exn t.seen var with
+      | _ -> 0
+    ;;
+  end
+
+  module Witness = struct
+    module Elab = struct
+      module T = struct
+        type 'a t = Decoded_type.Decoder.t -> 'a
+
+        let return x _dec = x
+        let bind t ~f = fun dec -> f (t dec) dec
+        let map = `Define_using_bind
+      end
+
+      include T
+      include Monad.Make (T)
+
+      let decode_type type_ : Decoded_type.t t = fun dec -> dec type_
+      let run t = t (Decoded_type.Decoder.create ())
+    end
+
+    module T = struct
+      type t = desc ref
+
+      and desc =
+        | Hole
+        | Spine of spine
+
+      and spine =
+        { head : Constraint.Var.t
+        ; instantiation : unit -> G.Type.t list
+        ; args : t list
+        }
+      [@@deriving sexp_of]
+    end
+
+    include T
+
+    module Spine = struct
+      type t = T.spine [@@deriving sexp_of]
+
+      let create ~head ~instantiation ~args = { head; instantiation; args }
+      let head t = t.head
+      let instantiation t = t.instantiation () |> List.map ~f:Elab.decode_type |> Elab.all
+      let args t = t.args
+    end
+
+    type view = desc
+
+    let view (t : t) = !t
+    let hole () = ref Hole
+    let spine spine = ref (Spine spine)
+  end
+
+  module Check = struct
+    type t =
+      { recursive_occurrence_threshold : int
+      ; rejects : Witness.t -> bool Witness.Elab.t
+      }
+    [@@deriving sexp_of]
+
+    let trigger_check t history ~on =
+      History.count history on > t.recursive_occurrence_threshold
+    ;;
+
+    let check_if_exceeded_threshold t history ~on ~root_witness =
+      if trigger_check t history ~on
+      then `Check (t.rejects root_witness |> Witness.Elab.run)
+      else `No_check
+    ;;
+
+    let default =
+      { recursive_occurrence_threshold = 256
+      ; rejects = (fun _ -> Witness.Elab.return true)
+      }
+    ;;
+  end
 end
 
 module Env = struct
@@ -30,18 +122,22 @@ module Env = struct
     ; implicit_vars : Constraint.Var.Set.t
     ; curr_region : G.Region.t
     ; range : Range.t option
+    ; termination_history : Termination.History.t
+    ; termination_check : Termination.Check.t
     }
   [@@deriving sexp_of]
 
   let raise t err = Error.raise ~range:t.range err
   let with_range t ~range = { t with range = Some range }
 
-  let empty ~range ~curr_region =
+  let empty ~range ~curr_region ~termination_check =
     { type_vars = Type.Var.Map.empty
     ; expr_vars = Constraint.Var.Map.empty
     ; implicit_vars = Constraint.Var.Set.empty
     ; curr_region
     ; range
+    ; termination_history = Termination.History.empty
+    ; termination_check
     }
   ;;
 
@@ -54,6 +150,10 @@ module Env = struct
   ;;
 
   let add_implicit_var t var = { t with implicit_vars = Set.add t.implicit_vars var }
+
+  let mark_var_in_termination_history t var =
+    { t with termination_history = Termination.History.mark t.termination_history var }
+  ;;
 
   let find_type_var t type_var =
     try Map.find_exn t.type_vars type_var with
@@ -82,6 +182,7 @@ module Env = struct
         ~closure:({ type_vars; vars } : Constraint.Closure.t)
         ~range
         ~curr_region
+        ~termination_check
     =
     let type_vars =
       List.zip_exn type_vars gclosure.variables |> Type.Var.Map.of_alist_exn
@@ -89,13 +190,17 @@ module Env = struct
     let expr_vars =
       List.zip_exn vars gclosure.schemes |> Constraint.Var.Map.of_alist_exn
     in
-    { (empty ~range ~curr_region) with type_vars; expr_vars }
+    { (empty ~range ~curr_region ~termination_check) with type_vars; expr_vars }
   ;;
 
   let prev_region t =
     match t.curr_region.parent with
     | None -> t.curr_region
     | Some parent -> parent
+  ;;
+
+  let implicit_env t =
+    t.implicit_vars |> Set.to_list |> List.map ~f:(fun var -> var, find_var t var)
   ;;
 end
 
@@ -197,7 +302,7 @@ module Overload = struct
 
     exception Not_resolved
 
-    val try_resolve : t -> f:(G.Scheme.t -> 'a) -> 'a
+    val try_resolve : t -> f:(Constraint.Var.t -> G.Scheme.t -> 'a) -> 'a
     val iter : t -> f:(key:Constraint.Var.t -> data:G.Scheme.t -> unit) -> unit
   end = struct
     type t =
@@ -254,9 +359,9 @@ module Overload = struct
       then raise Not_resolved
       else (
         match Map.to_alist t.remaining_overs with
-        | [ (_over_var, over) ] ->
+        | [ (over_var, over) ] ->
           cancel_over over;
-          f over.over_scheme
+          f over_var over.over_scheme
         | _ -> assert false)
     ;;
 
@@ -379,31 +484,91 @@ module Overload = struct
   ;;
 end
 
-let rec implicit_instantiate ~(state : State.t) ~(env : Env.t) gscheme expected_type =
-  let implicits, actual_type =
+let instantiate ~(state : State.t) ~(env : Env.t) gscheme expected_type =
+  let instantiation, implicits, actual_type =
     G.instantiate ~state ~curr_region:env.curr_region gscheme
   in
   unify ~state ~env actual_type expected_type;
-  match implicits with
-  | [] ->
-    (* Optimize for the common case *)
-    ()
-  | _ ->
-    let env_implicits =
-      env.implicit_vars
-      |> Set.to_list
-      |> List.map ~f:(fun var -> var, Env.find_var env var)
-    in
-    List.iter implicits ~f:(over_instantiate ~state ~env ~in_:env_implicits)
+  instantiation, implicits
+;;
 
-and over_instantiate ~state ~env expected_type ~in_ =
+let rec resolve_implicit
+          ~state
+          ~env
+          ~root_witness
+          ~curr_witness
+          ~implicit_env
+          expected_type
+  =
   Overload.match_
     ~state
     ~env
     expected_type
-    ~in_
+    ~in_:implicit_env
     ~closure:[ expected_type ]
-    ~with_:(fun gscheme -> implicit_instantiate ~state ~env gscheme expected_type)
+    ~with_:(fun head gscheme ->
+      (* Instantiate the type scheme*)
+      let instantiation, implicits = instantiate ~state ~env gscheme expected_type in
+      (* Allocate witnesses for each implicit and set the current witness *)
+      let implicit_witnesses =
+        List.map implicits ~f:(fun _implicit -> Termination.Witness.hole ())
+      in
+      (curr_witness
+       := Termination.Witness.(
+            Spine (Spine.create ~head ~instantiation ~args:implicit_witnesses)));
+      (* Mark the variable in the history *)
+      let env = Env.mark_var_in_termination_history env head in
+      (match
+         Termination.Check.check_if_exceeded_threshold
+           env.termination_check
+           env.termination_history
+           ~on:head
+           ~root_witness
+       with
+       | `No_check -> ()
+       | `Check rejects ->
+         if rejects then Env.raise env Resolution_termination_check_failed);
+      (* Safety: List.length implicit_witnesses = List.length implicits by construction *)
+      List.iter2_exn implicits implicit_witnesses ~f:(fun implicit implicit_witness ->
+        resolve_implicit
+          ~state
+          ~env
+          ~root_witness
+          ~curr_witness:implicit_witness
+          ~implicit_env
+          implicit))
+;;
+
+let resolve_toplevel_implicits ~state ~env implicits =
+  let implicit_env = Env.implicit_env env in
+  List.iter implicits ~f:(fun implicit ->
+    let root_witness = Termination.Witness.hole () in
+    resolve_implicit
+      ~state
+      ~env
+      ~root_witness
+      ~curr_witness:root_witness
+      ~implicit_env
+      implicit)
+;;
+
+let explicit_instantiate ~state ~env gscheme expected_type =
+  let _, implicits = instantiate ~state ~env gscheme expected_type in
+  match implicits with
+  | [] ->
+    (* Optimize for common case *)
+    ()
+  | _ :: _ -> resolve_toplevel_implicits ~state ~env implicits
+;;
+
+let over_instantiate ~state ~env ~overs expected_type =
+  Overload.match_
+    ~state
+    ~env
+    expected_type
+    ~in_:overs
+    ~closure:[ expected_type ]
+    ~with_:(fun _ gscheme -> explicit_instantiate ~state ~env gscheme expected_type)
 ;;
 
 let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
@@ -443,13 +608,13 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
     let var_gscheme = Env.find_var env var in
     [%log.global.debug
       "Instantiating scheme" (var : Constraint.Var.t) (var_gscheme : G.Scheme.t)];
-    implicit_instantiate ~state ~env var_gscheme expected_gtype
+    explicit_instantiate ~state ~env var_gscheme expected_gtype
   | Over_instance (vars, expected_type) ->
     [%log.global.debug "Decoding expected_type" (expected_type : Type.t)];
     let expected_gtype = gtype_of_type ~state ~env expected_type in
     [%log.global.debug "Decoded expected_type" (expected_gtype : G.Type.t)];
     let overs = List.map vars ~f:(fun over_var -> over_var, Env.find_var env over_var) in
-    over_instantiate ~state ~env expected_gtype ~in_:overs
+    over_instantiate ~state ~env ~overs expected_gtype
   | Exists (type_var, cst) ->
     [%log.global.debug "Binding unification for type_var" (type_var : Type.Var.t)];
     let env = exists ~state ~env ~type_var in
@@ -471,7 +636,12 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
       [%log.global.debug "Entered match handler" (shape : Principal_shape.t)];
       (* Enter region and construct env *)
       let env =
-        Env.of_gclosure gclosure ~closure ~curr_region:env.curr_region ~range:env.range
+        Env.of_gclosure
+          gclosure
+          ~closure
+          ~curr_region:env.curr_region
+          ~range:env.range
+          ~termination_check:env.termination_check
       in
       [%log.global.debug "Handler env" (env : Env.t)];
       [%log.global.debug "Handler state" (state : State.t)];
@@ -505,12 +675,7 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
     [%log.global.debug "Decoding expected_type" (expected_type : Type.t)];
     let expected_gtype = gtype_of_type ~state ~env expected_type in
     [%log.global.debug "Decoded expected_type" (expected_gtype : G.Type.t)];
-    let env_implicits =
-      env.implicit_vars
-      |> Set.to_list
-      |> List.map ~f:(fun var -> var, Env.find_var env var)
-    in
-    over_instantiate ~state ~env expected_gtype ~in_:env_implicits
+    resolve_toplevel_implicits ~state ~env [ expected_gtype ]
   | With_range (t, range) -> solve ~state ~env:(Env.with_range env ~range) t
 
 and solve_let_binding ~state ~env { type_vars; implicits; in_; bindings } =
@@ -553,15 +718,19 @@ and gclosure_of_closure ~env closure : G.Suspended_match.closure =
 let solve
   :  ?range:Range.t
   -> ?defaulting:Omniml_options.Defaulting.t
+  -> ?termination_check:Termination.Check.t
   -> Constraint.t
   -> (unit, Error.t) result
   =
-  fun ?range ?defaulting cst ->
+  fun ?range ?defaulting ?termination_check cst ->
+  let termination_check =
+    Option.value termination_check ~default:Termination.Check.default
+  in
   try
     Scheduler.(clear (t ()));
     let state = State.create ?defaulting () in
     let root_region = State.root_region state in
-    let env = Env.empty ~curr_region:root_region ~range in
+    let env = Env.empty ~curr_region:root_region ~range ~termination_check in
     [%log.global.debug "Initial env and state" (state : State.t) (env : Env.t)];
     solve ~state ~env cst;
     [%log.global.debug "State" (state : State.t)];

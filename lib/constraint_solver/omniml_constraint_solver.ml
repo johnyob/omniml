@@ -4,6 +4,7 @@ module Type = Type
 module Constraint = Constraint
 module Decoded_type = Decoded_type
 module Error = Solver.Error
+module Termination = Solver.Termination
 
 let solve = Solver.solve
 

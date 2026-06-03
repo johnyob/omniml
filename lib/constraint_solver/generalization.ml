@@ -239,6 +239,30 @@ end
 module U = Unifier.Make (S)
 module Type0 = U.Term
 
+module Copy_scope0 = struct
+  module Copy = struct
+    type t =
+      { it : Type0.t
+      ; is_quantifier : bool
+        (** [is_quantifier] is set to true if the copy 
+            is of a generic variable. *)
+      }
+    [@@deriving sexp_of]
+  end
+
+  type t = { generic_copies : (Identifier.t, Copy.t) Hashtbl.t } [@@deriving sexp_of]
+
+  let create_scope () = { generic_copies = Hashtbl.create (module Identifier) }
+
+  module State = struct
+    type nonrec t = (Instance_identifier.t, t) Hashtbl.t [@@deriving sexp_of]
+
+    let create () = Hashtbl.create (module Identifier)
+    let add t iid copy = Hashtbl.set t ~key:iid ~data:copy
+    let find_or_add t iid = Hashtbl.find_or_add t iid ~default:create_scope
+  end
+end
+
 module State = struct
   type t =
     { id_source : (Identifier.source[@sexp.opaque])
@@ -246,6 +270,7 @@ module State = struct
     ; alive_regions : (Identifier.t, Type0.t Region0.t) Hashtbl.t
     ; shape_var_state : Principal_shape.Var.State.t
     ; defaulting : Omniml_options.Defaulting.t
+    ; copy_scope_state : Copy_scope0.State.t
     }
   [@@deriving sexp_of]
 
@@ -268,6 +293,7 @@ module State = struct
     ; shape_var_state
     ; alive_regions = Hashtbl.create (module Identifier)
     ; defaulting
+    ; copy_scope_state = Copy_scope0.State.create ()
     }
   ;;
 
@@ -446,6 +472,25 @@ module Scheme = struct
   ;;
 end
 
+module Copy_scope = struct
+  include Copy_scope0
+
+  let with_ ~state ~instance_id f =
+    (* TODO: This leaks memory, since all instantiations are kept in the 
+       state. We never collect until the end of solving. *)
+    let scope = State.find_or_add state instance_id in
+    f scope
+  ;;
+
+  let find t type_ = Hashtbl.find t.generic_copies (Type.id type_)
+  let find_it t type_ = find t type_ |> Option.map ~f:(fun copy -> copy.it)
+
+  let register t type_ copy =
+    let copy = { Copy.it = copy; is_quantifier = Type.is_var type_ } in
+    Hashtbl.set t.generic_copies ~key:(Type.id type_) ~data:copy
+  ;;
+end
+
 let create_var ~state ~curr_region () = Type.create ~state ~curr_region Var
 
 let create_shape_var ~(state : State.t) ~curr_region () =
@@ -518,58 +563,69 @@ let rec prune_structure ~(state : State.t) structure instances =
     [%log.global.debug "Copy" (copy : Type.t)];
     unify ~state ~curr_region:dst_region copy instance)
 
-(** [copy ~state type_ ~instance_id ~src_region ~dst_region] copies the type [type_] 
-    in the [src_region] region to a fresh type in the [dst_region] region. Any 
-    instantiation edges are associated with the instance id [instance_id].  *)
-and copy ~(state : State.t) ~instance_id ~src_region ~dst_region =
-  let generic_copies = Hashtbl.create (module Identifier) in
-  fun type_ ->
-    let rec visit type_ =
-      if Tree.compare_node_by_level (Type.region type_) src_region < 0
-      then type_
-      else (
-        match Type.status type_ with
-        | Generic -> find_or_alloc_generic_copy type_
-        | Instance _ ->
-          (* The type is an instance, but a member of the region. Meaning it 
+and copy ~state ~instance_id ~src_region ~dst_region type_ =
+  Copy_scope.with_ ~state:state.copy_scope_state ~instance_id
+  @@ fun copy_scope ->
+  copy_with_scope ~state ~instance_id ~src_region ~dst_region ~copy_scope type_
+
+(** [copy_with_scope ~state type_ ~instance_id ~src_region ~dst_region ~copy_scope] 
+    copies the type [type_] in the [src_region] region to a fresh type in the 
+    [dst_region] region. Any instantiation edges are associated with the instance id 
+    [instance_id].  
+
+    Invariant: the passed in [copy_scope] is expected to be registered with 
+    instance id [instance_id] in [state]. *)
+and copy_with_scope
+      ~(state : State.t)
+      ~instance_id
+      ~src_region
+      ~dst_region
+      ~copy_scope
+      type_
+  =
+  let rec visit type_ =
+    if Tree.compare_node_by_level (Type.region type_) src_region < 0
+    then type_
+    else (
+      match Type.status type_ with
+      | Generic -> find_or_alloc_generic_copy type_
+      | Instance _ ->
+        (* The type is an instance, but a member of the region. Meaning it 
            could be generic in the future. So we create an instantiation 
            edge. *)
-          find_or_alloc_instance_copy type_)
-    and alloc_copy ~on_alloc type_ =
-      let copy = create_var ~state ~curr_region:dst_region () in
-      on_alloc copy;
-      let inner = Type.inner type_ in
-      let flexized_inner = if Type.is_generic type_ then inner else flexize_inner inner in
-      let inner_copy = I.map flexized_inner ~f:visit in
-      unify
-        ~state
-        ~curr_region:dst_region
-        copy
-        (Type.create ~state ~curr_region:dst_region inner_copy);
+        find_or_alloc_instance_copy type_)
+  and alloc_copy ~on_alloc type_ =
+    let copy = create_var ~state ~curr_region:dst_region () in
+    on_alloc copy;
+    let inner = Type.inner type_ in
+    let flexized_inner = if Type.is_generic type_ then inner else flexize_inner inner in
+    let inner_copy = I.map flexized_inner ~f:visit in
+    unify
+      ~state
+      ~curr_region:dst_region
       copy
-    and find_or_alloc_generic_copy type_ =
-      let id = Type.id type_ in
-      try Hashtbl.find_exn generic_copies id with
-      | Not_found_s _ ->
-        alloc_copy
-          ~on_alloc:(fun copy -> Hashtbl.set generic_copies ~key:id ~data:copy)
-          type_
-    and find_or_alloc_instance_copy type_ =
-      try
-        let _from, instance = Map.find_exn (Type.instances type_) instance_id in
-        (* Invariant: [from = src_region] *)
-        instance
-      with
-      | Not_found_s _ ->
-        alloc_copy
-          ~on_alloc:(fun instance ->
-            [%log.global.debug
-              "Adding instance guard" (type_ : Type.t) (instance : Type.t)];
-            Type.add_guard ~state instance;
-            Type.add_instance ~state type_ instance_id (src_region, instance))
-          type_
-    in
-    visit type_
+      (Type.create ~state ~curr_region:dst_region inner_copy);
+    copy
+  and find_or_alloc_generic_copy type_ =
+    match Copy_scope.find_it copy_scope type_ with
+    | Some copy -> copy
+    | None ->
+      alloc_copy ~on_alloc:(fun copy -> Copy_scope.register copy_scope type_ copy) type_
+  and find_or_alloc_instance_copy type_ =
+    try
+      let _from, instance = Map.find_exn (Type.instances type_) instance_id in
+      (* Invariant: [from = src_region] *)
+      instance
+    with
+    | Not_found_s _ ->
+      alloc_copy
+        ~on_alloc:(fun instance ->
+          [%log.global.debug "Adding instance guard" (type_ : Type.t) (instance : Type.t)];
+          Type.add_guard ~state instance;
+          Type.add_instance ~state type_ instance_id (src_region, instance))
+        type_
+  in
+  visit type_
 
 and unify ~(state : State.t) ~curr_region type1 type2 =
   let remove_guard_worklist = Queue.create () in
@@ -833,8 +889,12 @@ let rigid_scope_check (generation : Generation.t) =
 let unsafe_generalize ~state type_ =
   if Type.is_unguarded type_
   then (
-    Map.iter (Type.instances type_) ~f:(fun (_from, instance) ->
-      Type.remove_guard ~state instance);
+    Map.iteri (Type.instances type_) ~f:(fun ~key:iid ~data:(_from, instance) ->
+      (* Remove the guard *)
+      Type.remove_guard ~state instance;
+      (* Register the instance as a generic copy in the copy scope *)
+      Copy_scope.with_ ~state:state.copy_scope_state ~instance_id:iid
+      @@ fun copy_scope -> Copy_scope.register copy_scope type_ instance);
     (* Safety: [type_] is being generalized, there is no 
        point setting it's write barrier (and dirty bit). *)
     Type.unsafe_update_structure type_ (fun structure ->
@@ -984,12 +1044,24 @@ let instantiate ~state ~curr_region ({ root; implicits; region = src_region } : 
   (* Create an instance group *)
   let instance_id = Instance_identifier.create state.id_source in
   (* Create a new copy scope *)
-  let copy = copy ~state ~src_region ~dst_region:curr_region ~instance_id in
+  Copy_scope.with_ ~state:state.copy_scope_state ~instance_id
+  @@ fun copy_scope ->
+  let copy =
+    copy_with_scope ~state ~instance_id ~src_region ~dst_region:curr_region ~copy_scope
+  in
   (* Copy the root *)
   let root = copy root in
   (* Copy the implicits *)
   let implicits = List.map implicits ~f:copy in
-  implicits, root
+  (* Return copied quantifiers. Note that this is delayed since 
+     the quantifiers can mutate as partial generalization progresses. *)
+  let quantifiers () =
+    (* All quantifiers must be generic *)
+    copy_scope.generic_copies
+    |> Hashtbl.filter_map ~f:(fun copy -> Option.some_if copy.is_quantifier copy.it)
+    |> Hashtbl.data
+  in
+  quantifiers, implicits, root
 ;;
 
 module Suspended_match = struct

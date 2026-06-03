@@ -86,6 +86,7 @@ val polytype_mismatched_type
 
 val ambiguous_tuple : range:Range.t -> t
 val ambiguous_polytype : range:Range.t -> t
+val resolution_termination_check_failed : range:Range.t -> t
 
 module For_testing : sig
   val use_expect_test_config : unit -> unit
