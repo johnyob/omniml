@@ -34,6 +34,8 @@ module Termination = struct
       { seen = Map.update t.seen var ~f:(Option.value_map ~default:1 ~f:Int.succ) }
     ;;
 
+    let reset t var = { seen = Map.set t.seen ~key:var ~data:0 }
+
     let count t var =
       try Map.find_exn t.seen var with
       | _ -> 0
@@ -83,7 +85,10 @@ module Termination = struct
       let args t = t.args
     end
 
-    type view = desc
+    type view = desc =
+      | Hole
+      | Spine of spine
+    [@@deriving sexp_of]
 
     let view (t : t) = !t
     let hole () = ref Hole
@@ -107,8 +112,14 @@ module Termination = struct
       else `No_check
     ;;
 
-    let default =
-      { recursive_occurrence_threshold = 256
+    let disabled =
+      { recursive_occurrence_threshold = Int.max_value
+      ; rejects = (fun _ -> Witness.Elab.return false)
+      }
+    ;;
+
+    let threshold n =
+      { recursive_occurrence_threshold = n
       ; rejects = (fun _ -> Witness.Elab.return true)
       }
     ;;
@@ -153,6 +164,10 @@ module Env = struct
 
   let mark_var_in_termination_history t var =
     { t with termination_history = Termination.History.mark t.termination_history var }
+  ;;
+
+  let reset_var_in_termination_history t var =
+    { t with termination_history = Termination.History.reset t.termination_history var }
   ;;
 
   let find_type_var t type_var =
@@ -518,16 +533,22 @@ let rec resolve_implicit
             Spine (Spine.create ~head ~instantiation ~args:implicit_witnesses)));
       (* Mark the variable in the history *)
       let env = Env.mark_var_in_termination_history env head in
-      (match
-         Termination.Check.check_if_exceeded_threshold
-           env.termination_check
-           env.termination_history
-           ~on:head
-           ~root_witness
-       with
-       | `No_check -> ()
-       | `Check rejects ->
-         if rejects then Env.raise env Resolution_termination_check_failed);
+      let env =
+        match
+          Termination.Check.check_if_exceeded_threshold
+            env.termination_check
+            env.termination_history
+            ~on:head
+            ~root_witness
+        with
+        | `No_check -> env
+        | `Check rejects ->
+          if rejects
+          then Env.raise env Resolution_termination_check_failed
+          else
+            (* TODO: Reset globally instead of just in current path *)
+            Env.reset_var_in_termination_history env head
+      in
       (* Safety: List.length implicit_witnesses = List.length implicits by construction *)
       List.iter2_exn implicits implicit_witnesses ~f:(fun implicit implicit_witness ->
         resolve_implicit
@@ -722,10 +743,7 @@ let solve
   -> Constraint.t
   -> (unit, Error.t) result
   =
-  fun ?range ?defaulting ?termination_check cst ->
-  let termination_check =
-    Option.value termination_check ~default:Termination.Check.default
-  in
+  fun ?range ?defaulting ?(termination_check = Termination.Check.disabled) cst ->
   try
     Scheduler.(clear (t ()));
     let state = State.create ?defaulting () in

@@ -16,9 +16,9 @@ let match_err _ =
 
 let else_match_err () = assert false
 
-let print_solve_result ?defaulting ?(log_level = `Info) cst =
+let print_solve_result ?defaulting ?termination_check ?(log_level = `Info) cst =
   Async.Log.Global.set_level log_level;
-  let result = Omniml_constraint_solver.solve ?defaulting cst in
+  let result = Omniml_constraint_solver.solve ?defaulting ?termination_check cst in
   match result with
   | Ok () -> print_s [%message "Constraint is satisfiable" (cst : C.t)]
   | Error err ->

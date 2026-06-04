@@ -13,6 +13,7 @@ let type_check_and_print
       ?(with_stdlib = true)
       ?(with_poly_params = false)
       ?(defaulting = Options.Defaulting.default)
+      ?(termination_check = Options.Termination_check.default)
       ?(log_level = `Info)
       str
   =
@@ -25,6 +26,7 @@ let type_check_and_print
     ~with_stdlib
     ~with_poly_params
     ~defaulting
+    ~termination_check
     (Lexing.from_string ~with_positions:true str)
 ;;
 

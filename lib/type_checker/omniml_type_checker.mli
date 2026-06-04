@@ -19,6 +19,7 @@ val infer_str
     @raises Omniml_error.T if the constraint is unsatisfiable *)
 val check
   :  ?defaulting:Omniml_options.Defaulting.t
+  -> ?termination_check:Omniml_options.Termination_check.t
   -> ?range:Range.t
   -> Constraint.t
   -> unit

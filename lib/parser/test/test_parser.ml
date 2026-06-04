@@ -4918,7 +4918,8 @@ let%expect_test "structure implicit function" =
     |}
   in
   parse_and_print_structure str;
-  [%expect {|
+  [%expect
+    {|
     (((it
        (Str_value
         ((it
@@ -5034,7 +5035,8 @@ let%expect_test "structure implicit let" =
     |}
   in
   parse_and_print_structure str;
-  [%expect {|
+  [%expect
+    {|
     (((it
        (Str_value
         ((it
@@ -5100,7 +5102,8 @@ let%expect_test "expression implicit function" =
     |}
   in
   parse_and_print_expression exp;
-  [%expect {|
+  [%expect
+    {|
     ((it
       (Exp_let
        ((it
@@ -5264,7 +5267,8 @@ let%expect_test "expression implicit hole" =
     |}
   in
   parse_and_print_expression exp;
-  [%expect {|
+  [%expect
+    {|
     ((it
       (Exp_let
        ((it

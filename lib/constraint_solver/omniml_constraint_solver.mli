@@ -276,8 +276,14 @@ module Constraint : sig
 end
 
 module Decoded_type : sig
+  module Var : Var.S
+
   (** A type produced by the constraint solver. *)
-  type t [@@deriving sexp]
+  type t =
+    | Var of Var.t
+    | App of t list * Principal_shape.t
+    | Mu of Var.t * t
+  [@@deriving sexp]
 
   include Pretty_printer.S with type t := t
 end
@@ -317,7 +323,7 @@ module Termination : sig
         {[ 
            W ::= ? | s
         ]} *)
-    type t
+    type t [@@deriving sexp_of]
 
     module Spine : sig
       (** A witness spine is a partial term of the form: 
@@ -328,12 +334,19 @@ module Termination : sig
           This represents a term inferred by an implicit hole.  *)
       type witness := t
 
-      type t
+      type t [@@deriving sexp_of]
 
       val head : t -> Constraint.Var.t
       val instantiation : t -> Decoded_type.t list Elab.t
       val args : t -> witness list
     end
+
+    type view =
+      | Hole
+      | Spine of Spine.t
+    [@@deriving sexp_of]
+
+    val view : t -> view
   end
 
   module Check : sig
@@ -352,6 +365,12 @@ module Termination : sig
             one-hole witness context. *)
       }
     [@@deriving sexp_of]
+
+    (** [disabled] is a check that effectively acts as no termination check exists. *)
+    val disabled : t
+
+    (** [threshold n] is a check that fails when a given variable occurs recursively [>= n] times. *)
+    val threshold : int -> t
   end
 end
 
