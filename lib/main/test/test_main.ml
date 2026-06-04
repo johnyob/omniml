@@ -3873,3 +3873,110 @@ let%expect_test "" =
         │                 ^^^^^^
     |}]
 ;;
+
+let%expect_test "" =
+  let test = Incremental_test.create ~initial:include_string type_check_and_print in
+  let do_test = Incremental_test.run test in
+  do_test
+    ~add:true
+    {|
+      (* Define [incr] name *)
+      type 'a incr = Incr of 'a;;
+      let val_incr = fun x -> Incr x;;
+      let use_incr = fun x -> match x with (Incr v -> v);;
+      let incr = fun ?x -> use_incr x;;
+
+      (* let incr!int x = x + 1 *)
+      let incr_int = fun x -> x + 1;;
+      let incr_int' = val_incr incr_int;;
+      let implicit incr_int';;
+
+      (* let incr!bool x = not x *)
+      let incr_bool = fun x -> if x then false else true;;
+      let incr_bool' = val_incr incr_bool;;
+      let implicit incr_bool';;
+
+      (* Define [show] name *)
+      type 'a show = Show of 'a;;
+      let val_show = fun x -> Show x;;
+      let use_show = fun x -> match x with (Show v -> v);;
+      let show = fun? x -> use_show x;;
+
+      external show_int : int -> string;;
+      external show_bool : bool -> string;;
+
+      (* let show!int = show_int *)
+      let show_int' = val_show show_int;;
+      let implicit show_int';;
+
+      (* let show!bool = show_bool *)
+      let show_bool= val_show show_bool;;
+      let implicit show_bool;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let one = show (incr 0);;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let show_incr = fun x -> show (incr x);;
+    |};
+  [%expect
+    {|
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:41:38
+     41 │        let show_incr = fun x -> show (incr x);;
+        │                                       ^^^^
+        = hint: add a type annotation
+
+    error[E017]: ambiguous overloading
+        ┌─ expect_test.ml:41:32
+     41 │        let show_incr = fun x -> show (incr x);;
+        │                                 ^^^^
+        = hint: add a type annotation
+    |}];
+  do_test
+    ~add:true
+    {|
+      let show_incr = fun? show incr -> 
+        let show = use_show show in
+        let incr = use_incr incr in
+        fun x -> show (incr x)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let two = show_incr 1;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    ~add:true
+    {|
+      let show_tuple = 
+        fun show_a show_b -> 
+          let show_a = use_show show_a in
+          let show_b = use_show show_b in
+          fun (fst, snd) -> 
+            concat_string (show_a fst) (show_b snd)
+      ;;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    ~add:true
+    {|
+      let show_tuple' = fun? show_a show_b -> 
+        val_show (show_tuple show_a show_b)
+      ;;
+
+      let implicit show_tuple';;
+    |};
+  [%expect {| Well typed :) |}];
+  do_test
+    {|
+      let onetrue = show (1, true);;
+    |};
+  [%expect {| Well typed :) |}]
+;;
