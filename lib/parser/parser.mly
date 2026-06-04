@@ -398,6 +398,8 @@ atom_expression:
     ; exp = seq_expression
     ; ")"
       { exp }
+  | "?"
+      { Expression.implicit ~range:(range_of_lex $loc) }
 
 %inline unary_op:
   "-"

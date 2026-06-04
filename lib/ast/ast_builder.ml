@@ -91,6 +91,7 @@ module type S = sig
     val case : (lhs:pattern -> rhs:expression -> case) with_range_fn
     val poly : (expression -> ?scheme:core_scheme -> unit -> expression) with_range_fn
     val inst : (expression -> expression) with_range_fn
+    val implicit : expression with_range_fn
   end
 
   module Term : sig
@@ -230,6 +231,7 @@ module Default : S with type 'a with_range_fn := range:Range.t -> 'a = struct
 
     let poly ~range exp ?scheme () = With_range.create ~range @@ Exp_poly (exp, scheme)
     let inst ~range exp = With_range.create ~range @@ Exp_inst exp
+    let implicit ~range = With_range.create ~range @@ Exp_implicit
   end
 
   module Term = struct
@@ -329,6 +331,7 @@ module Make (R : Range) : S with type 'a with_range_fn := 'a = struct
     let case = Expression.case ~range:R.v
     let poly = Expression.poly ~range:R.v
     let inst = Expression.inst ~range:R.v
+    let implicit = Expression.implicit ~range:R.v
   end
 
   module Term = struct

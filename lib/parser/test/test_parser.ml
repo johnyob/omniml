@@ -4910,3 +4910,542 @@ let%expect_test "polyparam - function" =
         (Reader ((id 0) (name (expect_test.ml)) (length 59) (unsafe_get <fun>)))))))
     |}]
 ;;
+
+let%expect_test "structure implicit function" =
+  let str =
+    {|
+      let foo = fun ?bar x -> bar x;;
+    |}
+  in
+  parse_and_print_structure str;
+  [%expect {|
+    (((it
+       (Str_value
+        ((it
+          ((value_binding_pat
+            ((it
+              (Pat_var
+               ((it foo)
+                (range
+                 ((start 11) (stop 14)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 43)
+                     (unsafe_get <fun>)))))))))
+             (range
+              ((start 11) (stop 14)
+               (source
+                (Reader
+                 ((id 0) (name (expect_test.ml)) (length 43) (unsafe_get <fun>))))))))
+           (value_binding_term
+            ((it
+              (Term_implicit_fun
+               (((it
+                  (Pat_var
+                   ((it bar)
+                    (range
+                     ((start 22) (stop 25)
+                      (source
+                       (Reader
+                        ((id 0) (name (expect_test.ml)) (length 43)
+                         (unsafe_get <fun>)))))))))
+                 (range
+                  ((start 22) (stop 25)
+                   (source
+                    (Reader
+                     ((id 0) (name (expect_test.ml)) (length 43)
+                      (unsafe_get <fun>)))))))
+                ((it
+                  (Pat_var
+                   ((it x)
+                    (range
+                     ((start 26) (stop 27)
+                      (source
+                       (Reader
+                        ((id 0) (name (expect_test.ml)) (length 43)
+                         (unsafe_get <fun>)))))))))
+                 (range
+                  ((start 26) (stop 27)
+                   (source
+                    (Reader
+                     ((id 0) (name (expect_test.ml)) (length 43)
+                      (unsafe_get <fun>))))))))
+               ((it
+                 (Exp_app
+                  ((it
+                    (Exp_var
+                     ((it bar)
+                      (range
+                       ((start 31) (stop 34)
+                        (source
+                         (Reader
+                          ((id 0) (name (expect_test.ml)) (length 43)
+                           (unsafe_get <fun>)))))))))
+                   (range
+                    ((start 31) (stop 34)
+                     (source
+                      (Reader
+                       ((id 0) (name (expect_test.ml)) (length 43)
+                        (unsafe_get <fun>)))))))
+                  ((it
+                    (Exp_var
+                     ((it x)
+                      (range
+                       ((start 35) (stop 36)
+                        (source
+                         (Reader
+                          ((id 0) (name (expect_test.ml)) (length 43)
+                           (unsafe_get <fun>)))))))))
+                   (range
+                    ((start 35) (stop 36)
+                     (source
+                      (Reader
+                       ((id 0) (name (expect_test.ml)) (length 43)
+                        (unsafe_get <fun>)))))))))
+                (range
+                 ((start 31) (stop 36)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 43)
+                     (unsafe_get <fun>)))))))))
+             (range
+              ((start 17) (stop 36)
+               (source
+                (Reader
+                 ((id 0) (name (expect_test.ml)) (length 43) (unsafe_get <fun>))))))))))
+         (range
+          ((start 11) (stop 36)
+           (source
+            (Reader
+             ((id 0) (name (expect_test.ml)) (length 43) (unsafe_get <fun>)))))))))
+      (range
+       ((start 7) (stop 36)
+        (source
+         (Reader ((id 0) (name (expect_test.ml)) (length 43) (unsafe_get <fun>))))))))
+    |}]
+;;
+
+let%expect_test "structure implicit let" =
+  let str =
+    {|
+      let x = 1;;
+
+      let implicit x;;
+    |}
+  in
+  parse_and_print_structure str;
+  [%expect {|
+    (((it
+       (Str_value
+        ((it
+          ((value_binding_pat
+            ((it
+              (Pat_var
+               ((it x)
+                (range
+                 ((start 11) (stop 12)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 47)
+                     (unsafe_get <fun>)))))))))
+             (range
+              ((start 11) (stop 12)
+               (source
+                (Reader
+                 ((id 0) (name (expect_test.ml)) (length 47) (unsafe_get <fun>))))))))
+           (value_binding_term
+            ((it
+              (Term_exp
+               ((it (Exp_const (Const_int 1)))
+                (range
+                 ((start 15) (stop 16)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 47)
+                     (unsafe_get <fun>)))))))))
+             (range
+              ((start 15) (stop 16)
+               (source
+                (Reader
+                 ((id 0) (name (expect_test.ml)) (length 47) (unsafe_get <fun>))))))))))
+         (range
+          ((start 11) (stop 16)
+           (source
+            (Reader
+             ((id 0) (name (expect_test.ml)) (length 47) (unsafe_get <fun>)))))))))
+      (range
+       ((start 7) (stop 16)
+        (source
+         (Reader ((id 0) (name (expect_test.ml)) (length 47) (unsafe_get <fun>)))))))
+     ((it
+       (Str_implicit
+        ((it x)
+         (range
+          ((start 39) (stop 40)
+           (source
+            (Reader
+             ((id 0) (name (expect_test.ml)) (length 47) (unsafe_get <fun>)))))))))
+      (range
+       ((start 26) (stop 40)
+        (source
+         (Reader ((id 0) (name (expect_test.ml)) (length 47) (unsafe_get <fun>))))))))
+    |}]
+;;
+
+let%expect_test "expression implicit function" =
+  let exp =
+    {|
+      let add = fun ?x y -> x + y in
+      add 1
+    |}
+  in
+  parse_and_print_expression exp;
+  [%expect {|
+    ((it
+      (Exp_let
+       ((it
+         ((value_binding_pat
+           ((it
+             (Pat_var
+              ((it add)
+               (range
+                ((start 11) (stop 14)
+                 (source
+                  (Reader
+                   ((id 0) (name (expect_test.ml)) (length 54)
+                    (unsafe_get <fun>)))))))))
+            (range
+             ((start 11) (stop 14)
+              (source
+               (Reader
+                ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>))))))))
+          (value_binding_term
+           ((it
+             (Term_implicit_fun
+              (((it
+                 (Pat_var
+                  ((it x)
+                   (range
+                    ((start 22) (stop 23)
+                     (source
+                      (Reader
+                       ((id 0) (name (expect_test.ml)) (length 54)
+                        (unsafe_get <fun>)))))))))
+                (range
+                 ((start 22) (stop 23)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 54)
+                     (unsafe_get <fun>)))))))
+               ((it
+                 (Pat_var
+                  ((it y)
+                   (range
+                    ((start 24) (stop 25)
+                     (source
+                      (Reader
+                       ((id 0) (name (expect_test.ml)) (length 54)
+                        (unsafe_get <fun>)))))))))
+                (range
+                 ((start 24) (stop 25)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 54)
+                     (unsafe_get <fun>))))))))
+              ((it
+                (Exp_app
+                 ((it
+                   (Exp_app
+                    ((it
+                      (Exp_var
+                       ((it "( + )")
+                        (range
+                         ((start 31) (stop 32)
+                          (source
+                           (Reader
+                            ((id 0) (name (expect_test.ml)) (length 54)
+                             (unsafe_get <fun>)))))))))
+                     (range
+                      ((start 29) (stop 34)
+                       (source
+                        (Reader
+                         ((id 0) (name (expect_test.ml)) (length 54)
+                          (unsafe_get <fun>)))))))
+                    ((it
+                      (Exp_var
+                       ((it x)
+                        (range
+                         ((start 29) (stop 30)
+                          (source
+                           (Reader
+                            ((id 0) (name (expect_test.ml)) (length 54)
+                             (unsafe_get <fun>)))))))))
+                     (range
+                      ((start 29) (stop 30)
+                       (source
+                        (Reader
+                         ((id 0) (name (expect_test.ml)) (length 54)
+                          (unsafe_get <fun>)))))))))
+                  (range
+                   ((start 29) (stop 34)
+                    (source
+                     (Reader
+                      ((id 0) (name (expect_test.ml)) (length 54)
+                       (unsafe_get <fun>)))))))
+                 ((it
+                   (Exp_var
+                    ((it y)
+                     (range
+                      ((start 33) (stop 34)
+                       (source
+                        (Reader
+                         ((id 0) (name (expect_test.ml)) (length 54)
+                          (unsafe_get <fun>)))))))))
+                  (range
+                   ((start 33) (stop 34)
+                    (source
+                     (Reader
+                      ((id 0) (name (expect_test.ml)) (length 54)
+                       (unsafe_get <fun>)))))))))
+               (range
+                ((start 29) (stop 34)
+                 (source
+                  (Reader
+                   ((id 0) (name (expect_test.ml)) (length 54)
+                    (unsafe_get <fun>)))))))))
+            (range
+             ((start 17) (stop 34)
+              (source
+               (Reader
+                ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>))))))))))
+        (range
+         ((start 11) (stop 34)
+          (source
+           (Reader
+            ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>)))))))
+       ((it
+         (Exp_app
+          ((it
+            (Exp_var
+             ((it add)
+              (range
+               ((start 44) (stop 47)
+                (source
+                 (Reader
+                  ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>)))))))))
+           (range
+            ((start 44) (stop 47)
+             (source
+              (Reader
+               ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>)))))))
+          ((it (Exp_const (Const_int 1)))
+           (range
+            ((start 48) (stop 49)
+             (source
+              (Reader
+               ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>)))))))))
+        (range
+         ((start 44) (stop 49)
+          (source
+           (Reader
+            ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>)))))))))
+     (range
+      ((start 7) (stop 49)
+       (source
+        (Reader ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>)))))))
+    |}]
+;;
+
+let%expect_test "expression implicit hole" =
+  let exp =
+    {|
+      let add = fun ?x y -> x + y in
+      (? : int -> int)
+    |}
+  in
+  parse_and_print_expression exp;
+  [%expect {|
+    ((it
+      (Exp_let
+       ((it
+         ((value_binding_pat
+           ((it
+             (Pat_var
+              ((it add)
+               (range
+                ((start 11) (stop 14)
+                 (source
+                  (Reader
+                   ((id 0) (name (expect_test.ml)) (length 65)
+                    (unsafe_get <fun>)))))))))
+            (range
+             ((start 11) (stop 14)
+              (source
+               (Reader
+                ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>))))))))
+          (value_binding_term
+           ((it
+             (Term_implicit_fun
+              (((it
+                 (Pat_var
+                  ((it x)
+                   (range
+                    ((start 22) (stop 23)
+                     (source
+                      (Reader
+                       ((id 0) (name (expect_test.ml)) (length 65)
+                        (unsafe_get <fun>)))))))))
+                (range
+                 ((start 22) (stop 23)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 65)
+                     (unsafe_get <fun>)))))))
+               ((it
+                 (Pat_var
+                  ((it y)
+                   (range
+                    ((start 24) (stop 25)
+                     (source
+                      (Reader
+                       ((id 0) (name (expect_test.ml)) (length 65)
+                        (unsafe_get <fun>)))))))))
+                (range
+                 ((start 24) (stop 25)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 65)
+                     (unsafe_get <fun>))))))))
+              ((it
+                (Exp_app
+                 ((it
+                   (Exp_app
+                    ((it
+                      (Exp_var
+                       ((it "( + )")
+                        (range
+                         ((start 31) (stop 32)
+                          (source
+                           (Reader
+                            ((id 0) (name (expect_test.ml)) (length 65)
+                             (unsafe_get <fun>)))))))))
+                     (range
+                      ((start 29) (stop 34)
+                       (source
+                        (Reader
+                         ((id 0) (name (expect_test.ml)) (length 65)
+                          (unsafe_get <fun>)))))))
+                    ((it
+                      (Exp_var
+                       ((it x)
+                        (range
+                         ((start 29) (stop 30)
+                          (source
+                           (Reader
+                            ((id 0) (name (expect_test.ml)) (length 65)
+                             (unsafe_get <fun>)))))))))
+                     (range
+                      ((start 29) (stop 30)
+                       (source
+                        (Reader
+                         ((id 0) (name (expect_test.ml)) (length 65)
+                          (unsafe_get <fun>)))))))))
+                  (range
+                   ((start 29) (stop 34)
+                    (source
+                     (Reader
+                      ((id 0) (name (expect_test.ml)) (length 65)
+                       (unsafe_get <fun>)))))))
+                 ((it
+                   (Exp_var
+                    ((it y)
+                     (range
+                      ((start 33) (stop 34)
+                       (source
+                        (Reader
+                         ((id 0) (name (expect_test.ml)) (length 65)
+                          (unsafe_get <fun>)))))))))
+                  (range
+                   ((start 33) (stop 34)
+                    (source
+                     (Reader
+                      ((id 0) (name (expect_test.ml)) (length 65)
+                       (unsafe_get <fun>)))))))))
+               (range
+                ((start 29) (stop 34)
+                 (source
+                  (Reader
+                   ((id 0) (name (expect_test.ml)) (length 65)
+                    (unsafe_get <fun>)))))))))
+            (range
+             ((start 17) (stop 34)
+              (source
+               (Reader
+                ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>))))))))))
+        (range
+         ((start 11) (stop 34)
+          (source
+           (Reader
+            ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>)))))))
+       ((it
+         (Exp_annot
+          ((it Exp_implicit)
+           (range
+            ((start 45) (stop 46)
+             (source
+              (Reader
+               ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>)))))))
+          ((it
+            (Type_arrow
+             ((it
+               (Param_mono_type
+                ((it
+                  (Type_constr ()
+                   ((it int)
+                    (range
+                     ((start 49) (stop 52)
+                      (source
+                       (Reader
+                        ((id 0) (name (expect_test.ml)) (length 65)
+                         (unsafe_get <fun>)))))))))
+                 (range
+                  ((start 48) (stop 52)
+                   (source
+                    (Reader
+                     ((id 0) (name (expect_test.ml)) (length 65)
+                      (unsafe_get <fun>)))))))))
+              (range
+               ((start 49) (stop 52)
+                (source
+                 (Reader
+                  ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>)))))))
+             ((it
+               (Type_constr ()
+                ((it int)
+                 (range
+                  ((start 56) (stop 59)
+                   (source
+                    (Reader
+                     ((id 0) (name (expect_test.ml)) (length 65)
+                      (unsafe_get <fun>)))))))))
+              (range
+               ((start 55) (stop 59)
+                (source
+                 (Reader
+                  ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>)))))))))
+           (range
+            ((start 49) (stop 59)
+             (source
+              (Reader
+               ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>)))))))))
+        (range
+         ((start 44) (stop 60)
+          (source
+           (Reader
+            ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>)))))))))
+     (range
+      ((start 7) (stop 60)
+       (source
+        (Reader ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>)))))))
+    |}]
+;;
