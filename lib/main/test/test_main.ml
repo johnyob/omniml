@@ -3864,12 +3864,73 @@ let%expect_test "" =
       let _ = (summon : int list);;
     |}
   in
-  type_check_and_print str;
+  (* Threshold below termination pressure *)
+  type_check_and_print ~termination_check:(Threshold 128) str;
   [%expect
     {|
     error[E018]: resolution failed to terminate
         ┌─ expect_test.ml:17:16
      17 │        let _ = (summon : int list);;
+        │                 ^^^^^^
+    |}];
+  (* Threshold above termination pressure *)
+  type_check_and_print ~termination_check:(Threshold 512) str;
+  [%expect
+    {|
+    error[E018]: resolution failed to terminate
+        ┌─ expect_test.ml:17:16
+     17 │        let _ = (summon : int list);;
+        │                 ^^^^^^
+    |}];
+  (* Decreasing instantiations check *)
+  type_check_and_print ~termination_check:Decreasing_instantiations str;
+  [%expect
+    {|
+    error[E018]: resolution failed to terminate
+        ┌─ expect_test.ml:17:16
+     17 │        let _ = (summon : int list);;
+        │                 ^^^^^^
+    |}]
+;;
+
+let%expect_test "" =
+  let str =
+    include_list
+    ^ {|
+      let bad0 = 
+        fun? (_ : int list list) -> (Nil : int list)
+      ;;
+
+      let bad1 = 
+        fun? (_ : int list list list) -> (Nil : int list list)
+      ;;
+
+      let bad2 = 
+        fun? (_ : int list list list list) -> (Nil : int list list list)
+      ;;
+
+      let bad3 = 
+        (Nil : int list list list list)
+      ;;
+
+      let implicit bad0;;
+      let implicit bad1;;
+      let implicit bad2;;
+      let implicit bad3;;
+
+      let summon = fun? x -> x;;
+      let _ = (summon : int list);;
+    |}
+  in
+  (* The expected solution should be (bad0 (bad1 (bad2 bad3))). 
+     But this exceeds the threshold of [2] (it requires 3). 
+     As a result, resolution should fail to terminate (despite terminating) *)
+  type_check_and_print ~termination_check:(Threshold 2) str;
+  [%expect
+    {|
+    error[E018]: resolution failed to terminate
+        ┌─ expect_test.ml:31:16
+     31 │        let _ = (summon : int list);;
         │                 ^^^^^^
     |}]
 ;;
