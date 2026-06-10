@@ -20,81 +20,31 @@ let infer_str ?with_stdlib ~with_poly_params str =
   @@ fun env -> Infer.Structure.infer_str ~with_poly_params ~env str
 ;;
 
-module Decreasing_instantiation_check = struct
-  open Omniml_constraint_solver
-  open Termination
-
-  module Ordinal = struct
-    module T = struct
-      type t =
-        { omega_coeff : int
-        ; one_coeff : int
-        }
-      [@@deriving sexp, compare]
+let decreasing_instantiation_spec =
+  let open Omniml_constraint_solver in
+  let open Termination.Budget.Spec in
+  (module struct
+    module Size = struct
+      let rec of_decoded_type (decoded_type : Decoded_type.t) =
+        match decoded_type with
+        | Var _ | Mu _ -> 0
+        | App (decoded_types, _) ->
+          1 + List.sum (module Int) decoded_types ~f:of_decoded_type
+      ;;
     end
 
-    include T
-    include Comparable.Make (T)
+    type t = { sizes : int Constraint.Var.Map.t } [@@deriving sexp_of, compare]
 
-    let of_int n = { one_coeff = n; omega_coeff = 0 }
-    let zero = of_int 0
-    let one = of_int 1
-    let omega = { omega_coeff = 1; one_coeff = 0 }
+    let initial = { sizes = Constraint.Var.Map.empty }
 
-    let ( + ) t1 t2 =
-      { one_coeff = t1.one_coeff + t2.one_coeff
-      ; omega_coeff = t1.omega_coeff + t2.omega_coeff
-      }
+    let consume var expected_type t =
+      let curr_size = Size.of_decoded_type (Lazy.force expected_type) in
+      match Map.find t.sizes var with
+      | Some prev_size when curr_size >= prev_size -> None
+      | None | Some _ -> Some { sizes = Map.set t.sizes ~key:var ~data:curr_size }
     ;;
-  end
-
-  module Size = struct
-    let rec of_decoded_type (decoded_type : Decoded_type.t) =
-      match decoded_type with
-      | Var _ | Mu _ -> Ordinal.omega
-      | App (decoded_types, _) ->
-        Ordinal.(one + List.sum (module Ordinal) decoded_types ~f:of_decoded_type)
-    ;;
-
-    let of_instantiation decoded_types =
-      decoded_types |> List.sum (module Ordinal) ~f:of_decoded_type
-    ;;
-  end
-
-  let reject_if_increasing_instantiation witness =
-    let open Witness in
-    let open Elab.Let_syntax in
-    let instantiation_size_table = Hashtbl.create (module Constraint.Var) in
-    let rec loop witness =
-      match Witness.view witness with
-      | Hole -> return false
-      | Spine s ->
-        let%bind instantiation = Spine.instantiation s in
-        let curr_size = Size.of_instantiation instantiation in
-        let head = Spine.head s in
-        if
-          match Hashtbl.find instantiation_size_table head with
-          | None -> true
-          | Some prev_size -> Ordinal.(curr_size < prev_size)
-        then (
-          Hashtbl.set instantiation_size_table ~key:head ~data:curr_size;
-          loop_args (Spine.args s))
-        else
-          (* [curr_size >= prev_size], therefore reject witness *)
-          return true
-    and loop_args = function
-      | [] -> return false
-      | witness :: witnesses ->
-        let%bind reject = loop witness in
-        if reject then return true else loop_args witnesses
-    in
-    loop witness
-  ;;
-
-  let v : Check.t =
-    { recursive_occurrence_threshold = 256; rejects = reject_if_increasing_instantiation }
-  ;;
-end
+  end : S)
+;;
 
 let check
       ?defaulting
@@ -102,13 +52,16 @@ let check
       ?range
       cst
   =
-  let termination_check =
+  let termination_budget_spec =
+    let open Omniml_constraint_solver.Termination.Budget.Spec in
     match termination_check with
-    | Disabled -> Omniml_constraint_solver.Termination.Check.disabled
-    | Threshold n -> Omniml_constraint_solver.Termination.Check.threshold n
-    | Decreasing_instantiations -> Decreasing_instantiation_check.v
+    | Disabled -> unlimited
+    | Threshold n -> bounded_by n
+    | Decreasing_instantiations -> decreasing_instantiation_spec
   in
-  match Omniml_constraint_solver.(solve ?range ?defaulting ~termination_check cst) with
+  match
+    Omniml_constraint_solver.(solve ?range ?defaulting ~termination_budget_spec cst)
+  with
   | Ok () -> ()
   | Error { range; it } ->
     let get_range range =

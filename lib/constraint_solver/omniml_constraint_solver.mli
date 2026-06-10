@@ -316,61 +316,24 @@ module Error : sig
 end
 
 module Termination : sig
-  module Witness : sig
-    module Elab : Monad.S
+  module Budget : sig
+    module Spec : sig
+      module type S = sig
+        (** [t] is the type of the budget*)
+        type t [@@deriving sexp_of, compare]
 
-    (** A partial witness is a term of the form: 
-        {[ 
-           W ::= ? | s
-        ]} *)
-    type t [@@deriving sexp_of]
+        val initial : t
+        val consume : Constraint.Var.t -> Decoded_type.t Lazy.t -> t -> t option
+      end
 
-    module Spine : sig
-      (** A witness spine is a partial term of the form: 
-          {[ 
-            s ::= x [tau1] ... [taun] W1 ... Wm
-          ]}
+      type t = (module S) [@@deriving sexp_of]
 
-          This represents a term inferred by an implicit hole.  *)
-      type witness := t
+      (** [unlimited] is a budget spec that consumes no budget. *)
+      val unlimited : t
 
-      type t [@@deriving sexp_of]
-
-      val head : t -> Constraint.Var.t
-      val instantiation : t -> Decoded_type.t list Elab.t
-      val args : t -> witness list
+      (** [bounded_by n] is a budget spec that consumes a simple counter. *)
+      val bounded_by : int -> t
     end
-
-    type view =
-      | Hole
-      | Spine of Spine.t
-    [@@deriving sexp_of]
-
-    val view : t -> view
-  end
-
-  module Check : sig
-    type t =
-      { recursive_occurrence_threshold : int
-        (** Number of recursive occurrences of the same variable 
-            after which we construct a candidate elaboration and 
-            run the termination checker. *)
-      ; rejects : Witness.t -> bool Witness.Elab.t
-        (** A predicate over candidate elaborations. 
-            
-            Returns [true] when the candidate exceeds the termination criterion. 
-
-            *Safety*: This function should be monotone with respect ot witnesses: 
-            If [rejects w] is true, then [rejects W[w]] is true where [W] is some 
-            one-hole witness context. *)
-      }
-    [@@deriving sexp_of]
-
-    (** [disabled] is a check that effectively acts as no termination check exists. *)
-    val disabled : t
-
-    (** [threshold n] is a check that fails when a given variable occurs recursively [>= n] times. *)
-    val threshold : int -> t
   end
 end
 
@@ -383,6 +346,6 @@ end
 val solve
   :  ?range:Range.t
   -> ?defaulting:Omniml_options.Defaulting.t
-  -> ?termination_check:Termination.Check.t
+  -> ?termination_budget_spec:Termination.Budget.Spec.t
   -> Constraint.t
   -> (unit, Error.t) result

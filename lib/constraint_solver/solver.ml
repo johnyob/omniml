@@ -25,103 +25,113 @@ module Error = struct
 end
 
 module Termination = struct
-  module History = struct
-    type t = { seen : int Constraint.Var.Map.t } [@@deriving sexp_of]
+  module Budget = struct
+    module Spec = struct
+      module type S = sig
+        type t [@@deriving sexp_of, compare]
 
-    let empty = { seen = Constraint.Var.Map.empty }
-
-    let mark t var =
-      { seen = Map.update t.seen var ~f:(Option.value_map ~default:1 ~f:Int.succ) }
-    ;;
-
-    let reset t var = { seen = Map.set t.seen ~key:var ~data:0 }
-
-    let count t var =
-      try Map.find_exn t.seen var with
-      | _ -> 0
-    ;;
-  end
-
-  module Witness = struct
-    module Elab = struct
-      module T = struct
-        type 'a t = Decoded_type.Decoder.t -> 'a
-
-        let return x _dec = x
-        let bind t ~f = fun dec -> f (t dec) dec
-        let map = `Define_using_bind
+        val initial : t
+        val consume : Constraint.Var.t -> Decoded_type.t Lazy.t -> t -> t option
       end
 
-      include T
-      include Monad.Make (T)
+      type t = ((module S)[@sexp.opaque]) [@@deriving sexp_of]
 
-      let decode_type type_ : Decoded_type.t t = fun dec -> dec type_
-      let run t = t (Decoded_type.Decoder.create ())
+      let unlimited : t =
+        (module struct
+          type t = unit [@@deriving sexp_of, compare]
+
+          let initial = ()
+          let consume _var _type _t = Some ()
+        end)
+      ;;
+
+      let bounded_by n : t =
+        (module struct
+          type t = int [@@deriving sexp_of, compare]
+
+          let initial = n
+          let consume _var _type t = if t = 0 then None else Some (t - 1)
+        end)
+      ;;
     end
 
-    module T = struct
-      type t = desc ref
-
-      and desc =
-        | Hole
-        | Spine of spine
-
-      and spine =
-        { head : Constraint.Var.t
-        ; instantiation : unit -> G.Type.t list
-        ; args : t list
-        }
-      [@@deriving sexp_of]
-    end
-
-    include T
-
-    module Spine = struct
-      type t = T.spine [@@deriving sexp_of]
-
-      let create ~head ~instantiation ~args = { head; instantiation; args }
-      let head t = t.head
-      let instantiation t = t.instantiation () |> List.map ~f:Elab.decode_type |> Elab.all
-      let args t = t.args
-    end
-
-    type view = desc =
-      | Hole
-      | Spine of spine
+    type t =
+      | Initial
+      | Consume of Constraint.Var.t * G.Type.t * t
     [@@deriving sexp_of]
 
-    let view (t : t) = !t
-    let hole () = ref Hole
-    let spine spine = ref (Spine spine)
+    let initial = Initial
+    let consume var type_ t = Consume (var, type_, t)
   end
 
   module Check = struct
+    module Pressure = struct
+      (* To decide when the solver should check the termination budget, 
+         we track a heuristic "peassure": the number of times a variable 
+         has been seen recursively. 
+
+         If this count exceeds a threshold, the budget is evaluated 
+         eargerly; otherwise evaluation is delayed until after constraint 
+         solving. *)
+
+      type t = { recursive_occurrences : int Constraint.Var.Map.t } [@@deriving sexp_of]
+
+      let empty = { recursive_occurrences = Constraint.Var.Map.empty }
+
+      let increase t var =
+        { recursive_occurrences =
+            Map.update
+              t.recursive_occurrences
+              var
+              ~f:(Option.value_map ~default:1 ~f:Int.succ)
+        }
+      ;;
+
+      let reset t var =
+        { recursive_occurrences = Map.set t.recursive_occurrences ~key:var ~data:0 }
+      ;;
+
+      let get t var =
+        try Map.find_exn t.recursive_occurrences var with
+        | _ -> 0
+      ;;
+
+      let threshold = 256
+    end
+
     type t =
-      { recursive_occurrence_threshold : int
-      ; rejects : Witness.t -> bool Witness.Elab.t
+      { budget_spec : Budget.Spec.t
+      ; mutable delayed_checks : (Range.t option * Budget.t) list
       }
     [@@deriving sexp_of]
 
-    let trigger_check t history ~on =
-      History.count history on > t.recursive_occurrence_threshold
+    let create budget_spec = { budget_spec; delayed_checks = [] }
+
+    let raise_if_exceeds t ?range budget =
+      let (module Tbs) = t.budget_spec in
+      let decode_type type_ =
+        lazy
+          (let dec = Decoded_type.Decoder.create () in
+           dec type_)
+      in
+      let rec interpret = function
+        | Budget.Initial -> Tbs.initial
+        | Consume (var, type_, budget_term) ->
+          let budget = interpret budget_term in
+          (match Tbs.consume var (decode_type type_) budget with
+           | Some budget -> budget
+           | None -> Error.(raise ~range @@ Resolution_termination_check_failed))
+      in
+      ignore (interpret budget : Tbs.t)
     ;;
 
-    let check_if_exceeded_threshold t history ~on ~root_witness =
-      if trigger_check t history ~on
-      then `Check (t.rejects root_witness |> Witness.Elab.run)
-      else `No_check
+    let add_delayed_check t ?range termination_budget =
+      t.delayed_checks <- (range, termination_budget) :: t.delayed_checks
     ;;
 
-    let disabled =
-      { recursive_occurrence_threshold = Int.max_value
-      ; rejects = (fun _ -> Witness.Elab.return false)
-      }
-    ;;
-
-    let threshold n =
-      { recursive_occurrence_threshold = n
-      ; rejects = (fun _ -> Witness.Elab.return true)
-      }
+    let force_delayed_checks t =
+      List.iter t.delayed_checks ~f:(fun (range, budget) ->
+        raise_if_exceeds t ?range budget)
     ;;
   end
 end
@@ -133,8 +143,8 @@ module Env = struct
     ; implicit_vars : Constraint.Var.Set.t
     ; curr_region : G.Region.t
     ; range : Range.t option
-    ; termination_history : Termination.History.t
     ; termination_check : Termination.Check.t
+    ; termination_pressure : Termination.Check.Pressure.t
     }
   [@@deriving sexp_of]
 
@@ -147,8 +157,8 @@ module Env = struct
     ; implicit_vars = Constraint.Var.Set.empty
     ; curr_region
     ; range
-    ; termination_history = Termination.History.empty
     ; termination_check
+    ; termination_pressure = Termination.Check.Pressure.empty
     }
   ;;
 
@@ -162,12 +172,17 @@ module Env = struct
 
   let add_implicit_var t var = { t with implicit_vars = Set.add t.implicit_vars var }
 
-  let mark_var_in_termination_history t var =
-    { t with termination_history = Termination.History.mark t.termination_history var }
+  let increase_termination_pressure t var =
+    { t with
+      termination_pressure =
+        Termination.Check.Pressure.increase t.termination_pressure var
+    }
   ;;
 
-  let reset_var_in_termination_history t var =
-    { t with termination_history = Termination.History.reset t.termination_history var }
+  let reset_termination_pressure t var =
+    { t with
+      termination_pressure = Termination.Check.Pressure.reset t.termination_pressure var
+    }
   ;;
 
   let find_type_var t type_var =
@@ -507,14 +522,7 @@ let instantiate ~(state : State.t) ~(env : Env.t) gscheme expected_type =
   instantiation, implicits
 ;;
 
-let rec resolve_implicit
-          ~state
-          ~env
-          ~root_witness
-          ~curr_witness
-          ~implicit_env
-          expected_type
-  =
+let rec resolve_implicit ~state ~env ~termination_budget ~implicit_env expected_type =
   Overload.match_
     ~state
     ~env
@@ -523,54 +531,49 @@ let rec resolve_implicit
     ~closure:[ expected_type ]
     ~with_:(fun head gscheme ->
       (* Instantiate the type scheme*)
-      let instantiation, implicits = instantiate ~state ~env gscheme expected_type in
-      (* Allocate witnesses for each implicit and set the current witness *)
-      let implicit_witnesses =
-        List.map implicits ~f:(fun _implicit -> Termination.Witness.hole ())
+      let _instantiation, implicits = instantiate ~state ~env gscheme expected_type in
+      let termination_budget =
+        Termination.Budget.consume head expected_type termination_budget
       in
-      (curr_witness
-       := Termination.Witness.(
-            Spine (Spine.create ~head ~instantiation ~args:implicit_witnesses)));
-      (* Mark the variable in the history *)
-      let env = Env.mark_var_in_termination_history env head in
-      let env =
-        match
-          Termination.Check.check_if_exceeded_threshold
-            env.termination_check
-            env.termination_history
-            ~on:head
-            ~root_witness
-        with
-        | `No_check -> env
-        | `Check rejects ->
-          if rejects
-          then Env.raise env Resolution_termination_check_failed
-          else
+      match implicits with
+      | [] ->
+        (* A leaf constraint in resolution. Despite the fact that resolution has 
+           terminated, we need to check the termination budget computation after 
+           constraint solving finishes. *)
+        Termination.Check.add_delayed_check
+          env.termination_check
+          ?range:env.range
+          termination_budget
+      | _ :: _ ->
+        (* Increase termination pressure for [head] *)
+        let env = Env.increase_termination_pressure env head in
+        (* Check if pressure threshold has exceeded *)
+        let env =
+          if Termination.Check.Pressure.(get env.termination_pressure head > threshold)
+          then (
+            Termination.Check.raise_if_exceeds
+              env.termination_check
+              ?range:env.range
+              termination_budget;
             (* TODO: Reset globally instead of just in current path *)
-            Env.reset_var_in_termination_history env head
-      in
-      (* Safety: List.length implicit_witnesses = List.length implicits by construction *)
-      List.iter2_exn implicits implicit_witnesses ~f:(fun implicit implicit_witness ->
-        resolve_implicit
-          ~state
-          ~env
-          ~root_witness
-          ~curr_witness:implicit_witness
-          ~implicit_env
-          implicit))
+            Env.reset_termination_pressure env head)
+          else env
+        in
+        List.iter
+          implicits
+          ~f:(resolve_implicit ~state ~env ~termination_budget ~implicit_env))
 ;;
 
 let resolve_toplevel_implicits ~state ~env implicits =
   let implicit_env = Env.implicit_env env in
-  List.iter implicits ~f:(fun implicit ->
-    let root_witness = Termination.Witness.hole () in
-    resolve_implicit
-      ~state
-      ~env
-      ~root_witness
-      ~curr_witness:root_witness
-      ~implicit_env
-      implicit)
+  List.iter
+    implicits
+    ~f:
+      (resolve_implicit
+         ~state
+         ~env
+         ~termination_budget:Termination.Budget.initial
+         ~implicit_env)
 ;;
 
 let explicit_instantiate ~state ~env gscheme expected_type =
@@ -739,15 +742,19 @@ and gclosure_of_closure ~env closure : G.Suspended_match.closure =
 let solve
   :  ?range:Range.t
   -> ?defaulting:Omniml_options.Defaulting.t
-  -> ?termination_check:Termination.Check.t
+  -> ?termination_budget_spec:Termination.Budget.Spec.t
   -> Constraint.t
   -> (unit, Error.t) result
   =
-  fun ?range ?defaulting ?(termination_check = Termination.Check.disabled) cst ->
+  fun ?range
+    ?defaulting
+    ?(termination_budget_spec = Termination.Budget.Spec.unlimited)
+    cst ->
   try
     Scheduler.(clear (t ()));
     let state = State.create ?defaulting () in
     let root_region = State.root_region state in
+    let termination_check = Termination.Check.create termination_budget_spec in
     let env = Env.empty ~curr_region:root_region ~range ~termination_check in
     [%log.global.debug "Initial env and state" (state : State.t) (env : Env.t)];
     solve ~state ~env cst;
@@ -787,6 +794,8 @@ let solve
             (num_shape_partially_generalized_regions : int)
             (num_type_partially_generalized_regions : int)
             (state : State.t)];
+    (* Check that all termination budgets *)
+    Termination.Check.force_delayed_checks termination_check;
     Ok ()
   with
   (* Catch solver exceptions *)
