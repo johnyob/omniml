@@ -74,6 +74,9 @@ module Type : sig
       | Arrow of Var.t * Var.t
       (** [Arrow (arg, ret)] is a function type with argument [arg]
           and result [ret] variables. *)
+      | Implicit_arrow of Var.t * Var.t
+      (** [Implicit_arrow (arg, ret)] is a implicit function type with 
+          argument [arg] and result [ret] variables. *)
       | Tuple of Var.t list
       (** [Tuple vs] is a tuple type with component variables [vs]. *)
       | Constr of Var.t list * Ident.t
@@ -130,6 +133,11 @@ module Constraint : sig
       ; vars : Var.t list
       }
     [@@deriving sexp]
+  end
+
+  module Implicit_scope : sig
+    (** A set of variables used for implicit resolution. *)
+    type t = { vars : Var.Set.t } [@@deriving sexp]
   end
 
   (** [t] is a constraint. *)
@@ -196,15 +204,15 @@ module Constraint : sig
       this syntax. *)
 
   type unquantified_let_binding := t * binding list
-  type abstracted_let_binding := Type.t list * unquantified_let_binding
-  type quantified_let_binding := (flexibility * Type.Var.t) list * abstracted_let_binding
+
+  type quantified_let_binding :=
+    (flexibility * Type.Var.t) list * unquantified_let_binding
 
   val ( @=> ) : t -> binding list -> unquantified_let_binding
-  val ( @?-> ) : Type.t list -> unquantified_let_binding -> abstracted_let_binding
 
   val ( @. )
     :  (flexibility * Type.Var.t) list
-    -> abstracted_let_binding
+    -> unquantified_let_binding
     -> quantified_let_binding
 
   (** [mono_binding bindings] builds a monomorphic let binding.
@@ -222,9 +230,7 @@ module Constraint : sig
       bound to [x]. The variable [x] must be bound earlier by {!let_}. *)
   val inst : Var.t -> Type.t -> t
 
-  val over : Var.t list -> Type.t -> t
-  val let_implicit : Var.t -> in_:t -> t
-  val implicit : Type.t -> t
+  val implicit : Type.t -> in_:Implicit_scope.t -> t
 
   module Match_error : sig
     type t =

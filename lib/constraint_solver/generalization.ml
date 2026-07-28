@@ -450,7 +450,6 @@ end
 module Scheme = struct
   type t =
     { root : Type.t
-    ; implicits : Type.t list
     ; region : Region.t
     }
   [@@deriving sexp_of]
@@ -467,8 +466,7 @@ module Scheme = struct
         | Generic -> Type.inner type_ |> I.iter ~f:loop
         | Instance _ -> f type_)
     in
-    loop t.root;
-    List.iter t.implicits ~f:loop
+    loop t.root
   ;;
 end
 
@@ -993,10 +991,7 @@ let update_and_generalize ~state (curr_region : Region.t) =
   [%log.global.debug "End generalization" (curr_region.id : Identifier.t)]
 ;;
 
-let create_scheme ~curr_region ?(implicits = []) root : Scheme.t =
-  { root; implicits; region = curr_region }
-;;
-
+let create_scheme ~curr_region root : Scheme.t = { root; region = curr_region }
 let run_scheduler () = Scheduler.(run (t ()))
 
 let force_generalization ~state region =
@@ -1035,7 +1030,7 @@ let force_root_generalization_and_return_unsolved_shape_var_errors ~state =
   collected_errors @ List.concat_map remaining_shape_vars ~f:Principal_shape.Var.errors
 ;;
 
-let instantiate ~state ~curr_region ({ root; implicits; region = src_region } : Scheme.t) =
+let instantiate ~state ~curr_region ({ root; region = src_region } : Scheme.t) =
   [%log.global.debug
     "Generalization tree @ instantiation"
       (state.region_tree : Type.t Pool.t Tree.With_dirty.t)];
@@ -1051,8 +1046,6 @@ let instantiate ~state ~curr_region ({ root; implicits; region = src_region } : 
   in
   (* Copy the root *)
   let root = copy root in
-  (* Copy the implicits *)
-  let implicits = List.map implicits ~f:copy in
   (* Return copied quantifiers. Note that this is delayed since 
      the quantifiers can mutate as partial generalization progresses. *)
   let quantifiers () =
@@ -1061,7 +1054,7 @@ let instantiate ~state ~curr_region ({ root; implicits; region = src_region } : 
     |> Hashtbl.filter_map ~f:(fun copy -> Option.some_if copy.is_quantifier copy.it)
     |> Hashtbl.data
   in
-  quantifiers, implicits, root
+  quantifiers, root
 ;;
 
 module Suspended_match = struct

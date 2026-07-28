@@ -6,6 +6,7 @@ module Var = Self.Var
 type t = Self.t =
   | Var of Var.t
   | Arrow of t * t
+  | Implicit_arrow of t * t
   | Tuple of t list
   | Constr of t list * Ident.t
   | Shape of t list * Types.Principal_shape.t
@@ -14,6 +15,7 @@ type t = Self.t =
 
 let var v = Var v
 let ( @-> ) t1 t2 = Arrow (t1, t2)
+let ( @=> ) t1 t2 = Implicit_arrow (t1, t2)
 let constr ts constr = Constr (ts, constr)
 
 let tuple ts =
@@ -38,6 +40,7 @@ end
 module Matchee = struct
   type t =
     | Arrow of Var.t * Var.t
+    | Implicit_arrow of Var.t * Var.t
     | Tuple of Var.t list
     | Constr of Var.t list * Ident.t
     | Poly of Scheme.t

@@ -19,6 +19,7 @@ module For_testing = struct
     type type_ = Type.t =
       | Var of Type.Var.t
       | Arrow of type_ * type_
+      | Implicit_arrow of type_ * type_
       | Tuple of type_ list
       | Constr of type_ list * Type.Ident.t
       | Shape of type_ list * principal_shape
@@ -39,6 +40,7 @@ module For_testing = struct
 
     and principal_shape = Principal_shape.t =
       | Sh_arrow [@quickcheck.do_not_generate]
+      | Sh_implicit_arrow [@quickcheck.do_not_generate]
       | Sh_tuple of int
       | Sh_constr of int * Type.Ident.t
       | Sh_poly of poly_principal_shape [@quickcheck.do_not_generate]

@@ -268,12 +268,11 @@ let%expect_test "No suspended matches results in normal generalization" =
     @@ let_
          (poly_binding
             ([ Flexible, a2 ]
-             @. []
-             @?-> (exists a3
-                   @@ exists a4
-                   @@ (T.(var a2 =~ var a3 @-> var a4)
-                       &~ let_ (mono_binding [ xx @: T.var a3 ]) ~in_:(inst xx (T.var a4))
-                      ))
+             @. (exists a3
+                 @@ exists a4
+                 @@ (T.(var a2 =~ var a3 @-> var a4)
+                     &~ let_ (mono_binding [ xx @: T.var a3 ]) ~in_:(inst xx (T.var a4)))
+                )
              @=> [ xid @: T.var a2 ]))
          ~in_:
            (exists a5
@@ -333,13 +332,12 @@ let%expect_test "Partial generic becomes instance" =
     @@ let_
          (poly_binding
             ([ Flexible, a3 ]
-             @. []
-             @?-> match_
-                    a1
-                    ~closure:[ `Type a3; `Type a2 ]
-                    ~with_:(fun _ -> T.(var a3 =~ var a2) &~ T.(var a2 =~ tint))
-                    ~else_:else_match_err
-                    ~error:match_err
+             @. match_
+                  a1
+                  ~closure:[ `Type a3; `Type a2 ]
+                  ~with_:(fun _ -> T.(var a3 =~ var a2) &~ T.(var a2 =~ tint))
+                  ~else_:else_match_err
+                  ~error:match_err
              @=> [ x1 @: T.var a3 ]))
          ~in_:(inst x1 tint &~ T.(var a1 =~ tstring))
   in
@@ -380,13 +378,12 @@ let%expect_test "Partial generic becomes generic" =
     @@ let_
          (poly_binding
             ([ Flexible, a2 ]
-             @. []
-             @?-> match_
-                    a1
-                    ~closure:[ `Type a2 ]
-                    ~with_:(fun _ -> exists a3 @@ T.(var a2 =~ var a3 @-> var a3))
-                    ~else_:else_match_err
-                    ~error:match_err
+             @. match_
+                  a1
+                  ~closure:[ `Type a2 ]
+                  ~with_:(fun _ -> exists a3 @@ T.(var a2 =~ var a3 @-> var a3))
+                  ~else_:else_match_err
+                  ~error:match_err
              @=> [ x1 @: T.var a2 ]))
          ~in_:
            (inst x1 T.(tint @-> tint)
@@ -433,24 +430,23 @@ let%expect_test "Propagating changes during partial generalization" =
     @@ let_
          (poly_binding
             ([ Flexible, a3 ]
-             @. []
-             @?-> ((* This match forces [a3] to be partially generic *)
-                   match_
-                     a1
-                     ~closure:[ `Type a3 ]
-                     ~with_:(fun _ -> tt)
-                     ~else_:else_match_err
-                     ~error:match_err
-                   &~
-                   (* This match is resolved after [a2] is unified with int.
+             @. ((* This match forces [a3] to be partially generic *)
+                 match_
+                   a1
+                   ~closure:[ `Type a3 ]
+                   ~with_:(fun _ -> tt)
+                   ~else_:else_match_err
+                   ~error:match_err
+                 &~
+                 (* This match is resolved after [a2] is unified with int.
                           But since [a3] is still partially generic, the structure of [a3] is
                           not propagated to [a4]. This causes a bug. *)
-                   match_
-                     a2
-                     ~closure:[ `Type a3 ]
-                     ~with_:(fun _ -> T.(var a3 =~ tint))
-                     ~else_:else_match_err
-                     ~error:match_err)
+                 match_
+                   a2
+                   ~closure:[ `Type a3 ]
+                   ~with_:(fun _ -> T.(var a3 =~ tint))
+                   ~else_:else_match_err
+                   ~error:match_err)
              @=> [ x1 @: T.var a3 ]))
          ~in_:
            (exists a4
@@ -557,13 +553,12 @@ let%expect_test "Partial ungeneralization (Partial<>Instance)" =
     @@ let_
          (poly_binding
             ([ Flexible, a3 ]
-             @. []
-             @?-> match_
-                    a1
-                    ~closure:[ `Type a3; `Type a2 ]
-                    ~with_:(fun _ -> T.(var a3 =~ var a2))
-                    ~else_:else_match_err
-                    ~error:match_err
+             @. match_
+                  a1
+                  ~closure:[ `Type a3; `Type a2 ]
+                  ~with_:(fun _ -> T.(var a3 =~ var a2))
+                  ~else_:else_match_err
+                  ~error:match_err
              @=> [ x1 @: T.var a3 ]))
          ~in_:(inst x1 tint &~ T.(var a2 =~ tstring) &~ T.(var a1 =~ tint))
   in
@@ -614,19 +609,17 @@ let%expect_test "Partial ungeneralization (Partial<>Partial)" =
     @@ let_
          (poly_binding
             ([ Flexible, a3 ]
-             @. []
-             @?-> let_
-                    (poly_binding
-                       ([ Flexible, a4 ]
-                        @. []
-                        @?-> match_
-                               a1
-                               ~closure:[ `Type a4; `Type a3 ]
-                               ~with_:(fun _ -> T.(var a4 =~ var a3))
-                               ~else_:else_match_err
-                               ~error:match_err
-                        @=> [ x2 @: T.var a4 ]))
-                    ~in_:(inst x2 tint &~ inst x2 tstring)
+             @. let_
+                  (poly_binding
+                     ([ Flexible, a4 ]
+                      @. match_
+                           a1
+                           ~closure:[ `Type a4; `Type a3 ]
+                           ~with_:(fun _ -> T.(var a4 =~ var a3))
+                           ~else_:else_match_err
+                           ~error:match_err
+                      @=> [ x2 @: T.var a4 ]))
+                  ~in_:(inst x2 tint &~ inst x2 tstring)
              @=> [ x1 @: T.var a3 ]))
          ~in_:T.(var a1 =~ tstring)
   in
@@ -682,13 +675,12 @@ let%expect_test "Partials propagate to same instance group" =
     @@ let_
          (poly_binding
             ([ Flexible, a2; Flexible, a3 ]
-             @. []
-             @?-> match_
-                    a1
-                    ~closure:[ `Type a2; `Type a3 ]
-                    ~with_:(fun _ -> T.(var a2 =~ var a3))
-                    ~else_:else_match_err
-                    ~error:match_err
+             @. match_
+                  a1
+                  ~closure:[ `Type a2; `Type a3 ]
+                  ~with_:(fun _ -> T.(var a2 =~ var a3))
+                  ~else_:else_match_err
+                  ~error:match_err
              @=> [ (x1 @: T.(var a3 @-> var a2)) ]))
          ~in_:
            (exists_many [ a4; a5 ]
@@ -751,20 +743,19 @@ let%expect_test "Detect SCC cycle accross regions" =
     @@ let_
          (poly_binding
             ([ Flexible, a2; Flexible, a3 ]
-             @. []
-             @?-> (match_
-                     a2
-                     ~closure:[ `Type a3 ]
-                     ~with_:(fun _ -> tt)
-                     ~else_:else_match_err
-                     ~error:match_err
-                   &~ match_
-                        a3
-                        ~closure:[ `Type a2 ]
-                        ~with_:(fun _ -> tt)
-                        ~else_:else_match_err
-                        ~error:match_err
-                   &~ T.(var a2 =~ var a1))
+             @. (match_
+                   a2
+                   ~closure:[ `Type a3 ]
+                   ~with_:(fun _ -> tt)
+                   ~else_:else_match_err
+                   ~error:match_err
+                 &~ match_
+                      a3
+                      ~closure:[ `Type a2 ]
+                      ~with_:(fun _ -> tt)
+                      ~else_:else_match_err
+                      ~error:match_err
+                 &~ T.(var a2 =~ var a1))
              @=> [ (x1 @: T.(var a2 @-> var a3)) ]))
          ~in_:tt
   in
@@ -834,20 +825,19 @@ let%expect_test "" =
     @@ let_
          (poly_binding
             ([ Flexible, a2 ]
-             @. []
-             @?-> (match_
-                     a1
-                     ~closure:[ `Type a2 ]
-                     ~with_:(fun _ ->
-                       exists_many [ a3; a4 ] @@ T.(var a2 =~ var a3 @-> var a4))
-                     ~else_:else_match_err
-                     ~error:match_err
-                   &~ match_
-                        a5
-                        ~closure:[ `Type a2 ]
-                        ~with_:(fun _ -> T.(var a2 =~ tint @-> tint))
-                        ~else_:else_match_err
-                        ~error:match_err)
+             @. (match_
+                   a1
+                   ~closure:[ `Type a2 ]
+                   ~with_:(fun _ ->
+                     exists_many [ a3; a4 ] @@ T.(var a2 =~ var a3 @-> var a4))
+                   ~else_:else_match_err
+                   ~error:match_err
+                 &~ match_
+                      a5
+                      ~closure:[ `Type a2 ]
+                      ~with_:(fun _ -> T.(var a2 =~ tint @-> tint))
+                      ~else_:else_match_err
+                      ~error:match_err)
              @=> [ x1 @: T.var a2 ]))
          ~in_:
            ((* 1. Forces the generalization of x1's region *)
@@ -902,11 +892,7 @@ let%expect_test "" =
   let cst =
     exists a1
     @@ let_
-         (poly_binding
-          @@ [ Flexible, a2 ]
-          @. []
-          @?-> tt
-          @=> [ (x1 @: T.(var a2 @-> var a2)) ])
+         (poly_binding @@ [ Flexible, a2 ] @. tt @=> [ (x1 @: T.(var a2 @-> var a2)) ])
          ~in_:
            (match_
               a1
@@ -953,16 +939,15 @@ let%expect_test "" =
     @@ let_
          (poly_binding
           @@ [ Flexible, a2 ]
-          @. []
-          @?-> let_
-                 (mono_binding [ x2 @: T.var a2 ])
-                 ~in_:
-                   (match_
-                      a1
-                      ~closure:[ `Scheme x2 ]
-                      ~with_:(fun _ -> inst x2 tint)
-                      ~else_:else_match_err
-                      ~error:match_err)
+          @. let_
+               (mono_binding [ x2 @: T.var a2 ])
+               ~in_:
+                 (match_
+                    a1
+                    ~closure:[ `Scheme x2 ]
+                    ~with_:(fun _ -> inst x2 tint)
+                    ~else_:else_match_err
+                    ~error:match_err)
           @=> [ x1 @: T.var a2 ])
          ~in_:T.(var a1 =~ tint)
   in
@@ -1002,16 +987,15 @@ let%expect_test "" =
     @@ let_
          (poly_binding
           @@ [ Flexible, a2 ]
-          @. []
-          @?-> let_
-                 (mono_binding [ x2 @: T.var a2 ])
-                 ~in_:
-                   (match_
-                      a1
-                      ~closure:[ `Scheme x2 ]
-                      ~with_:(fun _ -> inst x2 tint)
-                      ~else_:else_match_err
-                      ~error:match_err)
+          @. let_
+               (mono_binding [ x2 @: T.var a2 ])
+               ~in_:
+                 (match_
+                    a1
+                    ~closure:[ `Scheme x2 ]
+                    ~with_:(fun _ -> inst x2 tint)
+                    ~else_:else_match_err
+                    ~error:match_err)
           @=> [ x1 @: T.var a2 ])
          ~in_:T.(var a1 =~ tint &~ inst x1 tstring)
   in

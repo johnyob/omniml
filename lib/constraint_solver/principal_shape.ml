@@ -43,7 +43,7 @@ module Poly = struct
         let[@inline] num_uses (var : Type.Var.t) = uses.((var.id :> int)) in
         let[@inline] is_polyshape (shape : Self.t) =
           match shape with
-          | Sh_arrow | Sh_tuple _ | Sh_constr _ -> false
+          | Sh_arrow | Sh_implicit_arrow | Sh_tuple _ | Sh_constr _ -> false
           | Sh_poly _ -> true
         in
         (* We rely on non-short-circuting operators (since marking uses is effectful) *)
@@ -57,7 +57,7 @@ module Poly = struct
           | Var var ->
             mark_use var;
             Hash_set.mem scheme_quantifiers var
-          | Arrow (type1, type2) ->
+          | Arrow (type1, type2) | Implicit_arrow (type1, type2) ->
             (* Invariant: all constructors must contain a polymorphic subterm. *)
             assert (loop type1 ||| loop type2);
             true
@@ -95,6 +95,7 @@ end
 
 type t = Self.t =
   | Sh_arrow
+  | Sh_implicit_arrow
   | Sh_tuple of int
   | Sh_constr of int * Type.Ident.t
   | Sh_poly of Poly.t
@@ -112,14 +113,14 @@ let create_var ~id_source () = Type.Var.create ~id_source ~name:"Principal_shape
 
 let arity t =
   match t with
-  | Sh_arrow -> 2
+  | Sh_arrow | Sh_implicit_arrow -> 2
   | Sh_tuple n | Sh_constr (n, _) -> n
   | Sh_poly poly_shape -> List.length poly_shape.quantifiers
 ;;
 
 let quantifiers t =
   match t with
-  | Sh_arrow ->
+  | Sh_arrow | Sh_implicit_arrow ->
     (* Invariant: All quantifiers are locally named from 0 to n *)
     let id_source = Identifier.create_source () in
     (* [let]s are used to force the correct ordering *)
@@ -222,6 +223,10 @@ module Poly_shape_decomposition = struct
       (match types with
        | [ type1; type2 ] -> Arrow (type1, type2)
        | _ -> assert false)
+    | Sh_implicit_arrow ->
+      (match types with
+       | [ type1; type2 ] -> Implicit_arrow (type1, type2)
+       | _ -> assert false)
     | Sh_poly _ -> Shape (types, shape)
   ;;
 
@@ -244,6 +249,12 @@ module Poly_shape_decomposition = struct
         (self_with_original t2)
         ~state
         ~f:(fun t1 t2 -> Arrow (t1, t2))
+    | Implicit_arrow (t1, t2) ->
+      Part.map_principal_part2
+        (self_with_original t1)
+        (self_with_original t2)
+        ~state
+        ~f:(fun t1 t2 -> Implicit_arrow (t1, t2))
     | Tuple ts ->
       Part.map_principal_parts (List.map ts ~f:self_with_original) ~state ~f:(fun ts ->
         Tuple ts)

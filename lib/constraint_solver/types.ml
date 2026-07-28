@@ -19,6 +19,7 @@ module rec Type : sig
   type t =
     | Var of Var.t (** Type variable ['a] *)
     | Arrow of t * t (** Function types [tua1 -> tau2] *)
+    | Implicit_arrow of t * t (** Implicit function types [tau1 => tau2] *)
     | Tuple of t list (** Tuple types [tau1 * ... * taun] *)
     | Constr of t list * Ident.t (** Nominal types [(tau1, ..., taun) T] *)
     | Shape of t list * Principal_shape.t (** Applied shape [(tau1, ..., taun) s] *)
@@ -41,6 +42,7 @@ end = struct
   type t =
     | Var of Var.t (** Type variable ['a] *)
     | Arrow of t * t (** Function types [tua1 -> tau2] *)
+    | Implicit_arrow of t * t (** Implicit function types [tau1 => tau2] *)
     | Tuple of t list (** Tuple types [tau1 * ... * taun] *)
     | Constr of t list * Ident.t (** Nominal types [(tau1, ..., taun) T] *)
     | Shape of t list * Principal_shape.t (** Applied shape [(tau1, ..., taun) s] *)
@@ -68,6 +70,7 @@ and Principal_shape : sig
 
   type t =
     | Sh_arrow (** Arrow shape ['c1 'c2. 'c1 -> 'c2] *)
+    | Sh_implicit_arrow (** Implicit arrow shape ['c1 'c2. 'c1 => 'c2] *)
     | Sh_tuple of int (** Tuple shape ['c1, ..., 'cn. 'c1 * ... * 'cn] *)
     | Sh_constr of int * Type.Ident.t
     (** Nominal type shape ['c1, ..., 'cn. ('c1, ..., 'cn) T] *)
@@ -84,6 +87,7 @@ end = struct
 
   type t =
     | Sh_arrow (** Arrow shape ['c1 'c2. 'c1 -> 'c2] *)
+    | Sh_implicit_arrow (** Implicit arrow shape ['c1 'c2. 'c1 => 'c2] *)
     | Sh_tuple of int (** Tuple shape ['c1, ..., 'cn. 'c1 * ... * 'cn] *)
     | Sh_constr of int * Type.Ident.t
     (** Nominal type shape ['c1, ..., 'cn. ('c1, ..., 'cn) T] *)

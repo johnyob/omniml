@@ -14,8 +14,8 @@ module Node : sig
     { id : Identifier.t (** Unique identifier of the node *)
     ; level : Level.t
       (** The level of the node in the tree.
-      If [parent] is [None], then [level = Level.zero],
-      otherwise [level = Level.succ parent.level]. *)
+          If [parent] is [None], then [level = Level.zero],
+          otherwise [level = Level.succ parent.level]. *)
     ; value : 'a (** The region of the node *)
     ; parent : 'a t option (** Parent of the node, if [None] then node is a root node. *)
     }
