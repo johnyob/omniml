@@ -14,6 +14,10 @@ module type S = sig
   val var_name : (string -> Var_name.With_range.t) with_range_fn
   val constr_name : (string -> Constructor_name.With_range.t) with_range_fn
   val label_name : (string -> Label_name.With_range.t) with_range_fn
+  val over_name : (string -> Over_name.With_range.t) with_range_fn
+
+  val over_path
+    : (Over_name.With_range.t -> Var_name.With_range.t -> Over_path.t) with_range_fn
 
   module Type : sig
     module Function_param : sig
@@ -35,6 +39,7 @@ module type S = sig
   module Pattern : sig
     val any : pattern with_range_fn
     val var : (Var_name.With_range.t -> pattern) with_range_fn
+    val over : (Over_path.t -> pattern) with_range_fn
     val alias : (pattern -> as_:Var_name.With_range.t -> pattern) with_range_fn
     val const : (constant -> pattern) with_range_fn
     val tuple : (pattern list -> pattern) with_range_fn
@@ -53,10 +58,14 @@ module type S = sig
     end
 
     val var : (Var_name.With_range.t -> expression) with_range_fn
+    val over : (Over_path.t -> expression) with_range_fn
     val const : (constant -> expression) with_range_fn
     val fun_ : (function_param list -> expression -> expression) with_range_fn
     val app : (expression -> expression -> expression) with_range_fn
     val let_ : (value_binding -> in_:expression -> expression) with_range_fn
+
+    val let_implicit
+      : (Var_name.With_range.t -> in_:expression -> expression) with_range_fn
 
     val exists
       : (Type_var_name.With_range.t list -> expression -> expression) with_range_fn
@@ -82,14 +91,21 @@ module type S = sig
     val case : (lhs:pattern -> rhs:expression -> case) with_range_fn
     val poly : (expression -> ?scheme:core_scheme -> unit -> expression) with_range_fn
     val inst : (expression -> expression) with_range_fn
+    val implicit : expression with_range_fn
   end
 
-  val value_binding : (pattern -> expression -> value_binding) with_range_fn
+  module Term : sig
+    val exp : (expression -> term) with_range_fn
+    val implicit_fun : (pattern list -> expression -> term) with_range_fn
+  end
+
+  val value_binding : (pattern -> term -> value_binding) with_range_fn
 
   module Structure : sig
     val value : (value_binding -> structure_item) with_range_fn
     val primitive : (value_description -> structure_item) with_range_fn
     val type_ : (type_declaration list -> structure_item) with_range_fn
+    val implicit : (Var_name.With_range.t -> structure_item) with_range_fn
 
     val type_decl
       : (name:Type_name.With_range.t
@@ -117,6 +133,11 @@ module Default : S with type 'a with_range_fn := range:Range.t -> 'a = struct
   let constr_name ~range name = With_range.create ~range @@ Constructor_name.create name
   let type_name ~range name = With_range.create ~range @@ Type_name.create name
   let label_name ~range name = With_range.create ~range @@ Label_name.create name
+  let over_name ~range name = With_range.create ~range @@ Over_name.create name
+
+  let over_path ~range qualifier var =
+    With_range.create ~range @@ { Over_path.qualifier; var }
+  ;;
 
   module Type = struct
     module Function_param = struct
@@ -142,6 +163,7 @@ module Default : S with type 'a with_range_fn := range:Range.t -> 'a = struct
   module Pattern = struct
     let any ~range = With_range.create ~range Pat_any
     let var ~range var_name = With_range.create ~range @@ Pat_var var_name
+    let over ~range over_path = With_range.create ~range @@ Pat_over over_path
     let alias ~range pat ~as_ = With_range.create ~range @@ Pat_alias (pat, as_)
     let const ~range const = With_range.create ~range @@ Pat_const const
     let tuple ~range pats = With_range.create ~range @@ Pat_tuple pats
@@ -164,12 +186,17 @@ module Default : S with type 'a with_range_fn := range:Range.t -> 'a = struct
     end
 
     let var ~range var_name = With_range.create ~range @@ Exp_var var_name
+    let over ~range over_path = With_range.create ~range @@ Exp_over over_path
     let const ~range const = With_range.create ~range @@ Exp_const const
     let fun_ ~range pats exp = With_range.create ~range @@ Exp_fun (pats, exp)
     let app ~range exp1 exp2 = With_range.create ~range @@ Exp_app (exp1, exp2)
 
     let let_ ~range value_binding ~in_ =
       With_range.create ~range @@ Exp_let (value_binding, in_)
+    ;;
+
+    let let_implicit ~range var_name ~in_ =
+      With_range.create ~range @@ Exp_let_implicit (var_name, in_)
     ;;
 
     let exists ~range type_var_names exp =
@@ -204,16 +231,26 @@ module Default : S with type 'a with_range_fn := range:Range.t -> 'a = struct
 
     let poly ~range exp ?scheme () = With_range.create ~range @@ Exp_poly (exp, scheme)
     let inst ~range exp = With_range.create ~range @@ Exp_inst exp
+    let implicit ~range = With_range.create ~range @@ Exp_implicit
   end
 
-  let value_binding ~range pat exp =
-    With_range.create ~range { value_binding_exp = exp; value_binding_pat = pat }
+  module Term = struct
+    let exp ~range exp = With_range.create ~range @@ Term_exp exp
+
+    let implicit_fun ~range pat term =
+      With_range.create ~range @@ Term_implicit_fun (pat, term)
+    ;;
+  end
+
+  let value_binding ~range pat term =
+    With_range.create ~range { value_binding_term = term; value_binding_pat = pat }
   ;;
 
   module Structure = struct
     let value ~range value_binding = With_range.create ~range @@ Str_value value_binding
     let primitive ~range value_desc = With_range.create ~range @@ Str_primitive value_desc
     let type_ ~range type_decls = With_range.create ~range @@ Str_type type_decls
+    let implicit ~range var_name = With_range.create ~range @@ Str_implicit var_name
 
     let type_decl ~range ~name ~params kind =
       With_range.create
@@ -238,6 +275,8 @@ module Make (R : Range) : S with type 'a with_range_fn := 'a = struct
   let constr_name = constr_name ~range:R.v
   let type_name = type_name ~range:R.v
   let label_name = label_name ~range:R.v
+  let over_name = over_name ~range:R.v
+  let over_path = over_path ~range:R.v
 
   module Type = struct
     module Function_param = struct
@@ -256,6 +295,7 @@ module Make (R : Range) : S with type 'a with_range_fn := 'a = struct
   module Pattern = struct
     let any = Pattern.any ~range:R.v
     let var = Pattern.var ~range:R.v
+    let over = Pattern.over ~range:R.v
     let alias = Pattern.alias ~range:R.v
     let const = Pattern.const ~range:R.v
     let tuple = Pattern.tuple ~range:R.v
@@ -271,10 +311,12 @@ module Make (R : Range) : S with type 'a with_range_fn := 'a = struct
     end
 
     let var = Expression.var ~range:R.v
+    let over = Expression.over ~range:R.v
     let const = Expression.const ~range:R.v
     let fun_ = Expression.fun_ ~range:R.v
     let app = Expression.app ~range:R.v
     let let_ = Expression.let_ ~range:R.v
+    let let_implicit = Expression.let_implicit ~range:R.v
     let forall = Expression.forall ~range:R.v
     let exists = Expression.exists ~range:R.v
     let annot = Expression.annot ~range:R.v
@@ -289,6 +331,12 @@ module Make (R : Range) : S with type 'a with_range_fn := 'a = struct
     let case = Expression.case ~range:R.v
     let poly = Expression.poly ~range:R.v
     let inst = Expression.inst ~range:R.v
+    let implicit = Expression.implicit ~range:R.v
+  end
+
+  module Term = struct
+    let exp = Term.exp ~range:R.v
+    let implicit_fun = Term.implicit_fun ~range:R.v
   end
 
   let value_binding = value_binding ~range:R.v
@@ -297,6 +345,7 @@ module Make (R : Range) : S with type 'a with_range_fn := 'a = struct
     let value = Structure.value ~range:R.v
     let primitive = Structure.primitive ~range:R.v
     let type_ = Structure.type_ ~range:R.v
+    let implicit = Structure.implicit ~range:R.v
     let type_decl = Structure.type_decl ~range:R.v
     let value_desc = Structure.value_desc ~range:R.v
     let constr_decl = Structure.constr_decl

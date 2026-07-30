@@ -23,6 +23,10 @@ module Closure = struct
   ;;
 end
 
+module Implicit_scope = struct
+  type t = { vars : Var.Set.t } [@@deriving sexp]
+end
+
 module Match_error = struct
   type t =
     | Cannot_default
@@ -43,6 +47,7 @@ type t =
   | Forall of Type.Var.t list * t
   | Let of let_binding * t
   | Instance of Var.t * Type.t
+  | Implicit of Type.t * Implicit_scope.t
   | Match of
       { matchee : Type.Var.t
       ; closure : Closure.t
@@ -90,6 +95,7 @@ let ( @. ) t1 t2 = t1, t2
 let poly_binding (type_vars, (in_, bindings)) = { type_vars; in_; bindings }
 let let_ binding ~in_ = Let (binding, in_)
 let inst x type_ = Instance (x, type_)
+let implicit type_ ~in_:scope = Implicit (type_, scope)
 
 let match_ matchee ~closure ~with_ ~else_ ~error =
   Match { matchee; closure = Closure.of_list closure; case = with_; else_; error }

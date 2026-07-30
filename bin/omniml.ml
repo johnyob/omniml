@@ -42,6 +42,17 @@ module Params = struct
          Omniml_main.Options.Defaulting.arg_type)
       ~doc:"STRATEGY Defaulting strategy, disabled by default"
   ;;
+
+  let termination_check =
+    flag
+      "-termination-check"
+      (optional_with_default
+         Omniml_main.Options.Termination_check.default
+         Omniml_main.Options.Termination_check.arg_type)
+      ~doc:
+        "TERMINATION_CHECK Termination checker used during implicit resolution, \
+         `threshold:256` by default"
+  ;;
 end
 
 module Command = struct
@@ -90,6 +101,7 @@ module Command = struct
         +> Params.disable_stdlib
         +> Params.fpoly_params
         +> Params.defaulting
+        +> Params.termination_check
         +> Async_log.Global.set_level_via_param ())
       (fun filename
         dump_ast
@@ -97,6 +109,7 @@ module Command = struct
         without_stdlib
         with_poly_params
         defaulting
+        termination_check
         () ->
          open_with_lexbuf filename ~f:(fun lexbuf ->
            let source = `File filename in
@@ -108,6 +121,7 @@ module Command = struct
                ~with_stdlib:(not without_stdlib)
                ~with_poly_params
                ~defaulting
+               ~termination_check
                lexbuf
            in
            Async_log.Global.flushed ()))

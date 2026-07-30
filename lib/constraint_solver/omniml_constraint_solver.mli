@@ -63,6 +63,9 @@ module Type : sig
   (** [poly s] embeds a type scheme as a (mono)type. *)
   val poly : Scheme.t -> t
 
+  (** [a @=> b] is the implicit function type [a => b]. *)
+  val ( @=> ) : t -> t -> t
+
   module Matchee : sig
     (** A "pattern" used by {!Constraint.match_}.
 
@@ -74,6 +77,9 @@ module Type : sig
       | Arrow of Var.t * Var.t
       (** [Arrow (arg, ret)] is a function type with argument [arg]
           and result [ret] variables. *)
+      | Implicit_arrow of Var.t * Var.t
+      (** [Implicit_arrow (arg, ret)] is a implicit function type with 
+          argument [arg] and result [ret] variables. *)
       | Tuple of Var.t list
       (** [Tuple vs] is a tuple type with component variables [vs]. *)
       | Constr of Var.t list * Ident.t
@@ -130,6 +136,11 @@ module Constraint : sig
       ; vars : Var.t list
       }
     [@@deriving sexp]
+  end
+
+  module Implicit_scope : sig
+    (** A set of variables used for implicit resolution. *)
+    type t = { vars : Var.Set.t } [@@deriving sexp]
   end
 
   (** [t] is a constraint. *)
@@ -211,8 +222,8 @@ module Constraint : sig
       This is equivalent to [poly_binding ([] @. tt @=> bindings)]. *)
   val mono_binding : binding list -> let_binding
 
-  (** [poly_binding (vs @. c @=> bindings)] builds the constrained let binding
-      [forall vs. c => bindings]. *)
+  (** [poly_binding (vs @. ts @?> c @=> bindings)] builds the constrained let binding
+      [forall vs. ?ts -> c => bindings]. *)
   val poly_binding : quantified_let_binding -> let_binding
 
   (** [let_ binding ~in_:c] binds the variables in [binding] in [c]. *)
@@ -221,6 +232,8 @@ module Constraint : sig
   (** [inst x ty] requires the type [ty] to be an instance of the scheme 
       bound to [x]. The variable [x] must be bound earlier by {!let_}. *)
   val inst : Var.t -> Type.t -> t
+
+  val implicit : Type.t -> in_:Implicit_scope.t -> t
 
   module Match_error : sig
     type t =
@@ -272,8 +285,14 @@ module Constraint : sig
 end
 
 module Decoded_type : sig
+  module Var : Var.S
+
   (** A type produced by the constraint solver. *)
-  type t [@@deriving sexp]
+  type t =
+    | Var of Var.t
+    | App of t list * Principal_shape.t
+    | Mu of Var.t * t
+  [@@deriving sexp]
 
   include Pretty_printer.S with type t := t
 end
@@ -301,7 +320,30 @@ module Error : sig
         the given types [ty1] and [ty2]. *)
     | Cannot_discharge_match_constraints of Omniml_error.t list
     (** Some match constraints could not be discharged. *)
+    | Resolution_termination_check_failed
   [@@deriving sexp]
+end
+
+module Termination : sig
+  module Budget : sig
+    module Spec : sig
+      module type S = sig
+        (** [t] is the type of the budget*)
+        type t [@@deriving sexp_of, compare]
+
+        val initial : t
+        val consume : Constraint.Var.t -> Decoded_type.t Lazy.t -> t -> t option
+      end
+
+      type t = (module S) [@@deriving sexp_of]
+
+      (** [unlimited] is a budget spec that consumes no budget. *)
+      val unlimited : t
+
+      (** [bounded_by n] is a budget spec that consumes a simple counter. *)
+      val bounded_by : int -> t
+    end
+  end
 end
 
 (** [solve ?range c] solves the constraint [c]. 
@@ -313,5 +355,6 @@ end
 val solve
   :  ?range:Range.t
   -> ?defaulting:Omniml_options.Defaulting.t
+  -> ?termination_budget_spec:Termination.Budget.Spec.t
   -> Constraint.t
   -> (unit, Error.t) result

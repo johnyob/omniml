@@ -20,3 +20,13 @@ module Defaulting : sig
 
   include S_with_default with type t := t
 end
+
+module Termination_check : sig
+  type t =
+    | Disabled
+    | Threshold of int
+    | Decreasing_instantiations
+  [@@deriving sexp]
+
+  include S_with_default with type t := t
+end

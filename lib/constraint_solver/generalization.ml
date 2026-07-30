@@ -239,6 +239,30 @@ end
 module U = Unifier.Make (S)
 module Type0 = U.Term
 
+module Copy_scope0 = struct
+  module Copy = struct
+    type t =
+      { it : Type0.t
+      ; is_quantifier : bool
+        (** [is_quantifier] is set to true if the copy 
+            is of a generic variable. *)
+      }
+    [@@deriving sexp_of]
+  end
+
+  type t = { generic_copies : (Identifier.t, Copy.t) Hashtbl.t } [@@deriving sexp_of]
+
+  let create_scope () = { generic_copies = Hashtbl.create (module Identifier) }
+
+  module State = struct
+    type nonrec t = (Instance_identifier.t, t) Hashtbl.t [@@deriving sexp_of]
+
+    let create () = Hashtbl.create (module Identifier)
+    let add t iid copy = Hashtbl.set t ~key:iid ~data:copy
+    let find_or_add t iid = Hashtbl.find_or_add t iid ~default:create_scope
+  end
+end
+
 module State = struct
   type t =
     { id_source : (Identifier.source[@sexp.opaque])
@@ -246,6 +270,7 @@ module State = struct
     ; alive_regions : (Identifier.t, Type0.t Region0.t) Hashtbl.t
     ; shape_var_state : Principal_shape.Var.State.t
     ; defaulting : Omniml_options.Defaulting.t
+    ; copy_scope_state : Copy_scope0.State.t
     }
   [@@deriving sexp_of]
 
@@ -268,6 +293,7 @@ module State = struct
     ; shape_var_state
     ; alive_regions = Hashtbl.create (module Identifier)
     ; defaulting
+    ; copy_scope_state = Copy_scope0.State.create ()
     }
   ;;
 
@@ -444,6 +470,25 @@ module Scheme = struct
   ;;
 end
 
+module Copy_scope = struct
+  include Copy_scope0
+
+  let with_ ~state ~instance_id f =
+    (* TODO: This leaks memory, since all instantiations are kept in the 
+       state. We never collect until the end of solving. *)
+    let scope = State.find_or_add state instance_id in
+    f scope
+  ;;
+
+  let find t type_ = Hashtbl.find t.generic_copies (Type.id type_)
+  let find_it t type_ = find t type_ |> Option.map ~f:(fun copy -> copy.it)
+
+  let register t type_ copy =
+    let copy = { Copy.it = copy; is_quantifier = Type.is_var type_ } in
+    Hashtbl.set t.generic_copies ~key:(Type.id type_) ~data:copy
+  ;;
+end
+
 let create_var ~state ~curr_region () = Type.create ~state ~curr_region Var
 
 let create_shape_var ~(state : State.t) ~curr_region () =
@@ -516,11 +561,26 @@ let rec prune_structure ~(state : State.t) structure instances =
     [%log.global.debug "Copy" (copy : Type.t)];
     unify ~state ~curr_region:dst_region copy instance)
 
-(** [copy ~state type_ ~instance_id ~src_region ~dst_region] copies the type [type_] 
-    in the [src_region] region to a fresh type in the [dst_region] region. Any 
-    instantiation edges are associated with the instance id [instance_id].  *)
-and copy ~(state : State.t) type_ ~instance_id ~src_region ~dst_region =
-  let generic_copies = Hashtbl.create (module Identifier) in
+and copy ~state ~instance_id ~src_region ~dst_region type_ =
+  Copy_scope.with_ ~state:state.copy_scope_state ~instance_id
+  @@ fun copy_scope ->
+  copy_with_scope ~state ~instance_id ~src_region ~dst_region ~copy_scope type_
+
+(** [copy_with_scope ~state type_ ~instance_id ~src_region ~dst_region ~copy_scope] 
+    copies the type [type_] in the [src_region] region to a fresh type in the 
+    [dst_region] region. Any instantiation edges are associated with the instance id 
+    [instance_id].  
+
+    Invariant: the passed in [copy_scope] is expected to be registered with 
+    instance id [instance_id] in [state]. *)
+and copy_with_scope
+      ~(state : State.t)
+      ~instance_id
+      ~src_region
+      ~dst_region
+      ~copy_scope
+      type_
+  =
   let rec visit type_ =
     if Tree.compare_node_by_level (Type.region type_) src_region < 0
     then type_
@@ -545,12 +605,10 @@ and copy ~(state : State.t) type_ ~instance_id ~src_region ~dst_region =
       (Type.create ~state ~curr_region:dst_region inner_copy);
     copy
   and find_or_alloc_generic_copy type_ =
-    let id = Type.id type_ in
-    try Hashtbl.find_exn generic_copies id with
-    | Not_found_s _ ->
-      alloc_copy
-        ~on_alloc:(fun copy -> Hashtbl.set generic_copies ~key:id ~data:copy)
-        type_
+    match Copy_scope.find_it copy_scope type_ with
+    | Some copy -> copy
+    | None ->
+      alloc_copy ~on_alloc:(fun copy -> Copy_scope.register copy_scope type_ copy) type_
   and find_or_alloc_instance_copy type_ =
     try
       let _from, instance = Map.find_exn (Type.instances type_) instance_id in
@@ -829,8 +887,12 @@ let rigid_scope_check (generation : Generation.t) =
 let unsafe_generalize ~state type_ =
   if Type.is_unguarded type_
   then (
-    Map.iter (Type.instances type_) ~f:(fun (_from, instance) ->
-      Type.remove_guard ~state instance);
+    Map.iteri (Type.instances type_) ~f:(fun ~key:iid ~data:(_from, instance) ->
+      (* Remove the guard *)
+      Type.remove_guard ~state instance;
+      (* Register the instance as a generic copy in the copy scope *)
+      Copy_scope.with_ ~state:state.copy_scope_state ~instance_id:iid
+      @@ fun copy_scope -> Copy_scope.register copy_scope type_ instance);
     (* Safety: [type_] is being generalized, there is no 
        point setting it's write barrier (and dirty bit). *)
     Type.unsafe_update_structure type_ (fun structure ->
@@ -976,17 +1038,32 @@ let instantiate ~state ~curr_region ({ root; region = src_region } : Scheme.t) =
   force_generalization ~state src_region;
   (* Create an instance group *)
   let instance_id = Instance_identifier.create state.id_source in
-  (* Copy the type *)
-  copy ~state ~src_region ~dst_region:curr_region ~instance_id root
+  (* Create a new copy scope *)
+  Copy_scope.with_ ~state:state.copy_scope_state ~instance_id
+  @@ fun copy_scope ->
+  let copy =
+    copy_with_scope ~state ~instance_id ~src_region ~dst_region:curr_region ~copy_scope
+  in
+  (* Copy the root *)
+  let root = copy root in
+  (* Return copied quantifiers. Note that this is delayed since 
+     the quantifiers can mutate as partial generalization progresses. *)
+  let quantifiers () =
+    (* All quantifiers must be generic *)
+    copy_scope.generic_copies
+    |> Hashtbl.filter_map ~f:(fun copy -> Option.some_if copy.is_quantifier copy.it)
+    |> Hashtbl.data
+  in
+  quantifiers, root
 ;;
 
 module Suspended_match = struct
   type t =
     { matchee : Type.t
     ; closure : closure
-    ; case : curr_region:Region.t -> shape:Principal_shape.t -> args:Type.t list -> unit
+    ; case : shape:Principal_shape.t -> args:Type.t list -> unit
     ; else_ : unit -> Principal_shape.t
-    ; error : Constraint.Match_error.t -> Omniml_error.t
+    ; error : Constraint.Match_error.t -> Omniml_error.t option
     }
   [@@deriving sexp_of]
 
@@ -1055,54 +1132,60 @@ module Suspended_match = struct
     in
     let add_handler ~shape_args svar =
       [%log.global.debug "Adding handler" (svar : Principal_shape.Var.t)];
-      Principal_shape.Var.add_handler
-        svar
-        { run =
-            (fun shape ->
-              let args = get_or_alloc_matchee_args () in
-              (* Remove guard from closure *)
-              closure_remove_guard ~state ~shape_args closure;
-              (* Solve case *)
-              case ~curr_region ~shape ~args;
-              [%log.global.debug
-                "Generalization tree after solving case"
-                  (state.region_tree : Type.t Pool.t Tree.With_dirty.t)])
-        ; default =
-            (fun () ->
-              [%log.global.debug
-                "Default handler triggered" (svar : Principal_shape.Var.t)];
-              let default_shape = else_ () in
-              [%log.global.debug "Default shape" (default_shape : Principal_shape.t)];
-              (try
-                 Principal_shape.Var.fill_exn
-                   ~state:state.shape_var_state
-                   svar
-                   default_shape
-               with
-               | Principal_shape.Var.Not_empty ->
-                 let actual = Principal_shape.Var.peek_exn svar in
-                 let report =
-                   error (Inconsistent_default { actual; expected = default_shape })
-                 in
-                 raise (Inconsistent_defaults report));
-              [%log.global.debug
-                "Generalization tree running default handler"
-                  (state.region_tree : Type.t Pool.t Tree.With_dirty.t)])
-        ; error = (fun () -> error Cannot_default)
-        };
+      let handler =
+        Principal_shape.Var.add_handler
+          svar
+          { run =
+              (fun shape ->
+                let args = get_or_alloc_matchee_args () in
+                (* Remove guard from closure *)
+                closure_remove_guard ~state ~shape_args closure;
+                (* Solve case *)
+                case ~shape ~args;
+                [%log.global.debug
+                  "Generalization tree after solving case"
+                    (state.region_tree : Type.t Pool.t Tree.With_dirty.t)])
+          ; default =
+              (fun () ->
+                [%log.global.debug
+                  "Default handler triggered" (svar : Principal_shape.Var.t)];
+                let default_shape = else_ () in
+                [%log.global.debug "Default shape" (default_shape : Principal_shape.t)];
+                (try
+                   Principal_shape.Var.fill_exn
+                     ~state:state.shape_var_state
+                     svar
+                     default_shape
+                 with
+                 | Principal_shape.Var.Not_empty ->
+                   let actual = Principal_shape.Var.peek_exn svar in
+                   let report =
+                     error (Inconsistent_default { actual; expected = default_shape })
+                     |> Option.value_exn ~here:[%here]
+                   in
+                   raise (Inconsistent_defaults report));
+                [%log.global.debug
+                  "Generalization tree running default handler"
+                    (state.region_tree : Type.t Pool.t Tree.With_dirty.t)])
+          ; cancel = (fun () -> closure_remove_guard ~state ~shape_args closure)
+          ; error = (fun () -> error Cannot_default)
+          }
+      in
       (* Add guard to closure *)
-      closure_add_guard ~state ~shape_args closure
+      closure_add_guard ~state ~shape_args closure;
+      handler
     in
     match Type.inner matchee with
     | Var ->
       let shape_var = create_shape_var ~state ~curr_region () in
       let shape_args = create_var ~state ~curr_region () in
-      add_handler ~shape_args shape_var;
+      let handler = add_handler ~shape_args shape_var in
       unify
         ~state
         ~curr_region
         matchee
-        (create_shape_app ~state ~curr_region shape_args shape_var)
+        (create_shape_app ~state ~curr_region shape_args shape_var);
+      handler
     | Structure (Structure (Shape_app { args = shape_args; shape_var })) ->
       add_handler ~shape_args shape_var
     | Structure (Structure (Shape_args _)) ->
@@ -1111,9 +1194,12 @@ module Suspended_match = struct
         [%message
           "Kind mismatch when adding matchee handler. Expected type, got args."
             (matchee : Type.t)]
-    | Structure Rigid_var -> raise (Cannot_match_on_rigid (error Matchee_is_rigid))
+    | Structure Rigid_var ->
+      raise
+        (Cannot_match_on_rigid (error Matchee_is_rigid |> Option.value_exn ~here:[%here]))
     | Structure (Structure (Structure { args; shape })) ->
       (* Optimisation: Immediately solve the case *)
-      case ~curr_region ~shape ~args
+      case ~shape ~args;
+      None
   ;;
 end

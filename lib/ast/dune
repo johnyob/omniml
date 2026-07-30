@@ -1,6 +1,6 @@
 (library
  (name omniml_ast)
  (public_name omniml.ast)
- (libraries core grace)
+ (libraries core grace fmt)
  (preprocess
   (pps ppx_jane)))

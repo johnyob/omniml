@@ -43,20 +43,20 @@ module Env = struct
   let t = [ "int", 0, int_ident; "bool", 0, bool_ident; "unit", 0, unit_ident ]
 
   let v ~with_poly_params =
-    [ "( || )", bool_bop ~with_poly_params
-    ; "( && )", bool_bop ~with_poly_params
-    ; "not", bool_uop ~with_poly_params
-    ; "( = )", int_comparator ~with_poly_params
-    ; "( <> )", int_comparator ~with_poly_params
-    ; "( < )", int_comparator ~with_poly_params
-    ; "( > )", int_comparator ~with_poly_params
-    ; "( <= )", int_comparator ~with_poly_params
-    ; "( >= )", int_comparator ~with_poly_params
-    ; "( + )", int_bop ~with_poly_params
-    ; "( - )", int_bop ~with_poly_params
-    ; "( * )", int_bop ~with_poly_params
-    ; "( / )", int_bop ~with_poly_params
-    ; "unary( - )", int_uop ~with_poly_params
+    [ "( || )", 0, bool_bop ~with_poly_params
+    ; "( && )", 0, bool_bop ~with_poly_params
+    ; "not", 0, bool_uop ~with_poly_params
+    ; "( = )", 0, int_comparator ~with_poly_params
+    ; "( <> )", 0, int_comparator ~with_poly_params
+    ; "( < )", 0, int_comparator ~with_poly_params
+    ; "( > )", 0, int_comparator ~with_poly_params
+    ; "( <= )", 0, int_comparator ~with_poly_params
+    ; "( >= )", 0, int_comparator ~with_poly_params
+    ; "( + )", 0, int_bop ~with_poly_params
+    ; "( - )", 0, int_bop ~with_poly_params
+    ; "( * )", 0, int_bop ~with_poly_params
+    ; "( / )", 0, int_bop ~with_poly_params
+    ; "unary( - )", 0, int_uop ~with_poly_params
     ]
   ;;
 
@@ -72,9 +72,15 @@ module Env = struct
   let wrap ~with_poly_params k =
     let env = init () in
     let env, bindings =
-      List.fold_map (v ~with_poly_params) ~init:env ~f:(fun env (var_str, type_) ->
-        Env.rename_var env ~var:(Var_name.create var_str) ~in_:(fun env cvar ->
-          env, (cvar, type_)))
+      List.fold_map
+        (v ~with_poly_params)
+        ~init:env
+        ~f:(fun env (var_str, implicit_arity, type_) ->
+          Env.rename_var
+            env
+            ~var:(Var_name.create var_str)
+            ~implicit_arity
+            ~in_:(fun env cvar -> env, (cvar, type_)))
     in
     let c = k env in
     let_ (mono_binding (List.map bindings ~f:(fun (var, type_) -> var @: type_))) ~in_:c

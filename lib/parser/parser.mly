@@ -232,6 +232,16 @@ core_scheme:
   id = "<ident>"
     { label_name ~range:(range_of_lex $loc) id }
 
+%inline over_name:
+  id = "<ident>"
+    { over_name ~range:(range_of_lex $loc) id }
+
+%inline over_path:
+  over_name = over_name
+  ; "?"
+  ; var_name = var_name
+    { over_path ~range:(range_of_lex $loc) over_name var_name }
+
 constant:
     int = "<int>"
       { Const_int int }
@@ -298,6 +308,12 @@ expression:
     ; "in"
     ; exp = seq_expression
       { Expression.let_ ~range:(range_of_lex $loc) value_binding ~in_:exp }
+  | "let"
+    ; "implicit"
+    ; var_name = var_name
+    ; "in"
+    ; exp = seq_expression
+      { Expression.let_implicit ~range:(range_of_lex $loc) var_name ~in_:exp }
 
 app_expression:
     exp = atom_expression
@@ -312,8 +328,8 @@ app_expression:
 value_binding:
   pat = pattern 
   ; "="
-  ; exp = seq_expression
-    { value_binding ~range:(range_of_lex $loc) pat exp }
+  ; term = term
+    { value_binding ~range:(range_of_lex $loc) pat term }
 
 cases:
   "("
@@ -338,6 +354,8 @@ atom_expression:
       { Expression.const ~range:(range_of_lex $loc) const }
   | var_name = var_name
       { Expression.var ~range:(range_of_lex $loc) var_name }
+  | over_path = over_path
+      { Expression.over ~range:(range_of_lex $loc) over_path }
   | constr_name = constr_name
       { Expression.constr ~range:(range_of_lex $loc) constr_name None }
   | "("
@@ -380,6 +398,8 @@ atom_expression:
     ; exp = seq_expression
     ; ")"
       { exp }
+  | "?"
+      { Expression.implicit ~range:(range_of_lex $loc) }
 
 %inline unary_op:
   "-"
@@ -429,6 +449,16 @@ function_param:
           scheme
       }
 
+term:
+    exp = seq_expression
+      { Term.exp ~range:(range_of_lex $loc) exp }
+  | "fun"
+    ; "?"
+    ; pats = nonempty_list(atom_pattern)
+    ; "->"
+    ; exp = seq_expression
+      { Term.implicit_fun ~range:(range_of_lex $loc) pats exp }
+
 pattern:
     pat = construct_pattern
       { pat }
@@ -451,6 +481,8 @@ atom_pattern:
       { Pattern.any ~range:(range_of_lex $loc) }
   | var_name = var_name
       { Pattern.var ~range:(range_of_lex $loc) var_name }
+  | over_path = over_path
+      { Pattern.over ~range:(range_of_lex $loc) over_path }
   | constr_name = constr_name
       { Pattern.constr ~range:(range_of_lex $loc) constr_name None }
   | "("
@@ -539,6 +571,10 @@ structure_item:
     "let"
     ; value_binding = value_binding
       { Structure.value ~range:(range_of_lex $loc) value_binding }
+  | "let"
+    ; "implicit"
+    ; var_name = var_name
+      { Structure.implicit ~range:(range_of_lex $loc) var_name }
   | "external"
     ; value_desc = value_description
       { Structure.primitive ~range:(range_of_lex $loc) value_desc }

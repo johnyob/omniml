@@ -22,6 +22,7 @@ module Token = struct
     | RIGHT_BRACE -> Fmt.pf ppf "Right_brace"
     | RIGHT_ARROW -> Fmt.pf ppf "Right_arrow"
     | QUOTE -> Fmt.pf ppf "Quote"
+    | QUESTION_MARK -> Fmt.pf ppf "Question_mark"
     | PLUS -> Fmt.pf ppf "Plus"
     | OF -> Fmt.pf ppf "Of"
     | MINUS -> Fmt.pf ppf "Minus"
@@ -34,6 +35,7 @@ module Token = struct
     | LEFT_BRACKET -> Fmt.pf ppf "Left_bracket"
     | LEFT_BRACE -> Fmt.pf ppf "Left_brace"
     | IN -> Fmt.pf ppf "In"
+    | IMPLICIT -> Fmt.pf ppf "Implicit"
     | IF -> Fmt.pf ppf "If"
     | IDENT ident -> Fmt.pf ppf "Ident(%s)" ident
     | GREATER_EQUAL -> Fmt.pf ppf "Greater_equal"

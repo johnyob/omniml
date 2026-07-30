@@ -22,6 +22,7 @@ let keywords =
   ; "as", AS 
   ; "of", OF 
   ; "external", EXTERNAL
+  ; "implicit", IMPLICIT
   ]
 ;;
 
@@ -75,6 +76,8 @@ rule read  =
       { UNDERSCORE }
   | "|"
       { BAR }
+  | "?"
+      { QUESTION_MARK }
 
   (* comments *)
   | "(*"

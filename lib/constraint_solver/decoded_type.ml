@@ -27,6 +27,10 @@ module Pretter_printer = struct
     Fmt.pf ppf "@[%a ->@ %a@]" pp_lhs lhs pp_rhs rhs
   ;;
 
+  let[@inline] pp_implicit_arrow pp_lhs pp_rhs ppf (lhs, rhs) =
+    Fmt.pf ppf "@[%a =>@ %a@]" pp_lhs lhs pp_rhs rhs
+  ;;
+
   let[@inline] pp_tuple pp_type ppf types =
     Fmt.(pf ppf "@[<0>%a@]" (list ~sep:(any " *@ ") pp_type) types)
   ;;
@@ -56,7 +60,12 @@ module Pretter_printer = struct
     ;;
 
     let rec pp ppf (t : Type.t) =
-      let rec pp_lvl_arrow ppf (t : Type.t) =
+      let rec pp_lvl_implicit_arrow ppf (t : Type.t) =
+        match t with
+        | Implicit_arrow (t1, t2) | Shape ([ t1; t2 ], Sh_implicit_arrow) ->
+          pp_arrow pp_lvl_arrow pp_lvl_implicit_arrow ppf (t1, t2)
+        | t -> pp_lvl_arrow ppf t
+      and pp_lvl_arrow ppf (t : Type.t) =
         match t with
         | Arrow (t1, t2) | Shape ([ t1; t2 ], Sh_arrow) ->
           pp_arrow pp_lvl_tuple pp_lvl_arrow ppf (t1, t2)
@@ -77,13 +86,14 @@ module Pretter_printer = struct
         match t with
         | Var var -> pp_var ppf var
         | Poly scheme -> Fmt.pf ppf "@[[%a]@]" pp_scheme scheme
-        | t -> Fmt.parens pp_lvl_arrow ppf t
+        | t -> Fmt.parens pp_lvl_implicit_arrow ppf t
       in
-      pp_lvl_arrow ppf t
+      pp_lvl_implicit_arrow ppf t
 
     and pp_shape ppf (shape : Principal_shape.t) =
       match shape with
       | Sh_arrow -> Fmt.string ppf "(->)"
+      | Sh_implicit_arrow -> Fmt.string ppf "(=>)"
       | Sh_tuple n -> Fmt.pf ppf "Pi^%d" n
       | Sh_constr (n, constr) -> Fmt.pf ppf "%a(%d)" pp_ident constr n
       | Sh_poly { quantifiers; scheme } ->
@@ -111,6 +121,11 @@ module Pretter_printer = struct
       let rec pp_lvl_mu ppf t =
         match t with
         | Mu (var, t) -> Fmt.pf ppf "@[%a@ as %a@]" pp_lvl_mu t pp_var var
+        | t -> pp_lvl_implicit_arrow ppf t
+      and pp_lvl_implicit_arrow ppf t =
+        match t with
+        | App ([ t1; t2 ], Sh_implicit_arrow) ->
+          pp_implicit_arrow pp_lvl_arrow pp_lvl_implicit_arrow ppf (t1, t2)
         | t -> pp_lvl_arrow ppf t
       and pp_lvl_arrow ppf t =
         match t with

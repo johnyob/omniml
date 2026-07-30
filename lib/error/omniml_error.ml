@@ -22,6 +22,8 @@ module Code = struct
     | Projection_out_of_bounds
     | Ambiguous_tuple
     | Ambiguous_polytype
+    | Ambiguous_overloading
+    | Resolution_termination_check_failed
     | Unknown
   [@@deriving sexp]
 
@@ -42,6 +44,8 @@ module Code = struct
     | Projection_out_of_bounds -> "E014"
     | Ambiguous_tuple -> "E015"
     | Ambiguous_polytype -> "E016"
+    | Ambiguous_overloading -> "E017"
+    | Resolution_termination_check_failed -> "E018"
     | Unknown -> "E???"
   ;;
 end
@@ -135,6 +139,17 @@ let unbound_variable ~range (var_name : Var_name.t) : t =
        "cannot find value %a in this scope"
        pp_quoted_s
        (var_name :> string)
+;;
+
+let unbound_over_path (over_path : Over_path.t) : t =
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ not_found_in_this_scope_label ~range:over_path.range ]
+       ~code:Code.Unbound_variable
+       Error
+       "cannot find value %a in this scope"
+       (pp_quoted Over_path.pp)
+       over_path
 ;;
 
 let unbound_type ~range (type_name : Type_name.t) : t =
@@ -287,6 +302,7 @@ let disambiguation_mismatched_type ~range ~type_head =
     match type_head with
     | `Tuple -> "tuple"
     | `Arrow -> "function type"
+    | `Implicit_arrow -> "implicit function type"
     | `Poly -> "polymorphic type"
   in
   singleton
@@ -317,6 +333,7 @@ let disambiguation_tuple_mismatched_type ~range ~type_head =
     match type_head with
     | `Constr -> "type constructor"
     | `Arrow -> "function type"
+    | `Implicit_arrow -> "implicit function type"
     | `Poly -> "polymorphic type"
   in
   singleton
@@ -336,6 +353,17 @@ let ambiguous_constructor ~range =
        ~code:Code.Ambiguous_constructor
        Error
        "ambiguous constructor"
+;;
+
+let ambiguous_overloading ~range =
+  let open Diagnostic in
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ empty_primary_label ~range ]
+       ~notes:[ Message.createf "hint: add a type annotation" ]
+       ~code:Code.Ambiguous_overloading
+       Error
+       "ambiguous overloading"
 ;;
 
 let rigid_variable_escape ~range =
@@ -364,6 +392,7 @@ let polytype_mismatched_type ~range ~type_head =
     match type_head with
     | `Tuple -> "tuple"
     | `Arrow -> "function type"
+    | `Implicit_arrow -> "implicit function type"
     | `Constr -> "type constructor"
   in
   singleton
@@ -395,6 +424,16 @@ let ambiguous_polytype ~range =
        ~code:Code.Ambiguous_polytype
        Error
        "unknown polytype"
+;;
+
+let resolution_termination_check_failed ~range =
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ empty_primary_label ~range ]
+       ~notes:[]
+       ~code:Code.Resolution_termination_check_failed
+       Error
+       "resolution failed to terminate"
 ;;
 
 module For_testing = struct

@@ -43,7 +43,7 @@ module Poly = struct
         let[@inline] num_uses (var : Type.Var.t) = uses.((var.id :> int)) in
         let[@inline] is_polyshape (shape : Self.t) =
           match shape with
-          | Sh_arrow | Sh_tuple _ | Sh_constr _ -> false
+          | Sh_arrow | Sh_implicit_arrow | Sh_tuple _ | Sh_constr _ -> false
           | Sh_poly _ -> true
         in
         (* We rely on non-short-circuting operators (since marking uses is effectful) *)
@@ -57,7 +57,7 @@ module Poly = struct
           | Var var ->
             mark_use var;
             Hash_set.mem scheme_quantifiers var
-          | Arrow (type1, type2) ->
+          | Arrow (type1, type2) | Implicit_arrow (type1, type2) ->
             (* Invariant: all constructors must contain a polymorphic subterm. *)
             assert (loop type1 ||| loop type2);
             true
@@ -95,6 +95,7 @@ end
 
 type t = Self.t =
   | Sh_arrow
+  | Sh_implicit_arrow
   | Sh_tuple of int
   | Sh_constr of int * Type.Ident.t
   | Sh_poly of Poly.t
@@ -112,14 +113,14 @@ let create_var ~id_source () = Type.Var.create ~id_source ~name:"Principal_shape
 
 let arity t =
   match t with
-  | Sh_arrow -> 2
+  | Sh_arrow | Sh_implicit_arrow -> 2
   | Sh_tuple n | Sh_constr (n, _) -> n
   | Sh_poly poly_shape -> List.length poly_shape.quantifiers
 ;;
 
 let quantifiers t =
   match t with
-  | Sh_arrow ->
+  | Sh_arrow | Sh_implicit_arrow ->
     (* Invariant: All quantifiers are locally named from 0 to n *)
     let id_source = Identifier.create_source () in
     (* [let]s are used to force the correct ordering *)
@@ -222,6 +223,10 @@ module Poly_shape_decomposition = struct
       (match types with
        | [ type1; type2 ] -> Arrow (type1, type2)
        | _ -> assert false)
+    | Sh_implicit_arrow ->
+      (match types with
+       | [ type1; type2 ] -> Implicit_arrow (type1, type2)
+       | _ -> assert false)
     | Sh_poly _ -> Shape (types, shape)
   ;;
 
@@ -244,6 +249,12 @@ module Poly_shape_decomposition = struct
         (self_with_original t2)
         ~state
         ~f:(fun t1 t2 -> Arrow (t1, t2))
+    | Implicit_arrow (t1, t2) ->
+      Part.map_principal_part2
+        (self_with_original t1)
+        (self_with_original t2)
+        ~state
+        ~f:(fun t1 t2 -> Implicit_arrow (t1, t2))
     | Tuple ts ->
       Part.map_principal_parts (List.map ts ~f:self_with_original) ~state ~f:(fun ts ->
         Tuple ts)
@@ -301,7 +312,8 @@ module Var = struct
     type nonrec t =
       { run : t -> unit
       ; default : unit -> unit
-      ; error : unit -> Omniml_error.t
+      ; cancel : unit -> unit
+      ; error : unit -> Omniml_error.t option
       }
     [@@deriving sexp_of]
 
@@ -310,25 +322,31 @@ module Var = struct
 
     let schedule_all ts shape =
       let scheduler = Scheduler.t () in
-      List.iter ts ~f:(fun t ->
+      Doubly_linked.iter ts ~f:(fun t ->
         let job = fun () -> t.run shape in
-        Scheduler.enqueue scheduler job)
+        Scheduler.enqueue scheduler job);
+      Doubly_linked.clear ts
     ;;
 
     let schedule_default_all ts =
       [%log.global.debug "Scheduling defaults"];
       let scheduler = Scheduler.t () in
-      List.iter ts ~f:(fun t ->
+      Doubly_linked.iter ts ~f:(fun t ->
         [%log.global.debug "Scheduling default"];
         Scheduler.enqueue scheduler t.default)
     ;;
 
-    let errors ts = List.map ts ~f:(fun t -> t.error ())
+    let errors ts =
+      Doubly_linked.fold_right ts ~init:[] ~f:(fun t acc ->
+        match t.error () with
+        | None -> acc
+        | Some error -> error :: acc)
+    ;;
   end
 
   module S = struct
     type desc =
-      | Empty of Handler.t list
+      | Empty of Handler.t Doubly_linked.t
       | Full of t
     [@@deriving sexp_of]
 
@@ -346,7 +364,9 @@ module Var = struct
 
     let merge_desc ~ctx:_ ~create:_ ~unify:_ ~type1:_ ~type2:_ t1 t2 =
       match t1, t2 with
-      | Empty hs1, Empty hs2 -> Empty (hs1 @ hs2)
+      | Empty hs1, Empty hs2 ->
+        Doubly_linked.transfer ~src:hs2 ~dst:hs1;
+        Empty hs1
       | Full s1, Full s2 -> if equal s1 s2 then Full s1 else raise Cannot_merge
       | Empty hs, Full s | Full s, Empty hs ->
         Handler.schedule_all hs s;
@@ -367,7 +387,7 @@ module Var = struct
       { id = Identifier.create id_source
       ; region
       ; guards = Guard_set.empty
-      ; desc = Empty []
+      ; desc = Empty (Doubly_linked.create ())
       }
     ;;
   end
@@ -392,10 +412,28 @@ module Var = struct
     | Full _ -> false
   ;;
 
+  module Registered_handler = struct
+    type t =
+      { wait_list : Handler.t Doubly_linked.t
+      ; handler : Handler.t Doubly_linked.Elt.t
+      }
+
+    let cancel_if_pending t =
+      if not (Doubly_linked.is_empty t.wait_list)
+      then (
+        (Doubly_linked.Elt.value t.handler).cancel ();
+        Doubly_linked.remove t.wait_list t.handler)
+    ;;
+  end
+
   let add_handler t handler =
     match desc t with
-    | Full s -> Handler.schedule handler s
-    | Empty handlers -> set_desc t (Empty (handler :: handlers))
+    | Full s ->
+      Handler.schedule handler s;
+      None
+    | Empty handlers ->
+      let handler = Doubly_linked.insert_first handlers handler in
+      Some { Registered_handler.wait_list = handlers; handler }
   ;;
 
   exception Empty

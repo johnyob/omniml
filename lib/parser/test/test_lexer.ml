@@ -80,6 +80,7 @@ let%expect_test "keywords" =
   ; ">="
   ; "<="
   ; "<>"
+  ; "?"
   ]
   |> List.iter ~f:(fun keyword ->
     Fmt.pr "Keyword: %s @.Output: " keyword;
@@ -162,6 +163,8 @@ let%expect_test "keywords" =
     Output: Less_equal
     Keyword: <>
     Output: Less_greater
+    Keyword: ?
+    Output: Question_mark
     |}]
 ;;
 

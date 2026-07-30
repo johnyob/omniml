@@ -36,4 +36,5 @@ val type_check_and_print
   -> with_stdlib:bool
   -> with_poly_params:bool
   -> defaulting:Options.Defaulting.t
+  -> termination_check:Options.Termination_check.t
   -> unit

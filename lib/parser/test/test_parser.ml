@@ -815,31 +815,39 @@ let%expect_test "fun : map" =
               (source
                (Reader
                 ((id 0) (name (expect_test.ml)) (length 146) (unsafe_get <fun>))))))))
-          (value_binding_exp
+          (value_binding_term
            ((it
-             (Exp_app
+             (Term_exp
               ((it
-                (Exp_var
-                 ((it fix)
+                (Exp_app
+                 ((it
+                   (Exp_var
+                    ((it fix)
+                     (range
+                      ((start 12) (stop 15)
+                       (source
+                        (Reader
+                         ((id 0) (name (expect_test.ml)) (length 146)
+                          (unsafe_get <fun>)))))))))
                   (range
                    ((start 12) (stop 15)
                     (source
                      (Reader
                       ((id 0) (name (expect_test.ml)) (length 146)
-                       (unsafe_get <fun>)))))))))
-               (range
-                ((start 12) (stop 15)
-                 (source
-                  (Reader
-                   ((id 0) (name (expect_test.ml)) (length 146)
-                    (unsafe_get <fun>)))))))
-              ((it
-                (Exp_fun
-                 (((it
-                    (Param_mono_val
-                     ((it
-                       (Pat_var
-                        ((it map)
+                       (unsafe_get <fun>)))))))
+                 ((it
+                   (Exp_fun
+                    (((it
+                       (Param_mono_val
+                        ((it
+                          (Pat_var
+                           ((it map)
+                            (range
+                             ((start 21) (stop 24)
+                              (source
+                               (Reader
+                                ((id 0) (name (expect_test.ml)) (length 146)
+                                 (unsafe_get <fun>)))))))))
                          (range
                           ((start 21) (stop 24)
                            (source
@@ -851,18 +859,18 @@ let%expect_test "fun : map" =
                         (source
                          (Reader
                           ((id 0) (name (expect_test.ml)) (length 146)
-                           (unsafe_get <fun>)))))))))
-                   (range
-                    ((start 21) (stop 24)
-                     (source
-                      (Reader
-                       ((id 0) (name (expect_test.ml)) (length 146)
-                        (unsafe_get <fun>)))))))
-                  ((it
-                    (Param_mono_val
+                           (unsafe_get <fun>)))))))
                      ((it
-                       (Pat_var
-                        ((it t)
+                       (Param_mono_val
+                        ((it
+                          (Pat_var
+                           ((it t)
+                            (range
+                             ((start 25) (stop 26)
+                              (source
+                               (Reader
+                                ((id 0) (name (expect_test.ml)) (length 146)
+                                 (unsafe_get <fun>)))))))))
                          (range
                           ((start 25) (stop 26)
                            (source
@@ -874,18 +882,18 @@ let%expect_test "fun : map" =
                         (source
                          (Reader
                           ((id 0) (name (expect_test.ml)) (length 146)
-                           (unsafe_get <fun>)))))))))
-                   (range
-                    ((start 25) (stop 26)
-                     (source
-                      (Reader
-                       ((id 0) (name (expect_test.ml)) (length 146)
-                        (unsafe_get <fun>)))))))
-                  ((it
-                    (Param_mono_val
+                           (unsafe_get <fun>)))))))
                      ((it
-                       (Pat_var
-                        ((it f)
+                       (Param_mono_val
+                        ((it
+                          (Pat_var
+                           ((it f)
+                            (range
+                             ((start 27) (stop 28)
+                              (source
+                               (Reader
+                                ((id 0) (name (expect_test.ml)) (length 146)
+                                 (unsafe_get <fun>)))))))))
                          (range
                           ((start 27) (stop 28)
                            (source
@@ -897,121 +905,121 @@ let%expect_test "fun : map" =
                         (source
                          (Reader
                           ((id 0) (name (expect_test.ml)) (length 146)
-                           (unsafe_get <fun>)))))))))
-                   (range
-                    ((start 27) (stop 28)
-                     (source
-                      (Reader
-                       ((id 0) (name (expect_test.ml)) (length 146)
-                        (unsafe_get <fun>))))))))
-                 ((it
-                   (Exp_match
+                           (unsafe_get <fun>))))))))
                     ((it
-                      (Exp_var
-                       ((it t)
+                      (Exp_match
+                       ((it
+                         (Exp_var
+                          ((it t)
+                           (range
+                            ((start 49) (stop 50)
+                             (source
+                              (Reader
+                               ((id 0) (name (expect_test.ml)) (length 146)
+                                (unsafe_get <fun>)))))))))
                         (range
                          ((start 49) (stop 50)
                           (source
                            (Reader
                             ((id 0) (name (expect_test.ml)) (length 146)
-                             (unsafe_get <fun>)))))))))
-                     (range
-                      ((start 49) (stop 50)
-                       (source
-                        (Reader
-                         ((id 0) (name (expect_test.ml)) (length 146)
-                          (unsafe_get <fun>)))))))
-                    (((it
-                       ((case_lhs
-                         ((it
-                           (Pat_constr
-                            ((it Nil)
+                             (unsafe_get <fun>)))))))
+                       (((it
+                          ((case_lhs
+                            ((it
+                              (Pat_constr
+                               ((it Nil)
+                                (range
+                                 ((start 71) (stop 74)
+                                  (source
+                                   (Reader
+                                    ((id 0) (name (expect_test.ml)) (length 146)
+                                     (unsafe_get <fun>)))))))
+                               ()))
                              (range
                               ((start 71) (stop 74)
                                (source
                                 (Reader
                                  ((id 0) (name (expect_test.ml)) (length 146)
-                                  (unsafe_get <fun>)))))))
-                            ()))
-                          (range
-                           ((start 71) (stop 74)
-                            (source
-                             (Reader
-                              ((id 0) (name (expect_test.ml)) (length 146)
-                               (unsafe_get <fun>))))))))
-                        (case_rhs
-                         ((it
-                           (Exp_constr
-                            ((it Nil)
+                                  (unsafe_get <fun>))))))))
+                           (case_rhs
+                            ((it
+                              (Exp_constr
+                               ((it Nil)
+                                (range
+                                 ((start 78) (stop 81)
+                                  (source
+                                   (Reader
+                                    ((id 0) (name (expect_test.ml)) (length 146)
+                                     (unsafe_get <fun>)))))))
+                               ()))
                              (range
                               ((start 78) (stop 81)
                                (source
                                 (Reader
                                  ((id 0) (name (expect_test.ml)) (length 146)
-                                  (unsafe_get <fun>)))))))
-                            ()))
-                          (range
-                           ((start 78) (stop 81)
-                            (source
-                             (Reader
-                              ((id 0) (name (expect_test.ml)) (length 146)
-                               (unsafe_get <fun>))))))))))
-                      (range
-                       ((start 71) (stop 81)
-                        (source
-                         (Reader
-                          ((id 0) (name (expect_test.ml)) (length 146)
-                           (unsafe_get <fun>)))))))
-                     ((it
-                       ((case_lhs
-                         ((it
-                           (Pat_constr
-                            ((it Cons)
+                                  (unsafe_get <fun>))))))))))
+                         (range
+                          ((start 71) (stop 81)
+                           (source
+                            (Reader
+                             ((id 0) (name (expect_test.ml)) (length 146)
+                              (unsafe_get <fun>)))))))
+                        ((it
+                          ((case_lhs
+                            ((it
+                              (Pat_constr
+                               ((it Cons)
+                                (range
+                                 ((start 96) (stop 100)
+                                  (source
+                                   (Reader
+                                    ((id 0) (name (expect_test.ml)) (length 146)
+                                     (unsafe_get <fun>)))))))
+                               ()))
                              (range
                               ((start 96) (stop 100)
                                (source
                                 (Reader
                                  ((id 0) (name (expect_test.ml)) (length 146)
-                                  (unsafe_get <fun>)))))))
-                            ()))
-                          (range
-                           ((start 96) (stop 100)
-                            (source
-                             (Reader
-                              ((id 0) (name (expect_test.ml)) (length 146)
-                               (unsafe_get <fun>))))))))
-                        (case_rhs
-                         ((it
-                           (Exp_constr
-                            ((it Cons)
-                             (range
-                              ((start 104) (stop 108)
-                               (source
-                                (Reader
-                                 ((id 0) (name (expect_test.ml)) (length 146)
-                                  (unsafe_get <fun>)))))))
-                            (((it
-                               (Exp_tuple
-                                (((it
-                                   (Exp_app
-                                    ((it
-                                      (Exp_var
-                                       ((it f)
+                                  (unsafe_get <fun>))))))))
+                           (case_rhs
+                            ((it
+                              (Exp_constr
+                               ((it Cons)
+                                (range
+                                 ((start 104) (stop 108)
+                                  (source
+                                   (Reader
+                                    ((id 0) (name (expect_test.ml)) (length 146)
+                                     (unsafe_get <fun>)))))))
+                               (((it
+                                  (Exp_tuple
+                                   (((it
+                                      (Exp_app
+                                       ((it
+                                         (Exp_var
+                                          ((it f)
+                                           (range
+                                            ((start 110) (stop 111)
+                                             (source
+                                              (Reader
+                                               ((id 0) (name (expect_test.ml))
+                                                (length 146) (unsafe_get <fun>)))))))))
                                         (range
                                          ((start 110) (stop 111)
                                           (source
                                            (Reader
                                             ((id 0) (name (expect_test.ml))
-                                             (length 146) (unsafe_get <fun>)))))))))
-                                     (range
-                                      ((start 110) (stop 111)
-                                       (source
-                                        (Reader
-                                         ((id 0) (name (expect_test.ml))
-                                          (length 146) (unsafe_get <fun>)))))))
-                                    ((it
-                                      (Exp_var
-                                       ((it x)
+                                             (length 146) (unsafe_get <fun>)))))))
+                                       ((it
+                                         (Exp_var
+                                          ((it x)
+                                           (range
+                                            ((start 112) (stop 113)
+                                             (source
+                                              (Reader
+                                               ((id 0) (name (expect_test.ml))
+                                                (length 146) (unsafe_get <fun>)))))))))
                                         (range
                                          ((start 112) (stop 113)
                                           (source
@@ -1019,39 +1027,41 @@ let%expect_test "fun : map" =
                                             ((id 0) (name (expect_test.ml))
                                              (length 146) (unsafe_get <fun>)))))))))
                                      (range
-                                      ((start 112) (stop 113)
+                                      ((start 110) (stop 113)
                                        (source
                                         (Reader
                                          ((id 0) (name (expect_test.ml))
-                                          (length 146) (unsafe_get <fun>)))))))))
-                                  (range
-                                   ((start 110) (stop 113)
-                                    (source
-                                     (Reader
-                                      ((id 0) (name (expect_test.ml))
-                                       (length 146) (unsafe_get <fun>)))))))
-                                 ((it
-                                   (Exp_app
+                                          (length 146) (unsafe_get <fun>)))))))
                                     ((it
                                       (Exp_app
                                        ((it
-                                         (Exp_var
-                                          ((it map)
+                                         (Exp_app
+                                          ((it
+                                            (Exp_var
+                                             ((it map)
+                                              (range
+                                               ((start 115) (stop 118)
+                                                (source
+                                                 (Reader
+                                                  ((id 0) (name (expect_test.ml))
+                                                   (length 146)
+                                                   (unsafe_get <fun>)))))))))
                                            (range
                                             ((start 115) (stop 118)
                                              (source
                                               (Reader
                                                ((id 0) (name (expect_test.ml))
-                                                (length 146) (unsafe_get <fun>)))))))))
-                                        (range
-                                         ((start 115) (stop 118)
-                                          (source
-                                           (Reader
-                                            ((id 0) (name (expect_test.ml))
-                                             (length 146) (unsafe_get <fun>)))))))
-                                       ((it
-                                         (Exp_var
-                                          ((it t)
+                                                (length 146) (unsafe_get <fun>)))))))
+                                          ((it
+                                            (Exp_var
+                                             ((it t)
+                                              (range
+                                               ((start 119) (stop 120)
+                                                (source
+                                                 (Reader
+                                                  ((id 0) (name (expect_test.ml))
+                                                   (length 146)
+                                                   (unsafe_get <fun>)))))))))
                                            (range
                                             ((start 119) (stop 120)
                                              (source
@@ -1059,20 +1069,20 @@ let%expect_test "fun : map" =
                                                ((id 0) (name (expect_test.ml))
                                                 (length 146) (unsafe_get <fun>)))))))))
                                         (range
-                                         ((start 119) (stop 120)
+                                         ((start 115) (stop 120)
                                           (source
                                            (Reader
                                             ((id 0) (name (expect_test.ml))
-                                             (length 146) (unsafe_get <fun>)))))))))
-                                     (range
-                                      ((start 115) (stop 120)
-                                       (source
-                                        (Reader
-                                         ((id 0) (name (expect_test.ml))
-                                          (length 146) (unsafe_get <fun>)))))))
-                                    ((it
-                                      (Exp_var
-                                       ((it f)
+                                             (length 146) (unsafe_get <fun>)))))))
+                                       ((it
+                                         (Exp_var
+                                          ((it f)
+                                           (range
+                                            ((start 121) (stop 122)
+                                             (source
+                                              (Reader
+                                               ((id 0) (name (expect_test.ml))
+                                                (length 146) (unsafe_get <fun>)))))))))
                                         (range
                                          ((start 121) (stop 122)
                                           (source
@@ -1080,43 +1090,43 @@ let%expect_test "fun : map" =
                                             ((id 0) (name (expect_test.ml))
                                              (length 146) (unsafe_get <fun>)))))))))
                                      (range
-                                      ((start 121) (stop 122)
+                                      ((start 115) (stop 122)
                                        (source
                                         (Reader
                                          ((id 0) (name (expect_test.ml))
-                                          (length 146) (unsafe_get <fun>)))))))))
-                                  (range
-                                   ((start 115) (stop 122)
-                                    (source
-                                     (Reader
-                                      ((id 0) (name (expect_test.ml))
-                                       (length 146) (unsafe_get <fun>))))))))))
-                              (range
-                               ((start 109) (stop 123)
-                                (source
-                                 (Reader
-                                  ((id 0) (name (expect_test.ml)) (length 146)
-                                   (unsafe_get <fun>))))))))))
-                          (range
-                           ((start 104) (stop 123)
-                            (source
-                             (Reader
-                              ((id 0) (name (expect_test.ml)) (length 146)
-                               (unsafe_get <fun>))))))))))
-                      (range
-                       ((start 96) (stop 123)
-                        (source
-                         (Reader
-                          ((id 0) (name (expect_test.ml)) (length 146)
-                           (unsafe_get <fun>))))))))))
+                                          (length 146) (unsafe_get <fun>))))))))))
+                                 (range
+                                  ((start 109) (stop 123)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 146)
+                                      (unsafe_get <fun>))))))))))
+                             (range
+                              ((start 104) (stop 123)
+                               (source
+                                (Reader
+                                 ((id 0) (name (expect_test.ml)) (length 146)
+                                  (unsafe_get <fun>))))))))))
+                         (range
+                          ((start 96) (stop 123)
+                           (source
+                            (Reader
+                             ((id 0) (name (expect_test.ml)) (length 146)
+                              (unsafe_get <fun>))))))))))
+                     (range
+                      ((start 43) (stop 125)
+                       (source
+                        (Reader
+                         ((id 0) (name (expect_test.ml)) (length 146)
+                          (unsafe_get <fun>)))))))))
                   (range
-                   ((start 43) (stop 125)
+                   ((start 17) (stop 125)
                     (source
                      (Reader
                       ((id 0) (name (expect_test.ml)) (length 146)
                        (unsafe_get <fun>)))))))))
                (range
-                ((start 17) (stop 125)
+                ((start 12) (stop 127)
                  (source
                   (Reader
                    ((id 0) (name (expect_test.ml)) (length 146)
@@ -1400,31 +1410,39 @@ let%expect_test "let : fact" =
               (source
                (Reader
                 ((id 0) (name (expect_test.ml)) (length 97) (unsafe_get <fun>))))))))
-          (value_binding_exp
+          (value_binding_term
            ((it
-             (Exp_app
+             (Term_exp
               ((it
-                (Exp_var
-                 ((it fix)
+                (Exp_app
+                 ((it
+                   (Exp_var
+                    ((it fix)
+                     (range
+                      ((start 12) (stop 15)
+                       (source
+                        (Reader
+                         ((id 0) (name (expect_test.ml)) (length 97)
+                          (unsafe_get <fun>)))))))))
                   (range
                    ((start 12) (stop 15)
                     (source
                      (Reader
                       ((id 0) (name (expect_test.ml)) (length 97)
-                       (unsafe_get <fun>)))))))))
-               (range
-                ((start 12) (stop 15)
-                 (source
-                  (Reader
-                   ((id 0) (name (expect_test.ml)) (length 97)
-                    (unsafe_get <fun>)))))))
-              ((it
-                (Exp_fun
-                 (((it
-                    (Param_mono_val
-                     ((it
-                       (Pat_var
-                        ((it fact)
+                       (unsafe_get <fun>)))))))
+                 ((it
+                   (Exp_fun
+                    (((it
+                       (Param_mono_val
+                        ((it
+                          (Pat_var
+                           ((it fact)
+                            (range
+                             ((start 21) (stop 25)
+                              (source
+                               (Reader
+                                ((id 0) (name (expect_test.ml)) (length 97)
+                                 (unsafe_get <fun>)))))))))
                          (range
                           ((start 21) (stop 25)
                            (source
@@ -1436,18 +1454,18 @@ let%expect_test "let : fact" =
                         (source
                          (Reader
                           ((id 0) (name (expect_test.ml)) (length 97)
-                           (unsafe_get <fun>)))))))))
-                   (range
-                    ((start 21) (stop 25)
-                     (source
-                      (Reader
-                       ((id 0) (name (expect_test.ml)) (length 97)
-                        (unsafe_get <fun>)))))))
-                  ((it
-                    (Param_mono_val
+                           (unsafe_get <fun>)))))))
                      ((it
-                       (Pat_var
-                        ((it n)
+                       (Param_mono_val
+                        ((it
+                          (Pat_var
+                           ((it n)
+                            (range
+                             ((start 26) (stop 27)
+                              (source
+                               (Reader
+                                ((id 0) (name (expect_test.ml)) (length 97)
+                                 (unsafe_get <fun>)))))))))
                          (range
                           ((start 26) (stop 27)
                            (source
@@ -1459,24 +1477,39 @@ let%expect_test "let : fact" =
                         (source
                          (Reader
                           ((id 0) (name (expect_test.ml)) (length 97)
-                           (unsafe_get <fun>)))))))))
-                   (range
-                    ((start 26) (stop 27)
-                     (source
-                      (Reader
-                       ((id 0) (name (expect_test.ml)) (length 97)
-                        (unsafe_get <fun>))))))))
-                 ((it
-                   (Exp_if_then_else
+                           (unsafe_get <fun>))))))))
                     ((it
-                      (Exp_app
+                      (Exp_if_then_else
                        ((it
                          (Exp_app
                           ((it
-                            (Exp_var
-                             ((it "( = )")
+                            (Exp_app
+                             ((it
+                               (Exp_var
+                                ((it "( = )")
+                                 (range
+                                  ((start 45) (stop 46)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 97)
+                                      (unsafe_get <fun>)))))))))
                               (range
-                               ((start 45) (stop 46)
+                               ((start 43) (stop 48)
+                                (source
+                                 (Reader
+                                  ((id 0) (name (expect_test.ml)) (length 97)
+                                   (unsafe_get <fun>)))))))
+                             ((it
+                               (Exp_var
+                                ((it n)
+                                 (range
+                                  ((start 43) (stop 44)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 97)
+                                      (unsafe_get <fun>)))))))))
+                              (range
+                               ((start 43) (stop 44)
                                 (source
                                  (Reader
                                   ((id 0) (name (expect_test.ml)) (length 97)
@@ -1487,17 +1520,9 @@ let%expect_test "let : fact" =
                               (Reader
                                ((id 0) (name (expect_test.ml)) (length 97)
                                 (unsafe_get <fun>)))))))
-                          ((it
-                            (Exp_var
-                             ((it n)
-                              (range
-                               ((start 43) (stop 44)
-                                (source
-                                 (Reader
-                                  ((id 0) (name (expect_test.ml)) (length 97)
-                                   (unsafe_get <fun>)))))))))
+                          ((it (Exp_const (Const_int 0)))
                            (range
-                            ((start 43) (stop 44)
+                            ((start 47) (stop 48)
                              (source
                               (Reader
                                ((id 0) (name (expect_test.ml)) (length 97)
@@ -1508,35 +1533,43 @@ let%expect_test "let : fact" =
                            (Reader
                             ((id 0) (name (expect_test.ml)) (length 97)
                              (unsafe_get <fun>)))))))
-                       ((it (Exp_const (Const_int 0)))
+                       ((it (Exp_const (Const_int 1)))
                         (range
-                         ((start 47) (stop 48)
+                         ((start 54) (stop 55)
                           (source
                            (Reader
                             ((id 0) (name (expect_test.ml)) (length 97)
-                             (unsafe_get <fun>)))))))))
-                     (range
-                      ((start 43) (stop 48)
-                       (source
-                        (Reader
-                         ((id 0) (name (expect_test.ml)) (length 97)
-                          (unsafe_get <fun>)))))))
-                    ((it (Exp_const (Const_int 1)))
-                     (range
-                      ((start 54) (stop 55)
-                       (source
-                        (Reader
-                         ((id 0) (name (expect_test.ml)) (length 97)
-                          (unsafe_get <fun>)))))))
-                    ((it
-                      (Exp_app
+                             (unsafe_get <fun>)))))))
                        ((it
                          (Exp_app
                           ((it
-                            (Exp_var
-                             ((it "( * )")
+                            (Exp_app
+                             ((it
+                               (Exp_var
+                                ((it "( * )")
+                                 (range
+                                  ((start 63) (stop 64)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 97)
+                                      (unsafe_get <fun>)))))))))
                               (range
-                               ((start 63) (stop 64)
+                               ((start 61) (stop 77)
+                                (source
+                                 (Reader
+                                  ((id 0) (name (expect_test.ml)) (length 97)
+                                   (unsafe_get <fun>)))))))
+                             ((it
+                               (Exp_var
+                                ((it n)
+                                 (range
+                                  ((start 61) (stop 62)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 97)
+                                      (unsafe_get <fun>)))))))))
+                              (range
+                               ((start 61) (stop 62)
                                 (source
                                  (Reader
                                   ((id 0) (name (expect_test.ml)) (length 97)
@@ -1548,52 +1581,52 @@ let%expect_test "let : fact" =
                                ((id 0) (name (expect_test.ml)) (length 97)
                                 (unsafe_get <fun>)))))))
                           ((it
-                            (Exp_var
-                             ((it n)
-                              (range
-                               ((start 61) (stop 62)
-                                (source
-                                 (Reader
-                                  ((id 0) (name (expect_test.ml)) (length 97)
-                                   (unsafe_get <fun>)))))))))
-                           (range
-                            ((start 61) (stop 62)
-                             (source
-                              (Reader
-                               ((id 0) (name (expect_test.ml)) (length 97)
-                                (unsafe_get <fun>)))))))))
-                        (range
-                         ((start 61) (stop 77)
-                          (source
-                           (Reader
-                            ((id 0) (name (expect_test.ml)) (length 97)
-                             (unsafe_get <fun>)))))))
-                       ((it
-                         (Exp_app
-                          ((it
-                            (Exp_var
-                             ((it fact)
+                            (Exp_app
+                             ((it
+                               (Exp_var
+                                ((it fact)
+                                 (range
+                                  ((start 65) (stop 69)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 97)
+                                      (unsafe_get <fun>)))))))))
                               (range
                                ((start 65) (stop 69)
                                 (source
                                  (Reader
                                   ((id 0) (name (expect_test.ml)) (length 97)
-                                   (unsafe_get <fun>)))))))))
-                           (range
-                            ((start 65) (stop 69)
-                             (source
-                              (Reader
-                               ((id 0) (name (expect_test.ml)) (length 97)
-                                (unsafe_get <fun>)))))))
-                          ((it
-                            (Exp_app
+                                   (unsafe_get <fun>)))))))
                              ((it
                                (Exp_app
                                 ((it
-                                  (Exp_var
-                                   ((it "( - )")
+                                  (Exp_app
+                                   ((it
+                                     (Exp_var
+                                      ((it "( - )")
+                                       (range
+                                        ((start 73) (stop 74)
+                                         (source
+                                          (Reader
+                                           ((id 0) (name (expect_test.ml))
+                                            (length 97) (unsafe_get <fun>)))))))))
                                     (range
-                                     ((start 73) (stop 74)
+                                     ((start 71) (stop 76)
+                                      (source
+                                       (Reader
+                                        ((id 0) (name (expect_test.ml))
+                                         (length 97) (unsafe_get <fun>)))))))
+                                   ((it
+                                     (Exp_var
+                                      ((it n)
+                                       (range
+                                        ((start 71) (stop 72)
+                                         (source
+                                          (Reader
+                                           ((id 0) (name (expect_test.ml))
+                                            (length 97) (unsafe_get <fun>)))))))))
+                                    (range
+                                     ((start 71) (stop 72)
                                       (source
                                        (Reader
                                         ((id 0) (name (expect_test.ml))
@@ -1604,17 +1637,9 @@ let%expect_test "let : fact" =
                                     (Reader
                                      ((id 0) (name (expect_test.ml)) (length 97)
                                       (unsafe_get <fun>)))))))
-                                ((it
-                                  (Exp_var
-                                   ((it n)
-                                    (range
-                                     ((start 71) (stop 72)
-                                      (source
-                                       (Reader
-                                        ((id 0) (name (expect_test.ml))
-                                         (length 97) (unsafe_get <fun>)))))))))
+                                ((it (Exp_const (Const_int 1)))
                                  (range
-                                  ((start 71) (stop 72)
+                                  ((start 75) (stop 76)
                                    (source
                                     (Reader
                                      ((id 0) (name (expect_test.ml)) (length 97)
@@ -1624,40 +1649,33 @@ let%expect_test "let : fact" =
                                 (source
                                  (Reader
                                   ((id 0) (name (expect_test.ml)) (length 97)
-                                   (unsafe_get <fun>)))))))
-                             ((it (Exp_const (Const_int 1)))
-                              (range
-                               ((start 75) (stop 76)
-                                (source
-                                 (Reader
-                                  ((id 0) (name (expect_test.ml)) (length 97)
                                    (unsafe_get <fun>)))))))))
                            (range
-                            ((start 71) (stop 76)
+                            ((start 65) (stop 77)
                              (source
                               (Reader
                                ((id 0) (name (expect_test.ml)) (length 97)
                                 (unsafe_get <fun>)))))))))
                         (range
-                         ((start 65) (stop 77)
+                         ((start 61) (stop 77)
                           (source
                            (Reader
                             ((id 0) (name (expect_test.ml)) (length 97)
                              (unsafe_get <fun>)))))))))
                      (range
-                      ((start 61) (stop 77)
+                      ((start 40) (stop 77)
                        (source
                         (Reader
                          ((id 0) (name (expect_test.ml)) (length 97)
                           (unsafe_get <fun>)))))))))
                   (range
-                   ((start 40) (stop 77)
+                   ((start 17) (stop 77)
                     (source
                      (Reader
                       ((id 0) (name (expect_test.ml)) (length 97)
                        (unsafe_get <fun>)))))))))
                (range
-                ((start 17) (stop 77)
+                ((start 12) (stop 79)
                  (source
                   (Reader
                    ((id 0) (name (expect_test.ml)) (length 97)
@@ -2503,8 +2521,16 @@ let%expect_test "top level function definition" =
                (source
                 (Reader
                  ((id 0) (name (expect_test.ml)) (length 39) (unsafe_get <fun>))))))))
-           (value_binding_exp
-            ((it (Exp_const (Const_int 0)))
+           (value_binding_term
+            ((it
+              (Term_exp
+               ((it (Exp_const (Const_int 0)))
+                (range
+                 ((start 31) (stop 32)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 39)
+                     (unsafe_get <fun>)))))))))
              (range
               ((start 31) (stop 32)
                (source
@@ -3020,14 +3046,22 @@ let%expect_test "eval example" =
                (source
                 (Reader
                  ((id 0) (name (expect_test.ml)) (length 806) (unsafe_get <fun>))))))))
-           (value_binding_exp
+           (value_binding_term
             ((it
-              (Exp_fun
-               (((it
-                  (Param_mono_val
-                   ((it
-                     (Pat_var
-                      ((it op)
+              (Term_exp
+               ((it
+                 (Exp_fun
+                  (((it
+                     (Param_mono_val
+                      ((it
+                        (Pat_var
+                         ((it op)
+                          (range
+                           ((start 222) (stop 224)
+                            (source
+                             (Reader
+                              ((id 0) (name (expect_test.ml)) (length 806)
+                               (unsafe_get <fun>)))))))))
                        (range
                         ((start 222) (stop 224)
                          (source
@@ -3039,18 +3073,18 @@ let%expect_test "eval example" =
                       (source
                        (Reader
                         ((id 0) (name (expect_test.ml)) (length 806)
-                         (unsafe_get <fun>)))))))))
-                 (range
-                  ((start 222) (stop 224)
-                   (source
-                    (Reader
-                     ((id 0) (name (expect_test.ml)) (length 806)
-                      (unsafe_get <fun>)))))))
-                ((it
-                  (Param_mono_val
+                         (unsafe_get <fun>)))))))
                    ((it
-                     (Pat_var
-                      ((it n1)
+                     (Param_mono_val
+                      ((it
+                        (Pat_var
+                         ((it n1)
+                          (range
+                           ((start 225) (stop 227)
+                            (source
+                             (Reader
+                              ((id 0) (name (expect_test.ml)) (length 806)
+                               (unsafe_get <fun>)))))))))
                        (range
                         ((start 225) (stop 227)
                          (source
@@ -3062,18 +3096,18 @@ let%expect_test "eval example" =
                       (source
                        (Reader
                         ((id 0) (name (expect_test.ml)) (length 806)
-                         (unsafe_get <fun>)))))))))
-                 (range
-                  ((start 225) (stop 227)
-                   (source
-                    (Reader
-                     ((id 0) (name (expect_test.ml)) (length 806)
-                      (unsafe_get <fun>)))))))
-                ((it
-                  (Param_mono_val
+                         (unsafe_get <fun>)))))))
                    ((it
-                     (Pat_var
-                      ((it n2)
+                     (Param_mono_val
+                      ((it
+                        (Pat_var
+                         ((it n2)
+                          (range
+                           ((start 228) (stop 230)
+                            (source
+                             (Reader
+                              ((id 0) (name (expect_test.ml)) (length 806)
+                               (unsafe_get <fun>)))))))))
                        (range
                         ((start 228) (stop 230)
                          (source
@@ -3085,58 +3119,73 @@ let%expect_test "eval example" =
                       (source
                        (Reader
                         ((id 0) (name (expect_test.ml)) (length 806)
-                         (unsafe_get <fun>)))))))))
-                 (range
-                  ((start 228) (stop 230)
-                   (source
-                    (Reader
-                     ((id 0) (name (expect_test.ml)) (length 806)
-                      (unsafe_get <fun>))))))))
-               ((it
-                 (Exp_match
+                         (unsafe_get <fun>))))))))
                   ((it
-                    (Exp_var
-                     ((it op)
+                    (Exp_match
+                     ((it
+                       (Exp_var
+                        ((it op)
+                         (range
+                          ((start 249) (stop 251)
+                           (source
+                            (Reader
+                             ((id 0) (name (expect_test.ml)) (length 806)
+                              (unsafe_get <fun>)))))))))
                       (range
                        ((start 249) (stop 251)
                         (source
                          (Reader
                           ((id 0) (name (expect_test.ml)) (length 806)
-                           (unsafe_get <fun>)))))))))
-                   (range
-                    ((start 249) (stop 251)
-                     (source
-                      (Reader
-                       ((id 0) (name (expect_test.ml)) (length 806)
-                        (unsafe_get <fun>)))))))
-                  (((it
-                     ((case_lhs
-                       ((it
-                         (Pat_constr
-                          ((it Add)
+                           (unsafe_get <fun>)))))))
+                     (((it
+                        ((case_lhs
+                          ((it
+                            (Pat_constr
+                             ((it Add)
+                              (range
+                               ((start 267) (stop 270)
+                                (source
+                                 (Reader
+                                  ((id 0) (name (expect_test.ml)) (length 806)
+                                   (unsafe_get <fun>)))))))
+                             ()))
                            (range
                             ((start 267) (stop 270)
                              (source
                               (Reader
                                ((id 0) (name (expect_test.ml)) (length 806)
-                                (unsafe_get <fun>)))))))
-                          ()))
-                        (range
-                         ((start 267) (stop 270)
-                          (source
-                           (Reader
-                            ((id 0) (name (expect_test.ml)) (length 806)
-                             (unsafe_get <fun>))))))))
-                      (case_rhs
-                       ((it
-                         (Exp_app
+                                (unsafe_get <fun>))))))))
+                         (case_rhs
                           ((it
                             (Exp_app
                              ((it
-                               (Exp_var
-                                ((it "( + )")
+                               (Exp_app
+                                ((it
+                                  (Exp_var
+                                   ((it "( + )")
+                                    (range
+                                     ((start 277) (stop 278)
+                                      (source
+                                       (Reader
+                                        ((id 0) (name (expect_test.ml))
+                                         (length 806) (unsafe_get <fun>)))))))))
                                  (range
-                                  ((start 277) (stop 278)
+                                  ((start 274) (stop 281)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 806)
+                                      (unsafe_get <fun>)))))))
+                                ((it
+                                  (Exp_var
+                                   ((it n1)
+                                    (range
+                                     ((start 274) (stop 276)
+                                      (source
+                                       (Reader
+                                        ((id 0) (name (expect_test.ml))
+                                         (length 806) (unsafe_get <fun>)))))))))
+                                 (range
+                                  ((start 274) (stop 276)
                                    (source
                                     (Reader
                                      ((id 0) (name (expect_test.ml)) (length 806)
@@ -3149,15 +3198,15 @@ let%expect_test "eval example" =
                                    (unsafe_get <fun>)))))))
                              ((it
                                (Exp_var
-                                ((it n1)
+                                ((it n2)
                                  (range
-                                  ((start 274) (stop 276)
+                                  ((start 279) (stop 281)
                                    (source
                                     (Reader
                                      ((id 0) (name (expect_test.ml)) (length 806)
                                       (unsafe_get <fun>)))))))))
                               (range
-                               ((start 274) (stop 276)
+                               ((start 279) (stop 281)
                                 (source
                                  (Reader
                                   ((id 0) (name (expect_test.ml)) (length 806)
@@ -3167,62 +3216,62 @@ let%expect_test "eval example" =
                              (source
                               (Reader
                                ((id 0) (name (expect_test.ml)) (length 806)
-                                (unsafe_get <fun>)))))))
+                                (unsafe_get <fun>))))))))))
+                       (range
+                        ((start 267) (stop 281)
+                         (source
+                          (Reader
+                           ((id 0) (name (expect_test.ml)) (length 806)
+                            (unsafe_get <fun>)))))))
+                      ((it
+                        ((case_lhs
                           ((it
-                            (Exp_var
-                             ((it n2)
+                            (Pat_constr
+                             ((it Sub)
                               (range
-                               ((start 279) (stop 281)
+                               ((start 292) (stop 295)
                                 (source
                                  (Reader
                                   ((id 0) (name (expect_test.ml)) (length 806)
-                                   (unsafe_get <fun>)))))))))
-                           (range
-                            ((start 279) (stop 281)
-                             (source
-                              (Reader
-                               ((id 0) (name (expect_test.ml)) (length 806)
-                                (unsafe_get <fun>)))))))))
-                        (range
-                         ((start 274) (stop 281)
-                          (source
-                           (Reader
-                            ((id 0) (name (expect_test.ml)) (length 806)
-                             (unsafe_get <fun>))))))))))
-                    (range
-                     ((start 267) (stop 281)
-                      (source
-                       (Reader
-                        ((id 0) (name (expect_test.ml)) (length 806)
-                         (unsafe_get <fun>)))))))
-                   ((it
-                     ((case_lhs
-                       ((it
-                         (Pat_constr
-                          ((it Sub)
+                                   (unsafe_get <fun>)))))))
+                             ()))
                            (range
                             ((start 292) (stop 295)
                              (source
                               (Reader
                                ((id 0) (name (expect_test.ml)) (length 806)
-                                (unsafe_get <fun>)))))))
-                          ()))
-                        (range
-                         ((start 292) (stop 295)
-                          (source
-                           (Reader
-                            ((id 0) (name (expect_test.ml)) (length 806)
-                             (unsafe_get <fun>))))))))
-                      (case_rhs
-                       ((it
-                         (Exp_app
+                                (unsafe_get <fun>))))))))
+                         (case_rhs
                           ((it
                             (Exp_app
                              ((it
-                               (Exp_var
-                                ((it "( - )")
+                               (Exp_app
+                                ((it
+                                  (Exp_var
+                                   ((it "( - )")
+                                    (range
+                                     ((start 302) (stop 303)
+                                      (source
+                                       (Reader
+                                        ((id 0) (name (expect_test.ml))
+                                         (length 806) (unsafe_get <fun>)))))))))
                                  (range
-                                  ((start 302) (stop 303)
+                                  ((start 299) (stop 306)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 806)
+                                      (unsafe_get <fun>)))))))
+                                ((it
+                                  (Exp_var
+                                   ((it n1)
+                                    (range
+                                     ((start 299) (stop 301)
+                                      (source
+                                       (Reader
+                                        ((id 0) (name (expect_test.ml))
+                                         (length 806) (unsafe_get <fun>)))))))))
+                                 (range
+                                  ((start 299) (stop 301)
                                    (source
                                     (Reader
                                      ((id 0) (name (expect_test.ml)) (length 806)
@@ -3235,15 +3284,15 @@ let%expect_test "eval example" =
                                    (unsafe_get <fun>)))))))
                              ((it
                                (Exp_var
-                                ((it n1)
+                                ((it n2)
                                  (range
-                                  ((start 299) (stop 301)
+                                  ((start 304) (stop 306)
                                    (source
                                     (Reader
                                      ((id 0) (name (expect_test.ml)) (length 806)
                                       (unsafe_get <fun>)))))))))
                               (range
-                               ((start 299) (stop 301)
+                               ((start 304) (stop 306)
                                 (source
                                  (Reader
                                   ((id 0) (name (expect_test.ml)) (length 806)
@@ -3253,36 +3302,21 @@ let%expect_test "eval example" =
                              (source
                               (Reader
                                ((id 0) (name (expect_test.ml)) (length 806)
-                                (unsafe_get <fun>)))))))
-                          ((it
-                            (Exp_var
-                             ((it n2)
-                              (range
-                               ((start 304) (stop 306)
-                                (source
-                                 (Reader
-                                  ((id 0) (name (expect_test.ml)) (length 806)
-                                   (unsafe_get <fun>)))))))))
-                           (range
-                            ((start 304) (stop 306)
-                             (source
-                              (Reader
-                               ((id 0) (name (expect_test.ml)) (length 806)
-                                (unsafe_get <fun>)))))))))
-                        (range
-                         ((start 299) (stop 306)
-                          (source
-                           (Reader
-                            ((id 0) (name (expect_test.ml)) (length 806)
-                             (unsafe_get <fun>))))))))))
-                    (range
-                     ((start 292) (stop 306)
-                      (source
-                       (Reader
-                        ((id 0) (name (expect_test.ml)) (length 806)
-                         (unsafe_get <fun>))))))))))
+                                (unsafe_get <fun>))))))))))
+                       (range
+                        ((start 292) (stop 306)
+                         (source
+                          (Reader
+                           ((id 0) (name (expect_test.ml)) (length 806)
+                            (unsafe_get <fun>))))))))))
+                   (range
+                    ((start 243) (stop 316)
+                     (source
+                      (Reader
+                       ((id 0) (name (expect_test.ml)) (length 806)
+                        (unsafe_get <fun>)))))))))
                 (range
-                 ((start 243) (stop 316)
+                 ((start 218) (stop 316)
                   (source
                    (Reader
                     ((id 0) (name (expect_test.ml)) (length 806)
@@ -3320,31 +3354,39 @@ let%expect_test "eval example" =
                (source
                 (Reader
                  ((id 0) (name (expect_test.ml)) (length 806) (unsafe_get <fun>))))))))
-           (value_binding_exp
+           (value_binding_term
             ((it
-              (Exp_app
+              (Term_exp
                ((it
-                 (Exp_var
-                  ((it fix)
+                 (Exp_app
+                  ((it
+                    (Exp_var
+                     ((it fix)
+                      (range
+                       ((start 345) (stop 348)
+                        (source
+                         (Reader
+                          ((id 0) (name (expect_test.ml)) (length 806)
+                           (unsafe_get <fun>)))))))))
                    (range
                     ((start 345) (stop 348)
                      (source
                       (Reader
                        ((id 0) (name (expect_test.ml)) (length 806)
-                        (unsafe_get <fun>)))))))))
-                (range
-                 ((start 345) (stop 348)
-                  (source
-                   (Reader
-                    ((id 0) (name (expect_test.ml)) (length 806)
-                     (unsafe_get <fun>)))))))
-               ((it
-                 (Exp_fun
-                  (((it
-                     (Param_mono_val
-                      ((it
-                        (Pat_var
-                         ((it eval)
+                        (unsafe_get <fun>)))))))
+                  ((it
+                    (Exp_fun
+                     (((it
+                        (Param_mono_val
+                         ((it
+                           (Pat_var
+                            ((it eval)
+                             (range
+                              ((start 354) (stop 358)
+                               (source
+                                (Reader
+                                 ((id 0) (name (expect_test.ml)) (length 806)
+                                  (unsafe_get <fun>)))))))))
                           (range
                            ((start 354) (stop 358)
                             (source
@@ -3356,18 +3398,18 @@ let%expect_test "eval example" =
                          (source
                           (Reader
                            ((id 0) (name (expect_test.ml)) (length 806)
-                            (unsafe_get <fun>)))))))))
-                    (range
-                     ((start 354) (stop 358)
-                      (source
-                       (Reader
-                        ((id 0) (name (expect_test.ml)) (length 806)
-                         (unsafe_get <fun>)))))))
-                   ((it
-                     (Param_mono_val
+                            (unsafe_get <fun>)))))))
                       ((it
-                        (Pat_var
-                         ((it env)
+                        (Param_mono_val
+                         ((it
+                           (Pat_var
+                            ((it env)
+                             (range
+                              ((start 359) (stop 362)
+                               (source
+                                (Reader
+                                 ((id 0) (name (expect_test.ml)) (length 806)
+                                  (unsafe_get <fun>)))))))))
                           (range
                            ((start 359) (stop 362)
                             (source
@@ -3379,18 +3421,18 @@ let%expect_test "eval example" =
                          (source
                           (Reader
                            ((id 0) (name (expect_test.ml)) (length 806)
-                            (unsafe_get <fun>)))))))))
-                    (range
-                     ((start 359) (stop 362)
-                      (source
-                       (Reader
-                        ((id 0) (name (expect_test.ml)) (length 806)
-                         (unsafe_get <fun>)))))))
-                   ((it
-                     (Param_mono_val
+                            (unsafe_get <fun>)))))))
                       ((it
-                        (Pat_var
-                         ((it exp)
+                        (Param_mono_val
+                         ((it
+                           (Pat_var
+                            ((it exp)
+                             (range
+                              ((start 363) (stop 366)
+                               (source
+                                (Reader
+                                 ((id 0) (name (expect_test.ml)) (length 806)
+                                  (unsafe_get <fun>)))))))))
                           (range
                            ((start 363) (stop 366)
                             (source
@@ -3402,139 +3444,139 @@ let%expect_test "eval example" =
                          (source
                           (Reader
                            ((id 0) (name (expect_test.ml)) (length 806)
-                            (unsafe_get <fun>)))))))))
-                    (range
-                     ((start 363) (stop 366)
-                      (source
-                       (Reader
-                        ((id 0) (name (expect_test.ml)) (length 806)
-                         (unsafe_get <fun>))))))))
-                  ((it
-                    (Exp_match
+                            (unsafe_get <fun>))))))))
                      ((it
-                       (Exp_var
-                        ((it exp)
+                       (Exp_match
+                        ((it
+                          (Exp_var
+                           ((it exp)
+                            (range
+                             ((start 384) (stop 387)
+                              (source
+                               (Reader
+                                ((id 0) (name (expect_test.ml)) (length 806)
+                                 (unsafe_get <fun>)))))))))
                          (range
                           ((start 384) (stop 387)
                            (source
                             (Reader
                              ((id 0) (name (expect_test.ml)) (length 806)
-                              (unsafe_get <fun>)))))))))
-                      (range
-                       ((start 384) (stop 387)
-                        (source
-                         (Reader
-                          ((id 0) (name (expect_test.ml)) (length 806)
-                           (unsafe_get <fun>)))))))
-                     (((it
-                        ((case_lhs
-                          ((it
-                            (Pat_constr
-                             ((it Int)
-                              (range
-                               ((start 403) (stop 406)
-                                (source
-                                 (Reader
-                                  ((id 0) (name (expect_test.ml)) (length 806)
-                                   (unsafe_get <fun>)))))))
-                             (((it
-                                (Pat_var
-                                 ((it n)
+                              (unsafe_get <fun>)))))))
+                        (((it
+                           ((case_lhs
+                             ((it
+                               (Pat_constr
+                                ((it Int)
+                                 (range
+                                  ((start 403) (stop 406)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 806)
+                                      (unsafe_get <fun>)))))))
+                                (((it
+                                   (Pat_var
+                                    ((it n)
+                                     (range
+                                      ((start 407) (stop 408)
+                                       (source
+                                        (Reader
+                                         ((id 0) (name (expect_test.ml))
+                                          (length 806) (unsafe_get <fun>)))))))))
                                   (range
                                    ((start 407) (stop 408)
                                     (source
                                      (Reader
                                       ((id 0) (name (expect_test.ml))
-                                       (length 806) (unsafe_get <fun>)))))))))
-                               (range
-                                ((start 407) (stop 408)
-                                 (source
-                                  (Reader
-                                   ((id 0) (name (expect_test.ml)) (length 806)
-                                    (unsafe_get <fun>))))))))))
-                           (range
-                            ((start 403) (stop 408)
-                             (source
-                              (Reader
-                               ((id 0) (name (expect_test.ml)) (length 806)
-                                (unsafe_get <fun>))))))))
-                         (case_rhs
-                          ((it
-                            (Exp_var
-                             ((it n)
+                                       (length 806) (unsafe_get <fun>))))))))))
+                              (range
+                               ((start 403) (stop 408)
+                                (source
+                                 (Reader
+                                  ((id 0) (name (expect_test.ml)) (length 806)
+                                   (unsafe_get <fun>))))))))
+                            (case_rhs
+                             ((it
+                               (Exp_var
+                                ((it n)
+                                 (range
+                                  ((start 412) (stop 413)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 806)
+                                      (unsafe_get <fun>)))))))))
                               (range
                                ((start 412) (stop 413)
                                 (source
                                  (Reader
                                   ((id 0) (name (expect_test.ml)) (length 806)
-                                   (unsafe_get <fun>)))))))))
-                           (range
-                            ((start 412) (stop 413)
-                             (source
-                              (Reader
-                               ((id 0) (name (expect_test.ml)) (length 806)
-                                (unsafe_get <fun>))))))))))
-                       (range
-                        ((start 403) (stop 413)
-                         (source
-                          (Reader
-                           ((id 0) (name (expect_test.ml)) (length 806)
-                            (unsafe_get <fun>)))))))
-                      ((it
-                        ((case_lhs
-                          ((it
-                            (Pat_constr
-                             ((it Var)
-                              (range
-                               ((start 424) (stop 427)
-                                (source
-                                 (Reader
-                                  ((id 0) (name (expect_test.ml)) (length 806)
-                                   (unsafe_get <fun>)))))))
-                             (((it
-                                (Pat_var
-                                 ((it x)
+                                   (unsafe_get <fun>))))))))))
+                          (range
+                           ((start 403) (stop 413)
+                            (source
+                             (Reader
+                              ((id 0) (name (expect_test.ml)) (length 806)
+                               (unsafe_get <fun>)))))))
+                         ((it
+                           ((case_lhs
+                             ((it
+                               (Pat_constr
+                                ((it Var)
+                                 (range
+                                  ((start 424) (stop 427)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 806)
+                                      (unsafe_get <fun>)))))))
+                                (((it
+                                   (Pat_var
+                                    ((it x)
+                                     (range
+                                      ((start 428) (stop 429)
+                                       (source
+                                        (Reader
+                                         ((id 0) (name (expect_test.ml))
+                                          (length 806) (unsafe_get <fun>)))))))))
                                   (range
                                    ((start 428) (stop 429)
                                     (source
                                      (Reader
                                       ((id 0) (name (expect_test.ml))
-                                       (length 806) (unsafe_get <fun>)))))))))
-                               (range
-                                ((start 428) (stop 429)
-                                 (source
-                                  (Reader
-                                   ((id 0) (name (expect_test.ml)) (length 806)
-                                    (unsafe_get <fun>))))))))))
-                           (range
-                            ((start 424) (stop 429)
-                             (source
-                              (Reader
-                               ((id 0) (name (expect_test.ml)) (length 806)
-                                (unsafe_get <fun>))))))))
-                         (case_rhs
-                          ((it
-                            (Exp_app
+                                       (length 806) (unsafe_get <fun>))))))))))
+                              (range
+                               ((start 424) (stop 429)
+                                (source
+                                 (Reader
+                                  ((id 0) (name (expect_test.ml)) (length 806)
+                                   (unsafe_get <fun>))))))))
+                            (case_rhs
                              ((it
                                (Exp_app
                                 ((it
-                                  (Exp_var
-                                   ((it env_find)
+                                  (Exp_app
+                                   ((it
+                                     (Exp_var
+                                      ((it env_find)
+                                       (range
+                                        ((start 433) (stop 441)
+                                         (source
+                                          (Reader
+                                           ((id 0) (name (expect_test.ml))
+                                            (length 806) (unsafe_get <fun>)))))))))
                                     (range
                                      ((start 433) (stop 441)
                                       (source
                                        (Reader
                                         ((id 0) (name (expect_test.ml))
-                                         (length 806) (unsafe_get <fun>)))))))))
-                                 (range
-                                  ((start 433) (stop 441)
-                                   (source
-                                    (Reader
-                                     ((id 0) (name (expect_test.ml)) (length 806)
-                                      (unsafe_get <fun>)))))))
-                                ((it
-                                  (Exp_var
-                                   ((it env)
+                                         (length 806) (unsafe_get <fun>)))))))
+                                   ((it
+                                     (Exp_var
+                                      ((it env)
+                                       (range
+                                        ((start 442) (stop 445)
+                                         (source
+                                          (Reader
+                                           ((id 0) (name (expect_test.ml))
+                                            (length 806) (unsafe_get <fun>)))))))))
                                     (range
                                      ((start 442) (stop 445)
                                       (source
@@ -3542,20 +3584,20 @@ let%expect_test "eval example" =
                                         ((id 0) (name (expect_test.ml))
                                          (length 806) (unsafe_get <fun>)))))))))
                                  (range
-                                  ((start 442) (stop 445)
+                                  ((start 433) (stop 445)
                                    (source
                                     (Reader
                                      ((id 0) (name (expect_test.ml)) (length 806)
-                                      (unsafe_get <fun>)))))))))
-                              (range
-                               ((start 433) (stop 445)
-                                (source
-                                 (Reader
-                                  ((id 0) (name (expect_test.ml)) (length 806)
-                                   (unsafe_get <fun>)))))))
-                             ((it
-                               (Exp_var
-                                ((it x)
+                                      (unsafe_get <fun>)))))))
+                                ((it
+                                  (Exp_var
+                                   ((it x)
+                                    (range
+                                     ((start 446) (stop 447)
+                                      (source
+                                       (Reader
+                                        ((id 0) (name (expect_test.ml))
+                                         (length 806) (unsafe_get <fun>)))))))))
                                  (range
                                   ((start 446) (stop 447)
                                    (source
@@ -3563,245 +3605,95 @@ let%expect_test "eval example" =
                                      ((id 0) (name (expect_test.ml)) (length 806)
                                       (unsafe_get <fun>)))))))))
                               (range
-                               ((start 446) (stop 447)
+                               ((start 433) (stop 447)
                                 (source
                                  (Reader
                                   ((id 0) (name (expect_test.ml)) (length 806)
-                                   (unsafe_get <fun>)))))))))
-                           (range
-                            ((start 433) (stop 447)
-                             (source
-                              (Reader
-                               ((id 0) (name (expect_test.ml)) (length 806)
-                                (unsafe_get <fun>))))))))))
-                       (range
-                        ((start 424) (stop 447)
-                         (source
-                          (Reader
-                           ((id 0) (name (expect_test.ml)) (length 806)
-                            (unsafe_get <fun>)))))))
-                      ((it
-                        ((case_lhs
-                          ((it
-                            (Pat_constr
-                             ((it Let)
-                              (range
-                               ((start 458) (stop 461)
-                                (source
-                                 (Reader
-                                  ((id 0) (name (expect_test.ml)) (length 806)
-                                   (unsafe_get <fun>)))))))
-                             (((it
-                                (Pat_tuple
-                                 (((it
-                                    (Pat_var
-                                     ((it bindings)
+                                   (unsafe_get <fun>))))))))))
+                          (range
+                           ((start 424) (stop 447)
+                            (source
+                             (Reader
+                              ((id 0) (name (expect_test.ml)) (length 806)
+                               (unsafe_get <fun>)))))))
+                         ((it
+                           ((case_lhs
+                             ((it
+                               (Pat_constr
+                                ((it Let)
+                                 (range
+                                  ((start 458) (stop 461)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 806)
+                                      (unsafe_get <fun>)))))))
+                                (((it
+                                   (Pat_tuple
+                                    (((it
+                                       (Pat_var
+                                        ((it bindings)
+                                         (range
+                                          ((start 463) (stop 471)
+                                           (source
+                                            (Reader
+                                             ((id 0) (name (expect_test.ml))
+                                              (length 806) (unsafe_get <fun>)))))))))
                                       (range
                                        ((start 463) (stop 471)
                                         (source
                                          (Reader
                                           ((id 0) (name (expect_test.ml))
-                                           (length 806) (unsafe_get <fun>)))))))))
-                                   (range
-                                    ((start 463) (stop 471)
-                                     (source
-                                      (Reader
-                                       ((id 0) (name (expect_test.ml))
-                                        (length 806) (unsafe_get <fun>)))))))
-                                  ((it
-                                    (Pat_var
-                                     ((it in_)
+                                           (length 806) (unsafe_get <fun>)))))))
+                                     ((it
+                                       (Pat_var
+                                        ((it in_)
+                                         (range
+                                          ((start 473) (stop 476)
+                                           (source
+                                            (Reader
+                                             ((id 0) (name (expect_test.ml))
+                                              (length 806) (unsafe_get <fun>)))))))))
                                       (range
                                        ((start 473) (stop 476)
                                         (source
                                          (Reader
                                           ((id 0) (name (expect_test.ml))
-                                           (length 806) (unsafe_get <fun>)))))))))
-                                   (range
-                                    ((start 473) (stop 476)
-                                     (source
-                                      (Reader
-                                       ((id 0) (name (expect_test.ml))
-                                        (length 806) (unsafe_get <fun>))))))))))
-                               (range
-                                ((start 462) (stop 477)
-                                 (source
-                                  (Reader
-                                   ((id 0) (name (expect_test.ml)) (length 806)
-                                    (unsafe_get <fun>))))))))))
-                           (range
-                            ((start 458) (stop 477)
-                             (source
-                              (Reader
-                               ((id 0) (name (expect_test.ml)) (length 806)
-                                (unsafe_get <fun>))))))))
-                         (case_rhs
-                          ((it
-                            (Exp_let
-                             ((it
-                               ((value_binding_pat
-                                 ((it
-                                   (Pat_var
-                                    ((it env)
-                                     (range
-                                      ((start 496) (stop 499)
-                                       (source
-                                        (Reader
-                                         ((id 0) (name (expect_test.ml))
-                                          (length 806) (unsafe_get <fun>)))))))))
+                                           (length 806) (unsafe_get <fun>))))))))))
                                   (range
-                                   ((start 496) (stop 499)
+                                   ((start 462) (stop 477)
                                     (source
                                      (Reader
                                       ((id 0) (name (expect_test.ml))
-                                       (length 806) (unsafe_get <fun>))))))))
-                                (value_binding_exp
-                                 ((it
-                                   (Exp_app
+                                       (length 806) (unsafe_get <fun>))))))))))
+                              (range
+                               ((start 458) (stop 477)
+                                (source
+                                 (Reader
+                                  ((id 0) (name (expect_test.ml)) (length 806)
+                                   (unsafe_get <fun>))))))))
+                            (case_rhs
+                             ((it
+                               (Exp_let
+                                ((it
+                                  ((value_binding_pat
                                     ((it
-                                      (Exp_app
-                                       ((it
-                                         (Exp_app
-                                          ((it
-                                            (Exp_var
-                                             ((it list_fold_right)
-                                              (range
-                                               ((start 515) (stop 530)
-                                                (source
-                                                 (Reader
-                                                  ((id 0) (name (expect_test.ml))
-                                                   (length 806)
-                                                   (unsafe_get <fun>)))))))))
-                                           (range
-                                            ((start 515) (stop 530)
-                                             (source
-                                              (Reader
-                                               ((id 0) (name (expect_test.ml))
-                                                (length 806) (unsafe_get <fun>)))))))
-                                          ((it
-                                            (Exp_var
-                                             ((it bindings)
-                                              (range
-                                               ((start 531) (stop 539)
-                                                (source
-                                                 (Reader
-                                                  ((id 0) (name (expect_test.ml))
-                                                   (length 806)
-                                                   (unsafe_get <fun>)))))))))
-                                           (range
-                                            ((start 531) (stop 539)
-                                             (source
-                                              (Reader
-                                               ((id 0) (name (expect_test.ml))
-                                                (length 806) (unsafe_get <fun>)))))))))
+                                      (Pat_var
+                                       ((it env)
                                         (range
-                                         ((start 515) (stop 539)
-                                          (source
-                                           (Reader
-                                            ((id 0) (name (expect_test.ml))
-                                             (length 806) (unsafe_get <fun>)))))))
-                                       ((it
-                                         (Exp_var
-                                          ((it env)
-                                           (range
-                                            ((start 540) (stop 543)
-                                             (source
-                                              (Reader
-                                               ((id 0) (name (expect_test.ml))
-                                                (length 806) (unsafe_get <fun>)))))))))
-                                        (range
-                                         ((start 540) (stop 543)
+                                         ((start 496) (stop 499)
                                           (source
                                            (Reader
                                             ((id 0) (name (expect_test.ml))
                                              (length 806) (unsafe_get <fun>)))))))))
                                      (range
-                                      ((start 515) (stop 543)
+                                      ((start 496) (stop 499)
                                        (source
                                         (Reader
                                          ((id 0) (name (expect_test.ml))
-                                          (length 806) (unsafe_get <fun>)))))))
+                                          (length 806) (unsafe_get <fun>))))))))
+                                   (value_binding_term
                                     ((it
-                                      (Exp_fun
-                                       (((it
-                                          (Param_mono_val
-                                           ((it
-                                             (Pat_tuple
-                                              (((it
-                                                 (Pat_var
-                                                  ((it var)
-                                                   (range
-                                                    ((start 550) (stop 553)
-                                                     (source
-                                                      (Reader
-                                                       ((id 0)
-                                                        (name (expect_test.ml))
-                                                        (length 806)
-                                                        (unsafe_get <fun>)))))))))
-                                                (range
-                                                 ((start 550) (stop 553)
-                                                  (source
-                                                   (Reader
-                                                    ((id 0)
-                                                     (name (expect_test.ml))
-                                                     (length 806)
-                                                     (unsafe_get <fun>)))))))
-                                               ((it
-                                                 (Pat_var
-                                                  ((it exp)
-                                                   (range
-                                                    ((start 555) (stop 558)
-                                                     (source
-                                                      (Reader
-                                                       ((id 0)
-                                                        (name (expect_test.ml))
-                                                        (length 806)
-                                                        (unsafe_get <fun>)))))))))
-                                                (range
-                                                 ((start 555) (stop 558)
-                                                  (source
-                                                   (Reader
-                                                    ((id 0)
-                                                     (name (expect_test.ml))
-                                                     (length 806)
-                                                     (unsafe_get <fun>))))))))))
-                                            (range
-                                             ((start 549) (stop 559)
-                                              (source
-                                               (Reader
-                                                ((id 0) (name (expect_test.ml))
-                                                 (length 806) (unsafe_get <fun>)))))))))
-                                         (range
-                                          ((start 549) (stop 559)
-                                           (source
-                                            (Reader
-                                             ((id 0) (name (expect_test.ml))
-                                              (length 806) (unsafe_get <fun>)))))))
-                                        ((it
-                                          (Param_mono_val
-                                           ((it
-                                             (Pat_var
-                                              ((it env)
-                                               (range
-                                                ((start 560) (stop 563)
-                                                 (source
-                                                  (Reader
-                                                   ((id 0)
-                                                    (name (expect_test.ml))
-                                                    (length 806)
-                                                    (unsafe_get <fun>)))))))))
-                                            (range
-                                             ((start 560) (stop 563)
-                                              (source
-                                               (Reader
-                                                ((id 0) (name (expect_test.ml))
-                                                 (length 806) (unsafe_get <fun>)))))))))
-                                         (range
-                                          ((start 560) (stop 563)
-                                           (source
-                                            (Reader
-                                             ((id 0) (name (expect_test.ml))
-                                              (length 806) (unsafe_get <fun>))))))))
+                                      (Term_exp
                                        ((it
                                          (Exp_app
                                           ((it
@@ -3810,9 +3702,9 @@ let%expect_test "eval example" =
                                                (Exp_app
                                                 ((it
                                                   (Exp_var
-                                                   ((it env_bind)
+                                                   ((it list_fold_right)
                                                     (range
-                                                     ((start 581) (stop 589)
+                                                     ((start 515) (stop 530)
                                                       (source
                                                        (Reader
                                                         ((id 0)
@@ -3820,7 +3712,577 @@ let%expect_test "eval example" =
                                                          (length 806)
                                                          (unsafe_get <fun>)))))))))
                                                  (range
-                                                  ((start 581) (stop 589)
+                                                  ((start 515) (stop 530)
+                                                   (source
+                                                    (Reader
+                                                     ((id 0)
+                                                      (name (expect_test.ml))
+                                                      (length 806)
+                                                      (unsafe_get <fun>)))))))
+                                                ((it
+                                                  (Exp_var
+                                                   ((it bindings)
+                                                    (range
+                                                     ((start 531) (stop 539)
+                                                      (source
+                                                       (Reader
+                                                        ((id 0)
+                                                         (name (expect_test.ml))
+                                                         (length 806)
+                                                         (unsafe_get <fun>)))))))))
+                                                 (range
+                                                  ((start 531) (stop 539)
+                                                   (source
+                                                    (Reader
+                                                     ((id 0)
+                                                      (name (expect_test.ml))
+                                                      (length 806)
+                                                      (unsafe_get <fun>)))))))))
+                                              (range
+                                               ((start 515) (stop 539)
+                                                (source
+                                                 (Reader
+                                                  ((id 0) (name (expect_test.ml))
+                                                   (length 806)
+                                                   (unsafe_get <fun>)))))))
+                                             ((it
+                                               (Exp_var
+                                                ((it env)
+                                                 (range
+                                                  ((start 540) (stop 543)
+                                                   (source
+                                                    (Reader
+                                                     ((id 0)
+                                                      (name (expect_test.ml))
+                                                      (length 806)
+                                                      (unsafe_get <fun>)))))))))
+                                              (range
+                                               ((start 540) (stop 543)
+                                                (source
+                                                 (Reader
+                                                  ((id 0) (name (expect_test.ml))
+                                                   (length 806)
+                                                   (unsafe_get <fun>)))))))))
+                                           (range
+                                            ((start 515) (stop 543)
+                                             (source
+                                              (Reader
+                                               ((id 0) (name (expect_test.ml))
+                                                (length 806) (unsafe_get <fun>)))))))
+                                          ((it
+                                            (Exp_fun
+                                             (((it
+                                                (Param_mono_val
+                                                 ((it
+                                                   (Pat_tuple
+                                                    (((it
+                                                       (Pat_var
+                                                        ((it var)
+                                                         (range
+                                                          ((start 550) (stop 553)
+                                                           (source
+                                                            (Reader
+                                                             ((id 0)
+                                                              (name
+                                                               (expect_test.ml))
+                                                              (length 806)
+                                                              (unsafe_get <fun>)))))))))
+                                                      (range
+                                                       ((start 550) (stop 553)
+                                                        (source
+                                                         (Reader
+                                                          ((id 0)
+                                                           (name
+                                                            (expect_test.ml))
+                                                           (length 806)
+                                                           (unsafe_get <fun>)))))))
+                                                     ((it
+                                                       (Pat_var
+                                                        ((it exp)
+                                                         (range
+                                                          ((start 555) (stop 558)
+                                                           (source
+                                                            (Reader
+                                                             ((id 0)
+                                                              (name
+                                                               (expect_test.ml))
+                                                              (length 806)
+                                                              (unsafe_get <fun>)))))))))
+                                                      (range
+                                                       ((start 555) (stop 558)
+                                                        (source
+                                                         (Reader
+                                                          ((id 0)
+                                                           (name
+                                                            (expect_test.ml))
+                                                           (length 806)
+                                                           (unsafe_get <fun>))))))))))
+                                                  (range
+                                                   ((start 549) (stop 559)
+                                                    (source
+                                                     (Reader
+                                                      ((id 0)
+                                                       (name (expect_test.ml))
+                                                       (length 806)
+                                                       (unsafe_get <fun>)))))))))
+                                               (range
+                                                ((start 549) (stop 559)
+                                                 (source
+                                                  (Reader
+                                                   ((id 0)
+                                                    (name (expect_test.ml))
+                                                    (length 806)
+                                                    (unsafe_get <fun>)))))))
+                                              ((it
+                                                (Param_mono_val
+                                                 ((it
+                                                   (Pat_var
+                                                    ((it env)
+                                                     (range
+                                                      ((start 560) (stop 563)
+                                                       (source
+                                                        (Reader
+                                                         ((id 0)
+                                                          (name (expect_test.ml))
+                                                          (length 806)
+                                                          (unsafe_get <fun>)))))))))
+                                                  (range
+                                                   ((start 560) (stop 563)
+                                                    (source
+                                                     (Reader
+                                                      ((id 0)
+                                                       (name (expect_test.ml))
+                                                       (length 806)
+                                                       (unsafe_get <fun>)))))))))
+                                               (range
+                                                ((start 560) (stop 563)
+                                                 (source
+                                                  (Reader
+                                                   ((id 0)
+                                                    (name (expect_test.ml))
+                                                    (length 806)
+                                                    (unsafe_get <fun>))))))))
+                                             ((it
+                                               (Exp_app
+                                                ((it
+                                                  (Exp_app
+                                                   ((it
+                                                     (Exp_app
+                                                      ((it
+                                                        (Exp_var
+                                                         ((it env_bind)
+                                                          (range
+                                                           ((start 581)
+                                                            (stop 589)
+                                                            (source
+                                                             (Reader
+                                                              ((id 0)
+                                                               (name
+                                                                (expect_test.ml))
+                                                               (length 806)
+                                                               (unsafe_get <fun>)))))))))
+                                                       (range
+                                                        ((start 581) (stop 589)
+                                                         (source
+                                                          (Reader
+                                                           ((id 0)
+                                                            (name
+                                                             (expect_test.ml))
+                                                            (length 806)
+                                                            (unsafe_get <fun>)))))))
+                                                      ((it
+                                                        (Exp_var
+                                                         ((it env)
+                                                          (range
+                                                           ((start 590)
+                                                            (stop 593)
+                                                            (source
+                                                             (Reader
+                                                              ((id 0)
+                                                               (name
+                                                                (expect_test.ml))
+                                                               (length 806)
+                                                               (unsafe_get <fun>)))))))))
+                                                       (range
+                                                        ((start 590) (stop 593)
+                                                         (source
+                                                          (Reader
+                                                           ((id 0)
+                                                            (name
+                                                             (expect_test.ml))
+                                                            (length 806)
+                                                            (unsafe_get <fun>)))))))))
+                                                    (range
+                                                     ((start 581) (stop 593)
+                                                      (source
+                                                       (Reader
+                                                        ((id 0)
+                                                         (name (expect_test.ml))
+                                                         (length 806)
+                                                         (unsafe_get <fun>)))))))
+                                                   ((it
+                                                     (Exp_var
+                                                      ((it var)
+                                                       (range
+                                                        ((start 594) (stop 597)
+                                                         (source
+                                                          (Reader
+                                                           ((id 0)
+                                                            (name
+                                                             (expect_test.ml))
+                                                            (length 806)
+                                                            (unsafe_get <fun>)))))))))
+                                                    (range
+                                                     ((start 594) (stop 597)
+                                                      (source
+                                                       (Reader
+                                                        ((id 0)
+                                                         (name (expect_test.ml))
+                                                         (length 806)
+                                                         (unsafe_get <fun>)))))))))
+                                                 (range
+                                                  ((start 581) (stop 597)
+                                                   (source
+                                                    (Reader
+                                                     ((id 0)
+                                                      (name (expect_test.ml))
+                                                      (length 806)
+                                                      (unsafe_get <fun>)))))))
+                                                ((it
+                                                  (Exp_var
+                                                   ((it exp)
+                                                    (range
+                                                     ((start 598) (stop 601)
+                                                      (source
+                                                       (Reader
+                                                        ((id 0)
+                                                         (name (expect_test.ml))
+                                                         (length 806)
+                                                         (unsafe_get <fun>)))))))))
+                                                 (range
+                                                  ((start 598) (stop 601)
+                                                   (source
+                                                    (Reader
+                                                     ((id 0)
+                                                      (name (expect_test.ml))
+                                                      (length 806)
+                                                      (unsafe_get <fun>)))))))))
+                                              (range
+                                               ((start 581) (stop 601)
+                                                (source
+                                                 (Reader
+                                                  ((id 0) (name (expect_test.ml))
+                                                   (length 806)
+                                                   (unsafe_get <fun>)))))))))
+                                           (range
+                                            ((start 545) (stop 601)
+                                             (source
+                                              (Reader
+                                               ((id 0) (name (expect_test.ml))
+                                                (length 806) (unsafe_get <fun>)))))))))
+                                        (range
+                                         ((start 515) (stop 602)
+                                          (source
+                                           (Reader
+                                            ((id 0) (name (expect_test.ml))
+                                             (length 806) (unsafe_get <fun>)))))))))
+                                     (range
+                                      ((start 515) (stop 602)
+                                       (source
+                                        (Reader
+                                         ((id 0) (name (expect_test.ml))
+                                          (length 806) (unsafe_get <fun>))))))))))
+                                 (range
+                                  ((start 496) (stop 602)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 806)
+                                      (unsafe_get <fun>)))))))
+                                ((it
+                                  (Exp_app
+                                   ((it
+                                     (Exp_app
+                                      ((it
+                                        (Exp_var
+                                         ((it eval)
+                                          (range
+                                           ((start 627) (stop 631)
+                                            (source
+                                             (Reader
+                                              ((id 0) (name (expect_test.ml))
+                                               (length 806) (unsafe_get <fun>)))))))))
+                                       (range
+                                        ((start 627) (stop 631)
+                                         (source
+                                          (Reader
+                                           ((id 0) (name (expect_test.ml))
+                                            (length 806) (unsafe_get <fun>)))))))
+                                      ((it
+                                        (Exp_var
+                                         ((it env)
+                                          (range
+                                           ((start 632) (stop 635)
+                                            (source
+                                             (Reader
+                                              ((id 0) (name (expect_test.ml))
+                                               (length 806) (unsafe_get <fun>)))))))))
+                                       (range
+                                        ((start 632) (stop 635)
+                                         (source
+                                          (Reader
+                                           ((id 0) (name (expect_test.ml))
+                                            (length 806) (unsafe_get <fun>)))))))))
+                                    (range
+                                     ((start 627) (stop 635)
+                                      (source
+                                       (Reader
+                                        ((id 0) (name (expect_test.ml))
+                                         (length 806) (unsafe_get <fun>)))))))
+                                   ((it
+                                     (Exp_var
+                                      ((it in_)
+                                       (range
+                                        ((start 636) (stop 639)
+                                         (source
+                                          (Reader
+                                           ((id 0) (name (expect_test.ml))
+                                            (length 806) (unsafe_get <fun>)))))))))
+                                    (range
+                                     ((start 636) (stop 639)
+                                      (source
+                                       (Reader
+                                        ((id 0) (name (expect_test.ml))
+                                         (length 806) (unsafe_get <fun>)))))))))
+                                 (range
+                                  ((start 627) (stop 639)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 806)
+                                      (unsafe_get <fun>)))))))))
+                              (range
+                               ((start 492) (stop 639)
+                                (source
+                                 (Reader
+                                  ((id 0) (name (expect_test.ml)) (length 806)
+                                   (unsafe_get <fun>))))))))))
+                          (range
+                           ((start 458) (stop 639)
+                            (source
+                             (Reader
+                              ((id 0) (name (expect_test.ml)) (length 806)
+                               (unsafe_get <fun>)))))))
+                         ((it
+                           ((case_lhs
+                             ((it
+                               (Pat_constr
+                                ((it Bin_op)
+                                 (range
+                                  ((start 650) (stop 656)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 806)
+                                      (unsafe_get <fun>)))))))
+                                (((it
+                                   (Pat_tuple
+                                    (((it
+                                       (Pat_var
+                                        ((it left)
+                                         (range
+                                          ((start 658) (stop 662)
+                                           (source
+                                            (Reader
+                                             ((id 0) (name (expect_test.ml))
+                                              (length 806) (unsafe_get <fun>)))))))))
+                                      (range
+                                       ((start 658) (stop 662)
+                                        (source
+                                         (Reader
+                                          ((id 0) (name (expect_test.ml))
+                                           (length 806) (unsafe_get <fun>)))))))
+                                     ((it
+                                       (Pat_var
+                                        ((it op)
+                                         (range
+                                          ((start 664) (stop 666)
+                                           (source
+                                            (Reader
+                                             ((id 0) (name (expect_test.ml))
+                                              (length 806) (unsafe_get <fun>)))))))))
+                                      (range
+                                       ((start 664) (stop 666)
+                                        (source
+                                         (Reader
+                                          ((id 0) (name (expect_test.ml))
+                                           (length 806) (unsafe_get <fun>)))))))
+                                     ((it
+                                       (Pat_var
+                                        ((it right)
+                                         (range
+                                          ((start 668) (stop 673)
+                                           (source
+                                            (Reader
+                                             ((id 0) (name (expect_test.ml))
+                                              (length 806) (unsafe_get <fun>)))))))))
+                                      (range
+                                       ((start 668) (stop 673)
+                                        (source
+                                         (Reader
+                                          ((id 0) (name (expect_test.ml))
+                                           (length 806) (unsafe_get <fun>))))))))))
+                                  (range
+                                   ((start 657) (stop 674)
+                                    (source
+                                     (Reader
+                                      ((id 0) (name (expect_test.ml))
+                                       (length 806) (unsafe_get <fun>))))))))))
+                              (range
+                               ((start 650) (stop 674)
+                                (source
+                                 (Reader
+                                  ((id 0) (name (expect_test.ml)) (length 806)
+                                   (unsafe_get <fun>))))))))
+                            (case_rhs
+                             ((it
+                               (Exp_let
+                                ((it
+                                  ((value_binding_pat
+                                    ((it
+                                      (Pat_var
+                                       ((it n1)
+                                        (range
+                                         ((start 692) (stop 694)
+                                          (source
+                                           (Reader
+                                            ((id 0) (name (expect_test.ml))
+                                             (length 806) (unsafe_get <fun>)))))))))
+                                     (range
+                                      ((start 692) (stop 694)
+                                       (source
+                                        (Reader
+                                         ((id 0) (name (expect_test.ml))
+                                          (length 806) (unsafe_get <fun>))))))))
+                                   (value_binding_term
+                                    ((it
+                                      (Term_exp
+                                       ((it
+                                         (Exp_app
+                                          ((it
+                                            (Exp_app
+                                             ((it
+                                               (Exp_var
+                                                ((it eval)
+                                                 (range
+                                                  ((start 697) (stop 701)
+                                                   (source
+                                                    (Reader
+                                                     ((id 0)
+                                                      (name (expect_test.ml))
+                                                      (length 806)
+                                                      (unsafe_get <fun>)))))))))
+                                              (range
+                                               ((start 697) (stop 701)
+                                                (source
+                                                 (Reader
+                                                  ((id 0) (name (expect_test.ml))
+                                                   (length 806)
+                                                   (unsafe_get <fun>)))))))
+                                             ((it
+                                               (Exp_var
+                                                ((it env)
+                                                 (range
+                                                  ((start 702) (stop 705)
+                                                   (source
+                                                    (Reader
+                                                     ((id 0)
+                                                      (name (expect_test.ml))
+                                                      (length 806)
+                                                      (unsafe_get <fun>)))))))))
+                                              (range
+                                               ((start 702) (stop 705)
+                                                (source
+                                                 (Reader
+                                                  ((id 0) (name (expect_test.ml))
+                                                   (length 806)
+                                                   (unsafe_get <fun>)))))))))
+                                           (range
+                                            ((start 697) (stop 705)
+                                             (source
+                                              (Reader
+                                               ((id 0) (name (expect_test.ml))
+                                                (length 806) (unsafe_get <fun>)))))))
+                                          ((it
+                                            (Exp_var
+                                             ((it left)
+                                              (range
+                                               ((start 706) (stop 710)
+                                                (source
+                                                 (Reader
+                                                  ((id 0) (name (expect_test.ml))
+                                                   (length 806)
+                                                   (unsafe_get <fun>)))))))))
+                                           (range
+                                            ((start 706) (stop 710)
+                                             (source
+                                              (Reader
+                                               ((id 0) (name (expect_test.ml))
+                                                (length 806) (unsafe_get <fun>)))))))))
+                                        (range
+                                         ((start 697) (stop 710)
+                                          (source
+                                           (Reader
+                                            ((id 0) (name (expect_test.ml))
+                                             (length 806) (unsafe_get <fun>)))))))))
+                                     (range
+                                      ((start 697) (stop 710)
+                                       (source
+                                        (Reader
+                                         ((id 0) (name (expect_test.ml))
+                                          (length 806) (unsafe_get <fun>))))))))))
+                                 (range
+                                  ((start 692) (stop 710)
+                                   (source
+                                    (Reader
+                                     ((id 0) (name (expect_test.ml)) (length 806)
+                                      (unsafe_get <fun>)))))))
+                                ((it
+                                  (Exp_let
+                                   ((it
+                                     ((value_binding_pat
+                                       ((it
+                                         (Pat_var
+                                          ((it n2)
+                                           (range
+                                            ((start 728) (stop 730)
+                                             (source
+                                              (Reader
+                                               ((id 0) (name (expect_test.ml))
+                                                (length 806) (unsafe_get <fun>)))))))))
+                                        (range
+                                         ((start 728) (stop 730)
+                                          (source
+                                           (Reader
+                                            ((id 0) (name (expect_test.ml))
+                                             (length 806) (unsafe_get <fun>))))))))
+                                      (value_binding_term
+                                       ((it
+                                         (Term_exp
+                                          ((it
+                                            (Exp_app
+                                             ((it
+                                               (Exp_app
+                                                ((it
+                                                  (Exp_var
+                                                   ((it eval)
+                                                    (range
+                                                     ((start 733) (stop 737)
+                                                      (source
+                                                       (Reader
+                                                        ((id 0)
+                                                         (name (expect_test.ml))
+                                                         (length 806)
+                                                         (unsafe_get <fun>)))))))))
+                                                 (range
+                                                  ((start 733) (stop 737)
                                                    (source
                                                     (Reader
                                                      ((id 0)
@@ -3831,7 +4293,7 @@ let%expect_test "eval example" =
                                                   (Exp_var
                                                    ((it env)
                                                     (range
-                                                     ((start 590) (stop 593)
+                                                     ((start 738) (stop 741)
                                                       (source
                                                        (Reader
                                                         ((id 0)
@@ -3839,7 +4301,7 @@ let%expect_test "eval example" =
                                                          (length 806)
                                                          (unsafe_get <fun>)))))))))
                                                  (range
-                                                  ((start 590) (stop 593)
+                                                  ((start 738) (stop 741)
                                                    (source
                                                     (Reader
                                                      ((id 0)
@@ -3847,7 +4309,7 @@ let%expect_test "eval example" =
                                                       (length 806)
                                                       (unsafe_get <fun>)))))))))
                                               (range
-                                               ((start 581) (stop 593)
+                                               ((start 733) (stop 741)
                                                 (source
                                                  (Reader
                                                   ((id 0) (name (expect_test.ml))
@@ -3855,9 +4317,9 @@ let%expect_test "eval example" =
                                                    (unsafe_get <fun>)))))))
                                              ((it
                                                (Exp_var
-                                                ((it var)
+                                                ((it right)
                                                  (range
-                                                  ((start 594) (stop 597)
+                                                  ((start 742) (stop 747)
                                                    (source
                                                     (Reader
                                                      ((id 0)
@@ -3865,403 +4327,65 @@ let%expect_test "eval example" =
                                                       (length 806)
                                                       (unsafe_get <fun>)))))))))
                                               (range
-                                               ((start 594) (stop 597)
+                                               ((start 742) (stop 747)
                                                 (source
                                                  (Reader
                                                   ((id 0) (name (expect_test.ml))
                                                    (length 806)
                                                    (unsafe_get <fun>)))))))))
                                            (range
-                                            ((start 581) (stop 597)
-                                             (source
-                                              (Reader
-                                               ((id 0) (name (expect_test.ml))
-                                                (length 806) (unsafe_get <fun>)))))))
-                                          ((it
-                                            (Exp_var
-                                             ((it exp)
-                                              (range
-                                               ((start 598) (stop 601)
-                                                (source
-                                                 (Reader
-                                                  ((id 0) (name (expect_test.ml))
-                                                   (length 806)
-                                                   (unsafe_get <fun>)))))))))
-                                           (range
-                                            ((start 598) (stop 601)
+                                            ((start 733) (stop 747)
                                              (source
                                               (Reader
                                                ((id 0) (name (expect_test.ml))
                                                 (length 806) (unsafe_get <fun>)))))))))
                                         (range
-                                         ((start 581) (stop 601)
+                                         ((start 733) (stop 747)
                                           (source
                                            (Reader
                                             ((id 0) (name (expect_test.ml))
-                                             (length 806) (unsafe_get <fun>)))))))))
-                                     (range
-                                      ((start 545) (stop 601)
-                                       (source
-                                        (Reader
-                                         ((id 0) (name (expect_test.ml))
-                                          (length 806) (unsafe_get <fun>)))))))))
-                                  (range
-                                   ((start 515) (stop 602)
-                                    (source
-                                     (Reader
-                                      ((id 0) (name (expect_test.ml))
-                                       (length 806) (unsafe_get <fun>))))))))))
-                              (range
-                               ((start 496) (stop 602)
-                                (source
-                                 (Reader
-                                  ((id 0) (name (expect_test.ml)) (length 806)
-                                   (unsafe_get <fun>)))))))
-                             ((it
-                               (Exp_app
-                                ((it
-                                  (Exp_app
-                                   ((it
-                                     (Exp_var
-                                      ((it eval)
-                                       (range
-                                        ((start 627) (stop 631)
-                                         (source
-                                          (Reader
-                                           ((id 0) (name (expect_test.ml))
-                                            (length 806) (unsafe_get <fun>)))))))))
+                                             (length 806) (unsafe_get <fun>))))))))))
                                     (range
-                                     ((start 627) (stop 631)
+                                     ((start 728) (stop 747)
                                       (source
                                        (Reader
                                         ((id 0) (name (expect_test.ml))
                                          (length 806) (unsafe_get <fun>)))))))
                                    ((it
-                                     (Exp_var
-                                      ((it env)
-                                       (range
-                                        ((start 632) (stop 635)
-                                         (source
-                                          (Reader
-                                           ((id 0) (name (expect_test.ml))
-                                            (length 806) (unsafe_get <fun>)))))))))
-                                    (range
-                                     ((start 632) (stop 635)
-                                      (source
-                                       (Reader
-                                        ((id 0) (name (expect_test.ml))
-                                         (length 806) (unsafe_get <fun>)))))))))
-                                 (range
-                                  ((start 627) (stop 635)
-                                   (source
-                                    (Reader
-                                     ((id 0) (name (expect_test.ml)) (length 806)
-                                      (unsafe_get <fun>)))))))
-                                ((it
-                                  (Exp_var
-                                   ((it in_)
-                                    (range
-                                     ((start 636) (stop 639)
-                                      (source
-                                       (Reader
-                                        ((id 0) (name (expect_test.ml))
-                                         (length 806) (unsafe_get <fun>)))))))))
-                                 (range
-                                  ((start 636) (stop 639)
-                                   (source
-                                    (Reader
-                                     ((id 0) (name (expect_test.ml)) (length 806)
-                                      (unsafe_get <fun>)))))))))
-                              (range
-                               ((start 627) (stop 639)
-                                (source
-                                 (Reader
-                                  ((id 0) (name (expect_test.ml)) (length 806)
-                                   (unsafe_get <fun>)))))))))
-                           (range
-                            ((start 492) (stop 639)
-                             (source
-                              (Reader
-                               ((id 0) (name (expect_test.ml)) (length 806)
-                                (unsafe_get <fun>))))))))))
-                       (range
-                        ((start 458) (stop 639)
-                         (source
-                          (Reader
-                           ((id 0) (name (expect_test.ml)) (length 806)
-                            (unsafe_get <fun>)))))))
-                      ((it
-                        ((case_lhs
-                          ((it
-                            (Pat_constr
-                             ((it Bin_op)
-                              (range
-                               ((start 650) (stop 656)
-                                (source
-                                 (Reader
-                                  ((id 0) (name (expect_test.ml)) (length 806)
-                                   (unsafe_get <fun>)))))))
-                             (((it
-                                (Pat_tuple
-                                 (((it
-                                    (Pat_var
-                                     ((it left)
-                                      (range
-                                       ((start 658) (stop 662)
-                                        (source
-                                         (Reader
-                                          ((id 0) (name (expect_test.ml))
-                                           (length 806) (unsafe_get <fun>)))))))))
-                                   (range
-                                    ((start 658) (stop 662)
-                                     (source
-                                      (Reader
-                                       ((id 0) (name (expect_test.ml))
-                                        (length 806) (unsafe_get <fun>)))))))
-                                  ((it
-                                    (Pat_var
-                                     ((it op)
-                                      (range
-                                       ((start 664) (stop 666)
-                                        (source
-                                         (Reader
-                                          ((id 0) (name (expect_test.ml))
-                                           (length 806) (unsafe_get <fun>)))))))))
-                                   (range
-                                    ((start 664) (stop 666)
-                                     (source
-                                      (Reader
-                                       ((id 0) (name (expect_test.ml))
-                                        (length 806) (unsafe_get <fun>)))))))
-                                  ((it
-                                    (Pat_var
-                                     ((it right)
-                                      (range
-                                       ((start 668) (stop 673)
-                                        (source
-                                         (Reader
-                                          ((id 0) (name (expect_test.ml))
-                                           (length 806) (unsafe_get <fun>)))))))))
-                                   (range
-                                    ((start 668) (stop 673)
-                                     (source
-                                      (Reader
-                                       ((id 0) (name (expect_test.ml))
-                                        (length 806) (unsafe_get <fun>))))))))))
-                               (range
-                                ((start 657) (stop 674)
-                                 (source
-                                  (Reader
-                                   ((id 0) (name (expect_test.ml)) (length 806)
-                                    (unsafe_get <fun>))))))))))
-                           (range
-                            ((start 650) (stop 674)
-                             (source
-                              (Reader
-                               ((id 0) (name (expect_test.ml)) (length 806)
-                                (unsafe_get <fun>))))))))
-                         (case_rhs
-                          ((it
-                            (Exp_let
-                             ((it
-                               ((value_binding_pat
-                                 ((it
-                                   (Pat_var
-                                    ((it n1)
-                                     (range
-                                      ((start 692) (stop 694)
-                                       (source
-                                        (Reader
-                                         ((id 0) (name (expect_test.ml))
-                                          (length 806) (unsafe_get <fun>)))))))))
-                                  (range
-                                   ((start 692) (stop 694)
-                                    (source
-                                     (Reader
-                                      ((id 0) (name (expect_test.ml))
-                                       (length 806) (unsafe_get <fun>))))))))
-                                (value_binding_exp
-                                 ((it
-                                   (Exp_app
-                                    ((it
-                                      (Exp_app
-                                       ((it
-                                         (Exp_var
-                                          ((it eval)
-                                           (range
-                                            ((start 697) (stop 701)
-                                             (source
-                                              (Reader
-                                               ((id 0) (name (expect_test.ml))
-                                                (length 806) (unsafe_get <fun>)))))))))
-                                        (range
-                                         ((start 697) (stop 701)
-                                          (source
-                                           (Reader
-                                            ((id 0) (name (expect_test.ml))
-                                             (length 806) (unsafe_get <fun>)))))))
-                                       ((it
-                                         (Exp_var
-                                          ((it env)
-                                           (range
-                                            ((start 702) (stop 705)
-                                             (source
-                                              (Reader
-                                               ((id 0) (name (expect_test.ml))
-                                                (length 806) (unsafe_get <fun>)))))))))
-                                        (range
-                                         ((start 702) (stop 705)
-                                          (source
-                                           (Reader
-                                            ((id 0) (name (expect_test.ml))
-                                             (length 806) (unsafe_get <fun>)))))))))
-                                     (range
-                                      ((start 697) (stop 705)
-                                       (source
-                                        (Reader
-                                         ((id 0) (name (expect_test.ml))
-                                          (length 806) (unsafe_get <fun>)))))))
-                                    ((it
-                                      (Exp_var
-                                       ((it left)
-                                        (range
-                                         ((start 706) (stop 710)
-                                          (source
-                                           (Reader
-                                            ((id 0) (name (expect_test.ml))
-                                             (length 806) (unsafe_get <fun>)))))))))
-                                     (range
-                                      ((start 706) (stop 710)
-                                       (source
-                                        (Reader
-                                         ((id 0) (name (expect_test.ml))
-                                          (length 806) (unsafe_get <fun>)))))))))
-                                  (range
-                                   ((start 697) (stop 710)
-                                    (source
-                                     (Reader
-                                      ((id 0) (name (expect_test.ml))
-                                       (length 806) (unsafe_get <fun>))))))))))
-                              (range
-                               ((start 692) (stop 710)
-                                (source
-                                 (Reader
-                                  ((id 0) (name (expect_test.ml)) (length 806)
-                                   (unsafe_get <fun>)))))))
-                             ((it
-                               (Exp_let
-                                ((it
-                                  ((value_binding_pat
-                                    ((it
-                                      (Pat_var
-                                       ((it n2)
-                                        (range
-                                         ((start 728) (stop 730)
-                                          (source
-                                           (Reader
-                                            ((id 0) (name (expect_test.ml))
-                                             (length 806) (unsafe_get <fun>)))))))))
-                                     (range
-                                      ((start 728) (stop 730)
-                                       (source
-                                        (Reader
-                                         ((id 0) (name (expect_test.ml))
-                                          (length 806) (unsafe_get <fun>))))))))
-                                   (value_binding_exp
-                                    ((it
-                                      (Exp_app
-                                       ((it
-                                         (Exp_app
-                                          ((it
-                                            (Exp_var
-                                             ((it eval)
-                                              (range
-                                               ((start 733) (stop 737)
-                                                (source
-                                                 (Reader
-                                                  ((id 0) (name (expect_test.ml))
-                                                   (length 806)
-                                                   (unsafe_get <fun>)))))))))
-                                           (range
-                                            ((start 733) (stop 737)
-                                             (source
-                                              (Reader
-                                               ((id 0) (name (expect_test.ml))
-                                                (length 806) (unsafe_get <fun>)))))))
-                                          ((it
-                                            (Exp_var
-                                             ((it env)
-                                              (range
-                                               ((start 738) (stop 741)
-                                                (source
-                                                 (Reader
-                                                  ((id 0) (name (expect_test.ml))
-                                                   (length 806)
-                                                   (unsafe_get <fun>)))))))))
-                                           (range
-                                            ((start 738) (stop 741)
-                                             (source
-                                              (Reader
-                                               ((id 0) (name (expect_test.ml))
-                                                (length 806) (unsafe_get <fun>)))))))))
-                                        (range
-                                         ((start 733) (stop 741)
-                                          (source
-                                           (Reader
-                                            ((id 0) (name (expect_test.ml))
-                                             (length 806) (unsafe_get <fun>)))))))
-                                       ((it
-                                         (Exp_var
-                                          ((it right)
-                                           (range
-                                            ((start 742) (stop 747)
-                                             (source
-                                              (Reader
-                                               ((id 0) (name (expect_test.ml))
-                                                (length 806) (unsafe_get <fun>)))))))))
-                                        (range
-                                         ((start 742) (stop 747)
-                                          (source
-                                           (Reader
-                                            ((id 0) (name (expect_test.ml))
-                                             (length 806) (unsafe_get <fun>)))))))))
-                                     (range
-                                      ((start 733) (stop 747)
-                                       (source
-                                        (Reader
-                                         ((id 0) (name (expect_test.ml))
-                                          (length 806) (unsafe_get <fun>))))))))))
-                                 (range
-                                  ((start 728) (stop 747)
-                                   (source
-                                    (Reader
-                                     ((id 0) (name (expect_test.ml)) (length 806)
-                                      (unsafe_get <fun>)))))))
-                                ((it
-                                  (Exp_app
-                                   ((it
                                      (Exp_app
                                       ((it
                                         (Exp_app
                                          ((it
-                                           (Exp_var
-                                            ((it eval_bin_op)
+                                           (Exp_app
+                                            ((it
+                                              (Exp_var
+                                               ((it eval_bin_op)
+                                                (range
+                                                 ((start 761) (stop 772)
+                                                  (source
+                                                   (Reader
+                                                    ((id 0)
+                                                     (name (expect_test.ml))
+                                                     (length 806)
+                                                     (unsafe_get <fun>)))))))))
                                              (range
                                               ((start 761) (stop 772)
                                                (source
                                                 (Reader
                                                  ((id 0) (name (expect_test.ml))
                                                   (length 806)
-                                                  (unsafe_get <fun>)))))))))
-                                          (range
-                                           ((start 761) (stop 772)
-                                            (source
-                                             (Reader
-                                              ((id 0) (name (expect_test.ml))
-                                               (length 806) (unsafe_get <fun>)))))))
-                                         ((it
-                                           (Exp_var
-                                            ((it op)
+                                                  (unsafe_get <fun>)))))))
+                                            ((it
+                                              (Exp_var
+                                               ((it op)
+                                                (range
+                                                 ((start 773) (stop 775)
+                                                  (source
+                                                   (Reader
+                                                    ((id 0)
+                                                     (name (expect_test.ml))
+                                                     (length 806)
+                                                     (unsafe_get <fun>)))))))))
                                              (range
                                               ((start 773) (stop 775)
                                                (source
@@ -4270,20 +4394,21 @@ let%expect_test "eval example" =
                                                   (length 806)
                                                   (unsafe_get <fun>)))))))))
                                           (range
-                                           ((start 773) (stop 775)
+                                           ((start 761) (stop 775)
                                             (source
                                              (Reader
                                               ((id 0) (name (expect_test.ml))
-                                               (length 806) (unsafe_get <fun>)))))))))
-                                       (range
-                                        ((start 761) (stop 775)
-                                         (source
-                                          (Reader
-                                           ((id 0) (name (expect_test.ml))
-                                            (length 806) (unsafe_get <fun>)))))))
-                                      ((it
-                                        (Exp_var
-                                         ((it n1)
+                                               (length 806) (unsafe_get <fun>)))))))
+                                         ((it
+                                           (Exp_var
+                                            ((it n1)
+                                             (range
+                                              ((start 776) (stop 778)
+                                               (source
+                                                (Reader
+                                                 ((id 0) (name (expect_test.ml))
+                                                  (length 806)
+                                                  (unsafe_get <fun>)))))))))
                                           (range
                                            ((start 776) (stop 778)
                                             (source
@@ -4291,20 +4416,20 @@ let%expect_test "eval example" =
                                               ((id 0) (name (expect_test.ml))
                                                (length 806) (unsafe_get <fun>)))))))))
                                        (range
-                                        ((start 776) (stop 778)
+                                        ((start 761) (stop 778)
                                          (source
                                           (Reader
                                            ((id 0) (name (expect_test.ml))
-                                            (length 806) (unsafe_get <fun>)))))))))
-                                    (range
-                                     ((start 761) (stop 778)
-                                      (source
-                                       (Reader
-                                        ((id 0) (name (expect_test.ml))
-                                         (length 806) (unsafe_get <fun>)))))))
-                                   ((it
-                                     (Exp_var
-                                      ((it n2)
+                                            (length 806) (unsafe_get <fun>)))))))
+                                      ((it
+                                        (Exp_var
+                                         ((it n2)
+                                          (range
+                                           ((start 779) (stop 781)
+                                            (source
+                                             (Reader
+                                              ((id 0) (name (expect_test.ml))
+                                               (length 806) (unsafe_get <fun>)))))))))
                                        (range
                                         ((start 779) (stop 781)
                                          (source
@@ -4312,43 +4437,43 @@ let%expect_test "eval example" =
                                            ((id 0) (name (expect_test.ml))
                                             (length 806) (unsafe_get <fun>)))))))))
                                     (range
-                                     ((start 779) (stop 781)
+                                     ((start 761) (stop 781)
                                       (source
                                        (Reader
                                         ((id 0) (name (expect_test.ml))
                                          (length 806) (unsafe_get <fun>)))))))))
                                  (range
-                                  ((start 761) (stop 781)
+                                  ((start 724) (stop 781)
                                    (source
                                     (Reader
                                      ((id 0) (name (expect_test.ml)) (length 806)
                                       (unsafe_get <fun>)))))))))
                               (range
-                               ((start 724) (stop 781)
+                               ((start 688) (stop 781)
                                 (source
                                  (Reader
                                   ((id 0) (name (expect_test.ml)) (length 806)
-                                   (unsafe_get <fun>)))))))))
-                           (range
-                            ((start 688) (stop 781)
-                             (source
-                              (Reader
-                               ((id 0) (name (expect_test.ml)) (length 806)
-                                (unsafe_get <fun>))))))))))
-                       (range
-                        ((start 650) (stop 781)
-                         (source
-                          (Reader
-                           ((id 0) (name (expect_test.ml)) (length 806)
-                            (unsafe_get <fun>))))))))))
+                                   (unsafe_get <fun>))))))))))
+                          (range
+                           ((start 650) (stop 781)
+                            (source
+                             (Reader
+                              ((id 0) (name (expect_test.ml)) (length 806)
+                               (unsafe_get <fun>))))))))))
+                      (range
+                       ((start 378) (stop 791)
+                        (source
+                         (Reader
+                          ((id 0) (name (expect_test.ml)) (length 806)
+                           (unsafe_get <fun>)))))))))
                    (range
-                    ((start 378) (stop 791)
+                    ((start 350) (stop 791)
                      (source
                       (Reader
                        ((id 0) (name (expect_test.ml)) (length 806)
                         (unsafe_get <fun>)))))))))
                 (range
-                 ((start 350) (stop 791)
+                 ((start 345) (stop 799)
                   (source
                    (Reader
                     ((id 0) (name (expect_test.ml)) (length 806)
@@ -4783,5 +4908,548 @@ let%expect_test "polyparam - function" =
       ((start 7) (stop 54)
        (source
         (Reader ((id 0) (name (expect_test.ml)) (length 59) (unsafe_get <fun>)))))))
+    |}]
+;;
+
+let%expect_test "structure implicit function" =
+  let str =
+    {|
+      let foo = fun ?bar x -> bar x;;
+    |}
+  in
+  parse_and_print_structure str;
+  [%expect
+    {|
+    (((it
+       (Str_value
+        ((it
+          ((value_binding_pat
+            ((it
+              (Pat_var
+               ((it foo)
+                (range
+                 ((start 11) (stop 14)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 43)
+                     (unsafe_get <fun>)))))))))
+             (range
+              ((start 11) (stop 14)
+               (source
+                (Reader
+                 ((id 0) (name (expect_test.ml)) (length 43) (unsafe_get <fun>))))))))
+           (value_binding_term
+            ((it
+              (Term_implicit_fun
+               (((it
+                  (Pat_var
+                   ((it bar)
+                    (range
+                     ((start 22) (stop 25)
+                      (source
+                       (Reader
+                        ((id 0) (name (expect_test.ml)) (length 43)
+                         (unsafe_get <fun>)))))))))
+                 (range
+                  ((start 22) (stop 25)
+                   (source
+                    (Reader
+                     ((id 0) (name (expect_test.ml)) (length 43)
+                      (unsafe_get <fun>)))))))
+                ((it
+                  (Pat_var
+                   ((it x)
+                    (range
+                     ((start 26) (stop 27)
+                      (source
+                       (Reader
+                        ((id 0) (name (expect_test.ml)) (length 43)
+                         (unsafe_get <fun>)))))))))
+                 (range
+                  ((start 26) (stop 27)
+                   (source
+                    (Reader
+                     ((id 0) (name (expect_test.ml)) (length 43)
+                      (unsafe_get <fun>))))))))
+               ((it
+                 (Exp_app
+                  ((it
+                    (Exp_var
+                     ((it bar)
+                      (range
+                       ((start 31) (stop 34)
+                        (source
+                         (Reader
+                          ((id 0) (name (expect_test.ml)) (length 43)
+                           (unsafe_get <fun>)))))))))
+                   (range
+                    ((start 31) (stop 34)
+                     (source
+                      (Reader
+                       ((id 0) (name (expect_test.ml)) (length 43)
+                        (unsafe_get <fun>)))))))
+                  ((it
+                    (Exp_var
+                     ((it x)
+                      (range
+                       ((start 35) (stop 36)
+                        (source
+                         (Reader
+                          ((id 0) (name (expect_test.ml)) (length 43)
+                           (unsafe_get <fun>)))))))))
+                   (range
+                    ((start 35) (stop 36)
+                     (source
+                      (Reader
+                       ((id 0) (name (expect_test.ml)) (length 43)
+                        (unsafe_get <fun>)))))))))
+                (range
+                 ((start 31) (stop 36)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 43)
+                     (unsafe_get <fun>)))))))))
+             (range
+              ((start 17) (stop 36)
+               (source
+                (Reader
+                 ((id 0) (name (expect_test.ml)) (length 43) (unsafe_get <fun>))))))))))
+         (range
+          ((start 11) (stop 36)
+           (source
+            (Reader
+             ((id 0) (name (expect_test.ml)) (length 43) (unsafe_get <fun>)))))))))
+      (range
+       ((start 7) (stop 36)
+        (source
+         (Reader ((id 0) (name (expect_test.ml)) (length 43) (unsafe_get <fun>))))))))
+    |}]
+;;
+
+let%expect_test "structure implicit let" =
+  let str =
+    {|
+      let x = 1;;
+
+      let implicit x;;
+    |}
+  in
+  parse_and_print_structure str;
+  [%expect
+    {|
+    (((it
+       (Str_value
+        ((it
+          ((value_binding_pat
+            ((it
+              (Pat_var
+               ((it x)
+                (range
+                 ((start 11) (stop 12)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 47)
+                     (unsafe_get <fun>)))))))))
+             (range
+              ((start 11) (stop 12)
+               (source
+                (Reader
+                 ((id 0) (name (expect_test.ml)) (length 47) (unsafe_get <fun>))))))))
+           (value_binding_term
+            ((it
+              (Term_exp
+               ((it (Exp_const (Const_int 1)))
+                (range
+                 ((start 15) (stop 16)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 47)
+                     (unsafe_get <fun>)))))))))
+             (range
+              ((start 15) (stop 16)
+               (source
+                (Reader
+                 ((id 0) (name (expect_test.ml)) (length 47) (unsafe_get <fun>))))))))))
+         (range
+          ((start 11) (stop 16)
+           (source
+            (Reader
+             ((id 0) (name (expect_test.ml)) (length 47) (unsafe_get <fun>)))))))))
+      (range
+       ((start 7) (stop 16)
+        (source
+         (Reader ((id 0) (name (expect_test.ml)) (length 47) (unsafe_get <fun>)))))))
+     ((it
+       (Str_implicit
+        ((it x)
+         (range
+          ((start 39) (stop 40)
+           (source
+            (Reader
+             ((id 0) (name (expect_test.ml)) (length 47) (unsafe_get <fun>)))))))))
+      (range
+       ((start 26) (stop 40)
+        (source
+         (Reader ((id 0) (name (expect_test.ml)) (length 47) (unsafe_get <fun>))))))))
+    |}]
+;;
+
+let%expect_test "expression implicit function" =
+  let exp =
+    {|
+      let add = fun ?x y -> x + y in
+      add 1
+    |}
+  in
+  parse_and_print_expression exp;
+  [%expect
+    {|
+    ((it
+      (Exp_let
+       ((it
+         ((value_binding_pat
+           ((it
+             (Pat_var
+              ((it add)
+               (range
+                ((start 11) (stop 14)
+                 (source
+                  (Reader
+                   ((id 0) (name (expect_test.ml)) (length 54)
+                    (unsafe_get <fun>)))))))))
+            (range
+             ((start 11) (stop 14)
+              (source
+               (Reader
+                ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>))))))))
+          (value_binding_term
+           ((it
+             (Term_implicit_fun
+              (((it
+                 (Pat_var
+                  ((it x)
+                   (range
+                    ((start 22) (stop 23)
+                     (source
+                      (Reader
+                       ((id 0) (name (expect_test.ml)) (length 54)
+                        (unsafe_get <fun>)))))))))
+                (range
+                 ((start 22) (stop 23)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 54)
+                     (unsafe_get <fun>)))))))
+               ((it
+                 (Pat_var
+                  ((it y)
+                   (range
+                    ((start 24) (stop 25)
+                     (source
+                      (Reader
+                       ((id 0) (name (expect_test.ml)) (length 54)
+                        (unsafe_get <fun>)))))))))
+                (range
+                 ((start 24) (stop 25)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 54)
+                     (unsafe_get <fun>))))))))
+              ((it
+                (Exp_app
+                 ((it
+                   (Exp_app
+                    ((it
+                      (Exp_var
+                       ((it "( + )")
+                        (range
+                         ((start 31) (stop 32)
+                          (source
+                           (Reader
+                            ((id 0) (name (expect_test.ml)) (length 54)
+                             (unsafe_get <fun>)))))))))
+                     (range
+                      ((start 29) (stop 34)
+                       (source
+                        (Reader
+                         ((id 0) (name (expect_test.ml)) (length 54)
+                          (unsafe_get <fun>)))))))
+                    ((it
+                      (Exp_var
+                       ((it x)
+                        (range
+                         ((start 29) (stop 30)
+                          (source
+                           (Reader
+                            ((id 0) (name (expect_test.ml)) (length 54)
+                             (unsafe_get <fun>)))))))))
+                     (range
+                      ((start 29) (stop 30)
+                       (source
+                        (Reader
+                         ((id 0) (name (expect_test.ml)) (length 54)
+                          (unsafe_get <fun>)))))))))
+                  (range
+                   ((start 29) (stop 34)
+                    (source
+                     (Reader
+                      ((id 0) (name (expect_test.ml)) (length 54)
+                       (unsafe_get <fun>)))))))
+                 ((it
+                   (Exp_var
+                    ((it y)
+                     (range
+                      ((start 33) (stop 34)
+                       (source
+                        (Reader
+                         ((id 0) (name (expect_test.ml)) (length 54)
+                          (unsafe_get <fun>)))))))))
+                  (range
+                   ((start 33) (stop 34)
+                    (source
+                     (Reader
+                      ((id 0) (name (expect_test.ml)) (length 54)
+                       (unsafe_get <fun>)))))))))
+               (range
+                ((start 29) (stop 34)
+                 (source
+                  (Reader
+                   ((id 0) (name (expect_test.ml)) (length 54)
+                    (unsafe_get <fun>)))))))))
+            (range
+             ((start 17) (stop 34)
+              (source
+               (Reader
+                ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>))))))))))
+        (range
+         ((start 11) (stop 34)
+          (source
+           (Reader
+            ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>)))))))
+       ((it
+         (Exp_app
+          ((it
+            (Exp_var
+             ((it add)
+              (range
+               ((start 44) (stop 47)
+                (source
+                 (Reader
+                  ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>)))))))))
+           (range
+            ((start 44) (stop 47)
+             (source
+              (Reader
+               ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>)))))))
+          ((it (Exp_const (Const_int 1)))
+           (range
+            ((start 48) (stop 49)
+             (source
+              (Reader
+               ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>)))))))))
+        (range
+         ((start 44) (stop 49)
+          (source
+           (Reader
+            ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>)))))))))
+     (range
+      ((start 7) (stop 49)
+       (source
+        (Reader ((id 0) (name (expect_test.ml)) (length 54) (unsafe_get <fun>)))))))
+    |}]
+;;
+
+let%expect_test "expression implicit hole" =
+  let exp =
+    {|
+      let add = fun ?x y -> x + y in
+      (? : int -> int)
+    |}
+  in
+  parse_and_print_expression exp;
+  [%expect
+    {|
+    ((it
+      (Exp_let
+       ((it
+         ((value_binding_pat
+           ((it
+             (Pat_var
+              ((it add)
+               (range
+                ((start 11) (stop 14)
+                 (source
+                  (Reader
+                   ((id 0) (name (expect_test.ml)) (length 65)
+                    (unsafe_get <fun>)))))))))
+            (range
+             ((start 11) (stop 14)
+              (source
+               (Reader
+                ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>))))))))
+          (value_binding_term
+           ((it
+             (Term_implicit_fun
+              (((it
+                 (Pat_var
+                  ((it x)
+                   (range
+                    ((start 22) (stop 23)
+                     (source
+                      (Reader
+                       ((id 0) (name (expect_test.ml)) (length 65)
+                        (unsafe_get <fun>)))))))))
+                (range
+                 ((start 22) (stop 23)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 65)
+                     (unsafe_get <fun>)))))))
+               ((it
+                 (Pat_var
+                  ((it y)
+                   (range
+                    ((start 24) (stop 25)
+                     (source
+                      (Reader
+                       ((id 0) (name (expect_test.ml)) (length 65)
+                        (unsafe_get <fun>)))))))))
+                (range
+                 ((start 24) (stop 25)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 65)
+                     (unsafe_get <fun>))))))))
+              ((it
+                (Exp_app
+                 ((it
+                   (Exp_app
+                    ((it
+                      (Exp_var
+                       ((it "( + )")
+                        (range
+                         ((start 31) (stop 32)
+                          (source
+                           (Reader
+                            ((id 0) (name (expect_test.ml)) (length 65)
+                             (unsafe_get <fun>)))))))))
+                     (range
+                      ((start 29) (stop 34)
+                       (source
+                        (Reader
+                         ((id 0) (name (expect_test.ml)) (length 65)
+                          (unsafe_get <fun>)))))))
+                    ((it
+                      (Exp_var
+                       ((it x)
+                        (range
+                         ((start 29) (stop 30)
+                          (source
+                           (Reader
+                            ((id 0) (name (expect_test.ml)) (length 65)
+                             (unsafe_get <fun>)))))))))
+                     (range
+                      ((start 29) (stop 30)
+                       (source
+                        (Reader
+                         ((id 0) (name (expect_test.ml)) (length 65)
+                          (unsafe_get <fun>)))))))))
+                  (range
+                   ((start 29) (stop 34)
+                    (source
+                     (Reader
+                      ((id 0) (name (expect_test.ml)) (length 65)
+                       (unsafe_get <fun>)))))))
+                 ((it
+                   (Exp_var
+                    ((it y)
+                     (range
+                      ((start 33) (stop 34)
+                       (source
+                        (Reader
+                         ((id 0) (name (expect_test.ml)) (length 65)
+                          (unsafe_get <fun>)))))))))
+                  (range
+                   ((start 33) (stop 34)
+                    (source
+                     (Reader
+                      ((id 0) (name (expect_test.ml)) (length 65)
+                       (unsafe_get <fun>)))))))))
+               (range
+                ((start 29) (stop 34)
+                 (source
+                  (Reader
+                   ((id 0) (name (expect_test.ml)) (length 65)
+                    (unsafe_get <fun>)))))))))
+            (range
+             ((start 17) (stop 34)
+              (source
+               (Reader
+                ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>))))))))))
+        (range
+         ((start 11) (stop 34)
+          (source
+           (Reader
+            ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>)))))))
+       ((it
+         (Exp_annot
+          ((it Exp_implicit)
+           (range
+            ((start 45) (stop 46)
+             (source
+              (Reader
+               ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>)))))))
+          ((it
+            (Type_arrow
+             ((it
+               (Param_mono_type
+                ((it
+                  (Type_constr ()
+                   ((it int)
+                    (range
+                     ((start 49) (stop 52)
+                      (source
+                       (Reader
+                        ((id 0) (name (expect_test.ml)) (length 65)
+                         (unsafe_get <fun>)))))))))
+                 (range
+                  ((start 48) (stop 52)
+                   (source
+                    (Reader
+                     ((id 0) (name (expect_test.ml)) (length 65)
+                      (unsafe_get <fun>)))))))))
+              (range
+               ((start 49) (stop 52)
+                (source
+                 (Reader
+                  ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>)))))))
+             ((it
+               (Type_constr ()
+                ((it int)
+                 (range
+                  ((start 56) (stop 59)
+                   (source
+                    (Reader
+                     ((id 0) (name (expect_test.ml)) (length 65)
+                      (unsafe_get <fun>)))))))))
+              (range
+               ((start 55) (stop 59)
+                (source
+                 (Reader
+                  ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>)))))))))
+           (range
+            ((start 49) (stop 59)
+             (source
+              (Reader
+               ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>)))))))))
+        (range
+         ((start 44) (stop 60)
+          (source
+           (Reader
+            ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>)))))))))
+     (range
+      ((start 7) (stop 60)
+       (source
+        (Reader ((id 0) (name (expect_test.ml)) (length 65) (unsafe_get <fun>)))))))
     |}]
 ;;

@@ -48,6 +48,7 @@ let type_check_and_print
       ~with_stdlib
       ~with_poly_params
       ~defaulting
+      ~termination_check
   =
   Omniml_error.handle_uncaught ~exit:false
   @@ fun () ->
@@ -60,6 +61,6 @@ let type_check_and_print
       >>| fun source ->
       Range.create ~source Byte_index.initial (Byte_index.of_int @@ Source.length source))
   in
-  Omniml_type_checker.check ~defaulting ?range cst;
+  Omniml_type_checker.check ~defaulting ~termination_check ?range cst;
   Fmt.pr "Well typed :)@."
 ;;

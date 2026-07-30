@@ -2,6 +2,14 @@ open! Import
 open Ast_types
 open Adt
 
+module Var_binding = struct
+  type t =
+    { var : Constraint.Var.t
+    ; implicit_arity : int
+    }
+  [@@deriving sexp_of]
+end
+
 type t =
   { id_source : Identifier.source
     (** [id_source] is the identifier source for any constraint variables
@@ -16,9 +24,11 @@ type t =
   ; type_vars : Type.Var.t Type_var_name.Map.t
     (** [type_vars] is a renaming from (user-defined) type variables to
       constraint type variables (unique). *)
-  ; vars : Constraint.Var.t Var_name.Map.t
+  ; vars : Var_binding.t Var_name.Map.t
     (** [vars] is a renaming from (user-defined) variable names to
-      constraint variables (unique). *)
+        constraint variables (unique). *)
+  ; implicit_scope : Constraint.Implicit_scope.t
+    (** [implicit_scope] is a set of variables in the implicit scope. *)
   }
 
 let empty ?(id_source = Identifier.create_source ()) () =
@@ -28,10 +38,17 @@ let empty ?(id_source = Identifier.create_source ()) () =
   ; type_vars = Type_var_name.Map.empty
   ; types = Type_name.Map.empty
   ; vars = Var_name.Map.empty
+  ; implicit_scope = Constraint.Implicit_scope.{ vars = Constraint.Var.Set.empty }
   }
 ;;
 
 let id_source t = t.id_source [@@inline]
+
+let add_implicit_var t var =
+  { t with implicit_scope = { vars = Set.add t.implicit_scope.vars var } }
+;;
+
+let implicit_scope t = t.implicit_scope
 
 let add_constr_def t (constr_def : constructor_definition) =
   { t with
@@ -93,10 +110,11 @@ let rename_type_var t ~type_var ~in_ =
   in_ t ctype_var
 ;;
 
-let rename_var t ~var ~in_ =
+let rename_var t ~var ~implicit_arity ~in_ =
   let cvar =
     Constraint.Var.create ~id_source:t.id_source ~name:(var : Var_name.t :> string) ()
   in
-  let t = { t with vars = Map.set t.vars ~key:var ~data:cvar } in
+  let var_binding = Var_binding.{ var = cvar; implicit_arity } in
+  let t = { t with vars = Map.set t.vars ~key:var ~data:var_binding } in
   in_ t cvar
 ;;

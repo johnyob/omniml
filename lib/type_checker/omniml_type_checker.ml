@@ -20,8 +20,48 @@ let infer_str ?with_stdlib ~with_poly_params str =
   @@ fun env -> Infer.Structure.infer_str ~with_poly_params ~env str
 ;;
 
-let check ?defaulting ?range cst =
-  match Omniml_constraint_solver.(solve ?range ?defaulting cst) with
+let decreasing_instantiation_spec =
+  let open Omniml_constraint_solver in
+  let open Termination.Budget.Spec in
+  (module struct
+    module Size = struct
+      let rec of_decoded_type (decoded_type : Decoded_type.t) =
+        match decoded_type with
+        | Var _ | Mu _ -> 0
+        | App (decoded_types, _) ->
+          1 + List.sum (module Int) decoded_types ~f:of_decoded_type
+      ;;
+    end
+
+    type t = { sizes : int Constraint.Var.Map.t } [@@deriving sexp_of, compare]
+
+    let initial = { sizes = Constraint.Var.Map.empty }
+
+    let consume var expected_type t =
+      let curr_size = Size.of_decoded_type (Lazy.force expected_type) in
+      match Map.find t.sizes var with
+      | Some prev_size when curr_size >= prev_size -> None
+      | None | Some _ -> Some { sizes = Map.set t.sizes ~key:var ~data:curr_size }
+    ;;
+  end : S)
+;;
+
+let check
+      ?defaulting
+      ?(termination_check = Omniml_options.Termination_check.default)
+      ?range
+      cst
+  =
+  let termination_budget_spec =
+    let open Omniml_constraint_solver.Termination.Budget.Spec in
+    match termination_check with
+    | Disabled -> unlimited
+    | Threshold n -> bounded_by n
+    | Decreasing_instantiations -> decreasing_instantiation_spec
+  in
+  match
+    Omniml_constraint_solver.(solve ?range ?defaulting ~termination_budget_spec cst)
+  with
   | Ok () -> ()
   | Error { range; it } ->
     let get_range range =
@@ -67,5 +107,8 @@ let check ?defaulting ?range cst =
               type1
               type2)
      | Rigid_variable_escape ->
-       Omniml_error.(raise @@ rigid_variable_escape ~range:(get_range range)))
+       Omniml_error.(raise @@ rigid_variable_escape ~range:(get_range range))
+     | Resolution_termination_check_failed ->
+       Omniml_error.(
+         raise @@ resolution_termination_check_failed ~range:(get_range range)))
 ;;
