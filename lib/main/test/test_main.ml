@@ -851,9 +851,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:3:9
       3 │          (x, x) (fun y -> y)
-        │          ^^^^^^ `'a -> 'b`
+        │          ^^^^^^ `'a * 'a`
         │                   is not equal to
-        │                 `'c * 'd`
+        │                 `'b -> 'c`
     |}];
   type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect
@@ -861,9 +861,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:3:9
       3 │          (x, x) (fun y -> y)
-        │          ^^^^^^ `'a -> 'b`
+        │          ^^^^^^ `'a * 'b`
         │                   is not equal to
-        │                 `'c * 'd`
+        │                 `'c -> 'd`
     |}]
 ;;
 
@@ -1036,9 +1036,11 @@ let%expect_test "" =
           (Exists ((id 1) (name Type.Var))
            (Exists ((id 2) (name Type.Var))
             (Conj
-             (Eq (Var ((id 0) (name Type.Var)))
-              (Arrow (Var ((id 1) (name Type.Var)))
-               (Var ((id 2) (name Type.Var)))))
+             (Conj
+              (Eq (Var ((id 0) (name Type.Var)))
+               (Arrow (Var ((id 1) (name Type.Var)))
+                (Var ((id 2) (name Type.Var)))))
+              True)
              (Conj
               (With_range True
                ((start 20) (stop 21)
@@ -1926,11 +1928,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:25:27
+        ┌─ expect_test.ml:25:29
      25 │        let xignore = poly1 [(fun x -> x + 1)];;
-        │                            ^^^^^^^^^^^^^^^^^^ `int -> int`
-        │                                                 is not equal to
-        │                                               `'a -> 'a`
+        │                              ^^^^^^^^^^^^^^ `int -> int`
+        │                                               is not equal to
+        │                                             `'a -> 'a`
     |}];
   do_test
     ~add:true
@@ -1958,9 +1960,9 @@ let%expect_test "" =
   [%expect
     {|
     error[E012]: generic type variable escapes its scope
-        ┌─ expect_test.ml:28:35
+        ┌─ expect_test.ml:28:37
      28 │        let escape = fun f -> poly1 [(fun x -> f x; x)];;
-        │                                    ^^^^^^^^^^^^^^^^^^^
+        │                                      ^^^^^^^^^^^^^^^
     |}];
   do_test
     ~add:true
@@ -1983,11 +1985,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:33:27
+        ┌─ expect_test.ml:33:29
      33 │        let xignore = poly2 [(fun x -> x + 1)];;
-        │                            ^^^^^^^^^^^^^^^^^^ `int -> int`
-        │                                                 is not equal to
-        │                                               `'a -> 'a`
+        │                              ^^^^^^^^^^^^^^ `int -> int`
+        │                                               is not equal to
+        │                                             `'a -> 'a`
     |}];
   do_test
     ~add:true
@@ -2013,11 +2015,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:41:27
+        ┌─ expect_test.ml:41:29
      41 │        let xignore = poly3 [(fun x -> x + 1)] [8];;
-        │                            ^^^^^^^^^^^^^^^^^^ `int -> int`
-        │                                                 is not equal to
-        │                                               `'a -> 'a`
+        │                              ^^^^^^^^^^^^^^ `int -> int`
+        │                                               is not equal to
+        │                                             `'a -> 'a`
     |}];
   do_test
     ~add:true
@@ -2041,11 +2043,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:47:34
+        ┌─ expect_test.ml:47:36
      47 │        let xignore = poly4 [true] [(fun x -> x + 1)];;
-        │                                   ^^^^^^^^^^^^^^^^^^ `int -> int`
-        │                                                        is not equal to
-        │                                                      `'a -> 'a`
+        │                                     ^^^^^^^^^^^^^^ `int -> int`
+        │                                                      is not equal to
+        │                                                    `'a -> 'a`
     |}];
   do_test
     ~add:true
@@ -2069,11 +2071,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:53:34
+        ┌─ expect_test.ml:53:36
      53 │        let xignore = poly5 [true] [(fun x -> x + 1)];;
-        │                                   ^^^^^^^^^^^^^^^^^^ `int -> int`
-        │                                                        is not equal to
-        │                                                      `'a -> 'a`
+        │                                     ^^^^^^^^^^^^^^ `int -> int`
+        │                                                      is not equal to
+        │                                                    `'a -> 'a`
     |}];
   do_test
     ~add:true
@@ -2100,11 +2102,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:62:34
+        ┌─ expect_test.ml:62:36
      62 │        let xignore = poly6 [true] [(fun x -> x + 1)] [8];;
-        │                                   ^^^^^^^^^^^^^^^^^^ `int -> int`
-        │                                                        is not equal to
-        │                                                      `'a -> 'a`
+        │                                     ^^^^^^^^^^^^^^ `int -> int`
+        │                                                      is not equal to
+        │                                                    `'a -> 'a`
     |}];
   do_test
     ~add:true
@@ -2122,11 +2124,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:67:33
+        ┌─ expect_test.ml:67:35
      67 │        let xignore = needs_magic [(fun x -> x)];;
-        │                                  ^^^^^^^^^^^^^^ `'a -> 'a`
-        │                                                   is not equal to
-        │                                                 `'b -> 'c`
+        │                                    ^^^^^^^^^^ `'a -> 'a`
+        │                                                 is not equal to
+        │                                               `'b -> 'c`
     |}];
   do_test
     ~add:true
@@ -3656,7 +3658,7 @@ let%expect_test "" =
   do_test
     {|
       external r : (forall 'a. 'a -> (forall 'b. 'b -> 'b)) -> int;;
-      let _ = r (fun x -> fun y -> y);;
+      let _ = r (fun x y -> y);;
     |};
   [%expect {| Well typed :) |}]
 ;;

@@ -652,6 +652,25 @@ module Expression = struct
       ~else_:(fun () -> default_mono_poly ~id_source)
   ;;
 
+  let match_poly ~id_source ~range cvar ~poly_type =
+    match_
+      poly_type
+      ~closure:[ `Scheme cvar ]
+      ~with_:(function
+        | Poly { quantifiers; body } -> forall quantifiers @@ inst cvar body
+        | (Arrow _ | Constr _ | Tuple _) as matchee ->
+          let type_head =
+            match matchee with
+            | Arrow _ -> `Arrow
+            | Constr _ -> `Constr
+            | Tuple _ -> `Tuple
+            | _ -> assert false
+          in
+          ff (Omniml_error.polytype_mismatched_type ~range ~type_head))
+      ~error:(fun _ -> Omniml_error.ambiguous_polytype ~range)
+      ~else_:(fun () -> default_mono_poly ~id_source)
+  ;;
+
   let infer_pat ~env ~with_poly_params pat pat_type =
     let { Pattern.Fragment.var_bindings; exist_bindings }, cpat =
       Pattern.(infer_pat ~env ~with_poly_params pat pat_type |> With_fragment.run)
@@ -723,21 +742,22 @@ module Expression = struct
          ~in_:(in_ env)
   ;;
 
+  let bind_param ~env ~with_poly_params param type_ ~in_ =
+    match With_range.it param with
+    | Param_mono_val pat ->
+      if with_poly_params
+      then bind_unknown_poly_pat ~env ~with_poly_params pat type_ ~in_
+      else bind_mono_pat ~env ~with_poly_params pat type_ ~in_
+    | Param_poly_val { pat; scheme } ->
+      assert with_poly_params;
+      bind_known_poly_pat ~env ~with_poly_params pat scheme type_ ~in_
+  ;;
+
   let rec bind_params ~env ~with_poly_params params_and_types ~in_ =
     match params_and_types with
     | [] -> in_ env
     | (param, param_type) :: params_and_types ->
-      let infer_param : in_:_ -> _ =
-        match With_range.it param with
-        | Param_mono_val pat ->
-          if with_poly_params
-          then bind_unknown_poly_pat ~env ~with_poly_params pat param_type
-          else bind_mono_pat ~env ~with_poly_params pat param_type
-        | Param_poly_val { pat; scheme } ->
-          assert with_poly_params;
-          bind_known_poly_pat ~env ~with_poly_params pat scheme param_type
-      in
-      infer_param ~in_:(fun env ->
+      bind_param ~env ~with_poly_params param param_type ~in_:(fun env ->
         bind_params ~env ~with_poly_params params_and_types ~in_)
   ;;
 
@@ -756,75 +776,80 @@ module Expression = struct
        | Some var -> inst var (Type.var exp_type)
        | None -> Omniml_error.(raise @@ unbound_variable ~range:var.range var.it))
     | Exp_const const -> Type.(var exp_type =~ infer_constant const)
-    | Exp_fun (params, ret_type_annot, exp) ->
-      exists_many' ~id_source (List.length params)
-      @@ fun as1 ->
-      exists' ~id_source
-      @@ fun a2 ->
-      let params_and_types = List.zip_exn params as1 in
-      let c =
-        bind_params ~env ~with_poly_params params_and_types ~in_:(fun env ->
-          let exp =
-            if with_poly_params
-            then Ast_builder.Expression.poly ~range:exp.range exp ()
-            else exp
-          in
-          let annot_type =
-            Option.map ret_type_annot ~f:(fun ret_type_annot ->
-              let range = ret_type_annot.range in
-              match ret_type_annot.it with
-              | Return_mono_type type_ ->
-                if with_poly_params
-                then Ast_builder.Type.(poly ~range (scheme ~range type_))
-                else type_
-              | Return_poly_type scheme ->
-                assert with_poly_params;
-                Ast_builder.Type.poly ~range scheme)
-          in
-          let exp =
-            match annot_type with
-            | None -> exp
-            | Some annot -> Ast_builder.Expression.annot ~range:exp.range exp annot
-          in
-          infer_exp ~env ~with_poly_params exp a2)
+    | Exp_fun (params, ret_type_annot, exp_body) ->
+      let ret_type_annot =
+        Option.map
+          ret_type_annot
+          ~f:(Convert.core_ret_type_to_type ~env ~with_poly_params)
       in
-      (* a2 is boxed, due to the above elaboration. *)
-      let nparams = List.length as1 in
-      let _, arr_type =
-        List.fold_right
-          as1
-          ~init:(0, Type.var a2)
-          ~f:(fun a1 (arrow_size, arr) ->
-            let arr = Type.(var a1 @-> arr) in
-            let arrow_size = arrow_size + 1 in
-            let arr =
-              if with_poly_params && arrow_size < nparams
-              then Type.(poly (Scheme.create arr))
-              else arr
-            in
-            arrow_size, arr)
+      let infer_arrow ~range ~env ~param ?expected_ret_type arr_type ~infer_body =
+        exists' ~id_source
+        @@ fun poly_param_type ->
+        exists' ~id_source
+        @@ fun poly_ret_type ->
+        (* Ensure [arr_type] is an arrow with param type [poly_param_type] 
+           and return type [poly_ret_type] *)
+        Type.(var arr_type =~ var poly_param_type @-> var poly_ret_type)
+        (* Check the expected ret type *)
+        &~ Option.value_map expected_ret_type ~default:tt ~f:(fun expected_ret_type ->
+          Type.(var poly_ret_type =~ expected_ret_type))
+        &~ bind_param ~env ~with_poly_params param poly_param_type ~in_:(fun env ->
+          (* Check that [exp] has a more general type than [poly_ret_type] *)
+          if with_poly_params
+          then
+            with_range ~range
+            @@ infer_principal ~env ~f:(fun body_type -> infer_body ~env body_type)
+            @@ fun cvar -> match_poly ~id_source ~range cvar ~poly_type:poly_ret_type
+          else infer_body ~env poly_ret_type)
       in
-      Type.(var exp_type =~ arr_type) &~ c
+      let rec infer_arrows ~env params arr_type =
+        match params with
+        | [] -> assert false
+        | [ param ] ->
+          infer_arrow
+            ~range:exp_body.range
+            ~env
+            ~param
+            ?expected_ret_type:ret_type_annot
+            arr_type
+            ~infer_body:(fun ~env exp_type ->
+              infer_exp ~env ~with_poly_params exp_body exp_type)
+        | param :: params ->
+          infer_arrow
+            ~range:exp.range
+            ~env
+            ~param
+            arr_type
+            ~infer_body:(fun ~env arr_type -> infer_arrows ~env params arr_type)
+      in
+      infer_arrows ~env params exp_type
     | Exp_app (exp1, exp2) ->
       exists' ~id_source
-      @@ fun a1 ->
+      @@ fun arr_type ->
       exists' ~id_source
-      @@ fun a2 ->
+      @@ fun poly_param_type ->
       exists' ~id_source
       @@ fun poly_ret_type ->
-      let c1 = infer_exp ~env ~with_poly_params exp1 a2 in
-      let c2 =
-        let exp2 =
-          if with_poly_params
-          then Ast_builder.Expression.poly ~range:exp2.range exp2 ()
-          else exp2
-        in
-        infer_exp ~env ~with_poly_params exp2 a1
+      (* Ensure that [exp1] has an arrow type w/ parameter type [poly_param_type] 
+         and return type [poly_ret_type] *)
+      let c1 =
+        infer_exp ~env ~with_poly_params exp1 arr_type
+        &~ with_range ~range:exp1.range
+           @@ Type.(var arr_type =~ var poly_param_type @-> var poly_ret_type)
       in
-      Type.(var a2 =~ var a1 @-> var poly_ret_type)
-      &~ c1
+      (* Check that [exp2] has a more general type than [poly_param_type] *)
+      let c2 =
+        if with_poly_params
+        then
+          infer_exp_principal ~env ~with_poly_params exp2
+          @@ fun cvar ->
+          match_poly ~id_source ~range:exp2.range cvar ~poly_type:poly_param_type
+        else infer_exp ~env ~with_poly_params exp2 poly_param_type
+      in
+      c1
       &~ c2
       &~
+      (* Check that [exp_type] is an instance of [poly_ret_type] *)
       if with_poly_params
       then
         match_inst
@@ -955,23 +980,7 @@ module Expression = struct
       (match scheme_annot with
        | None ->
          infer_exp_principal ~env ~with_poly_params exp
-         @@ fun cvar ->
-         match_
-           exp_type
-           ~closure:[ `Scheme cvar ]
-           ~with_:(function
-             | Poly { quantifiers; body } -> forall quantifiers @@ inst cvar body
-             | (Arrow _ | Constr _ | Tuple _) as matchee ->
-               let type_head =
-                 match matchee with
-                 | Arrow _ -> `Arrow
-                 | Constr _ -> `Constr
-                 | Tuple _ -> `Tuple
-                 | _ -> assert false
-               in
-               ff (Omniml_error.polytype_mismatched_type ~range:exp.range ~type_head))
-           ~error:(fun _ -> Omniml_error.ambiguous_polytype ~range:exp.range)
-           ~else_:(fun () -> default_mono_poly ~id_source)
+         @@ fun cvar -> match_poly ~id_source ~range:exp.range cvar ~poly_type:exp_type
        | Some core_scheme ->
          let quantifiers, type_ =
            Convert.core_scheme ~env ~with_poly_params core_scheme
@@ -1009,16 +1018,17 @@ module Expression = struct
     inst_label ~env ~label_name ~label_type
     @@ fun arg_type -> infer_exp ~env ~with_poly_params arg_exp arg_type
 
-  and infer_exp_principal ~env ~with_poly_params exp k =
+  and infer_principal ~env ~f k =
     let id_source = Env.id_source env in
     let cvar = Var.create ~id_source () in
-    let exp_type = Type.Var.create ~id_source () in
+    let type_ = Type.Var.create ~id_source () in
     let_
-      (poly_binding
-         ([ Flexible, exp_type ]
-          @. infer_exp ~env ~with_poly_params exp exp_type
-          @=> [ cvar @: Type.var exp_type ]))
+      (poly_binding ([ Flexible, type_ ] @. f type_ @=> [ cvar @: Type.var type_ ]))
       ~in_:(k cvar)
+
+  and infer_exp_principal ~env ~with_poly_params exp k =
+    with_range ~range:exp.range
+    @@ infer_principal ~env ~f:(infer_exp ~env ~with_poly_params exp) k
 
   and infer_cases ~env ~with_poly_params cases ~lhs_type ~rhs_type =
     let cs =
