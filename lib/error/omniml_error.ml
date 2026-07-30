@@ -302,6 +302,7 @@ let disambiguation_mismatched_type ~range ~type_head =
     match type_head with
     | `Tuple -> "tuple"
     | `Arrow -> "function type"
+    | `Implicit_arrow -> "implicit function type"
     | `Poly -> "polymorphic type"
   in
   singleton
@@ -332,6 +333,7 @@ let disambiguation_tuple_mismatched_type ~range ~type_head =
     match type_head with
     | `Constr -> "type constructor"
     | `Arrow -> "function type"
+    | `Implicit_arrow -> "implicit function type"
     | `Poly -> "polymorphic type"
   in
   singleton
@@ -390,6 +392,7 @@ let polytype_mismatched_type ~range ~type_head =
     match type_head with
     | `Tuple -> "tuple"
     | `Arrow -> "function type"
+    | `Implicit_arrow -> "implicit function type"
     | `Constr -> "type constructor"
   in
   singleton

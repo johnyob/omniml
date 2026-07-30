@@ -86,7 +86,7 @@ module Pretter_printer = struct
         match t with
         | Var var -> pp_var ppf var
         | Poly scheme -> Fmt.pf ppf "@[[%a]@]" pp_scheme scheme
-        | t -> Fmt.parens pp_lvl_arrow ppf t
+        | t -> Fmt.parens pp_lvl_implicit_arrow ppf t
       in
       pp_lvl_implicit_arrow ppf t
 
@@ -121,6 +121,11 @@ module Pretter_printer = struct
       let rec pp_lvl_mu ppf t =
         match t with
         | Mu (var, t) -> Fmt.pf ppf "@[%a@ as %a@]" pp_lvl_mu t pp_var var
+        | t -> pp_lvl_implicit_arrow ppf t
+      and pp_lvl_implicit_arrow ppf t =
+        match t with
+        | App ([ t1; t2 ], Sh_implicit_arrow) ->
+          pp_implicit_arrow pp_lvl_arrow pp_lvl_implicit_arrow ppf (t1, t2)
         | t -> pp_lvl_arrow ppf t
       and pp_lvl_arrow ppf t =
         match t with

@@ -48,8 +48,8 @@ val find_type_def : t -> Type_name.t -> type_definition list
 
 module Var_binding : sig
   type t =
-    { var : Constraint.Var.t option
-    ; overloads : Constraint.Var.t Over_name.Map.t
+    { var : Constraint.Var.t
+    ; implicit_arity : int
     }
   [@@deriving sexp_of]
 end
@@ -58,13 +58,10 @@ end
 val find_var : t -> Var_name.t -> Var_binding.t option
 
 (** [rename_var t ~var ~in_] renames the variable [var] to some fresh [cvar] in [in_]. *)
-val rename_var : t -> var:Var_name.t -> in_:(t -> Constraint.Var.t -> 'a) -> 'a
-
-(** [rename_over_path t ~over_path ~in_] renames the qualified variable [over_path] to some 
-    fresh [cvar] in [in_]. *)
-val rename_over_path
+val rename_var
   :  t
-  -> over_path:Over_name.t * Var_name.t
+  -> var:Var_name.t
+  -> implicit_arity:int
   -> in_:(t -> Constraint.Var.t -> 'a)
   -> 'a
 
@@ -75,3 +72,6 @@ val find_type_var : t -> Type_var_name.t -> Type.Var.t option
 (** [rename_type_var t ~type_var ~in_] renames the type variable [type_var] to some fresh
     [ctype_var] in [in_]. *)
 val rename_type_var : t -> type_var:Type_var_name.t -> in_:(t -> Type.Var.t -> 'a) -> 'a
+
+val add_implicit_var : t -> Constraint.Var.t -> t
+val implicit_scope : t -> Constraint.Implicit_scope.t

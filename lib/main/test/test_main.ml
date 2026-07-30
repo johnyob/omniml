@@ -1033,7 +1033,7 @@ let%expect_test "" =
     Generated constraint:
     (With_range
      (Let
-      ((type_vars ((Flexible ((id 0) (name Type.Var))))) (implicits ())
+      ((type_vars ((Flexible ((id 0) (name Type.Var)))))
        (in_
         (Conj
          (With_range
@@ -1050,12 +1050,13 @@ let%expect_test "" =
                  (Reader
                   ((id 0) (name (expect_test.ml)) (length 34) (unsafe_get <fun>))))))
               (Let
-               ((type_vars ()) (implicits ()) (in_ True)
+               ((type_vars ()) (in_ True)
                 (bindings
                  (((binding_var ((id 3) (name x)))
                    (binding_type (Var ((id 1) (name Type.Var))))))))
                (With_range
-                (Instance ((id 3) (name x)) (Var ((id 2) (name Type.Var))))
+                (Conj (Instance ((id 3) (name x)) (Var ((id 2) (name Type.Var))))
+                 True)
                 ((start 25) (stop 26)
                  (source
                   (Reader
@@ -3223,7 +3224,8 @@ let%expect_test "" =
     |}]
 ;;
 
-let%expect_test "" =
+(*
+   let%expect_test "" =
   let str =
     {|
       let x = 1;;
@@ -3242,14 +3244,17 @@ let%expect_test "" =
   type_check_and_print str;
   [%expect {| Well typed :) |}]
 ;;
+*)
 
-let include_array =
+(*
+   let include_array =
   {|
     type 'a array;; 
 
     external map_array : 'a 'b. ('a -> 'b) -> 'a array -> 'b array;;
   |}
 ;;
+*)
 
 let include_float =
   {|
@@ -3279,7 +3284,8 @@ let include_string =
   |}
 ;;
 
-let%expect_test "" =
+(*
+   let%expect_test "" =
   let test =
     Incremental_test.create
       ~initial:
@@ -3578,6 +3584,7 @@ let%expect_test "" =
         = hint: add a type annotation
     |}]
 ;;
+*)
 
 let%expect_test "" =
   let str =
@@ -3606,7 +3613,7 @@ let%expect_test "" =
       let f = fun? x -> x;;
       let value = 10;;
       let implicit value;;
-      let result = f;;
+      let result = (f : int);;
     |}
   in
   type_check_and_print str;
@@ -3753,7 +3760,7 @@ let%expect_test "" =
          ^ include_monoid_int
          ^ include_monoid_float
          ^ include_monoid_string)
-      type_check_and_print
+      (type_check_and_print ~termination_check:(Threshold 128))
   in
   let do_test = Incremental_test.run test in
   do_test

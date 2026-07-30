@@ -67,12 +67,12 @@ val ambiguous_overloading : range:Range.t -> t
 
 val disambiguation_mismatched_type
   :  range:Range.t
-  -> type_head:[ `Tuple | `Arrow | `Poly ]
+  -> type_head:[ `Tuple | `Arrow | `Implicit_arrow | `Poly ]
   -> t
 
 val disambiguation_tuple_mismatched_type
   :  range:Range.t
-  -> type_head:[ `Constr | `Arrow | `Poly ]
+  -> type_head:[ `Constr | `Arrow | `Implicit_arrow | `Poly ]
   -> t
 
 val projection_out_of_bounds : range:Range.t -> arity:int -> index:int -> t
@@ -81,7 +81,7 @@ val rigid_variable_escape : range:Range.t -> t
 
 val polytype_mismatched_type
   :  range:Range.t
-  -> type_head:[ `Tuple | `Arrow | `Constr ]
+  -> type_head:[ `Tuple | `Arrow | `Implicit_arrow | `Constr ]
   -> t
 
 val ambiguous_tuple : range:Range.t -> t

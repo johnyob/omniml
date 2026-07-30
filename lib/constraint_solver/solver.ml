@@ -602,7 +602,7 @@ module Implicit_resolution = struct
           else
             with_
               candidate_var
-              ~implicit_spine:(expected_spine - candidate_spine)
+              ~implicit_spine:(candidate_spine - expected_spine)
               candidate_scheme
         in
         strip_implicits_for_candidates
@@ -663,23 +663,19 @@ let rec resolve_implicit
     expected_type
     ~with_:(fun head ~implicit_spine gscheme ->
       let curr_region = env.curr_region in
-      (* Instantiate the type scheme *)
-      let _instantiation = instantiate ~state ~env gscheme expected_type in
-      (* Reconstruct the implicit spine using unification *)
+      (* Reconstruct the implicit spine *)
       let implicits =
         List.init implicit_spine ~f:(fun _ -> G.create_var ~state ~curr_region ())
       in
-      let implicit_arrow =
-        List.fold_right
-          implicits
-          ~init:(G.create_var ~state ~curr_region ())
-          ~f:(fun implicit ret ->
-            G.create_former
-              ~state
-              ~curr_region
-              { shape = Sh_implicit_arrow; args = [ implicit; ret ] })
+      let implicit_type =
+        List.fold_right implicits ~init:expected_type ~f:(fun implicit ret ->
+          G.create_former
+            ~state
+            ~curr_region
+            { shape = Sh_implicit_arrow; args = [ implicit; ret ] })
       in
-      unify ~state ~env implicit_arrow expected_type;
+      (* Instantiate the type scheme *)
+      let _instantiation = instantiate ~state ~env gscheme implicit_type in
       (* At this point, implicits contains the types that we must recursively resolve *)
       let termination_budget =
         Termination.Budget.consume head expected_type termination_budget

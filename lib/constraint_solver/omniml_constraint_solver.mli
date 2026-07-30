@@ -63,6 +63,9 @@ module Type : sig
   (** [poly s] embeds a type scheme as a (mono)type. *)
   val poly : Scheme.t -> t
 
+  (** [a @=> b] is the implicit function type [a => b]. *)
+  val ( @=> ) : t -> t -> t
+
   module Matchee : sig
     (** A "pattern" used by {!Constraint.match_}.
 

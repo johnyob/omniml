@@ -4,17 +4,10 @@ open Adt
 
 module Var_binding = struct
   type t =
-    { var : Constraint.Var.t option
-    ; overloads : Constraint.Var.t Over_name.Map.t
+    { var : Constraint.Var.t
+    ; implicit_arity : int
     }
   [@@deriving sexp_of]
-
-  let empty = { var = None; overloads = Over_name.Map.empty }
-  let set t var = { t with var = Some var }
-
-  let set_overload t over_name cvar =
-    { t with overloads = Map.set t.overloads ~key:over_name ~data:cvar }
-  ;;
 end
 
 type t =
@@ -33,7 +26,9 @@ type t =
       constraint type variables (unique). *)
   ; vars : Var_binding.t Var_name.Map.t
     (** [vars] is a renaming from (user-defined) variable names to
-      constraint variables (unique). *)
+        constraint variables (unique). *)
+  ; implicit_scope : Constraint.Implicit_scope.t
+    (** [implicit_scope] is a set of variables in the implicit scope. *)
   }
 
 let empty ?(id_source = Identifier.create_source ()) () =
@@ -43,10 +38,17 @@ let empty ?(id_source = Identifier.create_source ()) () =
   ; type_vars = Type_var_name.Map.empty
   ; types = Type_name.Map.empty
   ; vars = Var_name.Map.empty
+  ; implicit_scope = Constraint.Implicit_scope.{ vars = Constraint.Var.Set.empty }
   }
 ;;
 
 let id_source t = t.id_source [@@inline]
+
+let add_implicit_var t var =
+  { t with implicit_scope = { vars = Set.add t.implicit_scope.vars var } }
+;;
+
+let implicit_scope t = t.implicit_scope
 
 let add_constr_def t (constr_def : constructor_definition) =
   { t with
@@ -108,33 +110,11 @@ let rename_type_var t ~type_var ~in_ =
   in_ t ctype_var
 ;;
 
-let rename_var_binding ~name ~set_binding t ~var ~in_ =
-  let cvar = Constraint.Var.create ~id_source:t.id_source ~name () in
-  let t =
-    { t with
-      vars =
-        Map.update t.vars var ~f:(fun binding ->
-          let binding = Option.value binding ~default:Var_binding.empty in
-          set_binding binding cvar)
-    }
+let rename_var t ~var ~implicit_arity ~in_ =
+  let cvar =
+    Constraint.Var.create ~id_source:t.id_source ~name:(var : Var_name.t :> string) ()
   in
+  let var_binding = Var_binding.{ var = cvar; implicit_arity } in
+  let t = { t with vars = Map.set t.vars ~key:var ~data:var_binding } in
   in_ t cvar
-;;
-
-let rename_var t ~var ~in_ =
-  rename_var_binding
-    ~name:(var : Var_name.t :> string)
-    ~set_binding:Var_binding.set
-    t
-    ~var
-    ~in_
-;;
-
-let rename_over_path t ~over_path:(over_name, var) ~in_ =
-  rename_var_binding
-    ~name:(Fmt.str "%a?%a" Over_name.pp over_name Var_name.pp var)
-    ~set_binding:(fun binding cvar -> Var_binding.set_overload binding over_name cvar)
-    t
-    ~var
-    ~in_
 ;;
