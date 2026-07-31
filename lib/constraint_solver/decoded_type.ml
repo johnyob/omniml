@@ -105,7 +105,9 @@ module Decoder = struct
         | Type.Shape (types, shape) ->
           decode_shape (List.map types ~f:(decode_constraint_type substitution)) shape
         | Type.Poly scheme ->
-          let args, poly_shape = Principal_shape.poly_shape_decomposition_of_scheme scheme in
+          let args, poly_shape =
+            Principal_shape.poly_shape_decomposition_of_scheme scheme
+          in
           let args = List.map args ~f:(decode_constraint_type substitution) in
           decode_shape args (Principal_shape.Sh_poly poly_shape)
       and decode type_ =

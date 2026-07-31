@@ -32,8 +32,7 @@ module Type = struct
       | Tuple types -> Fmt.pf ppf "@[%a@]" Fmt.(list ~sep:(any " *@ ") pp_app) types
       | type_ -> pp_app ppf type_
     and pp_app ppf = function
-      | Constr (types, ident) ->
-        Fmt.pf ppf "@[%a%a@]" pp_args types pp_ident ident
+      | Constr (types, ident) -> Fmt.pf ppf "@[%a%a@]" pp_args types pp_ident ident
       | type_ -> pp_atom ppf type_
     and pp_args ppf = function
       | [] -> ()
