@@ -6,6 +6,7 @@
   grace
   omniml.std
   omniml.ast
+  omniml.typed_ast
   omniml.constraint_solver
   omniml.error)
  (preprocess

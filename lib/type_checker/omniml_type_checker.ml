@@ -20,9 +20,9 @@ let infer_str ?with_stdlib ~with_poly_params str =
   @@ fun env -> Infer.Structure.infer_str ~with_poly_params ~env str
 ;;
 
-let check ?defaulting ?range cst =
+let check ~with_poly_params ?defaulting ?range cst =
   match Omniml_constraint_solver.(solve ?range ?defaulting cst) with
-  | Ok () -> ()
+  | Ok value -> value
   | Error { range; it } ->
     let get_range range =
       Option.value_or_thunk range ~default:(fun () ->
@@ -63,7 +63,7 @@ let check ?defaulting ?range cst =
          raise
          @@ mismatched_type
               ~range:(get_range range)
-              ~pp_type:Omniml_constraint_solver.Decoded_type.pp
+              ~pp_type:(Typed_ast.Type.pp ~with_poly_params)
               type1
               type2)
      | Rigid_variable_escape ->

@@ -116,6 +116,38 @@ module Principal_shape : sig
   val poly : Type.Scheme.t -> t
 end
 
+module Decoded_type : sig
+  module Var : Var.S
+
+  (** A type produced by the constraint solver. *)
+  type t =
+    | Var of Var.t
+    | Arrow of t * t
+    | Tuple of t list
+    | Constr of t list * Type.Ident.t
+    | Poly of scheme
+    | Mu of Var.t * t
+
+  and scheme =
+    { quantifiers : Var.t list
+    ; body : t
+    }
+  [@@deriving sexp]
+
+  type type_ := t
+
+  module Scheme : sig
+    type nonrec t = scheme =
+      { quantifiers : Var.t list
+      ; body : t
+      }
+    [@@deriving sexp]
+
+    val create : ?quantifiers:Var.t list -> type_ -> t
+  end
+
+end
+
 module Constraint : sig
   (** Variables standing for term/program variables in constraints. *)
   module Var : Var.S
@@ -132,16 +164,20 @@ module Constraint : sig
     [@@deriving sexp]
   end
 
-  (** [t] is a constraint. *)
-  type t
+  (** ['a t] is a constraint whose successful resolution produces a value of
+      type ['a]. *)
+  type 'a t
 
-  (** [let_binding] is a constrainted type scheme with a number of binders.
+  (** [let_binding] is a constrained type scheme with a number of binders.
 
       [forall overline(a). C => (x1 : ty1, ..., xn : tyn)]. *)
-  and let_binding
+  and 'a let_binding
 
   (** [binding] is a type binding [x : ty], stored within a {!let_binding}. *)
-  and binding
+  and binding = private
+    { binding_var : Var.t
+    ; binding_type : Type.t
+    }
 
   (** Whether a quantified type variable must be generalizable. *)
   and flexibility =
@@ -150,36 +186,40 @@ module Constraint : sig
         (depends on the constraint). *)
     | Rigid (** Must not be monomorphic
         escaping rigid variables is an error. *)
-  [@@deriving sexp]
+  val sexp_of_t : 'a t -> Sexp.t
 
   (** The trivially satisfiable constraint. *)
-  val tt : t
+  val tt : unit t
 
   (** An unsatisfiable constraint. *)
-  val ff : Omniml_error.t -> t
+  val ff : Omniml_error.t -> 'a t
+
+  include Applicative.S with type 'a t := 'a t
+  include Applicative.Let_syntax with type 'a t := 'a t
 
   (** [c1 &~ c2] is the logical conjunction of [c1] and [c2]. *)
-  val ( &~ ) : t -> t -> t
+  val ( &~ ) : 'a t -> 'b t -> ('a * 'b) t
 
-  (** [all cs] is the logical conjunction of all constraints in [cs]. 
-      
-      If [cs] is [[]], then the constraint is trivially true. *)
-  val all : t list -> t
+  (** [c1 >> c2] solves both constraints and produces the value of [c2]. *)
+  val ( >> ) : 'a t -> 'b t -> 'b t
 
   (** [ty1 =~ ty2] asserts the equality of [ty1] and [ty2] as a constraint. *)
-  val ( =~ ) : Type.t -> Type.t -> t
+  val ( =~ ) : Type.t -> Type.t -> unit t
+
+  (** [decode ty] produces the final decoded solution of [ty]. *)
+  val decode : Type.t -> Decoded_type.t t
 
   (** [exists v c] existentially binds the type variable [v] in the 
       constraint [c]. *)
-  val exists : Type.Var.t -> t -> t
+  val exists : Type.Var.t -> 'a t -> 'a t
 
   (** [exists vs c] existentially binds the type variables [vs] in 
       the constraint [c]. *)
-  val exists_many : Type.Var.t list -> t -> t
+  val exists_many : Type.Var.t list -> 'a t -> 'a t
 
   (** [forall vs c] universally binds the type variables [vs] in 
       the constraint [c]. *)
-  val forall : Type.Var.t list -> t -> t
+  val forall : Type.Var.t list -> 'a t -> 'a t
 
   (** [x @: ty] constructs the binding [x : ty]. *)
   val ( @: ) : Var.t -> Type.t -> binding
@@ -195,32 +235,36 @@ module Constraint : sig
       The following combinators and types exist purely to support 
       this syntax. *)
 
-  type unquantified_let_binding := t * binding list
+  type 'a unquantified_let_binding := 'a t * binding list
 
-  type quantified_let_binding :=
-    (flexibility * Type.Var.t) list * unquantified_let_binding
+  type 'a quantified_let_binding :=
+    (flexibility * Type.Var.t) list * 'a unquantified_let_binding
 
-  val ( @=> ) : t -> binding list -> unquantified_let_binding
+  val ( @=> ) : 'a t -> binding list -> 'a unquantified_let_binding
 
   val ( @. )
     :  (flexibility * Type.Var.t) list
-    -> unquantified_let_binding
-    -> quantified_let_binding
+    -> 'a unquantified_let_binding
+    -> 'a quantified_let_binding
 
   (** [mono_binding bindings] builds a monomorphic let binding.
       This is equivalent to [poly_binding ([] @. tt @=> bindings)]. *)
-  val mono_binding : binding list -> let_binding
+  val mono_binding : binding list -> unit let_binding
 
   (** [poly_binding (vs @. c @=> bindings)] builds the constrained let binding
       [forall vs. c => bindings]. *)
-  val poly_binding : quantified_let_binding -> let_binding
+  val poly_binding : 'a quantified_let_binding -> 'a let_binding
 
   (** [let_ binding ~in_:c] binds the variables in [binding] in [c]. *)
-  val let_ : let_binding -> in_:t -> t
+  val let_ : 'a let_binding -> in_:'b t -> ('a * 'b) t
+
+  (** [let_unit binding ~in_] solves the let constraint and discards both
+      semantic values. *)
+  val let_unit : 'a let_binding -> in_:'b t -> unit t
 
   (** [inst x ty] requires the type [ty] to be an instance of the scheme 
       bound to [x]. The variable [x] must be bound earlier by {!let_}. *)
-  val inst : Var.t -> Type.t -> t
+  val inst : Var.t -> Type.t -> unit t
 
   module Match_error : sig
     type t =
@@ -260,22 +304,15 @@ module Constraint : sig
   val match_
     :  Type.Var.t
     -> closure:[< `Type of Type.Var.t | `Scheme of Var.t ] list
-    -> with_:(Type.Matchee.t -> t)
+    -> with_:(Type.Matchee.t -> unit t)
     -> else_:(unit -> Principal_shape.t)
     -> error:(Match_error.t -> Omniml_error.t)
-    -> t
+    -> unit t
 
   (** [with_range c ~range] is equivalent to [c], but attaches the source 
       range [range]. This information is used for error reporting. See 
       {!Error}. *)
-  val with_range : t -> range:Range.t -> t
-end
-
-module Decoded_type : sig
-  (** A type produced by the constraint solver. *)
-  type t [@@deriving sexp]
-
-  include Pretty_printer.S with type t := t
+  val with_range : 'a t -> range:Range.t -> 'a t
 end
 
 module Error : sig
@@ -304,14 +341,15 @@ module Error : sig
   [@@deriving sexp]
 end
 
-(** [solve ?range c] solves the constraint [c]. 
+(** [solve ?range c] solves the constraint [c] and, if successful, runs its
+    delayed semantic actions to construct the result.
 
-     On success returns [Ok ()]. On failure returns a structured 
+     On success returns [Ok value]. On failure returns a structured
      {!Error.t}. If [range] is provided, it is used as a fallback 
      location for errors that are not already range-annotated 
      via {!Constraint.with_range}. *)
 val solve
   :  ?range:Range.t
   -> ?defaulting:Omniml_options.Defaulting.t
-  -> Constraint.t
-  -> (unit, Error.t) result
+  -> 'a Constraint.t
+  -> ('a, Error.t) result

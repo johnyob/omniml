@@ -60,6 +60,6 @@ let type_check_and_print
       >>| fun source ->
       Range.create ~source Byte_index.initial (Byte_index.of_int @@ Source.length source))
   in
-  Omniml_type_checker.check ~defaulting ?range cst;
+  ignore (Omniml_type_checker.check ~with_poly_params ~defaulting ?range cst);
   Fmt.pr "Well typed :)@."
 ;;

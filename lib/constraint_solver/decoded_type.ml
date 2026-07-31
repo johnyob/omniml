@@ -7,144 +7,27 @@ module Var = Var.Make (struct
 
 type t =
   | Var of Var.t
-  | App of t list * Principal_shape.t
+  | Arrow of t * t
+  | Tuple of t list
+  | Constr of t list * Type.Ident.t
+  | Poly of scheme
   | Mu of Var.t * t
+
+and scheme =
+  { quantifiers : Var.t list
+  ; body : t
+  }
 [@@deriving sexp]
 
-module Pretter_printer = struct
-  let id_to_var_name (id : Identifier.t) =
-    let id = (id :> int) in
-    let char = String.make 1 (Char.of_int_exn (Char.to_int 'a' + (id mod 26))) in
-    let suffix = id / 26 in
-    if suffix = 0 then char else char ^ Int.to_string suffix
-  ;;
+module Scheme = struct
+  type nonrec t = scheme =
+    { quantifiers : Var.t list
+    ; body : t
+    }
+  [@@deriving sexp]
 
-  let[@inline] pp_ident ppf (ident : Type.Ident.t) =
-    Fmt.string ppf (String.split_on_chars ~on:[ '.' ] ident.name |> List.last_exn)
-  ;;
-
-  let[@inline] pp_arrow pp_lhs pp_rhs ppf (lhs, rhs) =
-    Fmt.pf ppf "@[%a ->@ %a@]" pp_lhs lhs pp_rhs rhs
-  ;;
-
-  let[@inline] pp_tuple pp_type ppf types =
-    Fmt.(pf ppf "@[<0>%a@]" (list ~sep:(any " *@ ") pp_type) types)
-  ;;
-
-  let[@inline] pp_constr pp_args ppf (types, ident) =
-    Fmt.(pf ppf "@[%a%a@]") pp_args types pp_ident ident
-  ;;
-
-  let[@inline] pp_applied_shape pp_args pp_shape ppf (types, shape) =
-    Fmt.(pf ppf "@[%a@%a@]") pp_args types pp_shape shape
-  ;;
-
-  let pp_args ~in_app ~pp_atom ~pp ppf ts =
-    if in_app
-    then (
-      match ts with
-      | [] -> ()
-      | [ t ] -> Fmt.pf ppf "%a@ " pp_atom t
-      | ts -> Fmt.(pf ppf "@[(%a)@ @]" (list ~sep:comma pp) ts))
-    else Fmt.(pf ppf "@[(%a)@]" (list ~sep:comma pp) ts)
-  ;;
-
-  module Constraint_type = struct
-    let[@inline] pp_var ppf (var : Type.Var.t) =
-      let name = id_to_var_name var.id in
-      Fmt.pf ppf "'%s" name
-    ;;
-
-    let rec pp ppf (t : Type.t) =
-      let rec pp_lvl_arrow ppf (t : Type.t) =
-        match t with
-        | Arrow (t1, t2) | Shape ([ t1; t2 ], Sh_arrow) ->
-          pp_arrow pp_lvl_tuple pp_lvl_arrow ppf (t1, t2)
-        | t -> pp_lvl_tuple ppf t
-      and pp_lvl_tuple ppf (t : Type.t) =
-        match t with
-        | Tuple ts | Shape (ts, Sh_tuple _) -> pp_tuple pp_lvl_app ppf ts
-        | t -> pp_lvl_app ppf t
-      and pp_lvl_app ppf (t : Type.t) =
-        match t with
-        | Constr (ts, constr) | Shape (ts, Sh_constr (_, constr)) ->
-          pp_constr pp_lvl_args ppf (ts, constr)
-        | Shape (ts, shape) -> pp_applied_shape pp_lvl_args pp_shape ppf (ts, shape)
-        | t -> pp_lvl_atom ppf t
-      and pp_lvl_args ppf ts =
-        pp_args ~in_app:true ~pp_atom:pp_lvl_atom ~pp:pp_lvl_arrow ppf ts
-      and pp_lvl_atom ppf t =
-        match t with
-        | Var var -> pp_var ppf var
-        | Poly scheme -> Fmt.pf ppf "@[[%a]@]" pp_scheme scheme
-        | t -> Fmt.parens pp_lvl_arrow ppf t
-      in
-      pp_lvl_arrow ppf t
-
-    and pp_shape ppf (shape : Principal_shape.t) =
-      match shape with
-      | Sh_arrow -> Fmt.string ppf "(->)"
-      | Sh_tuple n -> Fmt.pf ppf "Pi^%d" n
-      | Sh_constr (n, constr) -> Fmt.pf ppf "%a(%d)" pp_ident constr n
-      | Sh_poly { quantifiers; scheme } ->
-        Fmt.pf
-          ppf
-          "@[(@[<hov 2>ν%a.@ [%a]@])@]"
-          Fmt.(list ~sep:comma pp_var)
-          quantifiers
-          pp_scheme
-          scheme
-
-    and pp_scheme ppf scheme =
-      let { Type.Scheme.quantifiers; body } = scheme in
-      Fmt.pf ppf "@[<hov 2>∀%a.@ %a@]" Fmt.(list ~sep:comma pp_var) quantifiers pp body
-    ;;
-  end
-
-  module Decoded_type = struct
-    let[@inline] pp_var ppf (var : Var.t) =
-      let name = id_to_var_name var.id in
-      Fmt.pf ppf "'%s" name
-    ;;
-
-    let pp ppf t =
-      let rec pp_lvl_mu ppf t =
-        match t with
-        | Mu (var, t) -> Fmt.pf ppf "@[%a@ as %a@]" pp_lvl_mu t pp_var var
-        | t -> pp_lvl_arrow ppf t
-      and pp_lvl_arrow ppf t =
-        match t with
-        | App ([ t1; t2 ], Sh_arrow) -> pp_arrow pp_lvl_tuple pp_lvl_arrow ppf (t1, t2)
-        | t -> pp_lvl_tuple ppf t
-      and pp_lvl_tuple ppf t =
-        match t with
-        | App (ts, Sh_tuple _) -> pp_tuple pp_lvl_app ppf ts
-        | t -> pp_lvl_app ppf t
-      and pp_lvl_app ppf t =
-        match t with
-        | App (ts, Sh_constr (_, constr)) ->
-          pp_constr
-            (pp_args ~in_app:true ~pp_atom:pp_lvl_atom ~pp:pp_lvl_mu)
-            ppf
-            (ts, constr)
-        | App (ts, (Sh_poly _ as shape)) ->
-          pp_applied_shape
-            (pp_args ~in_app:true ~pp_atom:pp_lvl_atom ~pp:pp_lvl_mu)
-            Constraint_type.pp_shape
-            ppf
-            (ts, shape)
-        | t -> pp_lvl_atom ppf t
-      and pp_lvl_atom ppf t =
-        match t with
-        | Var var -> pp_var ppf var
-        | App _ | Mu _ -> Fmt.(parens pp_lvl_mu ppf t)
-      in
-      pp_lvl_mu ppf t
-    ;;
-  end
+  let create ?(quantifiers = []) body = { quantifiers; body }
 end
-
-let pp = Pretter_printer.Decoded_type.pp
 
 module Decoder = struct
   module State = struct
@@ -181,7 +64,51 @@ module Decoder = struct
     fun gtype ->
       let visited_table = Hashtbl.create (module Identifier) in
       (* Recursive loop that traverses the graphical type *)
-      let rec decode type_ =
+      let rec decode_shape args = function
+        | Principal_shape.Sh_arrow ->
+          (match args with
+           | [ param; return ] -> Arrow (param, return)
+           | _ -> assert false)
+        | Principal_shape.Sh_tuple _ -> Tuple args
+        | Principal_shape.Sh_constr (_, constr) -> Constr (args, constr)
+        | Principal_shape.Sh_poly poly_shape -> Poly (decode_poly_shape args poly_shape)
+      and decode_poly_shape args ({ quantifiers; scheme } : Principal_shape.Poly.t) =
+        decode_scheme (List.zip_exn quantifiers args) scheme
+      and decode_scheme substitution ({ quantifiers; body } : Type.Scheme.t) =
+        let quantifiers =
+          List.map quantifiers ~f:(fun quantifier -> quantifier, State.alloc_var state)
+        in
+        let body =
+          let quantified_variables =
+            List.map quantifiers ~f:(fun (quantifier, var) -> quantifier, Var var)
+          in
+          decode_constraint_type (quantified_variables @ substitution) body
+        in
+        { quantifiers = List.map quantifiers ~f:snd; body }
+      and decode_constraint_type substitution (type_ : Type.t) =
+        match type_ with
+        | Type.Var var ->
+          (match
+             List.find_map substitution ~f:(fun (quantifier, type_) ->
+               Option.some_if (Type.Var.equal quantifier var) type_)
+           with
+           | Some type_ -> type_
+           | None -> Var (State.rename_var state var.id))
+        | Type.Arrow (param, return) ->
+          Arrow
+            ( decode_constraint_type substitution param
+            , decode_constraint_type substitution return )
+        | Type.Tuple types ->
+          Tuple (List.map types ~f:(decode_constraint_type substitution))
+        | Type.Constr (types, constr) ->
+          Constr (List.map types ~f:(decode_constraint_type substitution), constr)
+        | Type.Shape (types, shape) ->
+          decode_shape (List.map types ~f:(decode_constraint_type substitution)) shape
+        | Type.Poly scheme ->
+          let args, poly_shape = Principal_shape.poly_shape_decomposition_of_scheme scheme in
+          let args = List.map args ~f:(decode_constraint_type substitution) in
+          decode_shape args (Principal_shape.Sh_poly poly_shape)
+      and decode type_ =
         let structure = G.Type.structure type_ in
         let id = structure.id in
         match Hashtbl.find visited_table id with
@@ -220,7 +147,7 @@ module Decoder = struct
           (match G.Type.inner args, Principal_shape.Var.peek_exn shape_var with
            | Structure (Structure (Shape_args args)), shape ->
              let args = List.map args ~f:decode in
-             App (args, shape)
+             decode_shape args shape
            | _ -> Var (State.rename_var state id)
            | exception Principal_shape.Var.Empty -> Var (State.rename_var state id))
         | Shape_args _ ->
@@ -236,7 +163,7 @@ module Decoder = struct
         | Structure f -> decode_former f
       and decode_former { args; shape } =
         let args = List.map args ~f:decode in
-        App (args, shape)
+        decode_shape args shape
       in
       decode gtype
   ;;

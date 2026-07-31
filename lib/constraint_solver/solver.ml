@@ -2,6 +2,21 @@ open! Import
 module G = Generalization
 module State = G.State
 
+module Elaboration = struct
+  type 'a t = Decoded_type.Decoder.t -> 'a
+
+  let run t = t (Decoded_type.Decoder.create ())
+  let return value _decoder = value
+  let map t ~f decoder = f (t decoder)
+  let decode type_ decoder = decoder type_
+
+  let both t1 t2 decoder =
+    let value1 = t1 decoder in
+    let value2 = t2 decoder in
+    value1, value2
+  ;;
+end
+
 module Error = struct
   type t =
     { it : desc
@@ -170,19 +185,28 @@ let match_type
   | Sh_poly poly_shape -> env, Poly poly_shape.scheme
 ;;
 
-let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
+let rec solve
+  : type a.
+    state:State.t
+    -> env:Env.t
+    -> a Constraint.t
+    -> a Elaboration.t
+  =
   fun ~state ~env cst ->
   [%log.global.debug
     "Solving constraint" (state : State.t) (env : Env.t) (cst : Constraint.t)];
   let self ~state ?(env = env) cst = solve ~state ~env cst in
   match cst with
-  | True -> ()
+  | True -> Elaboration.return ()
+  | Return value -> Elaboration.return value
   | False err -> Env.raise env @@ Unsatisfiable err
+  | Map (cst, f) -> Elaboration.map (self ~state cst) ~f
   | Conj (cst1, cst2) ->
     [%log.global.debug "Solving conj lhs"];
-    self ~state cst1;
+    let value1 = self ~state cst1 in
     [%log.global.debug "Solving conj rhs"];
-    self ~state cst2
+    let value2 = self ~state cst2 in
+    Elaboration.both value1 value2
   | Eq (type1, type2) ->
     [%log.global.debug "Decoding type1" (type1 : Type.t)];
     let gtype1 = gtype_of_type ~state ~env type1 in
@@ -190,16 +214,18 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
     [%log.global.debug "Decoding type2" (type2 : Type.t)];
     let gtype2 = gtype_of_type ~state ~env type2 in
     [%log.global.debug "Decoded type2" (gtype2 : G.Type.t)];
-    unify ~state ~env gtype1 gtype2
+    unify ~state ~env gtype1 gtype2;
+    Elaboration.return ()
   | Let (let_binding, in_) ->
     [%log.global.debug "Solving let binding"];
-    let gbindings = solve_let_binding ~state ~env let_binding in
+    let bound_value, gbindings = solve_let_binding ~state ~env let_binding in
     let env =
       List.fold gbindings ~init:env ~f:(fun env (var, gscheme) ->
         Env.bind_var env ~var ~type_:gscheme)
     in
     [%log.global.debug "Solving let body"];
-    self ~state ~env in_
+    let body_value = self ~state ~env in_ in
+    Elaboration.both bound_value body_value
   | Instance (var, expected_type) ->
     [%log.global.debug "Decoding expected_type" (expected_type : Type.t)];
     let expected_gtype = gtype_of_type ~state ~env expected_type in
@@ -210,7 +236,11 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
     let actual_gtype = G.instantiate ~state ~curr_region:env.curr_region var_gscheme in
     [%log.global.debug
       "Scheme instance" (var_gscheme : G.Scheme.t) (actual_gtype : G.Type.t)];
-    unify ~state ~env actual_gtype expected_gtype
+    unify ~state ~env actual_gtype expected_gtype;
+    Elaboration.return ()
+  | Decode type_ ->
+    let gtype = gtype_of_type ~state ~env type_ in
+    Elaboration.decode gtype
   | Exists (type_var, cst) ->
     [%log.global.debug "Binding unification for type_var" (type_var : Type.Var.t)];
     let env = exists ~state ~env ~type_var in
@@ -240,7 +270,7 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
         "Matchee and updated env" (matchee : Type.Matchee.t) (env : Env.t)];
       let cst = case matchee in
       [%log.global.debug "Generated constraint from case" (cst : Constraint.t)];
-      solve ~state ~env cst;
+      ignore (solve ~state ~env cst : unit Elaboration.t);
       [%log.global.debug "Solved generated constraint" (cst : Constraint.t)];
       [%log.global.debug "Exiting case region"]
     in
@@ -252,10 +282,18 @@ let rec solve : state:State.t -> env:Env.t -> Constraint.t -> unit =
     G.Suspended_match.match_or_yield
       ~state
       ~curr_region:env.curr_region
-      { matchee = gmatchee; closure = gclosure; case; else_; error }
-  | With_range (t, range) -> solve ~state ~env:(Env.with_range env ~range) t
+      { matchee = gmatchee; closure = gclosure; case; else_; error };
+    Elaboration.return ()
+  | With_range (t, range) -> self ~state ~env:(Env.with_range env ~range) t
 
-and solve_let_binding ~state ~env { type_vars; in_; bindings } =
+and solve_let_binding
+  : type a.
+    state:State.t
+    -> env:Env.t
+    -> a Constraint.let_binding
+    -> a Elaboration.t * (Constraint.Var.t * G.Scheme.t) list
+  =
+  fun ~state ~env { type_vars; in_; bindings } ->
   let env = Env.enter_new_region ~state env in
   [%log.global.debug "Entered new region" (env : Env.t)];
   let env =
@@ -269,7 +307,7 @@ and solve_let_binding ~state ~env { type_vars; in_; bindings } =
       (type_vars : (Constraint.flexibility * Type.Var.t) list)
       (env : Env.t)];
   [%log.global.debug "Solving scheme's constraint"];
-  solve ~state ~env in_;
+  let value = solve ~state ~env in_ in
   let gbindings =
     List.map bindings ~f:(fun { binding_var; binding_type } ->
       [%log.global.debug
@@ -281,7 +319,7 @@ and solve_let_binding ~state ~env { type_vars; in_; bindings } =
       binding_var, gscheme)
   in
   [%log.global.debug "Bindings" (gbindings : (Constraint.Var.t * G.Scheme.t) list)];
-  gbindings
+  value, gbindings
 
 and gclosure_of_closure ~env closure : G.Suspended_match.closure =
   let variables = List.map closure.type_vars ~f:(Env.find_type_var env) in
@@ -290,10 +328,11 @@ and gclosure_of_closure ~env closure : G.Suspended_match.closure =
 ;;
 
 let solve
-  :  ?range:Range.t
-  -> ?defaulting:Omniml_options.Defaulting.t
-  -> Constraint.t
-  -> (unit, Error.t) result
+  : type a.
+    ?range:Range.t
+    -> ?defaulting:Omniml_options.Defaulting.t
+    -> a Constraint.t
+    -> (a, Error.t) result
   =
   fun ?range ?defaulting cst ->
   try
@@ -302,7 +341,7 @@ let solve
     let root_region = State.root_region state in
     let env = Env.empty ~curr_region:root_region ~range in
     [%log.global.debug "Initial env and state" (state : State.t) (env : Env.t)];
-    solve ~state ~env cst;
+    let value = solve ~state ~env cst in
     [%log.global.debug "State" (state : State.t)];
     [%log.global.debug "Generalizing root region" (env.curr_region : G.Region.t)];
     G.Region.mark ~state env.curr_region;
@@ -339,7 +378,7 @@ let solve
             (num_shape_partially_generalized_regions : int)
             (num_type_partially_generalized_regions : int)
             (state : State.t)];
-    Ok ()
+    Ok (Elaboration.run value)
   with
   (* Catch solver exceptions *)
   | G.Unify.Unify (gtype1, gtype2) ->

@@ -1032,46 +1032,49 @@ let%expect_test "" =
       ((type_vars ((Flexible ((id 0) (name Type.Var)))))
        (in_
         (Conj
-         (With_range
-          (Exists ((id 1) (name Type.Var))
-           (Exists ((id 2) (name Type.Var))
-            (Conj
+         (Conj
+          (With_range
+           (Exists ((id 1) (name Type.Var))
+            (Exists ((id 2) (name Type.Var))
              (Conj
-              (Eq (Var ((id 0) (name Type.Var)))
-               (Arrow (Var ((id 1) (name Type.Var)))
-                (Var ((id 2) (name Type.Var)))))
-              True)
-             (Conj
-              (With_range True
-               ((start 20) (stop 21)
-                (source
-                 (Reader
-                  ((id 0) (name (expect_test.ml)) (length 34) (unsafe_get <fun>))))))
-              (Let
-               ((type_vars ()) (in_ True)
-                (bindings
-                 (((binding_var ((id 3) (name x)))
-                   (binding_type (Var ((id 1) (name Type.Var))))))))
-               (With_range
-                (Instance ((id 3) (name x)) (Var ((id 2) (name Type.Var))))
-                ((start 25) (stop 26)
+              (Conj
+               (Eq (Var ((id 0) (name Type.Var)))
+                (Arrow (Var ((id 1) (name Type.Var)))
+                 (Var ((id 2) (name Type.Var)))))
+               True)
+              (Conj
+               (With_range True
+                ((start 20) (stop 21)
                  (source
                   (Reader
                    ((id 0) (name (expect_test.ml)) (length 34)
-                    (unsafe_get <fun>)))))))))))
-          ((start 16) (stop 26)
-           (source
-            (Reader
-             ((id 0) (name (expect_test.ml)) (length 34) (unsafe_get <fun>))))))
-         (With_range True
-          ((start 11) (stop 13)
-           (source
-            (Reader
-             ((id 0) (name (expect_test.ml)) (length 34) (unsafe_get <fun>))))))))
+                    (unsafe_get <fun>))))))
+               (Let
+                ((type_vars ()) (in_ True)
+                 (bindings
+                  (((binding_var ((id 3) (name x)))
+                    (binding_type (Var ((id 1) (name Type.Var))))))))
+                (With_range
+                 (Instance ((id 3) (name x)) (Var ((id 2) (name Type.Var))))
+                 ((start 25) (stop 26)
+                  (source
+                   (Reader
+                    ((id 0) (name (expect_test.ml)) (length 34)
+                     (unsafe_get <fun>)))))))))))
+           ((start 16) (stop 26)
+            (source
+             (Reader
+              ((id 0) (name (expect_test.ml)) (length 34) (unsafe_get <fun>))))))
+          (With_range True
+           ((start 11) (stop 13)
+            (source
+             (Reader
+              ((id 0) (name (expect_test.ml)) (length 34) (unsafe_get <fun>)))))))
+         (Conj (Decode (Var ((id 0) (name Type.Var)))) Return)))
        (bindings
         (((binding_var ((id 4) (name id)))
           (binding_type (Var ((id 0) (name Type.Var))))))))
-      True)
+      Return)
      ((start 7) (stop 26)
       (source
        (Reader ((id 0) (name (expect_test.ml)) (length 34) (unsafe_get <fun>))))))
@@ -1676,11 +1679,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:4:33
       4 │        let see_pid1 = (fun x -> (@[x], @[x])) pid1 ;;
-        │                                  ^^^^ `('a * 'b) @(ν'a. [∀. 'a]) ->
-        │                                        ('a * 'b) @(ν'a. [∀. 'a])`
+        │                                  ^^^^ `'a * 'b -> 'a * 'b`
         │                                         is not equal to
-        │                                       `('c * 'd) @(ν'a. [∀. 'a]) ->
-        │                                        ('c * 'd) @(ν'a. [∀. 'a])`
+        │                                       `'c * 'd -> 'c * 'd`
     |}]
 ;;
 
@@ -3311,16 +3312,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:34:25
      34 │        let _ = choose id auto;;
-        │                          ^^^^ `@(ν.
-        │                                    [∀'a.
-        │                                       'a @(ν'a. [∀. 'a]) ->
-        │                                       'a @(ν'a. [∀. 'a])]) ->
-        │                                @(ν.
-        │                                    [∀'a.
-        │                                       'a @(ν'a. [∀. 'a]) ->
-        │                                       'a @(ν'a. [∀. 'a])])`
+        │                          ^^^^ `(forall 'a. 'a -> 'a) -> (forall 'b. 'b -> 'b)`
         │                                 is not equal to
-        │                               `'a @(ν'a. [∀. 'a]) -> 'a @(ν'a. [∀. 'a])`
+        │                               `'c -> 'c`
     |}];
   (* A8: fails for the same reason. *)
   do_test
@@ -3332,15 +3326,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:34:25
      34 │        let _ = choose id auto2;;
-        │                          ^^^^^ `@(ν.
-        │                                     [∀'a.
-        │                                        'a @(ν'a. [∀. 'a]) ->
-        │                                        'a @(ν'a. [∀. 'a])]) ->
-        │                                 ('a @(ν'a. [∀. 'a]) ->
-        │                                  'a @(ν'a. [∀. 'a]))
-        │                                 @(ν'a. [∀. 'a])`
+        │                          ^^^^^ `(forall 'a. 'a -> 'a) -> 'b -> 'b`
         │                                  is not equal to
-        │                                `'b @(ν'a. [∀. 'a]) -> 'b @(ν'a. [∀. 'a])`
+        │                                `'c -> 'c`
     |}];
   (* A9: fails because choose id becomes (['b] -> ['b]) -> (['b] -> ['b]). 
          unifies 'a with ['b] -> ['b]. But ids is ['c. 'c -> 'c] list. 
@@ -3355,15 +3343,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:35:29
      35 │        let _ = f (choose id) ids;;
-        │                              ^^^ `(@(ν.
-        │                                        [∀'a.
-        │                                           'a @(ν'a. [∀. 'a]) ->
-        │                                           'a @(ν'a. [∀. 'a])]))
-        │                                   list`
+        │                              ^^^ `[forall 'a. 'a -> 'a] list`
         │                                    is not equal to
-        │                                  `('a @(ν'a. [∀. 'a]) ->
-        │                                    'a @(ν'a. [∀. 'a]))
-        │                                   list`
+        │                                  `('b -> 'b) list`
     |}];
   (* A10 *)
   do_test
@@ -3448,14 +3430,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:34:23
      34 │        let _ = cons id ids;;
-        │                        ^^^ `(@(ν.
-        │                                  [∀'a.
-        │                                     'a @(ν'a. [∀. 'a]) ->
-        │                                     'a @(ν'a. [∀. 'a])]))
-        │                             list`
+        │                        ^^^ `[forall 'a. 'a -> 'a] list`
         │                              is not equal to
-        │                            `('a @(ν'a. [∀. 'a]) -> 'a @(ν'a. [∀. 'a]))
-        │                             list`
+        │                            `('b -> 'b) list`
     |}];
   (* C5 *)
   do_test
@@ -3467,13 +3444,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:34:33
      34 │        let _ = cons (fun x -> x) ids;;
-        │                                  ^^^ `(@(ν.
-        │                                            [∀'a.
-        │                                               'a @(ν'a. [∀. 'a]) ->
-        │                                               'a @(ν'a. [∀. 'a])]))
-        │                                       list`
+        │                                  ^^^ `[forall 'a. 'a -> 'a] list`
         │                                        is not equal to
-        │                                      `('a -> 'b) list`
+        │                                      `('b -> 'c) list`
     |}];
   (* C7 *)
   do_test
@@ -3492,15 +3465,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:35:29
      35 │        let _ = g (single id) ids;;
-        │                              ^^^ `(@(ν.
-        │                                        [∀'a.
-        │                                           'a @(ν'a. [∀. 'a]) ->
-        │                                           'a @(ν'a. [∀. 'a])]))
-        │                                   list`
+        │                              ^^^ `[forall 'a. 'a -> 'a] list`
         │                                    is not equal to
-        │                                  `('a @(ν'a. [∀. 'a]) ->
-        │                                    'a @(ν'a. [∀. 'a]))
-        │                                   list`
+        │                                  `('b -> 'b) list`
     |}];
   (* C9 *)
   do_test
@@ -3512,12 +3479,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:34:19
      34 │        let _ = map poly (single id);;
-        │                    ^^^^ `@(ν.
-        │                              [∀'a.
-        │                                 'a @(ν'a. [∀. 'a]) -> 'a @(ν'a. [∀. 'a])]) ->
-        │                          (int * bool) @(ν'a. [∀. 'a])`
+        │                    ^^^^ `(forall 'a. 'a -> 'a) -> int * bool`
         │                           is not equal to
-        │                         `'a @(ν'a. [∀. 'a]) -> 'b @(ν'a. [∀. 'a])`
+        │                         `'b -> 'c`
     |}];
   (* C10 *)
   do_test
@@ -3541,12 +3505,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:34:19
      34 │        let _ = app poly id;;
-        │                    ^^^^ `@(ν.
-        │                              [∀'a.
-        │                                 'a @(ν'a. [∀. 'a]) -> 'a @(ν'a. [∀. 'a])]) ->
-        │                          (int * bool) @(ν'a. [∀. 'a])`
+        │                    ^^^^ `(forall 'a. 'a -> 'a) -> int * bool`
         │                           is not equal to
-        │                         `'a @(ν'a. [∀. 'a]) -> 'b @(ν'a. [∀. 'a])`
+        │                         `'b -> 'c`
     |}];
   (* D2 *)
   do_test
@@ -3558,14 +3519,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:34:25
      34 │        let _ = revapp id poly;;
-        │                          ^^^^ `@(ν.
-        │                                    [∀'a.
-        │                                       'a @(ν'a. [∀. 'a]) ->
-        │                                       'a @(ν'a. [∀. 'a])]) ->
-        │                                (int * bool) @(ν'a. [∀. 'a])`
+        │                          ^^^^ `(forall 'a. 'a -> 'a) -> int * bool`
         │                                 is not equal to
-        │                               `('a @(ν'a. [∀. 'a]) -> 'a @(ν'a. [∀. 'a]))
-        │                                @(ν'a. [∀. 'a]) -> 'b @(ν'a. [∀. 'a])`
+        │                               `('b -> 'b) -> 'c`
     |}];
   (* D3 *)
   do_test
@@ -3583,10 +3539,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:34:19
      34 │        let _ = app run_st arg_st;;
-        │                    ^^^^^^ `'a @(ν'b. [∀'a. ('a, 'b) st]) ->
-        │                            'a @(ν'a. [∀. 'a])`
+        │                    ^^^^^^ `(forall 'b. ('b, 'a) st) -> 'a`
         │                             is not equal to
-        │                           `'b @(ν'a. [∀. 'a]) -> 'c @(ν'a. [∀. 'a])`
+        │                           `'c -> 'd`
     |}];
   (* D5 *)
   do_test
@@ -3598,11 +3553,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:34:29
      34 │        let _ = revapp arg_st run_st;;
-        │                              ^^^^^^ `'a @(ν'b. [∀'a. ('a, 'b) st]) ->
-        │                                      'a @(ν'a. [∀. 'a])`
+        │                              ^^^^^^ `(forall 'b. ('b, 'a) st) -> 'a`
         │                                       is not equal to
-        │                                     `(('b, int) st) @(ν'a. [∀. 'a]) ->
-        │                                      'c @(ν'a. [∀. 'a])`
+        │                                     `('c, int) st -> 'd`
     |}];
   (* E1 *)
   do_test
@@ -3617,20 +3570,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:37:19
      37 │        let _ = k h lst;;
-        │                    ^^^ `(((int) @(ν'a. [∀. 'a]))
-        │                          @(ν'b.
-        │                              [∀'a.
-        │                                 'b ->
-        │                                 ('a @(ν'a. [∀. 'a]) ->
-        │                                  'a @(ν'a. [∀. 'a]))
-        │                                 @(ν'a. [∀. 'a])]))
-        │                         list`
+        │                    ^^^ `[forall 'a. int -> 'a -> 'a] list`
         │                          is not equal to
-        │                        `((int) @(ν'a. [∀. 'a]) ->
-        │                          @(ν.
-        │                              [∀'a.
-        │                                 'a @(ν'a. [∀. 'a]) -> 'a @(ν'a. [∀. 'a])]))
-        │                         list`
+        │                        `(int -> (forall 'b. 'b -> 'b)) list`
     |}];
   do_test
     {|
@@ -3644,16 +3586,9 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:37:32
      37 │        let _ = k (fun x -> h x) lst;;
-        │                                 ^^^ `(((int) @(ν'a. [∀. 'a]))
-        │                                       @(ν'b.
-        │                                           [∀'a.
-        │                                              'b ->
-        │                                              ('a @(ν'a. [∀. 'a]) ->
-        │                                               'a @(ν'a. [∀. 'a]))
-        │                                              @(ν'a. [∀. 'a])]))
-        │                                      list`
+        │                                 ^^^ `[forall 'a. int -> 'a -> 'a] list`
         │                                       is not equal to
-        │                                     `('a -> 'b) list`
+        │                                     `('b -> 'c) list`
     |}];
   do_test
     {|
