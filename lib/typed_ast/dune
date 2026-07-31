@@ -1,0 +1,6 @@
+(library
+ (name omniml_typed_ast)
+ (public_name omniml.typed_ast)
+ (libraries core fmt omniml.std omniml.ast omniml.constraint_solver omniml.source)
+ (preprocess
+  (pps ppx_sexp_conv)))

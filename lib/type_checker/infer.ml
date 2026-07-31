@@ -268,7 +268,7 @@ let infer_constructor
       raise_constructor_arity_mismatch ~expected_arity:`One ~actual_arity:`Zero
   in
   let constr_type = Convert.type_expr ~env constructor_type in
-  exists_many constr_vars @@ (Type.(var constr_type' =~ constr_type) &~ c_constr_arg)
+  exists_many constr_vars @@ (Type.(var constr_type' =~ constr_type) >> c_constr_arg)
 ;;
 
 let infer_label ~id_source ~label_def label_arg' label_type' =
@@ -282,7 +282,7 @@ let infer_label ~id_source ~label_def label_arg' label_type' =
   let label_arg = Convert.type_expr ~env label_arg in
   let label_type = Convert.type_expr ~env label_type in
   exists_many label_vars
-  @@ (Type.(var label_type' =~ label_type) &~ Type.(var label_arg' =~ label_arg))
+  @@ (Type.(var label_type' =~ label_type) >> Type.(var label_arg' =~ label_arg))
 ;;
 
 module Make_adt_inst (X : sig
@@ -304,7 +304,7 @@ module Make_adt_inst (X : sig
       -> ctx:infer_ctx
       -> arg:arg_type
       -> ret:Type.Var.t
-      -> Constraint.t
+      -> unit Constraint.t
 
     val arg_closure : arg_type -> Type.Var.t list
     val ambiguous : range:Range.t -> Omniml_error.t
@@ -349,7 +349,7 @@ struct
         let def = disambiguate_defs_by_type_ident type_ident in
         exists ret
         @@ (Type.(var ret =~ constr (List.map args ~f:var) type_ident)
-            &~ X.infer def ~id_source ~ctx:infer_ctx ~arg ~ret)
+            >> X.infer def ~id_source ~ctx:infer_ctx ~arg ~ret)
       in
       (* Matches on [ret], if its a constructor then we can disambiguate it. 
          If [ret] is never unified, it is unified with the default shape (the 
@@ -516,7 +516,7 @@ module Pattern = struct
       let label_arg, c_label = inst_label ~env ~label_name ~label_type in
       let%bind () = perform_exists label_arg in
       let%map c_arg = k label_arg in
-      c_label &~ c_arg
+      c_label >> c_arg
     ;;
 
     let inst_constr ~env ~constr_name ~constr_arity ~constr_type k =
@@ -526,7 +526,7 @@ module Pattern = struct
       in
       let%bind () = Option.value_map constr_arg ~f:perform_exists ~default:(return ()) in
       let%map c_arg = k constr_arg in
-      c_label &~ c_arg
+      c_label >> c_arg
     ;;
 
     let run t = t Fragment.empty
@@ -549,7 +549,7 @@ module Pattern = struct
     | Pat_const const -> return @@ Type.(var pat_type =~ infer_constant const)
     | Pat_tuple pats ->
       let%map pat_types, cpats = infer_pats ~env ~with_poly_params pats in
-      cpats &~ Type.(var pat_type =~ tuple (List.map ~f:var pat_types))
+      cpats >> Type.(var pat_type =~ tuple (List.map ~f:var pat_types))
     | Pat_constr (constr_name, arg_pat) ->
       inst_constr
         ~env
@@ -572,7 +572,7 @@ module Pattern = struct
     | Pat_annot (pat, annot) ->
       let type_ = Convert.core_type_to_type ~env ~with_poly_params annot in
       let%map c = infer_pat ~env ~with_poly_params pat pat_type in
-      Type.(var pat_type =~ type_) &~ c
+      Type.(var pat_type =~ type_) >> c
 
   and infer_pats ~env ~with_poly_params pats =
     let open With_fragment in
@@ -584,7 +584,7 @@ module Pattern = struct
       let%bind () = perform_exists pat_type in
       let%bind cpat = infer_pat ~env ~with_poly_params pat pat_type in
       let%map pat_types, cpats = infer_pats ~env ~with_poly_params pats in
-      pat_type :: pat_types, cpat &~ cpats
+      pat_type :: pat_types, cpat >> cpats
 
   and infer_label_pats ~env ~with_poly_params ~record_type label_pats =
     let open With_fragment in
@@ -592,10 +592,10 @@ module Pattern = struct
     |> List.map ~f:(fun (label_name, arg_pat) ->
       infer_label_pat ~env ~with_poly_params ~label_type:record_type label_name arg_pat)
     |> all
-    >>| Constraint.all
+    >>| fun constraints -> Constraint.map (Constraint.all constraints) ~f:ignore
 
   and infer_label_pat ~env ~with_poly_params ~label_type label_name arg_pat
-    : Constraint.t With_fragment.t
+    : unit Constraint.t With_fragment.t
     =
     let open With_fragment in
     inst_label ~env ~label_name ~label_type
@@ -617,14 +617,14 @@ module Expression = struct
   let inst_constr ~env ~constr_name ~constr_arity ~constr_type k =
     let constr_arg, c_type = inst_constr ~env ~constr_name ~constr_arity ~constr_type in
     let c_arg = k constr_arg in
-    let c = c_type &~ c_arg in
+    let c = c_type >> c_arg in
     Option.value_map constr_arg ~default:c ~f:(fun constr_arg -> exists constr_arg c)
   ;;
 
   let inst_label ~env ~label_name ~label_type k =
     let label_arg, c_type = inst_label ~env ~label_name ~label_type in
     let c_arg = k label_arg in
-    exists label_arg (c_type &~ c_arg)
+    exists label_arg (c_type >> c_arg)
   ;;
 
   let default_mono_poly ~id_source =
@@ -675,21 +675,22 @@ module Expression = struct
     let { Pattern.Fragment.var_bindings; exist_bindings }, cpat =
       Pattern.(infer_pat ~env ~with_poly_params pat pat_type |> With_fragment.run)
     in
-    let env, bindings =
-      var_bindings
-      |> Map.to_alist
+    let env, named_bindings =
+      Map.to_alist var_bindings
       |> List.fold_map ~init:env ~f:(fun env (var, type_) ->
-        Env.rename_var env ~var ~in_:(fun env cvar -> env, cvar @: Type.var type_))
+        Env.rename_var env ~var ~in_:(fun env cvar ->
+          env, (var, cvar @: Type.var type_)))
     in
-    env, bindings, exist_bindings, cpat
+    env, named_bindings, exist_bindings, cpat
   ;;
 
   let bind_mono_pat ~env ~with_poly_params (pat : pattern) pat_type ~in_ =
-    let env, bindings, exists_bindings, cpat =
+    let env, named_bindings, exists_bindings, cpat =
       infer_pat ~env ~with_poly_params pat pat_type
     in
+    let bindings = List.map named_bindings ~f:snd in
     let in_ = in_ env in
-    exists_many exists_bindings (cpat &~ let_ (mono_binding bindings) ~in_)
+    exists_many exists_bindings (cpat >> let_unit (mono_binding bindings) ~in_)
   ;;
 
   let bind_mono_match_val ~env ~with_poly_params pat param_type ~in_ =
@@ -697,17 +698,18 @@ module Expression = struct
     exists' ~id_source
     @@ fun param_mono_type ->
     Type.(var param_type =~ poly (Type.Scheme.create (var param_mono_type)))
-    &~ bind_mono_pat ~env ~with_poly_params pat param_mono_type ~in_
+    >> bind_mono_pat ~env ~with_poly_params pat param_mono_type ~in_
   ;;
 
   let bind_unknown_poly_pat ~env ~with_poly_params (pat : Ast.pattern) param_type ~in_ =
     let id_source = Env.id_source env in
     let pat_type = Type.Var.create ~id_source () in
-    let env, bindings, exist_bindings, cpat =
+    let env, named_bindings, exist_bindings, cpat =
       infer_pat ~env ~with_poly_params pat pat_type
     in
+    let bindings = List.map named_bindings ~f:snd in
     let pat_quantifiers = List.map exist_bindings ~f:(fun v -> Flexible, v) in
-    let_
+    let_unit
       (poly_binding
          (((Flexible, pat_type) :: pat_quantifiers)
           @. (match_inst
@@ -715,7 +717,7 @@ module Expression = struct
                 ~range:pat.range
                 ~poly_type:param_type
                 ~mono_type:pat_type
-              &~ cpat)
+              >> cpat)
           @=> bindings))
       ~in_:(in_ env)
   ;;
@@ -726,18 +728,19 @@ module Expression = struct
     let scheme_quantifiers = List.map scheme.quantifiers ~f:(fun v -> Rigid, v) in
     (* Infer the pattern *)
     let pat_type = Type.Var.create ~id_source () in
-    let env, bindings, exist_bindings, cpat =
+    let env, named_bindings, exist_bindings, cpat =
       infer_pat ~env ~with_poly_params pat pat_type
     in
+    let bindings = List.map named_bindings ~f:snd in
     let pat_quantifiers =
       (Flexible, pat_type) :: List.map exist_bindings ~f:(fun v -> Flexible, v)
     in
     (* Unify the param type with the expected poly type *)
     Type.(var param_type =~ poly scheme)
-    &~ let_
+    >> let_unit
          (poly_binding
             ((scheme_quantifiers @ pat_quantifiers)
-             @. (cpat &~ Type.(var pat_type =~ scheme.body))
+             @. (cpat >> Type.(var pat_type =~ scheme.body))
              @=> bindings))
          ~in_:(in_ env)
   ;;
@@ -791,9 +794,9 @@ module Expression = struct
            and return type [poly_ret_type] *)
         Type.(var arr_type =~ var poly_param_type @-> var poly_ret_type)
         (* Check the expected ret type *)
-        &~ Option.value_map expected_ret_type ~default:tt ~f:(fun expected_ret_type ->
+        >> Option.value_map expected_ret_type ~default:tt ~f:(fun expected_ret_type ->
           Type.(var poly_ret_type =~ expected_ret_type))
-        &~ bind_param ~env ~with_poly_params param poly_param_type ~in_:(fun env ->
+        >> bind_param ~env ~with_poly_params param poly_param_type ~in_:(fun env ->
           (* Check that [exp] has a more general type than [poly_ret_type] *)
           if with_poly_params
           then
@@ -834,7 +837,7 @@ module Expression = struct
          and return type [poly_ret_type] *)
       let c1 =
         infer_exp ~env ~with_poly_params exp1 arr_type
-        &~ with_range ~range:exp1.range
+        >> with_range ~range:exp1.range
            @@ Type.(var arr_type =~ var poly_param_type @-> var poly_ret_type)
       in
       (* Check that [exp2] has a more general type than [poly_param_type] *)
@@ -847,8 +850,8 @@ module Expression = struct
         else infer_exp ~env ~with_poly_params exp2 poly_param_type
       in
       c1
-      &~ c2
-      &~
+      >> c2
+      >>
       (* Check that [exp_type] is an instance of [poly_ret_type] *)
       if with_poly_params
       then
@@ -859,8 +862,9 @@ module Expression = struct
           ~mono_type:exp_type
       else Type.(var poly_ret_type =~ var exp_type)
     | Exp_let (value_binding, exp) ->
-      infer_value_binding ~env ~with_poly_params value_binding
-      @@ fun env -> infer_exp ~env ~with_poly_params exp exp_type
+      (infer_value_binding ~env ~with_poly_params value_binding
+       @@ fun env -> infer_exp ~env ~with_poly_params exp exp_type)
+      >>| ignore
     | Exp_exists (type_vars, exp) ->
       let env, type_vars =
         List.fold_map type_vars ~init:env ~f:(fun env type_var ->
@@ -878,7 +882,7 @@ module Expression = struct
       let exp_type' = Type.Var.create ~id_source:(Env.id_source env) () in
       let c = infer_exp ~env ~with_poly_params exp exp_type' in
       let x = Var.create ~id_source:(Env.id_source env) () in
-      let_
+      let_unit
         (poly_binding
            (((Flexible, exp_type') :: rigid_type_vars)
             @. c
@@ -887,17 +891,17 @@ module Expression = struct
     | Exp_annot (exp, annot) ->
       let annot = Convert.core_type_to_type ~env ~with_poly_params annot in
       let c = infer_exp ~env ~with_poly_params exp exp_type in
-      Type.(var exp_type =~ annot) &~ c
+      Type.(var exp_type =~ annot) >> c
     | Exp_tuple exps ->
       infer_exps ~env ~with_poly_params exps
       @@ fun (exp_types, c) ->
-      Type.(var exp_type =~ tuple (List.map ~f:var exp_types)) &~ c
+      Type.(var exp_type =~ tuple (List.map ~f:var exp_types)) >> c
     | Exp_proj (exp', index) ->
       exists' ~id_source
       @@ fun tuple_type ->
       let c1 = infer_exp ~env ~with_poly_params exp' tuple_type in
       c1
-      &~ match_
+      >> match_
            tuple_type
            ~closure:[ `Type exp_type ]
            ~with_:(function
@@ -928,13 +932,13 @@ module Expression = struct
       let c1 = infer_exp ~env ~with_poly_params if_exp if_type in
       let c2 = infer_exp ~env ~with_poly_params then_exp exp_type in
       let c3 = infer_exp ~env ~with_poly_params else_exp exp_type in
-      Type.(var if_type =~ Predef.bool) &~ c1 &~ c2 &~ c3
+      Type.(var if_type =~ Predef.bool) >> c1 >> c2 >> c3
     | Exp_sequence (exp1, exp2) ->
       exists' ~id_source
       @@ fun exp1_type ->
       let c1 = infer_exp ~env ~with_poly_params exp1 exp1_type in
       let c2 = infer_exp ~env ~with_poly_params exp2 exp_type in
-      Type.(var exp1_type =~ Predef.unit) &~ c1 &~ c2
+      Type.(var exp1_type =~ Predef.unit) >> c1 >> c2
     | Exp_constr (constr_name, arg_exp) ->
       inst_constr
         ~env
@@ -964,7 +968,7 @@ module Expression = struct
           ~lhs_type:match_exp_type
           ~rhs_type:exp_type
       in
-      c1 &~ c2
+      c1 >> c2
     | Exp_record label_exps ->
       infer_label_exps ~env ~with_poly_params ~record_type:exp_type label_exps
     | Exp_field (exp, label_name) ->
@@ -975,7 +979,7 @@ module Expression = struct
         inst_label ~env ~label_name ~label_type:record_type
         @@ fun arg_type -> Type.(var exp_type =~ var arg_type)
       in
-      c1 &~ c2
+      c1 >> c2
     | Exp_poly (exp, scheme_annot) ->
       (match scheme_annot with
        | None ->
@@ -988,15 +992,15 @@ module Expression = struct
          Type.(
            var exp_type
            =~ poly (Convert.core_scheme_to_type_scheme ~env ~with_poly_params core_scheme))
-         &~ forall quantifiers
+         >> forall quantifiers
             @@ exists' ~id_source
             @@ fun exp_type ->
-            Type.(var exp_type =~ type_) &~ infer_exp ~env ~with_poly_params exp exp_type)
+            Type.(var exp_type =~ type_) >> infer_exp ~env ~with_poly_params exp exp_type)
     | Exp_inst exp ->
       exists' ~id_source
       @@ fun poly_type ->
       infer_exp ~env ~with_poly_params exp poly_type
-      &~ match_inst ~id_source ~range:exp.range ~poly_type ~mono_type:exp_type
+      >> match_inst ~id_source ~range:exp.range ~poly_type ~mono_type:exp_type
 
   and infer_exps ~env ~with_poly_params exps k =
     match exps with
@@ -1006,13 +1010,14 @@ module Expression = struct
       @@ fun exp_type ->
       let c1 = infer_exp ~env ~with_poly_params exp exp_type in
       infer_exps ~env ~with_poly_params exps
-      @@ fun (exp_types, c2) -> k (exp_type :: exp_types, c1 &~ c2)
+      @@ fun (exp_types, c2) -> k (exp_type :: exp_types, c1 >> c2)
 
   and infer_label_exps ~env ~with_poly_params ~record_type label_exps =
     label_exps
     |> List.map ~f:(fun (label_name, arg_exp) ->
       infer_label_exp ~env ~with_poly_params ~label_type:record_type label_name arg_exp)
     |> all
+    >>| ignore
 
   and infer_label_exp ~env ~with_poly_params ~label_type label_name arg_exp =
     inst_label ~env ~label_name ~label_type
@@ -1022,7 +1027,7 @@ module Expression = struct
     let id_source = Env.id_source env in
     let cvar = Var.create ~id_source () in
     let type_ = Type.Var.create ~id_source () in
-    let_
+    let_unit
       (poly_binding ([ Flexible, type_ ] @. f type_ @=> [ cvar @: Type.var type_ ]))
       ~in_:(k cvar)
 
@@ -1034,25 +1039,41 @@ module Expression = struct
     let cs =
       cases |> List.map ~f:(infer_case ~env ~with_poly_params ~lhs_type ~rhs_type)
     in
-    all cs
+    all cs >>| ignore
 
   and infer_case ~env ~with_poly_params case ~lhs_type ~rhs_type =
     let { case_lhs = pat; case_rhs = exp } = case.it in
     bind_mono_pat ~env ~with_poly_params pat lhs_type ~in_:(fun env ->
       infer_exp ~env ~with_poly_params exp rhs_type)
 
-  and infer_value_binding ~(env : Env.t) ~with_poly_params value_binding k =
+  and infer_value_binding
+    : 'a.
+      env:Env.t
+      -> with_poly_params:bool
+      -> Ast.value_binding
+      -> (Env.t -> 'a Constraint.t)
+      -> (Typed_ast.binding list * 'a) Constraint.t
+    =
+    fun ~env ~with_poly_params value_binding k ->
     let { value_binding_pat = pat; value_binding_exp = exp } = value_binding.it in
     let exp_type = Type.Var.create ~id_source:(Env.id_source env) () in
     let cexp = infer_exp ~env ~with_poly_params exp exp_type in
-    let env, bindings, exists_bindings, cpat =
+    let env, named_bindings, exists_bindings, cpat =
       infer_pat ~env ~with_poly_params pat exp_type
+    in
+    let bindings = List.map named_bindings ~f:snd in
+    let decoded_bindings =
+      named_bindings
+      |> List.map ~f:(fun (binding_name, binding) ->
+        decode binding.binding_type
+        >>| fun binding_type -> { Typed_ast.binding_name; binding_type })
+      |> all
     in
     let cin = k env in
     let_
       (poly_binding
          (((Flexible, exp_type) :: List.map exists_bindings ~f:(fun v -> Flexible, v))
-          @. (cexp &~ cpat)
+          @. (cexp >> cpat >> decoded_bindings)
           @=> bindings))
       ~in_:cin
   ;;
@@ -1064,8 +1085,15 @@ module Structure = struct
     let quantifiers, type_ = Convert.core_scheme ~env ~with_poly_params value_type in
     let quantifiers = List.map ~f:(fun q -> Flexible, q) quantifiers in
     Env.rename_var env ~var:value_name.it ~in_:(fun env cvar ->
-      let c = k env in
-      let_ (poly_binding (quantifiers @. tt @=> [ cvar @: type_ ])) ~in_:c)
+      let binding = cvar @: type_ in
+      let decoded_binding =
+        decode binding.binding_type
+        >>| fun binding_type ->
+        { Typed_ast.binding_name = value_name.it; binding_type }
+      in
+      let_
+        (poly_binding (quantifiers @. decoded_binding @=> [ binding ]))
+        ~in_:(k env))
   ;;
 
   let infer_type_decl
@@ -1157,17 +1185,24 @@ module Structure = struct
 
   let rec infer_str ~env ~with_poly_params (str : Ast.structure) =
     match str with
-    | [] -> tt
+    | [] -> return []
     | { it = Str_type type_decls; range } :: str ->
       let env = infer_type_decls ~env ~with_poly_params type_decls in
-      with_range ~range @@ infer_str ~env ~with_poly_params str
+      with_range ~range
+      @@ (infer_str ~env ~with_poly_params str
+          >>| fun signature ->
+          With_range.create ~range (Typed_ast.Sig_type type_decls) :: signature)
     | { it = Str_primitive value_desc; range } :: str ->
       with_range ~range
-      @@ infer_prim ~env ~with_poly_params value_desc
-      @@ fun env -> infer_str ~env ~with_poly_params str
+      @@ (infer_prim ~env ~with_poly_params value_desc
+          @@ fun env -> infer_str ~env ~with_poly_params str)
+      >>| fun (binding, signature) ->
+      With_range.create ~range (Typed_ast.Sig_primitive binding) :: signature
     | { it = Str_value value_binding; range } :: str ->
       with_range ~range
-      @@ Expression.infer_value_binding ~env ~with_poly_params value_binding
-      @@ fun env -> infer_str ~env ~with_poly_params str
+      @@ (Expression.infer_value_binding ~env ~with_poly_params value_binding
+          @@ fun env -> infer_str ~env ~with_poly_params str)
+      >>| fun (bindings, signature) ->
+      With_range.create ~range (Typed_ast.Sig_value bindings) :: signature
   ;;
 end

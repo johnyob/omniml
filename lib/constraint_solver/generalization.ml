@@ -981,12 +981,23 @@ let instantiate ~state ~curr_region ({ root; region = src_region } : Scheme.t) =
 ;;
 
 module Suspended_match = struct
+  module Error = struct
+    type t =
+      | Cannot_default
+      | Matchee_is_rigid
+      | Inconsistent_default of
+          { actual : Principal_shape.t
+          ; expected : Principal_shape.t
+          }
+    [@@deriving sexp]
+  end
+
   type t =
     { matchee : Type.t
     ; closure : closure
     ; case : curr_region:Region.t -> shape:Principal_shape.t -> args:Type.t list -> unit
     ; else_ : unit -> Principal_shape.t
-    ; error : Constraint.Match_error.t -> Omniml_error.t
+    ; error : Error.t -> Omniml_error.t
     }
   [@@deriving sexp_of]
 
