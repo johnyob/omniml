@@ -185,13 +185,7 @@ let match_type
   | Sh_poly poly_shape -> env, Poly poly_shape.scheme
 ;;
 
-let rec solve
-  : type a.
-    state:State.t
-    -> env:Env.t
-    -> a Constraint.t
-    -> a Elaboration.t
-  =
+let rec solve : type a. state:State.t -> env:Env.t -> a Constraint.t -> a Elaboration.t =
   fun ~state ~env cst ->
   [%log.global.debug
     "Solving constraint" (state : State.t) (env : Env.t) (cst : Constraint.t)];

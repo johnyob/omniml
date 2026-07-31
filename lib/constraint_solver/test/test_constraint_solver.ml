@@ -25,9 +25,7 @@ let print_solve_result ?defaulting ?(log_level = `Info) cst =
   | Error err ->
     print_s
       [%message
-        "Constraint is unsatisfiable"
-          (cst : C.t)
-          (err : Omniml_constraint_solver.Error.t)]
+        "Constraint is unsatisfiable" (cst : C.t) (err : Omniml_constraint_solver.Error.t)]
 ;;
 
 let predef_ident =
@@ -58,9 +56,10 @@ let%expect_test "Decode observes the final solution" =
   let type_var = T.Var.create ~id_source () in
   let cst =
     exists type_var
-    @@ let%map () = T.(var type_var =~ tint)
-       and decoded = decode (T.var type_var) in
-       decoded
+    @@
+    let%map () = T.(var type_var =~ tint)
+    and decoded = decode (T.var type_var) in
+    decoded
   in
   (match Omniml_constraint_solver.solve cst with
    | Ok decoded ->
@@ -83,7 +82,7 @@ let%expect_test "Let constraints preserve both values" =
   print_s
     [%sexp
       (Omniml_constraint_solver.solve (let_ binding ~in_:(return 22))
-        : (int * int, _) Result.t)];
+       : (int * int, _) Result.t)];
   [%expect {| (Ok (20 22)) |}]
 ;;
 

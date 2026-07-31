@@ -72,20 +72,13 @@ let rec sexp_of_t : type a. a t -> Sexp.t =
   | True -> atom "True"
   | Return _ -> atom "Return"
   | False err -> node "False" [ Omniml_error.sexp_of_t err ]
-  | Conj (t1, t2) ->
-    node "Conj" [ sexp_of_t t1; sexp_of_t t2 ]
+  | Conj (t1, t2) -> node "Conj" [ sexp_of_t t1; sexp_of_t t2 ]
   | Map (t, _) -> sexp_of_t t
   | Eq (type1, type2) -> node "Eq" [ Type.sexp_of_t type1; Type.sexp_of_t type2 ]
-  | Exists (type_var, t) ->
-    node "Exists" [ Type.Var.sexp_of_t type_var; sexp_of_t t ]
+  | Exists (type_var, t) -> node "Exists" [ Type.Var.sexp_of_t type_var; sexp_of_t t ]
   | Forall (type_vars, t) ->
-    node
-      "Forall"
-      [ [%sexp_of: Type.Var.t list] type_vars; sexp_of_t t ]
-  | Let (binding, t) ->
-    node
-      "Let"
-      [ sexp_of_let_binding binding; sexp_of_t t ]
+    node "Forall" [ [%sexp_of: Type.Var.t list] type_vars; sexp_of_t t ]
+  | Let (binding, t) -> node "Let" [ sexp_of_let_binding binding; sexp_of_t t ]
   | Instance (var, type_) -> node "Instance" [ Var.sexp_of_t var; Type.sexp_of_t type_ ]
   | Decode type_ -> node "Decode" [ Type.sexp_of_t type_ ]
   | Match { matchee; closure; case = _; else_ = _; error = _ } ->
@@ -97,8 +90,7 @@ let rec sexp_of_t : type a. a t -> Sexp.t =
       ; node "else_" [ atom "<fun>" ]
       ; node "error" [ atom "<fun>" ]
       ]
-  | With_range (t, range) ->
-    node "With_range" [ sexp_of_t t; Range.sexp_of_t range ]
+  | With_range (t, range) -> node "With_range" [ sexp_of_t t; Range.sexp_of_t range ]
 
 and sexp_of_let_binding : type a. a let_binding -> Sexp.t =
   fun { type_vars; in_; bindings } ->

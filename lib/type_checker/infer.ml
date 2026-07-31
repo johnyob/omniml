@@ -678,8 +678,7 @@ module Expression = struct
     let env, named_bindings =
       Map.to_alist var_bindings
       |> List.fold_map ~init:env ~f:(fun env (var, type_) ->
-        Env.rename_var env ~var ~in_:(fun env cvar ->
-          env, (var, cvar @: Type.var type_)))
+        Env.rename_var env ~var ~in_:(fun env cvar -> env, (var, cvar @: Type.var type_)))
     in
     env, named_bindings, exist_bindings, cpat
   ;;
@@ -1047,12 +1046,12 @@ module Expression = struct
       infer_exp ~env ~with_poly_params exp rhs_type)
 
   and infer_value_binding
-    : 'a.
-      env:Env.t
-      -> with_poly_params:bool
-      -> Ast.value_binding
-      -> (Env.t -> 'a Constraint.t)
-      -> (Typed_ast.binding list * 'a) Constraint.t
+    :  'a.
+       env:Env.t
+    -> with_poly_params:bool
+    -> Ast.value_binding
+    -> (Env.t -> 'a Constraint.t)
+    -> (Typed_ast.binding list * 'a) Constraint.t
     =
     fun ~env ~with_poly_params value_binding k ->
     let { value_binding_pat = pat; value_binding_exp = exp } = value_binding.it in
@@ -1088,12 +1087,9 @@ module Structure = struct
       let binding = cvar @: type_ in
       let decoded_binding =
         decode binding.binding_type
-        >>| fun binding_type ->
-        { Typed_ast.binding_name = value_name.it; binding_type }
+        >>| fun binding_type -> { Typed_ast.binding_name = value_name.it; binding_type }
       in
-      let_
-        (poly_binding (quantifiers @. decoded_binding @=> [ binding ]))
-        ~in_:(k env))
+      let_ (poly_binding (quantifiers @. decoded_binding @=> [ binding ])) ~in_:(k env))
   ;;
 
   let infer_type_decl
@@ -1193,15 +1189,15 @@ module Structure = struct
           >>| fun signature ->
           With_range.create ~range (Typed_ast.Sig_type type_decls) :: signature)
     | { it = Str_primitive value_desc; range } :: str ->
-      with_range ~range
-      @@ (infer_prim ~env ~with_poly_params value_desc
-          @@ fun env -> infer_str ~env ~with_poly_params str)
+      (with_range ~range
+       @@ infer_prim ~env ~with_poly_params value_desc
+       @@ fun env -> infer_str ~env ~with_poly_params str)
       >>| fun (binding, signature) ->
       With_range.create ~range (Typed_ast.Sig_primitive binding) :: signature
     | { it = Str_value value_binding; range } :: str ->
-      with_range ~range
-      @@ (Expression.infer_value_binding ~env ~with_poly_params value_binding
-          @@ fun env -> infer_str ~env ~with_poly_params str)
+      (with_range ~range
+       @@ Expression.infer_value_binding ~env ~with_poly_params value_binding
+       @@ fun env -> infer_str ~env ~with_poly_params str)
       >>| fun (bindings, signature) ->
       With_range.create ~range (Typed_ast.Sig_value bindings) :: signature
   ;;

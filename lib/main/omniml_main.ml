@@ -3,6 +3,7 @@ open Omniml_ast
 open Omniml_parser
 module Constraint = Omniml_constraint_solver.Constraint
 module Options = Omniml_options
+module Typed_ast = Omniml_typed_ast.Typed_ast
 
 let pp_structure ppf structure =
   Fmt.pf ppf "@[%a@]" Sexp.pp_hum ([%sexp_of: Ast.structure] structure)
@@ -60,6 +61,6 @@ let type_check_and_print
       >>| fun source ->
       Range.create ~source Byte_index.initial (Byte_index.of_int @@ Source.length source))
   in
-  ignore (Omniml_type_checker.check ~with_poly_params ~defaulting ?range cst);
-  Fmt.pr "Well typed :)@."
+  let signature = Omniml_type_checker.check ~with_poly_params ~defaulting ?range cst in
+  Fmt.pr "%a@." (Typed_ast.pp ~with_poly_params) signature
 ;;

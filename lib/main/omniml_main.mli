@@ -23,7 +23,8 @@ val constraint_gen_and_print
   -> unit
 
 (** [type_check_and_print lexbuf ~dump_ast ~dump_constraint] parses the [lexbuf] as a structure,
-    generates a well-typedness constraint, solves the constraint and prints the result.
+    generates a well-typedness constraint, solves the constraint and prints the inferred
+    signature.
 
     If [dump_ast] is [true], then the parsed structure is printed.
     If [dump_constraint] is [true], then the generated constraint is printed.

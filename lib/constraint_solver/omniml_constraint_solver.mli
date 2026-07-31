@@ -145,7 +145,6 @@ module Decoded_type : sig
 
     val create : ?quantifiers:Var.t list -> type_ -> t
   end
-
 end
 
 module Constraint : sig
@@ -186,6 +185,7 @@ module Constraint : sig
         (depends on the constraint). *)
     | Rigid (** Must not be monomorphic
         escaping rigid variables is an error. *)
+
   val sexp_of_t : 'a t -> Sexp.t
 
   (** The trivially satisfiable constraint. *)
