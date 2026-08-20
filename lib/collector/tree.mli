@@ -1,4 +1,5 @@
-open! Import
+open Core
+open Omniml_std
 
 module Level : sig
   (** The depth of a node in a tree *)
@@ -82,7 +83,8 @@ module With_dirty : sig
 
   (** [mark_dirty t n] marks [n] as dirty.
 
-      If [n] is already dirty, this is a no-op. *)
+      If [n] is currently being drained, marking it again ensures that the
+      drain performs another pass before making [n] clean. *)
   val mark_dirty : 'a t -> 'a Node.t -> unit
 
   (** [drain_dirty n ~before ~f ~after] repeatedly processes dirty nodes reachable from 

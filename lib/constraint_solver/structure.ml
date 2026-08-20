@@ -74,11 +74,7 @@ end
 
 module Shape_var (S : S) = struct
   type 'a t =
-    | Shape_app of
-        { args : 'a
-        ; shape_var : Principal_shape.Var.t
-        }
-    | Shape_args of 'a list
+    | Shape_var of Principal_shape.Var.t
     | Structure of 'a S.t
   [@@deriving sexp_of]
 
@@ -86,28 +82,25 @@ module Shape_var (S : S) = struct
 
   type 'a ctx =
     { super : 'a S.ctx
-    ; decomposition_of_structure : 'a S.t -> 'a list * Principal_shape.t
-    ; shape_var_state : Principal_shape.Var.State.t
+    ; shape_of_structure : 'a S.t -> Principal_shape.t option
+    ; scheduler : Scheduler.t
     }
 
   let iter t ~f =
     match t with
-    | Shape_app { args; shape_var = _ } -> f args
-    | Shape_args ts -> List.iter ts ~f
+    | Shape_var _ -> ()
     | Structure s -> S.iter s ~f
   ;;
 
   let fold t ~f ~init =
     match t with
-    | Shape_app { args; shape_var = _ } -> f args init
-    | Shape_args ts -> List.fold_right ts ~f ~init
+    | Shape_var _shape_var -> init
     | Structure s -> S.fold s ~f ~init
   ;;
 
   let map t ~f =
     match t with
-    | Shape_app { args; shape_var } -> Shape_app { args = f args; shape_var }
-    | Shape_args ts -> Shape_args (List.map ts ~f)
+    | Shape_var shape_var -> Shape_var shape_var
     | Structure s -> Structure (S.map s ~f)
   ;;
 
@@ -119,27 +112,16 @@ module Shape_var (S : S) = struct
 
   let merge ~ctx ~create ~unify ~type1 ~type2 t1 t2 =
     match t1, t2 with
-    | ( Shape_app { args = args1; shape_var = svar1 }
-      , Shape_app { args = args2; shape_var = svar2 } ) ->
-      Principal_shape.Var.(
-        try unify ~state:ctx.shape_var_state svar1 svar2 with
-        | Unify _ -> raise Cannot_merge);
-      unify args1 args2;
+    | Shape_var shape_var1, Shape_var shape_var2 ->
+      (try Principal_shape.Var.unify ~scheduler:ctx.scheduler shape_var1 shape_var2 with
+       | Principal_shape.Var.Unify _ -> raise Cannot_merge);
       t1
-    | (Structure s as t), Shape_app { args; shape_var }
-    | Shape_app { args; shape_var }, (Structure s as t) ->
-      let args', shape = ctx.decomposition_of_structure s in
-      Principal_shape.Var.(
-        try fill_exn ~state:ctx.shape_var_state shape_var shape with
-        | Not_empty -> raise Cannot_merge);
-      unify args (create (Shape_args args'));
+    | (Structure s as t), Shape_var shape_var | Shape_var shape_var, (Structure s as t) ->
+      ctx.shape_of_structure s
+      |> Option.iter ~f:(fun shape ->
+        try Principal_shape.Var.fill_exn ~scheduler:ctx.scheduler shape_var shape with
+        | Principal_shape.Var.Not_empty -> raise Cannot_merge);
       t
-    | Shape_args args1, Shape_args args2 ->
-      (try List.iter2_exn args1 args2 ~f:unify with
-       | _ -> raise Cannot_merge);
-      t1
-    | (Shape_app _ | Structure _), Shape_args _ | Shape_args _, (Shape_app _ | Structure _)
-      -> raise Cannot_merge
     | Structure s1, Structure s2 ->
       Structure
         (S.merge

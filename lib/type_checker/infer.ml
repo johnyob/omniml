@@ -369,10 +369,10 @@ struct
             ff (Omniml_error.disambiguation_mismatched_type ~range:name.range ~type_head)
           | Constr (args, type_ident) -> disambiguate_and_infer args type_ident)
         ~error:(fun _ -> X.ambiguous ~range:name.range)
-        ~else_:(fun () ->
+        ~default:(fun () ->
           let default_type_def = List.hd_exn defs in
           let ret_alphas, ret_constr = X.def_ret_shape default_type_def in
-          Principal_shape.constr ~arity:(List.length ret_alphas) ret_constr)
+          Shape (Principal_shape.constr ~arity:(List.length ret_alphas) ret_constr))
   ;;
 end
 
@@ -627,9 +627,9 @@ module Expression = struct
     exists label_arg (c_type >> c_arg)
   ;;
 
-  let default_mono_poly ~id_source =
+  let default_mono_poly ~id_source : Constraint.default =
     let mono = Type.Var.create ~id_source () in
-    Principal_shape.poly Type.(Scheme.create (var mono))
+    Shape (Principal_shape.poly Type.(Scheme.create (var mono)))
   ;;
 
   let match_inst ~id_source ~range ~poly_type ~mono_type =
@@ -649,7 +649,7 @@ module Expression = struct
           in
           ff (Omniml_error.polytype_mismatched_type ~range ~type_head))
       ~error:(fun _ -> Omniml_error.ambiguous_polytype ~range)
-      ~else_:(fun () -> default_mono_poly ~id_source)
+      ~default:(fun () -> default_mono_poly ~id_source)
   ;;
 
   let match_poly ~id_source ~range cvar ~poly_type =
@@ -668,7 +668,7 @@ module Expression = struct
           in
           ff (Omniml_error.polytype_mismatched_type ~range ~type_head))
       ~error:(fun _ -> Omniml_error.ambiguous_polytype ~range)
-      ~else_:(fun () -> default_mono_poly ~id_source)
+      ~default:(fun () -> default_mono_poly ~id_source)
   ;;
 
   let infer_pat ~env ~with_poly_params pat pat_type =
@@ -924,7 +924,7 @@ module Expression = struct
                     ~range:exp.range
                     ~type_head))
            ~error:(fun _ -> Omniml_error.ambiguous_tuple ~range:exp.range)
-           ~else_:(fun () -> Principal_shape.tuple index)
+           ~default:(fun () -> Shape (Principal_shape.tuple (max 2 index)))
     | Exp_if_then_else (if_exp, then_exp, else_exp) ->
       exists' ~id_source
       @@ fun if_type ->

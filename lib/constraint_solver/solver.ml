@@ -1,6 +1,38 @@
 open! Import
 module G = Generalization
-module State = G.State
+module S = Suspended
+
+module State = struct
+  module Defaulting = struct
+    type t =
+      | Disabled of { mutable errors : Omniml_error.t list }
+      | Unary
+    [@@deriving sexp_of]
+
+    let disabled () = Disabled { errors = [] }
+    let unary = Unary
+  end
+
+  type t =
+    { gstate : G.State.t
+    ; sstate : S.State.t
+    ; scheduler : Scheduler.t
+    ; mutable defaulting : Omniml_options.Defaulting.t
+    ; mutable suspended_match_errors : Omniml_error.t list
+    }
+  [@@deriving sexp_of]
+
+  let create ?(defaulting = Omniml_options.Defaulting.default) () =
+    { gstate = G.State.create ()
+    ; sstate = S.State.create ()
+    ; scheduler = Scheduler.create ()
+    ; defaulting
+    ; suspended_match_errors = []
+    }
+  ;;
+
+  let disable_defaulting t = t.defaulting <- Disabled
+end
 
 module Elaboration = struct
   type 'a t = Decoded_type.Decoder.t -> 'a
@@ -76,25 +108,23 @@ module Env = struct
     | _ -> raise t @@ Unbound_var expr_var
   ;;
 
-  let enter_new_region ~state t =
+  let enter_new_region ~(state : State.t) t =
     { t with
       curr_region =
-        G.new_region ~state t.curr_region ~raise_scope_escape:(fun _type ->
+        G.new_region ~state:state.gstate t.curr_region ~raise_scope_escape:(fun _type ->
           raise t @@ Rigid_variable_escape)
     }
   ;;
 
   let create_scheme t root = G.create_scheme ~curr_region:t.curr_region root
 
-  let of_gclosure
-        (gclosure : G.Suspended_match.closure)
+  let of_sclosure
+        (gclosure : S.Closure.t)
         ~closure:({ type_vars; vars } : Constraint.Closure.t)
         ~range
         ~curr_region
     =
-    let type_vars =
-      List.zip_exn type_vars gclosure.variables |> Type.Var.Map.of_alist_exn
-    in
+    let type_vars = List.zip_exn type_vars gclosure.types |> Type.Var.Map.of_alist_exn in
     let expr_vars =
       List.zip_exn vars gclosure.schemes |> Constraint.Var.Map.of_alist_exn
     in
@@ -102,7 +132,7 @@ module Env = struct
   ;;
 
   let prev_region t =
-    match t.curr_region.parent with
+    match G.Region.parent t.curr_region with
     | None -> t.curr_region
     | Some parent -> parent
   ;;
@@ -113,7 +143,7 @@ let rec gtype_of_type : state:State.t -> env:Env.t -> Type.t -> G.Type.t =
   let self = gtype_of_type ~state ~env in
   let gformer ~(env : Env.t) args shape =
     let curr_region = env.curr_region in
-    G.create_former ~state ~curr_region { args; shape }
+    G.create_former ~state:state.gstate ~curr_region { args; shape }
   in
   match type_ with
   | Var type_var -> Env.find_type_var env type_var
@@ -131,13 +161,18 @@ let unify ~(state : State.t) ~(env : Env.t) gtype1 gtype2 =
   [%log.global.debug
     "Unify" (state : State.t) (env : Env.t) (gtype1 : G.Type.t) (gtype2 : G.Type.t)];
   try
-    G.unify ~state ~curr_region:env.curr_region gtype1 gtype2;
+    G.unify
+      ~state:state.gstate
+      ~scheduler:state.scheduler
+      ~curr_region:env.curr_region
+      gtype1
+      gtype2;
     [%log.global.debug
       "(Unify) Running scheduler"
         (gtype1 : G.Type.t)
         (gtype2 : G.Type.t)
-        (Scheduler.t () : Scheduler.t)];
-    Scheduler.(run (t ()))
+        (state.scheduler : Scheduler.t)];
+    Scheduler.run state.scheduler
   with
   | G.Unify.Unify (gtype1, gtype2) ->
     let decoder = Decoded_type.Decoder.create () in
@@ -152,7 +187,7 @@ let forall ~(state : State.t) ~env ~type_var =
   Env.bind_type_var
     env
     ~var:type_var
-    ~type_:(G.create_rigid_var ~state ~curr_region:env.curr_region ())
+    ~type_:(G.create_rigid_var ~state:state.gstate ~curr_region:env.curr_region ())
 ;;
 
 let forall_many ~state ~env type_vars =
@@ -163,7 +198,7 @@ let exists ~(state : State.t) ~env ~type_var =
   Env.bind_type_var
     env
     ~var:type_var
-    ~type_:(G.create_var ~state ~curr_region:env.curr_region ())
+    ~type_:(G.create_var ~state:state.gstate ~curr_region:env.curr_region ())
 ;;
 
 let match_type
@@ -227,7 +262,13 @@ let rec solve : type a. state:State.t -> env:Env.t -> a Constraint.t -> a Elabor
     let var_gscheme = Env.find_var env var in
     [%log.global.debug
       "Instantiating scheme" (var : Constraint.Var.t) (var_gscheme : G.Scheme.t)];
-    let actual_gtype = G.instantiate ~state ~curr_region:env.curr_region var_gscheme in
+    let actual_gtype =
+      G.instantiate
+        ~state:state.gstate
+        ~scheduler:state.scheduler
+        ~curr_region:env.curr_region
+        var_gscheme
+    in
     [%log.global.debug
       "Scheme instance" (var_gscheme : G.Scheme.t) (actual_gtype : G.Type.t)];
     unify ~state ~env actual_gtype expected_gtype;
@@ -245,17 +286,22 @@ let rec solve : type a. state:State.t -> env:Env.t -> a Constraint.t -> a Elabor
     let env = Env.enter_new_region ~state env in
     let env = forall_many ~state ~env type_vars in
     self ~state ~env in_
-  | Match { matchee; closure; case; else_; error } ->
+  | Match { matchee; closure; case; default; error } ->
     let gmatchee = Env.find_type_var env matchee in
     [%log.global.debug "Matchee type" (gmatchee : G.Type.t)];
-    let gclosure = gclosure_of_closure ~env closure in
-    [%log.global.debug
-      "Closure of suspended match" (gclosure : G.Suspended_match.closure)];
+    let sclosure = sclosure_of_closure ~env closure in
+    let curr_region = env.curr_region in
+    let env_of_sclosure () =
+      let env = Env.of_sclosure sclosure ~closure ~curr_region ~range:env.range in
+      let env = Env.bind_type_var env ~var:matchee ~type_:gmatchee in
+      env
+    in
+    [%log.global.debug "Closure of suspended match" (sclosure : S.Closure.t)];
     (* Register match for the shape *)
-    let case ~curr_region ~shape ~args =
+    let with_ ~shape ~args =
       [%log.global.debug "Entered match handler" (shape : Principal_shape.t)];
       (* Enter region and construct env *)
-      let env = Env.of_gclosure gclosure ~closure ~curr_region ~range:env.range in
+      let env = env_of_sclosure () in
       [%log.global.debug "Handler env" (env : Env.t)];
       [%log.global.debug "Handler state" (state : State.t)];
       (* Solve *)
@@ -268,15 +314,36 @@ let rec solve : type a. state:State.t -> env:Env.t -> a Constraint.t -> a Elabor
       [%log.global.debug "Solved generated constraint" (cst : Constraint.t)];
       [%log.global.debug "Exiting case region"]
     in
-    let else_ () =
-      [%log.global.debug "Entered match default handler"];
-      else_ ()
+    let default () =
+      match state.defaulting with
+      | Disabled ->
+        state.suspended_match_errors <- error () :: state.suspended_match_errors
+      | Unary ->
+        (match default () with
+         | Shape shape ->
+           let args =
+             S.get_or_alloc_shape_args
+               ~gstate:state.gstate
+               ~scheduler:state.scheduler
+               ~curr_region
+               ~shape
+               gmatchee
+           in
+           with_ ~shape ~args
+         | Constraint cst ->
+           let env = env_of_sclosure () in
+           ignore (solve ~state ~env cst : unit Elaboration.t))
     in
     [%log.global.debug "Suspending match..."];
-    G.Suspended_match.match_or_yield
-      ~state
-      ~curr_region:env.curr_region
-      { matchee = gmatchee; closure = gclosure; case; else_; error };
+    S.match_
+      ~state:state.sstate
+      ~gstate:state.gstate
+      ~scheduler:state.scheduler
+      ~curr_region
+      gmatchee
+      ~with_
+      ~closure:sclosure
+      ~default;
     Elaboration.return ()
   | With_range (t, range) -> self ~state ~env:(Env.with_range env ~range) t
 
@@ -315,10 +382,21 @@ and solve_let_binding
   [%log.global.debug "Bindings" (gbindings : (Constraint.Var.t * G.Scheme.t) list)];
   value, gbindings
 
-and gclosure_of_closure ~env closure : G.Suspended_match.closure =
-  let variables = List.map closure.type_vars ~f:(Env.find_type_var env) in
+and sclosure_of_closure ~env closure : S.Closure.t =
+  let types = List.map closure.type_vars ~f:(Env.find_type_var env) in
   let schemes = List.map closure.vars ~f:(Env.find_var env) in
-  { variables; schemes }
+  { types; schemes }
+;;
+
+let default_unary ~(state : State.t) =
+  S.Defaulting.unary ~state:state.sstate ~gstate:state.gstate ~scheduler:state.scheduler
+;;
+
+let default_all ~(state : State.t) =
+  S.Defaulting.cancel_all
+    ~state:state.sstate
+    ~gstate:state.gstate
+    ~scheduler:state.scheduler
 ;;
 
 let solve
@@ -330,48 +408,29 @@ let solve
   =
   fun ?range ?defaulting cst ->
   try
-    Scheduler.(clear (t ()));
     let state = State.create ?defaulting () in
-    let root_region = State.root_region state in
+    let root_region = G.State.root_region state.gstate in
     let env = Env.empty ~curr_region:root_region ~range in
     [%log.global.debug "Initial env and state" (state : State.t) (env : Env.t)];
     let value = solve ~state ~env cst in
     [%log.global.debug "State" (state : State.t)];
     [%log.global.debug "Generalizing root region" (env.curr_region : G.Region.t)];
-    G.Region.mark ~state env.curr_region;
-    let shape_var_errors =
-      G.force_root_generalization_and_return_unsolved_shape_var_errors ~state
-    in
+    (match state.defaulting with
+     | Disabled -> default_all ~state
+     | Unary ->
+       default_unary ~state;
+       State.disable_defaulting state;
+       default_all ~state);
     [%log.global.debug "Generalized root region" (env.curr_region : G.Region.t)];
-    if not Scheduler.(is_empty (t ()))
+    if not (Scheduler.is_empty state.scheduler)
     then raise_bug_s ~here:[%here] [%message "Scheduler not flushed"];
     (* No more regions to generalize *)
-    if not (Tree.With_dirty.is_empty state.region_tree)
+    if not (G.State.is_quiescent state.gstate)
+    then raise_bug_s ~here:[%here] [%message "Region tree is not empty" (state : State.t)];
+    if not (List.is_empty state.suspended_match_errors)
     then
-      raise_bug_s
-        ~here:[%here]
-        [%message
-          "Region tree is not empty"
-            (state.region_tree : G.Type.t G.Pool.t Tree.With_dirty.t)];
-    if not (List.is_empty shape_var_errors)
-    then Error.raise ~range:None @@ Cannot_discharge_match_constraints shape_var_errors;
-    (* If we have no remaining shape var errors, then it must be the case that we have 
-       no alive regions. *)
-    let num_type_partially_generalized_regions = State.num_alive_regions state in
-    let num_shape_partially_generalized_regions =
-      Principal_shape.Var.State.num_partially_generalized_regions state.shape_var_state
-    in
-    if
-      num_shape_partially_generalized_regions > 0
-      || num_type_partially_generalized_regions > 0
-    then
-      raise_bug_s
-        ~here:[%here]
-        [%message
-          "Residual suspended constraints!"
-            (num_shape_partially_generalized_regions : int)
-            (num_type_partially_generalized_regions : int)
-            (state : State.t)];
+      Error.raise ~range:None
+      @@ Cannot_discharge_match_constraints state.suspended_match_errors;
     Ok (Elaboration.run value)
   with
   (* Catch solver exceptions *)
@@ -382,9 +441,5 @@ let solve
     let dtype1 = decoder gtype1 in
     let dtype2 = decoder gtype2 in
     Error (Error.create ~range (Cannot_unify (dtype1, dtype2)))
-  | G.Suspended_match.Cannot_match_on_rigid report
-  | G.Suspended_match.Inconsistent_defaults report ->
-    (* Catch suspended match constraint exceptions *)
-    Error (Error.create ~range (Unsatisfiable report))
   | Error.T err -> Error err
 ;;

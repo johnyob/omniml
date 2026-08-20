@@ -14,7 +14,7 @@ let match_err _ =
   Omniml_error.bug_s ~here:[%here] [%message "Cannot resume due to generic/cycle"]
 ;;
 
-let else_match_err () = assert false
+let default_match_err () = C.(Constraint (ff (match_err ())))
 
 let print_solve_result ?defaulting ?(log_level = `Info) cst =
   Async.Log.Global.set_level log_level;
@@ -37,6 +37,26 @@ let tint_ident = predef_ident "int"
 let tstring_ident = predef_ident "string"
 let tint = T.constr [] tint_ident
 let tstring = T.constr [] tstring_ident
+
+let%expect_test "handler scheduling is not re-entrant" =
+  let module Scheduler = Omniml_constraint_solver.For_testing.Scheduler in
+  let scheduler = Scheduler.create () in
+  let event name = print_endline name in
+  Scheduler.enqueue_handler scheduler (fun () ->
+    event "first: begin";
+    Scheduler.enqueue_handler scheduler (fun () -> event "second");
+    Scheduler.enqueue scheduler (fun () -> event "maintenance");
+    Scheduler.run scheduler;
+    event "first: end");
+  Scheduler.run scheduler;
+  [%expect
+    {|
+    first: begin
+    maintenance
+    first: end
+    second
+    |}]
+;;
 
 let%expect_test "Applicative constraints return values" =
   let open C.Let_syntax in
@@ -92,7 +112,12 @@ let%expect_test "Cannot resume suspended generic" =
   let a1 = T.Var.create ~id_source () in
   let cst =
     exists a1
-    @@ match_ a1 ~closure:[] ~with_:(fun _ -> tt) ~else_:else_match_err ~error:match_err
+    @@ match_
+         a1
+         ~closure:[]
+         ~with_:(fun _ -> tt)
+         ~default:default_match_err
+         ~error:match_err
   in
   print_solve_result cst;
   [%expect
@@ -124,7 +149,7 @@ let%expect_test "Cannot unsuspend undetermined" =
          a1
          ~closure:[ `Type a1 ]
          ~with_:(fun _ -> T.var a1 =~ tint)
-         ~else_:else_match_err
+         ~default:default_match_err
          ~error:match_err
   in
   print_solve_result cst;
@@ -160,7 +185,7 @@ let%expect_test "Can unsuspend determined (pre)" =
              ~with_:(function
                | Constr (_, constr) when T.Ident.(constr = tint_ident) -> tt
                | _ -> ff unsat_err)
-             ~else_:else_match_err
+             ~default:default_match_err
              ~error:match_err)
   in
   print_solve_result cst;
@@ -188,7 +213,7 @@ let%expect_test "Can unsuspend determined (post)" =
           ~with_:(function
             | Constr (_, constr) when T.Ident.(constr = tint_ident) -> tt
             | _ -> ff unsat_err)
-          ~else_:else_match_err
+          ~default:default_match_err
           ~error:match_err
         >> T.(var a1 =~ tint))
   in
@@ -218,16 +243,95 @@ let%expect_test "Cannot unsuspend circular dependencies" =
           a1
           ~closure:[ `Type a2 ]
           ~with_:(fun _ -> T.var a2 =~ tint)
-          ~else_:else_match_err
+          ~default:default_match_err
           ~error:match_err
         >> match_
              a2
              ~closure:[ `Type a1 ]
              ~with_:(fun _ -> T.var a1 =~ tint)
-             ~else_:else_match_err
+             ~default:default_match_err
              ~error:match_err)
   in
   print_solve_result cst;
+  [%expect
+    {|
+    ("Constraint is unsatisfiable"
+     (cst
+      (Exists ((id 0) (name Type.Var))
+       (Exists ((id 1) (name Type.Var))
+        (Conj
+         (Match (matchee ((id 0) (name Type.Var)))
+          (closure ((type_vars (((id 1) (name Type.Var)))) (vars ())))
+          (case <fun>) (else_ <fun>) (error <fun>))
+         (Match (matchee ((id 1) (name Type.Var)))
+          (closure ((type_vars (((id 0) (name Type.Var)))) (vars ())))
+          (case <fun>) (else_ <fun>) (error <fun>))))))
+     (err
+      ((it
+        (Cannot_discharge_match_constraints
+         ((((severity Bug)
+            (message
+             "lib/constraint_solver/test/test_constraint_solver.ml:14:27: \"Cannot resume due to generic/cycle\"")
+            (code (Unknown)) (labels ()) (notes ())))
+          (((severity Bug)
+            (message
+             "lib/constraint_solver/test/test_constraint_solver.ml:14:27: \"Cannot resume due to generic/cycle\"")
+            (code (Unknown)) (labels ()) (notes ()))))))
+       (range ()))))
+    |}]
+;;
+
+let default_int_shape () =
+  C.Shape (Omniml_constraint_solver.Principal_shape.constr ~arity:0 tint_ident)
+;;
+
+let%expect_test "a trivial defaulting dependency does not prevent defaulting" =
+  let open C in
+  let id_source = Identifier.create_source () in
+  let a = T.Var.create ~id_source () in
+  let cst =
+    exists a
+    @@ match_
+         a
+         ~closure:[]
+         ~with_:(fun _ -> tt)
+         ~default:default_int_shape
+         ~error:match_err
+  in
+  print_solve_result ~defaulting:Unary cst;
+  [%expect
+    {|
+    ("Constraint is satisfiable"
+     (cst
+      (Exists ((id 0) (name Type.Var))
+       (Match (matchee ((id 0) (name Type.Var)))
+        (closure ((type_vars ()) (vars ()))) (case <fun>) (else_ <fun>)
+        (error <fun>)))))
+    |}]
+;;
+
+let%expect_test "a non-trivial defaulting cycle prevents defaulting" =
+  let open C in
+  let id_source = Identifier.create_source () in
+  let a = T.Var.create ~id_source () in
+  let b = T.Var.create ~id_source () in
+  let cst =
+    exists a
+    @@ exists b
+    @@ (match_
+          a
+          ~closure:[ `Type b ]
+          ~with_:(fun _ -> tt)
+          ~default:default_int_shape
+          ~error:match_err
+        >> match_
+             b
+             ~closure:[ `Type a ]
+             ~with_:(fun _ -> tt)
+             ~default:default_int_shape
+             ~error:match_err)
+  in
+  print_solve_result ~defaulting:Unary cst;
   [%expect
     {|
     ("Constraint is unsatisfiable"
@@ -269,13 +373,13 @@ let%expect_test "Can unsuspend topological dependencies" =
              a1
              ~closure:[ `Type a2 ]
              ~with_:(fun _ -> T.var a2 =~ tint)
-             ~else_:else_match_err
+             ~default:default_match_err
              ~error:match_err
         >> match_
              a2
              ~closure:[]
              ~with_:(fun _ -> tt)
-             ~else_:else_match_err
+             ~default:default_match_err
              ~error:match_err)
   in
   print_solve_result cst;
@@ -385,7 +489,7 @@ let%expect_test "Partial generic becomes instance" =
                   a1
                   ~closure:[ `Type a3; `Type a2 ]
                   ~with_:(fun _ -> T.(var a3 =~ var a2) >> T.(var a2 =~ tint))
-                  ~else_:else_match_err
+                  ~default:default_match_err
                   ~error:match_err
              @=> [ x1 @: T.var a3 ]))
          ~in_:(inst x1 tint >> T.(var a1 =~ tstring))
@@ -431,7 +535,7 @@ let%expect_test "Partial generic becomes generic" =
                   a1
                   ~closure:[ `Type a2 ]
                   ~with_:(fun _ -> exists a3 @@ T.(var a2 =~ var a3 @-> var a3))
-                  ~else_:else_match_err
+                  ~default:default_match_err
                   ~error:match_err
              @=> [ x1 @: T.var a2 ]))
          ~in_:
@@ -484,7 +588,7 @@ let%expect_test "Propagating changes during partial generalization" =
                    a1
                    ~closure:[ `Type a3 ]
                    ~with_:(fun _ -> tt)
-                   ~else_:else_match_err
+                   ~default:default_match_err
                    ~error:match_err
                  >>
                  (* This match is resolved after [a2] is unified with int.
@@ -494,7 +598,7 @@ let%expect_test "Propagating changes during partial generalization" =
                    a2
                    ~closure:[ `Type a3 ]
                    ~with_:(fun _ -> T.(var a3 =~ tint))
-                   ~else_:else_match_err
+                   ~default:default_match_err
                    ~error:match_err)
              @=> [ x1 @: T.var a3 ]))
          ~in_:
@@ -505,7 +609,7 @@ let%expect_test "Propagating changes during partial generalization" =
                      a4
                      ~closure:[ `Type a1 ]
                      ~with_:(fun _ -> T.(var a1 =~ tint))
-                     ~else_:else_match_err
+                     ~default:default_match_err
                      ~error:match_err))
   in
   print_solve_result cst;
@@ -554,7 +658,7 @@ let%expect_test "loop" =
         | Constr ([ t1; t2 ], constr) when T.Ident.(constr = tapp_ident) ->
           T.(var t1 =~ tapp (var t1) (var t2))
         | _ -> ff unsat_err)
-      ~else_:else_match_err
+      ~default:default_match_err
       ~error:match_err
   in
   let app e1 e2 alpha =
@@ -606,7 +710,7 @@ let%expect_test "Partial ungeneralization (Partial<>Instance)" =
                   a1
                   ~closure:[ `Type a3; `Type a2 ]
                   ~with_:(fun _ -> T.(var a3 =~ var a2))
-                  ~else_:else_match_err
+                  ~default:default_match_err
                   ~error:match_err
              @=> [ x1 @: T.var a3 ]))
          ~in_:(inst x1 tint >> T.(var a2 =~ tstring) >> T.(var a1 =~ tint))
@@ -637,8 +741,8 @@ let%expect_test "Partial ungeneralization (Partial<>Instance)" =
           (Eq (Var ((id 0) (name Type.Var))) (Constr () ((id 0) (name int)))))))))
      (err
       ((it
-        (Cannot_unify (Var ((id 0) (name Decoded_type.Var)))
-         (Constr () ((id 1) (name string)))))
+        (Cannot_unify (Constr () ((id 1) (name string)))
+         (Constr () ((id 0) (name int)))))
        (range ()))))
     |}]
 ;;
@@ -665,7 +769,7 @@ let%expect_test "Partial ungeneralization (Partial<>Partial)" =
                            a1
                            ~closure:[ `Type a4; `Type a3 ]
                            ~with_:(fun _ -> T.(var a4 =~ var a3))
-                           ~else_:else_match_err
+                           ~default:default_match_err
                            ~error:match_err
                       @=> [ x2 @: T.var a4 ]))
                   ~in_:(inst x2 tint >> inst x2 tstring)
@@ -704,8 +808,8 @@ let%expect_test "Partial ungeneralization (Partial<>Partial)" =
          (Eq (Var ((id 0) (name Type.Var))) (Constr () ((id 1) (name string))))))))
      (err
       ((it
-        (Cannot_unify (Var ((id 0) (name Decoded_type.Var)))
-         (Var ((id 1) (name Decoded_type.Var)))))
+        (Cannot_unify (Constr () ((id 0) (name int)))
+         (Constr () ((id 1) (name string)))))
        (range ()))))
     |}]
 ;;
@@ -728,7 +832,7 @@ let%expect_test "Partials propagate to same instance group" =
                   a1
                   ~closure:[ `Type a2; `Type a3 ]
                   ~with_:(fun _ -> T.(var a2 =~ var a3))
-                  ~else_:else_match_err
+                  ~default:default_match_err
                   ~error:match_err
              @=> [ (x1 @: T.(var a3 @-> var a2)) ]))
          ~in_:
@@ -795,13 +899,13 @@ let%expect_test "Detect SCC cycle accross regions" =
                    a2
                    ~closure:[ `Type a3 ]
                    ~with_:(fun _ -> tt)
-                   ~else_:else_match_err
+                   ~default:default_match_err
                    ~error:match_err
                  >> match_
                       a3
                       ~closure:[ `Type a2 ]
                       ~with_:(fun _ -> tt)
-                      ~else_:else_match_err
+                      ~default:default_match_err
                       ~error:match_err
                  >> T.(var a2 =~ var a1))
              @=> [ (x1 @: T.(var a2 @-> var a3)) ]))
@@ -877,13 +981,13 @@ let%expect_test "" =
                    ~closure:[ `Type a2 ]
                    ~with_:(fun _ ->
                      exists_many [ a3; a4 ] @@ T.(var a2 =~ var a3 @-> var a4))
-                   ~else_:else_match_err
+                   ~default:default_match_err
                    ~error:match_err
                  >> match_
                       a5
                       ~closure:[ `Type a2 ]
                       ~with_:(fun _ -> T.(var a2 =~ tint @-> tint))
-                      ~else_:else_match_err
+                      ~default:default_match_err
                       ~error:match_err)
              @=> [ x1 @: T.var a2 ]))
          ~in_:
@@ -945,7 +1049,7 @@ let%expect_test "" =
               a1
               ~closure:[ `Type a1; `Scheme x1 ]
               ~with_:(fun _ -> inst x1 (T.var a1))
-              ~else_:else_match_err
+              ~default:default_match_err
               ~error:match_err
             >> T.(var a1 =~ tint @-> tint))
   in
@@ -992,7 +1096,7 @@ let%expect_test "" =
                     a1
                     ~closure:[ `Scheme x2 ]
                     ~with_:(fun _ -> inst x2 tint)
-                    ~else_:else_match_err
+                    ~default:default_match_err
                     ~error:match_err)
           @=> [ x1 @: T.var a2 ])
          ~in_:T.(var a1 =~ tint)
@@ -1040,7 +1144,7 @@ let%expect_test "" =
                     a1
                     ~closure:[ `Scheme x2 ]
                     ~with_:(fun _ -> inst x2 tint)
-                    ~else_:else_match_err
+                    ~default:default_match_err
                     ~error:match_err)
           @=> [ x1 @: T.var a2 ])
          ~in_:T.(var a1 =~ tint >> inst x1 tstring)

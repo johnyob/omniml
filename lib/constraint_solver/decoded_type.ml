@@ -111,8 +111,7 @@ module Decoder = struct
           let args = List.map args ~f:(decode_constraint_type substitution) in
           decode_shape args (Principal_shape.Sh_poly poly_shape)
       and decode type_ =
-        let structure = G.Type.structure type_ in
-        let id = structure.id in
+        let id = G.Type.id type_ in
         match Hashtbl.find visited_table id with
         | Some (Cyclical var) ->
           (* Node is cyclic, use allocated variable *)
@@ -127,7 +126,7 @@ module Decoder = struct
           (* Mark the node as being visited *)
           Hashtbl.set visited_table ~key:id ~data:Active;
           (* Visit children *)
-          let result = decode_first_order_structure ~id structure.inner in
+          let result = decode_first_order_structure ~id (G.Type.inner type_) in
           (* Safety: Cannot through an exception since the visited table
              must have an entry for this node. *)
           let status = Hashtbl.find_exn visited_table id in
@@ -138,30 +137,14 @@ module Decoder = struct
       and decode_first_order_structure ~id structure =
         match structure with
         | Var -> Var (State.rename_var state id)
-        | Structure s -> decode_rigid_structure ~id s
+        | Structure s -> decode_shape_var_structure ~id s
+      and decode_shape_var_structure ~id structure =
+        match structure with
+        | Shape_var _shape_var -> Var (State.rename_var state id)
+        | Structure rs -> decode_rigid_structure ~id rs
       and decode_rigid_structure ~id structure =
         match structure with
         | Rigid_var -> Var (State.rename_var state id)
-        | Structure s -> decode_suspended_structure ~id s
-      and decode_suspended_structure ~id structure =
-        match structure with
-        | Shape_app { args; shape_var } ->
-          (match G.Type.inner args, Principal_shape.Var.peek_exn shape_var with
-           | Structure (Structure (Shape_args args)), shape ->
-             let args = List.map args ~f:decode in
-             decode_shape args shape
-           | _ -> Var (State.rename_var state id)
-           | exception Principal_shape.Var.Empty -> Var (State.rename_var state id))
-        | Shape_args _ ->
-          (* Kind error, expected type *)
-          Omniml_error.(
-            raise
-            @@ bug_s
-                 ~here:[%here]
-                 [%message
-                   "Kind error when decoding types. Expected type, got args."
-                     (id : Identifier.t)
-                     (structure : G.Type.t G.M.t)])
         | Structure f -> decode_former f
       and decode_former { args; shape } =
         let args = List.map args ~f:decode in

@@ -1,0 +1,6 @@
+(library
+ (name test_generalizer)
+ (libraries core omniml.std omniml.unifier omniml.collector)
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane)))

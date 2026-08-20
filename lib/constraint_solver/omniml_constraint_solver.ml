@@ -11,6 +11,7 @@ module For_testing = struct
   module Types = Types
   module Type = Type
   module Principal_shape = Principal_shape
+  module Scheduler = Scheduler
 
   module Quickcheckable = struct
     [@@@warning "-30"]
