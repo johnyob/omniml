@@ -111,8 +111,7 @@ module Decoder = struct
           let args = List.map args ~f:(decode_constraint_type substitution) in
           decode_shape args (Principal_shape.Sh_poly poly_shape)
       and decode type_ =
-        let structure = G.Type.structure type_ in
-        let id = structure.id in
+        let id = G.Type.id type_ in
         match Hashtbl.find visited_table id with
         | Some (Cyclical var) ->
           (* Node is cyclic, use allocated variable *)
@@ -127,7 +126,7 @@ module Decoder = struct
           (* Mark the node as being visited *)
           Hashtbl.set visited_table ~key:id ~data:Active;
           (* Visit children *)
-          let result = decode_first_order_structure ~id structure.inner in
+          let result = decode_first_order_structure ~id (G.Type.inner type_) in
           (* Safety: Cannot through an exception since the visited table
              must have an entry for this node. *)
           let status = Hashtbl.find_exn visited_table id in
@@ -146,7 +145,7 @@ module Decoder = struct
       and decode_suspended_structure ~id structure =
         match structure with
         | Shape_app { args; shape_var } ->
-          (match G.Type.inner args, Principal_shape.Var.peek_exn shape_var with
+          (match G.Type.inner args, Principal_shape.Var.shape_exn shape_var with
            | Structure (Structure (Shape_args args)), shape ->
              let args = List.map args ~f:decode in
              decode_shape args shape

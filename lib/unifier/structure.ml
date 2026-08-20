@@ -5,18 +5,33 @@ module type Basic = sig
   type 'a t [@@deriving sexp_of]
 end
 
-module type Traverse = sig
+module type Iter = sig
   include Basic
-
-  (** [map t ~f] maps [t] using [f] to map each child. *)
-  val map : 'a t -> f:('a -> 'b) -> 'b t
 
   (** [iter t ~f] traverses [t], executing [f] on each child. *)
   val iter : 'a t -> f:('a -> unit) -> unit
+end
+
+module type Fold = sig
+  include Basic
 
   (** [fold t ~f ~init] performs the computation of [f], traversing
       over [t] with the initial accumulator value of [init]. *)
   val fold : 'a t -> f:('a -> 'b -> 'b) -> init:'b -> 'b
+end
+
+module type Map = sig
+  include Basic
+
+  (** [map t ~f] maps [t] using [f] to map each child. *)
+  val map : 'a t -> f:('a -> 'b) -> 'b t
+end
+
+module type Traverse = sig
+  include Basic
+  include Iter with type 'a t := 'a t
+  include Fold with type 'a t := 'a t
+  include Map with type 'a t := 'a t
 end
 
 module type Merge = sig

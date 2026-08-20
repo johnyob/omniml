@@ -102,7 +102,7 @@ module Env = struct
   ;;
 
   let prev_region t =
-    match t.curr_region.parent with
+    match G.Region.parent t.curr_region with
     | None -> t.curr_region
     | Some parent -> parent
   ;;
@@ -136,8 +136,8 @@ let unify ~(state : State.t) ~(env : Env.t) gtype1 gtype2 =
       "(Unify) Running scheduler"
         (gtype1 : G.Type.t)
         (gtype2 : G.Type.t)
-        (Scheduler.t () : Scheduler.t)];
-    Scheduler.(run (t ()))
+        (state.scheduler : Scheduler.t)];
+    Scheduler.run state.scheduler
   with
   | G.Unify.Unify (gtype1, gtype2) ->
     let decoder = Decoded_type.Decoder.create () in
@@ -330,7 +330,6 @@ let solve
   =
   fun ?range ?defaulting cst ->
   try
-    Scheduler.(clear (t ()));
     let state = State.create ?defaulting () in
     let root_region = State.root_region state in
     let env = Env.empty ~curr_region:root_region ~range in
@@ -338,28 +337,22 @@ let solve
     let value = solve ~state ~env cst in
     [%log.global.debug "State" (state : State.t)];
     [%log.global.debug "Generalizing root region" (env.curr_region : G.Region.t)];
-    G.Region.mark ~state env.curr_region;
     let shape_var_errors =
       G.force_root_generalization_and_return_unsolved_shape_var_errors ~state
     in
     [%log.global.debug "Generalized root region" (env.curr_region : G.Region.t)];
-    if not Scheduler.(is_empty (t ()))
+    if not (Scheduler.is_empty state.scheduler)
     then raise_bug_s ~here:[%here] [%message "Scheduler not flushed"];
     (* No more regions to generalize *)
-    if not (Tree.With_dirty.is_empty state.region_tree)
-    then
-      raise_bug_s
-        ~here:[%here]
-        [%message
-          "Region tree is not empty"
-            (state.region_tree : G.Type.t G.Pool.t Tree.With_dirty.t)];
+    if not (State.is_quiescent state)
+    then raise_bug_s ~here:[%here] [%message "Region tree is not empty" (state : State.t)];
     if not (List.is_empty shape_var_errors)
     then Error.raise ~range:None @@ Cannot_discharge_match_constraints shape_var_errors;
     (* If we have no remaining shape var errors, then it must be the case that we have 
        no alive regions. *)
     let num_type_partially_generalized_regions = State.num_alive_regions state in
     let num_shape_partially_generalized_regions =
-      Principal_shape.Var.State.num_partially_generalized_regions state.shape_var_state
+      Principal_shape.Var.State.num_alive_regions state.shape_var_state
     in
     if
       num_shape_partially_generalized_regions > 0

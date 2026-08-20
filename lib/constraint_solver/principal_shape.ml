@@ -291,12 +291,6 @@ let poly type_scheme =
 ;;
 
 module Var = struct
-  module Region0 = struct
-    (** For the purpose of defaulting, each shape variable belongs to a 'region', 
-        which indicates where the shape variable is existentially bound. *)
-    type 'a t = { mutable shape_vars : 'a list } [@@deriving sexp_of]
-  end
-
   module Handler = struct
     type nonrec t =
       { run : t -> unit
@@ -305,301 +299,204 @@ module Var = struct
       }
     [@@deriving sexp_of]
 
-    let schedule_job job = Scheduler.(enqueue (t ())) job
-    let schedule t shape = schedule_job (fun () -> t.run shape)
-
-    let schedule_all ts shape =
-      let scheduler = Scheduler.t () in
-      List.iter ts ~f:(fun t ->
-        let job = fun () -> t.run shape in
-        Scheduler.enqueue scheduler job)
+    let schedule scheduler t shape =
+      Scheduler.enqueue_handler scheduler (fun () -> t.run shape)
     ;;
 
-    let schedule_default_all ts =
-      [%log.global.debug "Scheduling defaults"];
-      let scheduler = Scheduler.t () in
-      List.iter ts ~f:(fun t ->
-        [%log.global.debug "Scheduling default"];
-        Scheduler.enqueue scheduler t.default)
+    let schedule_all scheduler handlers shape =
+      List.iter handlers ~f:(fun handler -> schedule scheduler handler shape)
     ;;
 
-    let errors ts = List.map ts ~f:(fun t -> t.error ())
+    let errors handlers = List.map handlers ~f:(fun handler -> handler.error ())
   end
 
-  module S = struct
-    type desc =
-      | Empty of Handler.t list
-      | Full of t
-    [@@deriving sexp_of]
-
-    type 'a t =
-      { id : Identifier.t
-      ; region : 'a Region0.t Tree.With_dirty.Node.opaque_t
-      ; guards : Guard_set.t
-      ; desc : desc
+  module Desc = struct
+    type 'node t =
+      { defaulted : bool
+      ; structure : structure
       }
+
+    and structure =
+      | Empty of Handler.t list
+      | Full of Self.t
     [@@deriving sexp_of]
 
-    type 'a ctx = { mark_region : 'a Region0.t Tree.With_dirty.Node.t -> unit }
+    let iter _ ~f:_ = ()
+
+    type 'node ctx = Scheduler.t
 
     exception Cannot_merge
 
-    let merge_desc ~ctx:_ ~create:_ ~unify:_ ~type1:_ ~type2:_ t1 t2 =
-      match t1, t2 with
+    let merge_structure ~scheduler s1 s2 =
+      match s1, s2 with
       | Empty hs1, Empty hs2 -> Empty (hs1 @ hs2)
-      | Full s1, Full s2 -> if equal s1 s2 then Full s1 else raise Cannot_merge
-      | Empty hs, Full s | Full s, Empty hs ->
-        Handler.schedule_all hs s;
-        Full s
+      | Full sh1, Full sh2 -> if equal sh1 sh2 then Full sh1 else raise Cannot_merge
+      | Empty hs, (Full sh as s) | (Full sh as s), Empty hs ->
+        Handler.schedule_all scheduler hs sh;
+        s
     ;;
 
-    let merge ~ctx ~create ~unify ~type1 ~type2 t1 t2 =
-      ctx.mark_region t1.region;
-      ctx.mark_region t2.region;
-      { id = t1.id
-      ; region = Tree.nearest_common_ancestor t1.region t2.region
-      ; guards = Guard_set.union t1.guards t2.guards
-      ; desc = merge_desc ~ctx ~create ~unify ~type1 ~type2 t1.desc t2.desc
+    let merge ~ctx:scheduler ~create:_ ~unify:_ ~type1:_ ~type2:_ t1 t2 =
+      { defaulted = t1.defaulted || t2.defaulted
+      ; structure = merge_structure ~scheduler t1.structure t2.structure
       }
     ;;
 
-    let create ~id_source ~region =
-      { id = Identifier.create id_source
-      ; region
-      ; guards = Guard_set.empty
-      ; desc = Empty []
-      }
+    module Region_metadata = struct
+      type 'node t = unit [@@deriving sexp_of]
+    end
+
+    module Propagation = struct
+      type ctx = unit
+      type 'node target = Nothing.t
+
+      let iter_targets _ ~f:_ = ()
+      let root_derived ~ctx:() ~source:() target ~by:_ = Nothing.unreachable_code target
+      let clear_derived ~ctx:() ~source:() target ~by:_ = Nothing.unreachable_code target
+    end
+  end
+
+  module G = Omniml_collector.Make (Desc)
+
+  type t = G.Node.t [@@deriving sexp_of]
+
+  module State = struct
+    include G.State
+
+    let create ~id_source = create ~id_source ~root:()
+
+    let shape_vars t =
+      t
+      |> alive_regions
+      |> List.concat_map ~f:(fun region ->
+        List.filter (G.Region.nodes region) ~f:G.Node.is_representative)
     ;;
   end
 
-  module U = Unifier.Make (S)
-  include U.Term
-  include U.Make_unify (S)
+  module Region = struct
+    include G.Region
 
-  let region t = (structure t).region
-  let desc t = (structure t).desc
+    let create ~state ~parent = create ~state ~parent ()
+    let root ~state = State.root_region state
+  end
 
-  let set_desc t desc =
-    let structure = structure t in
-    set_structure t { structure with desc }
+  let desc = G.Node.structure
+
+  let set_desc =
+    (* Safety: None of the data in [desc] affects generalizability. *)
+    G.Node.Unsafe.set_structure
   ;;
 
-  let id t = (structure t).id
+  let id = G.Node.id
 
   let is_empty t =
-    match desc t with
+    match (desc t).structure with
     | Empty _ -> true
     | Full _ -> false
   ;;
 
-  let add_handler t handler =
-    match desc t with
-    | Full s -> Handler.schedule handler s
-    | Empty handlers -> set_desc t (Empty (handler :: handlers))
-  ;;
+  let defaulted t = (desc t).defaulted
 
   exception Empty
 
-  let peek_exn t =
-    match desc t with
+  let shape_exn t =
+    match (desc t).structure with
     | Empty _ -> raise Empty
-    | Full s -> s
+    | Full shape -> shape
   ;;
 
-  let errors t =
-    match desc t with
-    | Full _ -> []
-    | Empty hs -> Handler.errors hs
-  ;;
-
-  module Region = struct
-    type nonrec t = t Region0.t [@@deriving sexp_of]
-
-    let create () : t = { shape_vars = [] }
-    let register_shape_var (t : t) shape_var = t.shape_vars <- shape_var :: t.shape_vars
-
-    module Tree = struct
-      type node = t Tree.With_dirty.Node.t [@@deriving sexp_of]
-      type nonrec t = t Tree.With_dirty.t [@@deriving sexp_of]
-
-      let region (t : node) = Tree.With_dirty.Node.value t
-    end
-
-    let is_empty (t : Tree.node) = List.is_empty (Tree.region t).shape_vars
-  end
-
-  module State = struct
-    type t =
-      { region_tree : Region.Tree.t
-      ; partially_generalized : (Identifier.t, Region.Tree.node) Hashtbl.t
-      }
-    [@@deriving sexp_of]
-
-    let create ~id_source =
-      { region_tree = Tree.With_dirty.create ~id_source (Region.create ())
-      ; partially_generalized = Hashtbl.create (module Identifier)
-      }
-    ;;
-
-    let root_region t = Tree.With_dirty.root t.region_tree
-    let is_quiet t = Tree.With_dirty.is_empty t.region_tree
-    let num_partially_generalized_regions t = Hashtbl.length t.partially_generalized
-
-    let remaining t =
-      t.partially_generalized
-      |> Hashtbl.data
-      |> List.concat_map ~f:(fun rn -> (Region.Tree.region rn).shape_vars)
-    ;;
-  end
-
-  let mark_region ~(state : State.t) node =
-    Tree.With_dirty.mark_dirty state.region_tree node
+  let add_handler t ~scheduler handler =
+    let desc = desc t in
+    match desc.structure with
+    | Empty handlers -> set_desc t { desc with structure = Empty (handler :: handlers) }
+    | Full shape -> Handler.schedule scheduler handler shape
   ;;
 
   exception Not_empty
 
-  let fill_exn ~state t shape =
-    match desc t with
-    | Full shape' -> if not (equal shape shape') then raise Not_empty
-    | Empty hs ->
-      mark_region ~state (region t);
-      Handler.schedule_all hs shape;
-      set_desc t (Full shape)
+  let fill_exn t ~scheduler shape =
+    let desc = desc t in
+    match desc.structure with
+    | Full previous -> if not (equal shape previous) then raise Not_empty
+    | Empty handlers ->
+      set_desc t { desc with structure = Full shape };
+      Handler.schedule_all scheduler handlers shape
   ;;
 
-  let register_shape_var ~(state : State.t) node t =
-    mark_region ~state node;
-    Region.register_shape_var (Region.Tree.region node) t
-  ;;
-
-  let unsafe_set_region_if_ancestor ~state t rn =
-    let structure = structure t in
-    let rn' = structure.region in
-    if Tree.compare_node_by_level rn rn' < 0
-    then (
-      mark_region ~state rn';
-      set_structure t { structure with region = rn })
-  ;;
-
-  let unify ~(state : State.t) =
-    unify
-      ~ctx:{ mark_region = (fun rn -> Tree.With_dirty.mark_dirty state.region_tree rn) }
-  ;;
-
-  let create ~id_source ~state ~region =
-    let t = create (S.create ~id_source ~region) in
-    register_shape_var ~state region t;
-    t
-  ;;
-
-  module Guard = Guard_set.Transitive_guard
-
-  let is_unguarded t = Guard_set.is_empty (structure t).guards
-
-  let add_guard ~state t g =
-    let structure = structure t in
-    mark_region ~state structure.region;
-    set_structure
-      t
-      { structure with guards = Guard_set.add_transitive_guard structure.guards g }
-  ;;
-
-  let remove_guard ~state t g =
-    let structure = structure t in
-    mark_region ~state structure.region;
-    set_structure
-      t
-      { structure with guards = Guard_set.remove_transitive_guard structure.guards g }
-  ;;
-
-  let clear_guard ~state t g =
-    let structure = structure t in
-    mark_region ~state structure.region;
-    set_structure
-      t
-      { structure with guards = Guard_set.clear_transitive_guard structure.guards g }
-  ;;
-
-  let collect_and_rehome_a_region ~(state : State.t) (rn : Region.Tree.node) ~collect =
-    let t = Region.Tree.region rn in
-    let shape_vars = t.shape_vars in
-    let shape_vars =
-      List.filter shape_vars ~f:(fun shape_var ->
-        is_representative shape_var
-        && is_empty shape_var
-        &&
-        let rn' = region shape_var in
-        if Identifier.(rn.id <> rn'.id)
-        then (
-          register_shape_var ~state rn' shape_var;
-          false)
-        else true)
+  let create ~(state : State.t) ~(region : Region.t) ?(defaulted = false) ?shape () =
+    let structure =
+      Option.value_map shape ~f:(fun shape -> Full shape) ~default:(Desc.Empty [])
     in
-    let unguarded, guarded = List.partition_tf shape_vars ~f:is_unguarded in
-    t.shape_vars <- guarded;
-    List.iter unguarded ~f:(fun shape_var -> collect shape_var);
-    if List.is_empty guarded
-    then Hashtbl.remove state.partially_generalized rn.id
-    else Hashtbl.set state.partially_generalized ~key:rn.id ~data:rn
+    G.Node.create ~state ~curr_region:region { defaulted; structure }
   ;;
 
-  let default_on_collect shape_var =
-    match desc shape_var with
-    | Full _ -> assert false
-    | Empty hs -> Handler.schedule_default_all hs
+  exception Unify = G.Node.Unify
+
+  let unify ~(state : State.t) ~scheduler t1 t2 =
+    (* NOTE: We give the root region as the current region. This is a dummy value.
+       We know that [create] is never called during unification of shape variables. *)
+    G.Node.unify ~state ~curr_region:(G.State.root_region state) ~ctx:scheduler t1 t2
   ;;
 
-  let error_on_collect () =
-    let errors = ref [] in
-    let on_collect shape_var =
-      match desc shape_var with
-      | Full _ -> assert false
-      | Empty hs -> errors := Handler.errors hs @ !errors
-    in
-    (fun () -> !errors), on_collect
+  let unsafe_lower ~(state : State.t) t ~(into : Region.t) =
+    G.Node.Unsafe.promote ~state t ~into
   ;;
 
-  let collect_rehome_and_default ~(state : State.t) rn =
-    let noop = Fn.id in
-    Tree.With_dirty.drain_dirty
-      state.region_tree
-      rn
-      ~before:noop
-      ~after:noop
-      ~f:(collect_and_rehome_a_region ~state ~collect:default_on_collect)
+  let add_guard ~(state : State.t) t key = G.Node.Rooting.root_derived ~state t ~by:key
+
+  let remove_guard ~(state : State.t) t key =
+    G.Node.Rooting.unroot_derived ~state t ~by:key
   ;;
 
-  let collect_rehome_and_default_roots ~(state : State.t) =
-    let noop = Fn.id in
-    Tree.With_dirty.drain_dirty_roots
-      state.region_tree
-      ~before:noop
-      ~after:noop
-      ~f:(collect_and_rehome_a_region ~state ~collect:default_on_collect)
+  let clear_guard ~(state : State.t) t key = G.Node.Rooting.clear_derived ~state t ~by:key
+
+  type 'a generalize = state:State.t -> on_generalize:(t -> unit) -> 'a
+
+  let default_on_generalize ~state ~scheduler t =
+    let desc = desc t in
+    match desc.structure with
+    | Full _ -> ()
+    | Empty handlers ->
+      (* We don't prevent re-running a default here *)
+      set_desc t { desc with defaulted = true };
+      List.iter handlers ~f:(fun handler ->
+        G.Node.Rooting.root ~state t;
+        Scheduler.enqueue_handler scheduler (fun () ->
+          Exn.protect ~f:handler.default ~finally:(fun () ->
+            G.Node.Rooting.unroot ~state t)))
   ;;
 
-  let collect_rehome_and_error ~(state : State.t) rn =
-    let noop = Fn.id in
-    let errors, collect = error_on_collect () in
-    Tree.With_dirty.drain_dirty
-      state.region_tree
-      rn
-      ~before:noop
-      ~after:noop
-      ~f:(collect_and_rehome_a_region ~state ~collect);
-    errors ()
+  let cancel_on_generalize ~errors t =
+    match (desc t).structure with
+    | Full _ -> ()
+    | Empty handlers -> errors := Handler.errors handlers @ !errors
   ;;
 
-  let collect_rehome_and_error_roots ~(state : State.t) =
-    let noop = Fn.id in
-    let errors, collect = error_on_collect () in
-    Tree.With_dirty.drain_dirty_roots
-      state.region_tree
-      ~before:noop
-      ~after:noop
-      ~f:(collect_and_rehome_a_region ~state ~collect);
-    errors ()
+  let generalize ~state ~on_generalize region =
+    G.collect_region
+      ~state
+      ~ctx:()
+      ~before_mark:ignore
+      ~before_sweep:ignore
+      ~after_sweep:ignore
+      ~promote:ignore
+      ~finalize:on_generalize
+      region
   ;;
+
+  let generalize_all ~state ~on_generalize () =
+    G.collect_all_regions
+      ~state
+      ~ctx:()
+      ~before_mark:ignore
+      ~before_sweep:ignore
+      ~after_sweep:ignore
+      ~promote:ignore
+      ~finalize:on_generalize
+      ()
+  ;;
+
+  let is_generic = G.Node.is_dead
 end
 
 include Comparable.Make (Self)

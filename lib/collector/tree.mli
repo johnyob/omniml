@@ -1,4 +1,5 @@
-open! Import
+open Core
+open Omniml_std
 
 module Level : sig
   (** The depth of a node in a tree *)

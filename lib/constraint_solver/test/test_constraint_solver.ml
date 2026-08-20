@@ -38,6 +38,90 @@ let tstring_ident = predef_ident "string"
 let tint = T.constr [] tint_ident
 let tstring = T.constr [] tstring_ident
 
+let%expect_test "handler scheduling is not re-entrant" =
+  let module Scheduler = Omniml_constraint_solver.For_testing.Scheduler in
+  let scheduler = Scheduler.create () in
+  let event name = print_endline name in
+  Scheduler.enqueue_handler scheduler (fun () ->
+    event "first: begin";
+    Scheduler.enqueue_handler scheduler (fun () -> event "second");
+    Scheduler.enqueue scheduler (fun () -> event "maintenance");
+    Scheduler.run scheduler;
+    event "first: end");
+  Scheduler.run scheduler;
+  [%expect
+    {|
+    first: begin
+    maintenance
+    first: end
+    second
+    |}]
+;;
+
+let%expect_test "shape defaulting decisions survive unification" =
+  let module PS = Omniml_constraint_solver.For_testing.Principal_shape in
+  let module Scheduler = Omniml_constraint_solver.For_testing.Scheduler in
+  let id_source = Identifier.create_source () in
+  let scheduler = Scheduler.create () in
+  let state = PS.Var.State.create ~id_source in
+  let region = PS.Var.Region.root ~state in
+  let defaulted = PS.Var.create ~state ~region ~defaulted:true ~shape:PS.( @-> ) () in
+  let inferred = PS.Var.create ~state ~region () in
+  PS.Var.fill_exn inferred ~scheduler PS.( @-> );
+  PS.Var.unify ~state ~scheduler defaulted inferred;
+  print_s [%sexp (PS.Var.defaulted inferred : bool)];
+  [%expect {| true |}]
+;;
+
+let%test_unit "shape variable structure can initialize fresh instances" =
+  let module PS = Omniml_constraint_solver.For_testing.Principal_shape in
+  let id_source = Identifier.create_source () in
+  let state = PS.Var.State.create ~id_source in
+  let region = PS.Var.Region.root ~state in
+  let shape = PS.Var.create ~state ~region ~shape:PS.( @-> ) () in
+  let default = PS.Var.create ~state ~region ~defaulted:true () in
+  assert (not (PS.Var.is_generic shape));
+  assert (not (PS.Var.is_generic default));
+  assert (PS.equal (PS.Var.shape_exn shape) PS.( @-> ));
+  assert (PS.Var.is_empty default);
+  PS.Var.generalize_all ~state ~on_generalize:ignore ();
+  assert (PS.Var.is_generic shape);
+  assert (PS.Var.is_generic default)
+;;
+
+let%test_unit "shape variables remain live while default handlers are pending" =
+  let module PS = Omniml_constraint_solver.For_testing.Principal_shape in
+  let module Scheduler = Omniml_constraint_solver.For_testing.Scheduler in
+  let id_source = Identifier.create_source () in
+  let scheduler = Scheduler.create () in
+  let state = PS.Var.State.create ~id_source in
+  let region = PS.Var.Region.root ~state in
+  let shape_var = PS.Var.create ~state ~region () in
+  PS.Var.add_handler
+    ~scheduler
+    shape_var
+    { run = ignore
+    ; default = (fun () -> PS.Var.fill_exn shape_var ~scheduler PS.( @-> ))
+    ; error = (fun () -> assert false)
+    };
+  PS.Var.generalize_all
+    ~state
+    ~on_generalize:(PS.Var.default_on_generalize ~state ~scheduler)
+    ();
+  assert (PS.Var.defaulted shape_var);
+  assert (PS.Var.is_empty shape_var);
+  assert (not (PS.Var.is_generic shape_var));
+  assert (PS.Var.State.is_quiescent state);
+  Scheduler.run scheduler;
+  assert (not (PS.Var.is_empty shape_var));
+  assert (not (PS.Var.State.is_quiescent state));
+  PS.Var.generalize_all
+    ~state
+    ~on_generalize:(PS.Var.default_on_generalize ~state ~scheduler)
+    ();
+  assert (PS.Var.State.is_quiescent state)
+;;
+
 let%expect_test "Applicative constraints return values" =
   let open C.Let_syntax in
   let cst =
@@ -637,8 +721,8 @@ let%expect_test "Partial ungeneralization (Partial<>Instance)" =
           (Eq (Var ((id 0) (name Type.Var))) (Constr () ((id 0) (name int)))))))))
      (err
       ((it
-        (Cannot_unify (Var ((id 0) (name Decoded_type.Var)))
-         (Constr () ((id 1) (name string)))))
+        (Cannot_unify (Constr () ((id 1) (name string)))
+         (Constr () ((id 0) (name int)))))
        (range ()))))
     |}]
 ;;
@@ -704,8 +788,8 @@ let%expect_test "Partial ungeneralization (Partial<>Partial)" =
          (Eq (Var ((id 0) (name Type.Var))) (Constr () ((id 1) (name string))))))))
      (err
       ((it
-        (Cannot_unify (Var ((id 0) (name Decoded_type.Var)))
-         (Var ((id 1) (name Decoded_type.Var)))))
+        (Cannot_unify (Constr () ((id 0) (name int)))
+         (Constr () ((id 1) (name string)))))
        (range ()))))
     |}]
 ;;

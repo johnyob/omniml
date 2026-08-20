@@ -88,6 +88,7 @@ module Shape_var (S : S) = struct
     { super : 'a S.ctx
     ; decomposition_of_structure : 'a S.t -> 'a list * Principal_shape.t
     ; shape_var_state : Principal_shape.Var.State.t
+    ; scheduler : Scheduler.t
     }
 
   let iter t ~f =
@@ -122,24 +123,22 @@ module Shape_var (S : S) = struct
     | ( Shape_app { args = args1; shape_var = svar1 }
       , Shape_app { args = args2; shape_var = svar2 } ) ->
       Principal_shape.Var.(
-        try unify ~state:ctx.shape_var_state svar1 svar2 with
+        try unify ~state:ctx.shape_var_state ~scheduler:ctx.scheduler svar1 svar2 with
         | Unify _ -> raise Cannot_merge);
       unify args1 args2;
       t1
-    | (Structure s as t), Shape_app { args; shape_var }
-    | Shape_app { args; shape_var }, (Structure s as t) ->
+    | Structure s, (Shape_app { args; shape_var } as shape_app)
+    | (Shape_app { args; shape_var } as shape_app), Structure s ->
       let args', shape = ctx.decomposition_of_structure s in
       Principal_shape.Var.(
-        try fill_exn ~state:ctx.shape_var_state shape_var shape with
+        try fill_exn ~scheduler:ctx.scheduler shape_var shape with
         | Not_empty -> raise Cannot_merge);
       unify args (create (Shape_args args'));
-      t
+      shape_app
     | Shape_args args1, Shape_args args2 ->
       (try List.iter2_exn args1 args2 ~f:unify with
        | _ -> raise Cannot_merge);
       t1
-    | (Shape_app _ | Structure _), Shape_args _ | Shape_args _, (Shape_app _ | Structure _)
-      -> raise Cannot_merge
     | Structure s1, Structure s2 ->
       Structure
         (S.merge
@@ -150,6 +149,10 @@ module Shape_var (S : S) = struct
            ~type2
            s1
            s2)
+    | (Shape_app _ | Structure _), Shape_args _ | Shape_args _, (Shape_app _ | Structure _)
+      ->
+      (* Kind error *)
+      raise Cannot_merge
   ;;
 end
 

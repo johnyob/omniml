@@ -1,4 +1,5 @@
-open! Import
+open Core
+open Omniml_std
 
 module Level : sig
   type t = private int [@@deriving equal, compare, sexp, hash]
@@ -50,8 +51,6 @@ let create_node ~id_source ~(parent : 'a Node.t) value : 'a Node.t =
 ;;
 
 let rec nearest_common_ancestor (t1 : 'a Node.t) (t2 : 'a Node.t) =
-  [%log.global.debug
-    "nearest common ancestor" (t1.id : Identifier.t) (t2.id : Identifier.t)];
   if Identifier.(t1.id = t2.id)
   then t1
   else if Level.(t1.level < t2.level)
@@ -103,11 +102,9 @@ module With_dirty = struct
 
     let loop_children t ~f =
       let rec loop () =
-        [%log.global.debug "loop_children" (Hashtbl.keys t.children : Identifier.t list)];
         match Hashtbl.choose t.children with
         | None -> ()
-        | Some (id, child) ->
-          [%log.global.debug "loop_children: processing child" (id : Identifier.t)];
+        | Some (_id, child) ->
           f child;
           loop ()
       in
@@ -171,7 +168,6 @@ module With_dirty = struct
            clear it. Otherwise try again. *)
         if Hashtbl.is_empty dirty.children
         then (
-          [%log.global.debug "Node is clean, clearing it :)"];
           let anc_dirty = find_closest_dirty_ancestor t node in
           Dirty.remove_child anc_dirty node;
           node.value.dirty <- None)

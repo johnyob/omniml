@@ -7,6 +7,7 @@ module For_testing : sig
 
   module Type = Type
   module Principal_shape = Principal_shape
+  module Scheduler = Scheduler
 
   module Quickcheckable : sig
     module Type : sig
@@ -293,9 +294,9 @@ module Constraint : sig
         refines [v] to a concrete type, and is given a {!Type.Matchee.t} 
         to describe the shape of said type. 
 
-      - [else_] is used when [v] is *never* determined by the surrounding context. 
-        If [else_ ()] is [sh], then [v] is unified s.t [shape(v) = sh],
-        triggering the associated case of [sh]. 
+      - [else_] is used when [v] is *never* determined by the surrounding context.
+        If [else_ ()] is [sh], then [v] is unified such that [shape(v) = sh],
+        triggering the associated case of [sh].
       
       - [error] is used when we cannot determine that [v] is *never* determined. 
         

@@ -46,104 +46,87 @@ module Var : sig
 
   type shape_var := t
 
+  module State : sig
+    type t [@@deriving sexp_of]
+
+    val create : id_source:Identifier.source -> t
+    val is_quiescent : t -> bool
+    val num_alive_regions : t -> int
+    val shape_vars : t -> shape_var list
+  end
+
   module Region : sig
     (** Shape variables are grouped into regions. Regions are used to 
         decide when it is valid to {e default} remaining empty variables. *)
     type t [@@deriving sexp_of]
 
-    val create : unit -> t
-
-    type region := t
-
-    module Tree : sig
-      type node = region Tree.With_dirty.Node.t [@@deriving sexp_of]
-      type t = region Tree.With_dirty.t [@@deriving sexp_of]
-    end
-
-    val is_empty : Tree.node -> bool
+    val root : state:State.t -> t
+    val create : state:State.t -> parent:t -> t
   end
 
   val id : t -> Identifier.t
 
-  (** [add_handler t h] adds a handler to the shape var that is scheduled 
-      once the variable is filled. If the shape is already filled, then 
-      the handler is scheduled immediately. *)
-  val add_handler : t -> Handler.t -> unit
+  (** [is_empty t] returns true when the cell is empty. *)
+  val is_empty : t -> bool
+
+  (** [defaulted t] returns whether [t] was defaulted. *)
+  val defaulted : t -> bool
 
   exception Empty
 
-  (** [peek_exn t] returns the current content of the cell.
-       
-      @raise Empty when [t] is empty. *)
-  val peek_exn : t -> shape
+  (** [shape_exn t] returns the current contents of the cell.
 
-  (** [errors t] returns the list of errors associated with cancelling 
-      the handlers on [t]. *)
-  val errors : t -> Omniml_error.t list
+      @raises Empty if [t] is empty. *)
+  val shape_exn : t -> shape
 
-  val is_empty : t -> bool
+  (** [add_handler t h] adds a handler to the shape var that is scheduled
+      once the variable is filled.
 
-  exception Unify of t * t
-
-  module State : sig
-    type t [@@deriving sexp_of]
-
-    val create : id_source:Identifier.source -> t
-    val root_region : t -> Region.Tree.node
-    val is_quiet : t -> bool
-    val num_partially_generalized_regions : t -> int
-    val remaining : t -> shape_var list
-  end
+      If the shape is already filled, then the handler is scheduled immediately. *)
+  val add_handler : t -> scheduler:Scheduler.t -> Handler.t -> unit
 
   exception Not_empty
 
-  (** [fill_exn t s] fills [t] with shape [s] if [t] was empty. 
+  (** [fill_exn t s] fills [t] with shape [s] if [t] was empty.
 
       @raise Not_empty when [t] is filled with [s'] and [s <> s']. *)
-  val fill_exn : state:State.t -> t -> shape -> unit
+  val fill_exn : t -> scheduler:Scheduler.t -> shape -> unit
 
-  (** [create ~id_source ~state] returns an empty shape var. *)
+  (** [create ~id_source ~state ?structure ()] returns a fresh shape variable,
+      optionally initialized with [structure]. *)
   val create
-    :  id_source:Identifier.source
-    -> state:State.t
-    -> region:Region.Tree.node
+    :  state:State.t
+    -> region:Region.t
+    -> ?defaulted:bool
+    -> ?shape:shape
+    -> unit
     -> t
 
-  (** [collect_rehome_and_default rn] performs three steps on the region [t] rooted at [rn]: 
+  exception Unify of t * t
 
-      1. {b Collection.} Remove any filled variables. These variables are not interesting 
-         for defaulting.
+  val unify : state:State.t -> scheduler:Scheduler.t -> t -> t -> unit
 
-      1. {b Rehoming.} Rehome any variables in [t] that are no-longer owned by [t] (due to 
-         changes on the variables' regions). Such variables are moved to their native 
-         region. 
+  type 'a generalize = state:State.t -> on_generalize:(t -> unit) -> 'a
 
-      2. {b Defaulting.} After rehoming, attempt to default every {e unguarded} shape variable. 
-    *)
-  val collect_rehome_and_default : state:State.t -> Region.Tree.node -> unit
+  (** [is_generic t] is true when [t] can no longer be updated. *)
+  val is_generic : t -> bool
 
-  val collect_rehome_and_default_roots : state:State.t -> unit
-  val collect_rehome_and_error : state:State.t -> Region.Tree.node -> Omniml_error.t list
-  val collect_rehome_and_error_roots : state:State.t -> Omniml_error.t list
-  val unify : state:State.t -> t -> t -> unit
+  val default_on_generalize : state:State.t -> scheduler:Scheduler.t -> t -> unit
+  val cancel_on_generalize : errors:Omniml_error.t list ref -> t -> unit
+  val generalize : (Region.t -> unit) generalize
+  val generalize_all : (unit -> unit) generalize
 
-  (** [unsafe_set_region_if_ancestor t rn] sets [t]'s region to [rn] 
-      if it is an ancestor of [t]'s region. 
+  (** [unsafe_lower t rn] sets [t]'s region to [rn] if it is an ancestor of [t]'s region.
 
       Safety: The comparison of regions is determined by levels. *)
-  val unsafe_set_region_if_ancestor : state:State.t -> t -> Region.Tree.node -> unit
-
-  (** Guards 
-
-      Shape variables cannot be guarded directly, only transitively. *)
-  module Guard = Guard_set.Transitive_guard
+  val unsafe_lower : state:State.t -> t -> into:Region.t -> unit
 
   (** [add_guard t g] adds [g] to [t]'s guards. *)
-  val add_guard : state:State.t -> t -> Guard.t -> unit
+  val add_guard : state:State.t -> t -> Identifier.t -> unit
 
   (** [remove_guard t g] removes the guard [g] from [t]. *)
-  val remove_guard : state:State.t -> t -> Guard.t -> unit
+  val remove_guard : state:State.t -> t -> Identifier.t -> unit
 
   (** [clear_guard t g] clears the guard [g] from [t]. *)
-  val clear_guard : state:State.t -> t -> Guard.t -> unit
+  val clear_guard : state:State.t -> t -> Identifier.t -> unit
 end
