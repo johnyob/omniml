@@ -1275,11 +1275,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:3:26
+        ┌─ expect_test.ml:3:10
       3 │          (fun y z -> y z) ()
-        │                           ^^ `unit`
-        │                                is not equal to
-        │                              `'a -> 'b`
+        │           ^^^^^^^^^^^^^^ `unit`
+        │                            is not equal to
+        │                          `'a -> 'b`
     |}]
 ;;
 
@@ -2588,11 +2588,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:4:33
+        ┌─ expect_test.ml:4:39
       4 │        let see_pid1 = (fun x -> (@[x], @[x])) pid1 ;;
-        │                                  ^^^^ `'a * 'b -> 'a * 'b`
-        │                                         is not equal to
-        │                                       `'c * 'd -> 'c * 'd`
+        │                                        ^^^^ `'a * 'b -> 'a * 'b`
+        │                                               is not equal to
+        │                                             `'c * 'd -> 'c * 'd`
     |}]
 ;;
 
@@ -5481,14 +5481,14 @@ let%expect_test "" =
   [%expect
     {|
     error[E010]: ambiguous constructor
-        ┌─ expect_test.ml:15:20
-     15 │            unify y (Foo (x))
+        ┌─ expect_test.ml:14:20
+     14 │            unify x (Foo (y));
         │                     ^^^
         = hint: add a type annotation
 
     error[E010]: ambiguous constructor
-        ┌─ expect_test.ml:14:20
-     14 │            unify x (Foo (y));
+        ┌─ expect_test.ml:15:20
+     15 │            unify y (Foo (x))
         │                     ^^^
         = hint: add a type annotation
     |}];
@@ -5496,14 +5496,14 @@ let%expect_test "" =
   [%expect
     {|
     error[E010]: ambiguous constructor
-        ┌─ expect_test.ml:15:20
-     15 │            unify y (Foo (x))
+        ┌─ expect_test.ml:14:20
+     14 │            unify x (Foo (y));
         │                     ^^^
         = hint: add a type annotation
 
     error[E010]: ambiguous constructor
-        ┌─ expect_test.ml:14:20
-     14 │            unify x (Foo (y));
+        ┌─ expect_test.ml:15:20
+     15 │            unify y (Foo (x))
         │                     ^^^
         = hint: add a type annotation
     |}]
@@ -5626,20 +5626,7 @@ let%expect_test "" =
     |}
   in
   type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
-  [%expect
-    {|
-    error[E016]: unknown polytype
-        ┌─ expect_test.ml:2:26
-      2 │        let _ = fun f -> f f;;
-        │                           ^
-        = hint: add a type annotation
-
-    error[E016]: unknown polytype
-        ┌─ expect_test.ml:2:24
-      2 │        let _ = fun f -> f f;;
-        │                         ^^^
-        = hint: add a type annotation
-    |}]
+  [%expect {| |}]
 ;;
 
 let%expect_test "" =
@@ -6031,11 +6018,11 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:34:27
+        ┌─ expect_test.ml:34:32
      34 │        let _ = fun f -> (f 1, f true);;
-        │                            ^ `int`
-        │                                is not equal to
-        │                              `bool`
+        │                                 ^^^^ `bool`
+        │                                        is not equal to
+        │                                      `int`
     |}];
   do_test
     {|

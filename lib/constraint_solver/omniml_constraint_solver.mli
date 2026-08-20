@@ -7,6 +7,7 @@ module For_testing : sig
 
   module Type = Type
   module Principal_shape = Principal_shape
+  module Scheduler = Scheduler
 
   module Quickcheckable : sig
     module Type : sig
@@ -266,25 +267,12 @@ module Constraint : sig
       bound to [x]. The variable [x] must be bound earlier by {!let_}. *)
   val inst : Var.t -> Type.t -> unit t
 
-  module Match_error : sig
-    type t =
-      | Cannot_default
-      (** [Cannot_default] is raised when [match v ...] could not be 
-          defaulted since we could not determine that [v] is *never* 
-          determined. *)
-      | Matchee_is_rigid
-      (** [Matchee_is_rigid] is raised when [match v ...] fails because [v] 
-          is unified with a rigid type variable. *)
-      | Inconsistent_default of
-          { actual : Principal_shape.t
-          ; expected : Principal_shape.t
-          }
-      (** [Inconsistent_default { actual; expected }] occurs when 
-          [match v ... else_:(fun () -> expected)] differs from the 
-          current shape of [v]. This occurs when one default has 
-          previously succeeded (with shape [actual]). *)
-    [@@deriving sexp]
-  end
+  type default =
+    | Shape of Principal_shape.t (** Select a concrete default shape. *)
+    | Constraint of unit t
+    (** Solve a constraint against the guarded matchee without selecting a
+        concrete shape. The constraint may refer to the match's [matchee]
+        variable; every other referenced value must occur in [closure]. *)
 
   (** [match v ...] matches on the "shape" of [v] and has the following 
       interpretation:
@@ -293,10 +281,10 @@ module Constraint : sig
         refines [v] to a concrete type, and is given a {!Type.Matchee.t} 
         to describe the shape of said type. 
 
-      - [else_] is used when [v] is *never* determined by the surrounding context. 
-        If [else_ ()] is [sh], then [v] is unified s.t [shape(v) = sh],
-        triggering the associated case of [sh]. 
-      
+      - [default] is used when [v] is *never* determined by the surrounding context.
+        A [Shape] default selects a shape for [v] and triggers [with_]. 
+        A [Constraint] default instead solves its constraint. 
+
       - [error] is used when we cannot determine that [v] is *never* determined. 
         
      The [closure] parameter specifies which variables are permitted to 
@@ -305,8 +293,8 @@ module Constraint : sig
     :  Type.Var.t
     -> closure:[< `Type of Type.Var.t | `Scheme of Var.t ] list
     -> with_:(Type.Matchee.t -> unit t)
-    -> else_:(unit -> Principal_shape.t)
-    -> error:(Match_error.t -> Omniml_error.t)
+    -> default:(unit -> default)
+    -> error:(unit -> Omniml_error.t)
     -> unit t
 
   (** [with_range c ~range] is equivalent to [c], but attaches the source 

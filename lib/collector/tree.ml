@@ -1,4 +1,5 @@
-open! Import
+open Core
+open Omniml_std
 
 module Level : sig
   type t = private int [@@deriving equal, compare, sexp, hash]
@@ -50,8 +51,6 @@ let create_node ~id_source ~(parent : 'a Node.t) value : 'a Node.t =
 ;;
 
 let rec nearest_common_ancestor (t1 : 'a Node.t) (t2 : 'a Node.t) =
-  [%log.global.debug
-    "nearest common ancestor" (t1.id : Identifier.t) (t2.id : Identifier.t)];
   if Identifier.(t1.id = t2.id)
   then t1
   else if Level.(t1.level < t2.level)
@@ -83,7 +82,11 @@ module With_dirty = struct
       ; mutable dirty : 'a dirty option
       }
 
-    and 'a dirty = { children : (Identifier.t, 'a t) Hashtbl.t }
+    and 'a dirty =
+      { children : (Identifier.t, 'a t) Hashtbl.t
+      ; mutable remarked : bool
+      }
+
     and 'a t = 'a desc Tree_node.t
     and 'a opaque_t = 'a desc Tree_node.opaque_t [@@deriving sexp_of]
 
@@ -92,10 +95,13 @@ module With_dirty = struct
   end
 
   module Dirty = struct
-    type 'a t = 'a Node.dirty = { children : (Identifier.t, 'a Node.t) Hashtbl.t }
+    type 'a t = 'a Node.dirty =
+      { children : (Identifier.t, 'a Node.t) Hashtbl.t
+      ; mutable remarked : bool
+      }
     [@@deriving sexp_of]
 
-    let create () = { children = Hashtbl.create (module Identifier) }
+    let create () = { children = Hashtbl.create (module Identifier); remarked = false }
     let is_empty t = Hashtbl.is_empty t.children
     let add_child t (child : 'a Node.t) = Hashtbl.set t.children ~key:child.id ~data:child
     let filter_inplace t ~f = Hashtbl.filter_inplace t.children ~f
@@ -103,11 +109,12 @@ module With_dirty = struct
 
     let loop_children t ~f =
       let rec loop () =
-        [%log.global.debug "loop_children" (Hashtbl.keys t.children : Identifier.t list)];
-        match Hashtbl.choose t.children with
+        match
+          Hashtbl.to_alist t.children
+          |> List.min_elt ~compare:(Comparable.lift Identifier.compare ~f:fst)
+        with
         | None -> ()
-        | Some (id, child) ->
-          [%log.global.debug "loop_children: processing child" (id : Identifier.t)];
+        | Some (_id, child) ->
           f child;
           loop ()
       in
@@ -143,7 +150,7 @@ module With_dirty = struct
 
   let mark_dirty t (node : 'a Node.t) =
     match node.value.dirty with
-    | Some _ -> ()
+    | Some dirty -> dirty.remarked <- true
     | None ->
       let dirty = Dirty.create () in
       node.value.dirty <- Some dirty;
@@ -165,13 +172,16 @@ module With_dirty = struct
       | None -> ()
       | Some dirty ->
         Dirty.loop_children dirty ~f:loop_node;
+        (* Marks made before this point are reflected by the pass below. Marks
+           made by [f] must cause another pass: sweeping and finalization may
+           mutate the very region which is currently being drained. *)
+        dirty.remarked <- false;
         f node;
         assert (Option.is_some node.value.dirty);
         (* If there is no-more remaining work at [node], 
            clear it. Otherwise try again. *)
-        if Hashtbl.is_empty dirty.children
+        if Hashtbl.is_empty dirty.children && not dirty.remarked
         then (
-          [%log.global.debug "Node is clean, clearing it :)"];
           let anc_dirty = find_closest_dirty_ancestor t node in
           Dirty.remove_child anc_dirty node;
           node.value.dirty <- None)

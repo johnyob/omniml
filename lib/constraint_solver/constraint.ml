@@ -23,8 +23,6 @@ module Closure = struct
   ;;
 end
 
-module Match_error = Generalization.Suspended_match.Error
-
 type flexibility =
   | Flexible
   | Rigid
@@ -52,11 +50,15 @@ type _ t =
       { matchee : Type.Var.t
       ; closure : Closure.t
       ; case : Type.Matchee.t -> unit t
-      ; else_ : unit -> Principal_shape.t
-      ; error : Match_error.t -> Omniml_error.t
+      ; default : unit -> default
+      ; error : unit -> Omniml_error.t
       }
       -> unit t
   | With_range : 'a t * Range.t -> 'a t
+
+and default =
+  | Shape of Principal_shape.t
+  | Constraint of unit t
 
 and 'a let_binding =
   { type_vars : (flexibility * Type.Var.t) list
@@ -81,7 +83,7 @@ let rec sexp_of_t : type a. a t -> Sexp.t =
   | Let (binding, t) -> node "Let" [ sexp_of_let_binding binding; sexp_of_t t ]
   | Instance (var, type_) -> node "Instance" [ Var.sexp_of_t var; Type.sexp_of_t type_ ]
   | Decode type_ -> node "Decode" [ Type.sexp_of_t type_ ]
-  | Match { matchee; closure; case = _; else_ = _; error = _ } ->
+  | Match { matchee; closure; case = _; default = _; error = _ } ->
     node
       "Match"
       [ node "matchee" [ Type.Var.sexp_of_t matchee ]
@@ -139,7 +141,13 @@ let ( =~ ) type1 type2 = Eq (type1, type2)
 let decode type_ = Decode type_
 let exists type_var t = Exists (type_var, t)
 let exists_many vars in_ = List.fold_right vars ~init:in_ ~f:exists
-let forall type_vars t = Forall (type_vars, t)
+
+let forall type_vars t =
+  match type_vars with
+  | [] -> t
+  | type_vars -> Forall (type_vars, t)
+;;
+
 let ( @: ) x type_ = { binding_var = x; binding_type = type_ }
 let mono_binding bindings = { type_vars = []; in_ = tt; bindings }
 let ( @=> ) t1 t2 = t1, t2
@@ -149,8 +157,8 @@ let let_ binding ~in_ = Let (binding, in_)
 let let_unit binding ~in_ = map (let_ binding ~in_) ~f:(fun _ -> ())
 let inst x type_ = Instance (x, type_)
 
-let match_ matchee ~closure ~with_ ~else_ ~error =
-  Match { matchee; closure = Closure.of_list closure; case = with_; else_; error }
+let match_ matchee ~closure ~with_ ~default ~error =
+  Match { matchee; closure = Closure.of_list closure; case = with_; default; error }
 ;;
 
 let with_range t ~range = With_range (t, range)
