@@ -61,7 +61,10 @@ module Type : sig
       @raises Invalid_argument if [length ts] is less than 2. *)
   val tuple : t list -> t
 
-  (** [poly s] embeds a type scheme as a (mono)type. *)
+  (** [scheme s] embeds a type scheme beneath another type. *)
+  val scheme : Scheme.t -> t
+
+  (** [poly s] embeds a type scheme as a first-class polymorphic value. *)
   val poly : Scheme.t -> t
 
   module Matchee : sig
@@ -80,7 +83,8 @@ module Type : sig
       | Constr of Var.t list * Ident.t
       (** [Constr (vs, id)] is the nominal type with argument variables [vs]
           and type constructor id. *)
-      | Poly of Scheme.t (** [Poly scm] is a polymorphic scheme node. *)
+      | Scheme of Scheme.t (** [Scheme scm] is a type-scheme node. *)
+      | Poly of Scheme.t (** [Poly scm] is a first-class polymorphic node. *)
     [@@deriving sexp]
   end
 end
@@ -113,7 +117,10 @@ module Principal_shape : sig
   (** [tuple n] is the principal shape of a tuple with [n] components. *)
   val tuple : int -> t
 
-  (** [poly scm] is the principal shape of a polymorphic type with scheme [scm]. *)
+  (** [scheme scm] is the principal shape of a type scheme [scm]. *)
+  val scheme : Type.Scheme.t -> t
+
+  (** [poly scm] is the principal shape of a first-class polymorphic type [scm]. *)
   val poly : Type.Scheme.t -> t
 end
 
@@ -126,6 +133,7 @@ module Decoded_type : sig
     | Arrow of t * t
     | Tuple of t list
     | Constr of t list * Type.Ident.t
+    | Scheme of scheme
     | Poly of scheme
     | Mu of Var.t * t
 

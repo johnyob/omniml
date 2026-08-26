@@ -82,8 +82,7 @@ let%expect_test "Decode observes the final solution" =
     decoded
   in
   (match Omniml_constraint_solver.solve cst with
-   | Ok decoded ->
-     Fmt.pr "%a@." (Omniml_typed_ast.Typed_ast.Type.pp ~with_poly_params:false) decoded
+   | Ok decoded -> Fmt.pr "%a@." Omniml_typed_ast.Typed_ast.Type.pp decoded
    | Error _ -> print_endline "error");
   [%expect {| int |}]
 ;;
@@ -1191,8 +1190,8 @@ let%expect_test "" =
     exists a1
     @@ T.(
          var a1
-         =~ poly (T.Scheme.create ~quantifiers:[ q2 ] (var q2))
-         >> (var a1 =~ poly (T.Scheme.create ~quantifiers:[ q3 ] (var q3))))
+         =~ scheme (T.Scheme.create ~quantifiers:[ q2 ] (var q2))
+         >> (var a1 =~ scheme (T.Scheme.create ~quantifiers:[ q3 ] (var q3))))
   in
   print_solve_result cst;
   [%expect
@@ -1202,11 +1201,11 @@ let%expect_test "" =
       (Exists ((id 0) (name Type.Var))
        (Conj
         (Eq (Var ((id 0) (name Type.Var)))
-         (Poly
+         (Scheme
           ((quantifiers (((id 1) (name Type.Var))))
            (body (Var ((id 1) (name Type.Var)))))))
         (Eq (Var ((id 0) (name Type.Var)))
-         (Poly
+         (Scheme
           ((quantifiers (((id 2) (name Type.Var))))
            (body (Var ((id 2) (name Type.Var)))))))))))
     |}]
@@ -1224,8 +1223,8 @@ let%expect_test "" =
     exists a1
     @@ T.(
          var a1
-         =~ poly (T.Scheme.create ~quantifiers:[ q2 ] (var q2))
-         >> (var a1 =~ poly (T.Scheme.create ~quantifiers:[ q3; q4 ] (var q3))))
+         =~ scheme (T.Scheme.create ~quantifiers:[ q2 ] (var q2))
+         >> (var a1 =~ scheme (T.Scheme.create ~quantifiers:[ q3; q4 ] (var q3))))
   in
   print_solve_result cst;
   [%expect
@@ -1235,11 +1234,11 @@ let%expect_test "" =
       (Exists ((id 0) (name Type.Var))
        (Conj
         (Eq (Var ((id 0) (name Type.Var)))
-         (Poly
+         (Scheme
           ((quantifiers (((id 1) (name Type.Var))))
            (body (Var ((id 1) (name Type.Var)))))))
         (Eq (Var ((id 0) (name Type.Var)))
-         (Poly
+         (Scheme
           ((quantifiers (((id 2) (name Type.Var)) ((id 3) (name Type.Var))))
            (body (Var ((id 2) (name Type.Var)))))))))))
     |}]
@@ -1256,8 +1255,8 @@ let%expect_test "" =
     exists a1
     @@ T.(
          var a1
-         =~ poly (T.Scheme.create ~quantifiers:[ q1 ] (var q1))
-         >> (var a1 =~ poly (T.Scheme.create ~quantifiers:[ q2 ] (var q2 @-> var q2))))
+         =~ scheme (T.Scheme.create ~quantifiers:[ q1 ] (var q1))
+         >> (var a1 =~ scheme (T.Scheme.create ~quantifiers:[ q2 ] (var q2 @-> var q2))))
   in
   print_solve_result cst;
   [%expect
@@ -1267,21 +1266,21 @@ let%expect_test "" =
       (Exists ((id 0) (name Type.Var))
        (Conj
         (Eq (Var ((id 0) (name Type.Var)))
-         (Poly
+         (Scheme
           ((quantifiers (((id 1) (name Type.Var))))
            (body (Var ((id 1) (name Type.Var)))))))
         (Eq (Var ((id 0) (name Type.Var)))
-         (Poly
+         (Scheme
           ((quantifiers (((id 2) (name Type.Var))))
            (body
             (Arrow (Var ((id 2) (name Type.Var))) (Var ((id 2) (name Type.Var)))))))))))
      (err
       ((it
         (Cannot_unify
-         (Poly
+         (Scheme
           ((quantifiers (((id 0) (name Decoded_type.Var))))
            (body (Var ((id 0) (name Decoded_type.Var))))))
-         (Poly
+         (Scheme
           ((quantifiers (((id 1) (name Decoded_type.Var))))
            (body
             (Arrow (Var ((id 1) (name Decoded_type.Var)))
@@ -1291,7 +1290,7 @@ let%expect_test "" =
 ;;
 
 let%expect_test "" =
-  (* nested polytypes *)
+  (* Nested type schemes. *)
   let open C in
   let id_source = Identifier.create_source () in
   let a1 = T.Var.create ~id_source () in
@@ -1299,17 +1298,19 @@ let%expect_test "" =
   let q2 = T.Var.create ~id_source () in
   let q3 = T.Var.create ~id_source () in
   let q4 = T.Var.create ~id_source () in
-  let poly1 =
+  let scheme1 =
     T.Scheme.create
       ~quantifiers:[ q1 ]
-      T.(tuple [ var q1; poly (T.Scheme.create ~quantifiers:[ q2 ] (var q1 @-> var q2)) ])
+      T.(
+        tuple [ var q1; scheme (T.Scheme.create ~quantifiers:[ q2 ] (var q1 @-> var q2)) ])
   in
-  let poly2 =
+  let scheme2 =
     T.Scheme.create
       ~quantifiers:[ q3 ]
-      T.(tuple [ var q3; poly (T.Scheme.create ~quantifiers:[ q4 ] (var q3 @-> var q4)) ])
+      T.(
+        tuple [ var q3; scheme (T.Scheme.create ~quantifiers:[ q4 ] (var q3 @-> var q4)) ])
   in
-  let cst = exists a1 @@ T.(var a1 =~ poly poly1 >> (var a1 =~ poly poly2)) in
+  let cst = exists a1 @@ T.(var a1 =~ scheme scheme1 >> (var a1 =~ scheme scheme2)) in
   print_solve_result cst;
   [%expect
     {|
@@ -1318,23 +1319,23 @@ let%expect_test "" =
       (Exists ((id 0) (name Type.Var))
        (Conj
         (Eq (Var ((id 0) (name Type.Var)))
-         (Poly
+         (Scheme
           ((quantifiers (((id 1) (name Type.Var))))
            (body
             (Tuple
              ((Var ((id 1) (name Type.Var)))
-              (Poly
+              (Scheme
                ((quantifiers (((id 2) (name Type.Var))))
                 (body
                  (Arrow (Var ((id 1) (name Type.Var)))
                   (Var ((id 2) (name Type.Var)))))))))))))
         (Eq (Var ((id 0) (name Type.Var)))
-         (Poly
+         (Scheme
           ((quantifiers (((id 3) (name Type.Var))))
            (body
             (Tuple
              ((Var ((id 3) (name Type.Var)))
-              (Poly
+              (Scheme
                ((quantifiers (((id 4) (name Type.Var))))
                 (body
                  (Arrow (Var ((id 3) (name Type.Var)))
@@ -1343,7 +1344,7 @@ let%expect_test "" =
 ;;
 
 let%expect_test "" =
-  (* monomorphism in polytypes *)
+  (* Monomorphism in type schemes. *)
   let open C in
   let id_source = Identifier.create_source () in
   let a1 = T.Var.create ~id_source () in
@@ -1353,8 +1354,8 @@ let%expect_test "" =
     exists_many [ a1; a2 ]
     @@ T.(
          var a1
-         =~ poly (T.Scheme.create ~quantifiers:[ q1 ] (tint @-> var q1))
-         >> (var a1 =~ poly (T.Scheme.create ~quantifiers:[ q1 ] (var a2 @-> var q1)))
+         =~ scheme (T.Scheme.create ~quantifiers:[ q1 ] (tint @-> var q1))
+         >> (var a1 =~ scheme (T.Scheme.create ~quantifiers:[ q1 ] (var a2 @-> var q1)))
          >> (var a2 =~ tstring))
   in
   print_solve_result cst;
@@ -1367,13 +1368,13 @@ let%expect_test "" =
         (Conj
          (Conj
           (Eq (Var ((id 0) (name Type.Var)))
-           (Poly
+           (Scheme
             ((quantifiers (((id 2) (name Type.Var))))
              (body
               (Arrow (Constr () ((id 0) (name int)))
                (Var ((id 2) (name Type.Var))))))))
           (Eq (Var ((id 0) (name Type.Var)))
-           (Poly
+           (Scheme
             ((quantifiers (((id 2) (name Type.Var))))
              (body
               (Arrow (Var ((id 1) (name Type.Var)))

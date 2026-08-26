@@ -5629,6 +5629,62 @@ let%expect_test "" =
   [%expect {| |}]
 ;;
 
+let%expect_test "polyparam schemes are distinct from first-class polymorphism" =
+  let str =
+    {|
+      type 'a list = Nil | Cons of 'a * 'a list;;
+      external id : 'a. 'a -> 'a;;
+      external head : 'a. 'a list -> 'a;;
+      external schemes : (forall 'a. 'a -> 'a) list;;
+      external polys : ['a. 'a -> 'a] list;;
+      external use_scheme : (forall 'a. 'a -> 'a) -> int;;
+      external use_poly : ['a. 'a -> 'a] -> int;;
+
+      let poly_id = [id];;
+      let scheme_result = use_scheme (head schemes);;
+      let poly_result = use_poly (head polys);;
+      let explicit_poly_result = use_poly poly_id;;
+    |}
+  in
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
+  [%expect
+    {|
+    type 'a list =
+      | Nil
+      | Cons of 'a * 'a list
+    external id : 'a -> 'a
+    external head : 'b list -> 'b
+    external schemes : (forall 'c. 'c -> 'c) list
+    external polys : [forall 'd. 'd -> 'd] list
+    external use_scheme : (forall 'e. 'e -> 'e) -> int
+    external use_poly : [forall 'f. 'f -> 'f] -> int
+    val poly_id : [forall 'g. 'g -> 'g]
+    val scheme_result : int
+    val poly_result : int
+    val explicit_poly_result : int
+    |}]
+;;
+
+let%expect_test "a scheme is not an implicitly first-class polymorphic value" =
+  let str =
+    {|
+      external id : 'a. 'a -> 'a;;
+      external use_poly : ['a. 'a -> 'a] -> int;;
+      let invalid_poly = use_poly id;;
+    |}
+  in
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:4:35
+      4 │        let invalid_poly = use_poly id;;
+        │                                    ^^ `'a -> 'a`
+        │                                         is not equal to
+        │                                       `[forall 'b. 'b -> 'b]`
+    |}]
+;;
+
 let%expect_test "" =
   (* All examples from https://dl.acm.org/doi/pdf/10.1145/3408971 *)
   let test =
@@ -5649,8 +5705,7 @@ let%expect_test "" =
               external poly : (forall 'a. 'a -> 'a) -> int * bool;;
               external auto : (forall 'a. 'a -> 'a) -> (forall 'a. 'a -> 'a);;
               external auto2 : 'b. (forall 'a. 'a -> 'a) -> 'b -> 'b;;
-              (* I've put ids in a polytype. Not too sure what we should do for this? *)
-              external ids : [ 'a. 'a -> 'a ] list;;
+              external ids : (forall 'a. 'a -> 'a) list;;
               external map : 'a 'b. ('a -> 'b) -> 'a list -> 'b list;;
               external app : 'a 'b. ('a -> 'b) -> 'a -> 'b;;
               external revapp : 'a 'b. 'a -> ('a -> 'b) -> 'b;;
@@ -5690,7 +5745,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -5724,7 +5779,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -5734,7 +5789,7 @@ let%expect_test "" =
     external run_st : (forall 'z. ('z, 'y) st) -> 'y
     external arg_st : ('a1, int) st
     |}];
-  (* A3 : infers ['a. 'a -> 'a] list *)
+  (* A3: infers [(forall 'a. 'a -> 'a) list]. *)
   do_test
     {|
       let _ = choose nil ids;;
@@ -5757,7 +5812,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -5790,7 +5845,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -5823,7 +5878,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -5856,7 +5911,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -5866,21 +5921,40 @@ let%expect_test "" =
     external run_st : (forall 'z. ('z, 'y) st) -> 'y
     external arg_st : ('a1, int) st
     |}];
-  (* A7: fails because id actually has the type 'a. ['a] -> ['a]. *)
+  (* A7 *)
   do_test
     {|
       let _ = choose id auto;;
     |};
   [%expect
     {|
-    error[E011]: mismatched type
-        ┌─ expect_test.ml:34:25
-     34 │        let _ = choose id auto;;
-        │                          ^^^^ `(forall 'a. 'a -> 'a) -> (forall 'b. 'b -> 'b)`
-        │                                 is not equal to
-        │                               `'c -> 'c`
+    type 'a list =
+      | Nil
+      | Cons of 'a * 'a list
+    external head : 'a list -> 'a
+    external tail : 'b list -> 'b list
+    external nil : 'c list
+    external cons : 'd -> 'd list -> 'd list
+    external single : 'e -> 'e list
+    external concat : 'f list -> 'f list -> 'f list
+    external length : 'g list -> int
+    external id : 'h -> 'h
+    external inc : int -> int
+    external choose : 'i -> 'i -> 'i
+    external poly : (forall 'j. 'j -> 'j) -> int * bool
+    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
+    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
+    external ids : (forall 'o. 'o -> 'o) list
+    external map : ('p -> 'q) -> 'p list -> 'q list
+    external app : ('r -> 's) -> 'r -> 's
+    external revapp : 't -> ('t -> 'u) -> 'u
+    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
+    type ('s, 'a) st =
+      | St
+    external run_st : (forall 'z. ('z, 'y) st) -> 'y
+    external arg_st : ('a1, int) st
     |}];
-  (* A8: fails for the same reason. *)
+  (* A8 *)
   do_test
     {|
       let _ = choose id auto2;;
@@ -5888,15 +5962,13 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:34:25
-     34 │        let _ = choose id auto2;;
-        │                          ^^^^^ `(forall 'a. 'a -> 'a) -> 'b -> 'b`
-        │                                  is not equal to
-        │                                `'c -> 'c`
+        ┌─ expect_test.ml:33:22
+     33 │        let _ = choose id auto2;;
+        │                       ^^ `'a -> 'a`
+        │                            is not equal to
+        │                          `(forall 'b. 'b -> 'b) -> 'c -> 'c`
     |}];
-  (* A9: fails because choose id becomes (['b] -> ['b]) -> (['b] -> ['b]). 
-         unifies 'a with ['b] -> ['b]. But ids is ['c. 'c -> 'c] list. 
-         'a cannot be unified with ['c. 'c -> 'c]. *)
+  (* A9 *)
   do_test
     {|
       external f : 'a. ('a -> 'a) -> 'a list -> 'a;;
@@ -5904,12 +5976,32 @@ let%expect_test "" =
     |};
   [%expect
     {|
-    error[E011]: mismatched type
-        ┌─ expect_test.ml:35:29
-     35 │        let _ = f (choose id) ids;;
-        │                              ^^^ `[forall 'a. 'a -> 'a] list`
-        │                                    is not equal to
-        │                                  `('b -> 'b) list`
+    type 'a list =
+      | Nil
+      | Cons of 'a * 'a list
+    external head : 'a list -> 'a
+    external tail : 'b list -> 'b list
+    external nil : 'c list
+    external cons : 'd -> 'd list -> 'd list
+    external single : 'e -> 'e list
+    external concat : 'f list -> 'f list -> 'f list
+    external length : 'g list -> int
+    external id : 'h -> 'h
+    external inc : int -> int
+    external choose : 'i -> 'i -> 'i
+    external poly : (forall 'j. 'j -> 'j) -> int * bool
+    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
+    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
+    external ids : (forall 'o. 'o -> 'o) list
+    external map : ('p -> 'q) -> 'p list -> 'q list
+    external app : ('r -> 's) -> 'r -> 's
+    external revapp : 't -> ('t -> 'u) -> 'u
+    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
+    type ('s, 'a) st =
+      | St
+    external run_st : (forall 'z. ('z, 'y) st) -> 'y
+    external arg_st : ('a1, int) st
+    external f : ('b1 -> 'b1) -> 'b1 list -> 'b1
     |}];
   (* A10 *)
   do_test
@@ -5934,7 +6026,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -5967,7 +6059,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -6000,7 +6092,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -6018,8 +6110,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:34:32
-     34 │        let _ = fun f -> (f 1, f true);;
+        ┌─ expect_test.ml:33:32
+     33 │        let _ = fun f -> (f 1, f true);;
         │                                 ^^^^ `bool`
         │                                        is not equal to
         │                                      `int`
@@ -6046,7 +6138,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -6064,8 +6156,8 @@ let%expect_test "" =
   [%expect
     {|
     error[E012]: generic type variable escapes its scope
-        ┌─ expect_test.ml:34:31
-     34 │        let _ = fun xs -> poly (head xs);;
+        ┌─ expect_test.ml:33:31
+     33 │        let _ = fun xs -> poly (head xs);;
         │                                ^^^^^^^
     |}];
   (* C1 *)
@@ -6091,7 +6183,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -6124,7 +6216,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -6157,7 +6249,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -6190,7 +6282,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -6200,19 +6292,38 @@ let%expect_test "" =
     external run_st : (forall 'z. ('z, 'y) st) -> 'y
     external arg_st : ('a1, int) st
     |}];
-  (* C4: fails because id is instantiated. *)
+  (* C4 *)
   do_test
     {|
       let _ = cons id ids;;
     |};
   [%expect
     {|
-    error[E011]: mismatched type
-        ┌─ expect_test.ml:34:23
-     34 │        let _ = cons id ids;;
-        │                        ^^^ `[forall 'a. 'a -> 'a] list`
-        │                              is not equal to
-        │                            `('b -> 'b) list`
+    type 'a list =
+      | Nil
+      | Cons of 'a * 'a list
+    external head : 'a list -> 'a
+    external tail : 'b list -> 'b list
+    external nil : 'c list
+    external cons : 'd -> 'd list -> 'd list
+    external single : 'e -> 'e list
+    external concat : 'f list -> 'f list -> 'f list
+    external length : 'g list -> int
+    external id : 'h -> 'h
+    external inc : int -> int
+    external choose : 'i -> 'i -> 'i
+    external poly : (forall 'j. 'j -> 'j) -> int * bool
+    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
+    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
+    external ids : (forall 'o. 'o -> 'o) list
+    external map : ('p -> 'q) -> 'p list -> 'q list
+    external app : ('r -> 's) -> 'r -> 's
+    external revapp : 't -> ('t -> 'u) -> 'u
+    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
+    type ('s, 'a) st =
+      | St
+    external run_st : (forall 'z. ('z, 'y) st) -> 'y
+    external arg_st : ('a1, int) st
     |}];
   (* C5 *)
   do_test
@@ -6221,12 +6332,31 @@ let%expect_test "" =
     |};
   [%expect
     {|
-    error[E011]: mismatched type
-        ┌─ expect_test.ml:34:33
-     34 │        let _ = cons (fun x -> x) ids;;
-        │                                  ^^^ `[forall 'a. 'a -> 'a] list`
-        │                                        is not equal to
-        │                                      `('b -> 'c) list`
+    type 'a list =
+      | Nil
+      | Cons of 'a * 'a list
+    external head : 'a list -> 'a
+    external tail : 'b list -> 'b list
+    external nil : 'c list
+    external cons : 'd -> 'd list -> 'd list
+    external single : 'e -> 'e list
+    external concat : 'f list -> 'f list -> 'f list
+    external length : 'g list -> int
+    external id : 'h -> 'h
+    external inc : int -> int
+    external choose : 'i -> 'i -> 'i
+    external poly : (forall 'j. 'j -> 'j) -> int * bool
+    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
+    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
+    external ids : (forall 'o. 'o -> 'o) list
+    external map : ('p -> 'q) -> 'p list -> 'q list
+    external app : ('r -> 's) -> 'r -> 's
+    external revapp : 't -> ('t -> 'u) -> 'u
+    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
+    type ('s, 'a) st =
+      | St
+    external run_st : (forall 'z. ('z, 'y) st) -> 'y
+    external arg_st : ('a1, int) st
     |}];
   (* C7 *)
   do_test
@@ -6251,7 +6381,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -6269,12 +6399,32 @@ let%expect_test "" =
     |};
   [%expect
     {|
-    error[E011]: mismatched type
-        ┌─ expect_test.ml:35:29
-     35 │        let _ = g (single id) ids;;
-        │                              ^^^ `[forall 'a. 'a -> 'a] list`
-        │                                    is not equal to
-        │                                  `('b -> 'b) list`
+    type 'a list =
+      | Nil
+      | Cons of 'a * 'a list
+    external head : 'a list -> 'a
+    external tail : 'b list -> 'b list
+    external nil : 'c list
+    external cons : 'd -> 'd list -> 'd list
+    external single : 'e -> 'e list
+    external concat : 'f list -> 'f list -> 'f list
+    external length : 'g list -> int
+    external id : 'h -> 'h
+    external inc : int -> int
+    external choose : 'i -> 'i -> 'i
+    external poly : (forall 'j. 'j -> 'j) -> int * bool
+    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
+    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
+    external ids : (forall 'o. 'o -> 'o) list
+    external map : ('p -> 'q) -> 'p list -> 'q list
+    external app : ('r -> 's) -> 'r -> 's
+    external revapp : 't -> ('t -> 'u) -> 'u
+    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
+    type ('s, 'a) st =
+      | St
+    external run_st : (forall 'z. ('z, 'y) st) -> 'y
+    external arg_st : ('a1, int) st
+    external g : 'b1 list -> 'b1 list -> 'b1
     |}];
   (* C9 *)
   do_test
@@ -6283,12 +6433,31 @@ let%expect_test "" =
     |};
   [%expect
     {|
-    error[E011]: mismatched type
-        ┌─ expect_test.ml:34:19
-     34 │        let _ = map poly (single id);;
-        │                    ^^^^ `(forall 'a. 'a -> 'a) -> int * bool`
-        │                           is not equal to
-        │                         `'b -> 'c`
+    type 'a list =
+      | Nil
+      | Cons of 'a * 'a list
+    external head : 'a list -> 'a
+    external tail : 'b list -> 'b list
+    external nil : 'c list
+    external cons : 'd -> 'd list -> 'd list
+    external single : 'e -> 'e list
+    external concat : 'f list -> 'f list -> 'f list
+    external length : 'g list -> int
+    external id : 'h -> 'h
+    external inc : int -> int
+    external choose : 'i -> 'i -> 'i
+    external poly : (forall 'j. 'j -> 'j) -> int * bool
+    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
+    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
+    external ids : (forall 'o. 'o -> 'o) list
+    external map : ('p -> 'q) -> 'p list -> 'q list
+    external app : ('r -> 's) -> 'r -> 's
+    external revapp : 't -> ('t -> 'u) -> 'u
+    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
+    type ('s, 'a) st =
+      | St
+    external run_st : (forall 'z. ('z, 'y) st) -> 'y
+    external arg_st : ('a1, int) st
     |}];
   (* C10 *)
   do_test
@@ -6313,7 +6482,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -6346,7 +6515,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -6363,12 +6532,31 @@ let%expect_test "" =
     |};
   [%expect
     {|
-    error[E011]: mismatched type
-        ┌─ expect_test.ml:34:19
-     34 │        let _ = app poly id;;
-        │                    ^^^^ `(forall 'a. 'a -> 'a) -> int * bool`
-        │                           is not equal to
-        │                         `'b -> 'c`
+    type 'a list =
+      | Nil
+      | Cons of 'a * 'a list
+    external head : 'a list -> 'a
+    external tail : 'b list -> 'b list
+    external nil : 'c list
+    external cons : 'd -> 'd list -> 'd list
+    external single : 'e -> 'e list
+    external concat : 'f list -> 'f list -> 'f list
+    external length : 'g list -> int
+    external id : 'h -> 'h
+    external inc : int -> int
+    external choose : 'i -> 'i -> 'i
+    external poly : (forall 'j. 'j -> 'j) -> int * bool
+    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
+    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
+    external ids : (forall 'o. 'o -> 'o) list
+    external map : ('p -> 'q) -> 'p list -> 'q list
+    external app : ('r -> 's) -> 'r -> 's
+    external revapp : 't -> ('t -> 'u) -> 'u
+    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
+    type ('s, 'a) st =
+      | St
+    external run_st : (forall 'z. ('z, 'y) st) -> 'y
+    external arg_st : ('a1, int) st
     |}];
   (* D2 *)
   do_test
@@ -6377,12 +6565,31 @@ let%expect_test "" =
     |};
   [%expect
     {|
-    error[E011]: mismatched type
-        ┌─ expect_test.ml:34:25
-     34 │        let _ = revapp id poly;;
-        │                          ^^^^ `(forall 'a. 'a -> 'a) -> int * bool`
-        │                                 is not equal to
-        │                               `('b -> 'b) -> 'c`
+    type 'a list =
+      | Nil
+      | Cons of 'a * 'a list
+    external head : 'a list -> 'a
+    external tail : 'b list -> 'b list
+    external nil : 'c list
+    external cons : 'd -> 'd list -> 'd list
+    external single : 'e -> 'e list
+    external concat : 'f list -> 'f list -> 'f list
+    external length : 'g list -> int
+    external id : 'h -> 'h
+    external inc : int -> int
+    external choose : 'i -> 'i -> 'i
+    external poly : (forall 'j. 'j -> 'j) -> int * bool
+    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
+    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
+    external ids : (forall 'o. 'o -> 'o) list
+    external map : ('p -> 'q) -> 'p list -> 'q list
+    external app : ('r -> 's) -> 'r -> 's
+    external revapp : 't -> ('t -> 'u) -> 'u
+    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
+    type ('s, 'a) st =
+      | St
+    external run_st : (forall 'z. ('z, 'y) st) -> 'y
+    external arg_st : ('a1, int) st
     |}];
   (* D3 *)
   do_test
@@ -6407,7 +6614,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u
@@ -6424,12 +6631,31 @@ let%expect_test "" =
     |};
   [%expect
     {|
-    error[E011]: mismatched type
-        ┌─ expect_test.ml:34:19
-     34 │        let _ = app run_st arg_st;;
-        │                    ^^^^^^ `(forall 'b. ('b, 'a) st) -> 'a`
-        │                             is not equal to
-        │                           `'c -> 'd`
+    type 'a list =
+      | Nil
+      | Cons of 'a * 'a list
+    external head : 'a list -> 'a
+    external tail : 'b list -> 'b list
+    external nil : 'c list
+    external cons : 'd -> 'd list -> 'd list
+    external single : 'e -> 'e list
+    external concat : 'f list -> 'f list -> 'f list
+    external length : 'g list -> int
+    external id : 'h -> 'h
+    external inc : int -> int
+    external choose : 'i -> 'i -> 'i
+    external poly : (forall 'j. 'j -> 'j) -> int * bool
+    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
+    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
+    external ids : (forall 'o. 'o -> 'o) list
+    external map : ('p -> 'q) -> 'p list -> 'q list
+    external app : ('r -> 's) -> 'r -> 's
+    external revapp : 't -> ('t -> 'u) -> 'u
+    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
+    type ('s, 'a) st =
+      | St
+    external run_st : (forall 'z. ('z, 'y) st) -> 'y
+    external arg_st : ('a1, int) st
     |}];
   (* D5 *)
   do_test
@@ -6438,45 +6664,86 @@ let%expect_test "" =
     |};
   [%expect
     {|
-    error[E011]: mismatched type
-        ┌─ expect_test.ml:34:29
-     34 │        let _ = revapp arg_st run_st;;
-        │                              ^^^^^^ `(forall 'b. ('b, 'a) st) -> 'a`
-        │                                       is not equal to
-        │                                     `('c, int) st -> 'd`
+    type 'a list =
+      | Nil
+      | Cons of 'a * 'a list
+    external head : 'a list -> 'a
+    external tail : 'b list -> 'b list
+    external nil : 'c list
+    external cons : 'd -> 'd list -> 'd list
+    external single : 'e -> 'e list
+    external concat : 'f list -> 'f list -> 'f list
+    external length : 'g list -> int
+    external id : 'h -> 'h
+    external inc : int -> int
+    external choose : 'i -> 'i -> 'i
+    external poly : (forall 'j. 'j -> 'j) -> int * bool
+    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
+    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
+    external ids : (forall 'o. 'o -> 'o) list
+    external map : ('p -> 'q) -> 'p list -> 'q list
+    external app : ('r -> 's) -> 'r -> 's
+    external revapp : 't -> ('t -> 'u) -> 'u
+    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
+    type ('s, 'a) st =
+      | St
+    external run_st : (forall 'z. ('z, 'y) st) -> 'y
+    external arg_st : ('a1, int) st
     |}];
   (* E1 *)
   do_test
     {|
       external h : int -> (forall 'a. 'a -> 'a);;
       external k : 'a. 'a -> 'a list -> 'a;;
-      external lst : ['a. int -> 'a -> 'a] list;;
+      external lst : (forall 'a. int -> 'a -> 'a) list;;
       let _ = k h lst;;
     |};
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:37:19
-     37 │        let _ = k h lst;;
-        │                    ^^^ `[forall 'a. int -> 'a -> 'a] list`
-        │                          is not equal to
-        │                        `(int -> (forall 'b. 'b -> 'b)) list`
+        ┌─ expect_test.ml:36:17
+     36 │        let _ = k h lst;;
+        │                  ^ `int -> (forall 'a. 'a -> 'a)`
+        │                      is not equal to
+        │                    `int -> 'b -> 'b`
     |}];
   do_test
     {|
       external h : int -> (forall 'a. 'a -> 'a);;
       external k : 'a. 'a -> 'a list -> 'a;;
-      external lst : ['a. int -> 'a -> 'a] list;;
+      external lst : (forall 'a. int -> 'a -> 'a) list;;
       let _ = k (fun x -> h x) lst;;
     |};
   [%expect
     {|
-    error[E011]: mismatched type
-        ┌─ expect_test.ml:37:32
-     37 │        let _ = k (fun x -> h x) lst;;
-        │                                 ^^^ `[forall 'a. int -> 'a -> 'a] list`
-        │                                       is not equal to
-        │                                     `('b -> 'c) list`
+    type 'a list =
+      | Nil
+      | Cons of 'a * 'a list
+    external head : 'a list -> 'a
+    external tail : 'b list -> 'b list
+    external nil : 'c list
+    external cons : 'd -> 'd list -> 'd list
+    external single : 'e -> 'e list
+    external concat : 'f list -> 'f list -> 'f list
+    external length : 'g list -> int
+    external id : 'h -> 'h
+    external inc : int -> int
+    external choose : 'i -> 'i -> 'i
+    external poly : (forall 'j. 'j -> 'j) -> int * bool
+    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
+    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
+    external ids : (forall 'o. 'o -> 'o) list
+    external map : ('p -> 'q) -> 'p list -> 'q list
+    external app : ('r -> 's) -> 'r -> 's
+    external revapp : 't -> ('t -> 'u) -> 'u
+    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
+    type ('s, 'a) st =
+      | St
+    external run_st : (forall 'z. ('z, 'y) st) -> 'y
+    external arg_st : ('a1, int) st
+    external h : int -> (forall 'b1. 'b1 -> 'b1)
+    external k : 'c1 -> 'c1 list -> 'c1
+    external lst : (forall 'd1. int -> 'd1 -> 'd1) list
     |}];
   do_test
     {|
@@ -6501,7 +6768,7 @@ let%expect_test "" =
     external poly : (forall 'j. 'j -> 'j) -> int * bool
     external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
     external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : [forall 'o. 'o -> 'o] list
+    external ids : (forall 'o. 'o -> 'o) list
     external map : ('p -> 'q) -> 'p list -> 'q list
     external app : ('r -> 's) -> 'r -> 's
     external revapp : 't -> ('t -> 'u) -> 'u

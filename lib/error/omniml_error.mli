@@ -76,10 +76,11 @@ val disambiguation_tuple_mismatched_type
 val projection_out_of_bounds : range:Range.t -> arity:int -> index:int -> t
 val ambiguous_label : range:Range.t -> t
 val rigid_variable_escape : range:Range.t -> t
+val scheme_mismatched_type : range:Range.t -> type_head:[ `Tuple | `Arrow | `Constr ] -> t
 
 val polytype_mismatched_type
   :  range:Range.t
-  -> type_head:[ `Tuple | `Arrow | `Constr ]
+  -> type_head:[ `Tuple | `Arrow | `Constr | `Poly ]
   -> t
 
 val ambiguous_tuple : range:Range.t -> t

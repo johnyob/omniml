@@ -358,6 +358,22 @@ let ambiguous_label ~range =
        "ambiguous label"
 ;;
 
+let scheme_mismatched_type ~range ~type_head =
+  let open Diagnostic in
+  let head_name =
+    match type_head with
+    | `Tuple -> "tuple"
+    | `Arrow -> "function type"
+    | `Constr -> "type constructor"
+  in
+  singleton
+  @@ Diagnostic.createf
+       ~labels:[ Label.primaryf ~range "expected a type scheme, found a %s" head_name ]
+       ~code:Code.Type_mismatch
+       Error
+       "mismatched type"
+;;
+
 let polytype_mismatched_type ~range ~type_head =
   let open Diagnostic in
   let head_name =
@@ -365,6 +381,7 @@ let polytype_mismatched_type ~range ~type_head =
     | `Tuple -> "tuple"
     | `Arrow -> "function type"
     | `Constr -> "type constructor"
+    | `Poly -> "polymorphic type"
   in
   singleton
   @@ Diagnostic.createf

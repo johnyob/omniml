@@ -18,8 +18,7 @@ val infer_str
 
     @raises Omniml_error.T if the constraint is unsatisfiable *)
 val check
-  :  with_poly_params:bool
-  -> ?defaulting:Omniml_options.Defaulting.t
+  :  ?defaulting:Omniml_options.Defaulting.t
   -> ?range:Range.t
   -> 'a Constraint.t
   -> 'a

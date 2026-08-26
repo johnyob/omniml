@@ -9,6 +9,7 @@ type t = Self.t =
   | Tuple of t list
   | Constr of t list * Ident.t
   | Shape of t list * Types.Principal_shape.t
+  | Scheme of Self.Scheme.t
   | Poly of Self.Scheme.t
 [@@deriving sexp, equal, compare, hash]
 
@@ -23,6 +24,7 @@ let tuple ts =
 ;;
 
 let shape ts sh = Shape (ts, sh)
+let scheme scm = Scheme scm
 let poly scm = Poly scm
 
 module Scheme = struct
@@ -40,6 +42,7 @@ module Matchee = struct
     | Arrow of Var.t * Var.t
     | Tuple of Var.t list
     | Constr of Var.t list * Ident.t
+    | Scheme of Scheme.t
     | Poly of Scheme.t
   [@@deriving sexp]
 end

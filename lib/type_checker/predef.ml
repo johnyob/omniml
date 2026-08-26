@@ -12,13 +12,8 @@ let bool = Type.(constr [] bool_ident)
 let unit = Type.(constr [] unit_ident)
 
 module Env = struct
-  let arg_type ~with_poly_params type_ =
-    if with_poly_params then Type.poly (Type.Scheme.create type_) else type_
-  ;;
-
-  let ret_type ~with_poly_params type_ =
-    if with_poly_params then Type.poly (Type.Scheme.create type_) else type_
-  ;;
+  let arg_type ~with_poly_params:_ type_ = type_
+  let ret_type ~with_poly_params:_ type_ = type_
 
   let bool_bop ~with_poly_params =
     Type.(

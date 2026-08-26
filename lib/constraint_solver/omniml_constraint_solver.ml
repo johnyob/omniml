@@ -22,10 +22,11 @@ module For_testing = struct
       | Tuple of type_ list
       | Constr of type_ list * Type.Ident.t
       | Shape of type_ list * principal_shape
+      | Scheme of type_scheme
       | Poly of type_scheme
     [@@deriving quickcheck]
 
-    and poly_principal_shape = Principal_shape.Poly.t =
+    and scheme_principal_shape = Principal_shape.Scheme.t =
       { quantifiers : Type.Var.t list
       ; scheme : type_scheme
       }
@@ -41,7 +42,8 @@ module For_testing = struct
       | Sh_arrow [@quickcheck.do_not_generate]
       | Sh_tuple of int
       | Sh_constr of int * Type.Ident.t
-      | Sh_poly of poly_principal_shape [@quickcheck.do_not_generate]
+      | Sh_scheme of scheme_principal_shape [@quickcheck.do_not_generate]
+      | Sh_poly of scheme_principal_shape [@quickcheck.do_not_generate]
     [@@deriving quickcheck]
 
     module Type = struct
@@ -57,7 +59,7 @@ module For_testing = struct
     end
 
     module Principal_shape = struct
-      (* We don't generate poly or arrow shapes due to the invariants that come with them. *)
+      (* We don't generate scheme, poly, or arrow shapes due to their invariants. *)
       let quickcheck_generator = quickcheck_generator_principal_shape
       let quickcheck_shrinker = quickcheck_shrinker_principal_shape
       let quickcheck_observer = quickcheck_observer_principal_shape

@@ -23,6 +23,20 @@ let parse_and_print_core_type =
   parse_and_print ~parser:Parser.parse_core_type [%sexp_of: Ast.core_type]
 ;;
 
+let parse_core_type input =
+  let source = Omniml_source.For_testing.expect_test_source input in
+  Parser.parse_core_type ~source (Lexing.from_string input)
+;;
+
+let%test_unit "core_type : schemes and polytypes remain distinct under constructors" =
+  let scheme = parse_core_type "(forall 'a. 'a -> 'a) list" in
+  let poly = parse_core_type "['a. 'a -> 'a] list" in
+  match scheme.it, poly.it with
+  | ( Ast.Type_constr ([ { it = Type_scheme _; _ } ], _)
+    , Ast.Type_constr ([ { it = Type_poly _; _ } ], _) ) -> ()
+  | _ -> failwith "expected a type scheme and a first-class polytype under list"
+;;
+
 let%expect_test "variable : alphas" =
   let exp =
     {|

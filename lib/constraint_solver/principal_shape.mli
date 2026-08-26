@@ -3,8 +3,8 @@ open! Import
 (** Shapes are defined by the constraint language *)
 include module type of Types.Principal_shape
 
-module Poly : sig
-  include module type of Poly
+module Scheme : sig
+  include module type of Scheme
   include Invariant.S with type t := t
 
   val create : ?quantifiers:Type.Var.t list -> Type.Scheme.t -> t
@@ -15,6 +15,7 @@ include Comparable.S with type t := t
 val ( @-> ) : t
 val constr : arity:int -> Type.Ident.t -> t
 val tuple : int -> t
+val scheme : Type.Scheme.t -> t
 val poly : Type.Scheme.t -> t
 
 (** [arity t] is the arity of the shape [t]. *)
@@ -23,9 +24,9 @@ val arity : t -> int
 (** [quantifiers t] returns the quantified shape variables in [t]. *)
 val quantifiers : t -> Type.Var.t list
 
-(** [poly_shape_decomposition_of_scheme scm] returns the canonical 
-    principal decomposition [(ts, poly_sh)] s.t [scm = apply_shape ts poly_sh]. *)
-val poly_shape_decomposition_of_scheme : Type.Scheme.t -> Type.t list * Poly.t
+(** [scheme_shape_decomposition scm] returns the canonical principal decomposition
+    [(ts, scheme_shape)] s.t. [scm = apply_shape ts scheme_shape]. *)
+val scheme_shape_decomposition : Type.Scheme.t -> Type.t list * Scheme.t
 
 module Var : sig
   type shape := t

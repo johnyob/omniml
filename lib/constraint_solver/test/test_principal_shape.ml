@@ -6,6 +6,6 @@ let%quick_test _ =
         (Type.Scheme.t
         [@generator Quickcheckable.Type.Scheme.quickcheck_generator]
         [@shrinker Quickcheckable.Type.Scheme.quickcheck_shrinker])) ->
-  let _, poly_shape = Principal_shape.poly_shape_decomposition_of_scheme type_scheme in
-  Principal_shape.Poly.invariant poly_shape
+  let _, scheme_shape = Principal_shape.scheme_shape_decomposition type_scheme in
+  Principal_shape.Scheme.invariant scheme_shape
 ;;

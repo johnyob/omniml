@@ -11,6 +11,7 @@ type type_expr =
   | Type_arrow of type_expr * type_expr
   | Type_tuple of type_expr list
   | Type_constr of type_expr list * Type_ident.t
+  | Type_scheme of type_scheme_expr
   | Type_poly of type_scheme_expr
 
 and type_scheme_expr =

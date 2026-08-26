@@ -152,9 +152,12 @@ let rec gtype_of_type : state:State.t -> env:Env.t -> Type.t -> G.Type.t =
   | Constr (ts, ident) ->
     gformer ~env (List.map ~f:self ts) (Sh_constr (List.length ts, ident))
   | Shape (ts, shape) -> gformer ~env (List.map ~f:self ts) shape
+  | Scheme scheme ->
+    let ts, scheme_shape = Principal_shape.scheme_shape_decomposition scheme in
+    gformer ~env (List.map ~f:self ts) (Sh_scheme scheme_shape)
   | Poly scheme ->
-    let ts, poly_shape = Principal_shape.poly_shape_decomposition_of_scheme scheme in
-    gformer ~env (List.map ~f:self ts) (Sh_poly poly_shape)
+    let ts, scheme_shape = Principal_shape.scheme_shape_decomposition scheme in
+    gformer ~env (List.map ~f:self ts) (Sh_poly scheme_shape)
 ;;
 
 let unify ~(state : State.t) ~(env : Env.t) gtype1 gtype2 =
@@ -217,7 +220,8 @@ let match_type
      | _ -> assert false)
   | Sh_tuple _n -> env, Tuple shape_quantifiers
   | Sh_constr (_n, ident) -> env, Constr (shape_quantifiers, ident)
-  | Sh_poly poly_shape -> env, Poly poly_shape.scheme
+  | Sh_scheme scheme_shape -> env, Scheme scheme_shape.scheme
+  | Sh_poly scheme_shape -> env, Poly scheme_shape.scheme
 ;;
 
 let rec solve : type a. state:State.t -> env:Env.t -> a Constraint.t -> a Elaboration.t =
