@@ -22,7 +22,8 @@ module rec Type : sig
     | Tuple of t list (** Tuple types [tau1 * ... * taun] *)
     | Constr of t list * Ident.t (** Nominal types [(tau1, ..., taun) T] *)
     | Shape of t list * Principal_shape.t (** Applied shape [(tau1, ..., taun) s] *)
-    | Poly of Type.Scheme.t (** Polytypes [[sigma]] *)
+    | Scheme of Type.Scheme.t (** Type schemes [forall alphas. tau] *)
+    | Poly of Type.Scheme.t (** First-class polymorphic values [[sigma]] *)
   [@@deriving sexp, equal, compare, hash]
 
   module Scheme : sig
@@ -44,7 +45,8 @@ end = struct
     | Tuple of t list (** Tuple types [tau1 * ... * taun] *)
     | Constr of t list * Ident.t (** Nominal types [(tau1, ..., taun) T] *)
     | Shape of t list * Principal_shape.t (** Applied shape [(tau1, ..., taun) s] *)
-    | Poly of Type.Scheme.t (** Polytypes [[sigma]] *)
+    | Scheme of Type.Scheme.t (** Type schemes [forall alphas. tau] *)
+    | Poly of Type.Scheme.t (** First-class polymorphic values [[sigma]] *)
   [@@deriving sexp, equal, compare, hash]
 
   module Scheme = struct
@@ -58,7 +60,7 @@ end = struct
 end
 
 and Principal_shape : sig
-  module Poly : sig
+  module Scheme : sig
     type t =
       { quantifiers : Type.Var.t list
       ; scheme : Type.Scheme.t
@@ -71,10 +73,11 @@ and Principal_shape : sig
     | Sh_tuple of int (** Tuple shape ['c1, ..., 'cn. 'c1 * ... * 'cn] *)
     | Sh_constr of int * Type.Ident.t
     (** Nominal type shape ['c1, ..., 'cn. ('c1, ..., 'cn) T] *)
-    | Sh_poly of Poly.t (** Polytype shape ['c1, ..., 'cn. [sigma]] *)
+    | Sh_scheme of Scheme.t (** Type-scheme shape ['c1, ..., 'cn. sigma] *)
+    | Sh_poly of Scheme.t (** First-class polymorphic shape ['c1, ..., 'cn. [sigma]] *)
   [@@deriving sexp, equal, compare, hash]
 end = struct
-  module Poly = struct
+  module Scheme = struct
     type t =
       { quantifiers : Type.Var.t list
       ; scheme : Type.Scheme.t
@@ -87,6 +90,7 @@ end = struct
     | Sh_tuple of int (** Tuple shape ['c1, ..., 'cn. 'c1 * ... * 'cn] *)
     | Sh_constr of int * Type.Ident.t
     (** Nominal type shape ['c1, ..., 'cn. ('c1, ..., 'cn) T] *)
-    | Sh_poly of Poly.t (** Polytype shape ['c1, ..., 'cn. [sigma]] *)
+    | Sh_scheme of Scheme.t (** Type-scheme shape ['c1, ..., 'cn. sigma] *)
+    | Sh_poly of Scheme.t (** First-class polymorphic shape ['c1, ..., 'cn. [sigma]] *)
   [@@deriving sexp, equal, compare, hash]
 end

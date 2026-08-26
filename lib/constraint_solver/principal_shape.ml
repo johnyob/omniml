@@ -1,11 +1,11 @@
 open! Import
 module Self = Types.Principal_shape
 
-(* TODO: Have optimized type for solver which includes a hash for poly_shapes. 
+(* TODO: Have optimized type for solver which includes a hash for scheme shapes.
          This will provide a cheap equality function for unification. *)
 
-module Poly = struct
-  type t = Self.Poly.t =
+module Scheme = struct
+  type t = Self.Scheme.t =
     { quantifiers : Type.Var.t list
     ; scheme : Type.Scheme.t
     }
@@ -41,10 +41,10 @@ module Poly = struct
           uses.(idx) <- uses.(idx) + 1
         in
         let[@inline] num_uses (var : Type.Var.t) = uses.((var.id :> int)) in
-        let[@inline] is_polyshape (shape : Self.t) =
+        let[@inline] is_scheme_shape (shape : Self.t) =
           match shape with
           | Sh_arrow | Sh_tuple _ | Sh_constr _ -> false
-          | Sh_poly _ -> true
+          | Sh_scheme _ | Sh_poly _ -> true
         in
         (* We rely on non-short-circuting operators (since marking uses is effectful) *)
         let ( ||| ) a b = a || b in
@@ -65,14 +65,14 @@ module Poly = struct
             (* Invariant: ditto. *)
             assert (non_short_circuiting_exists types ~f:loop);
             true
-          | Poly _ ->
-            (* Invariant: no occurrences of [Poly]. *)
+          | Scheme _ | Poly _ ->
+            (* Invariant: no occurrences of embedded schemes. *)
             assert false
           | Shape (types, shape) ->
             (* Invariant: all shapes applications must contain a polymorphic subterm. *)
             assert (non_short_circuiting_exists types ~f:loop);
-            (* Invariant: all shapes must be polyshapes. *)
-            assert (is_polyshape shape);
+            (* Invariant: all shapes must be scheme shapes. *)
+            assert (is_scheme_shape shape);
             true
         in
         (* Invariant: body is skeletal *)
@@ -97,7 +97,8 @@ type t = Self.t =
   | Sh_arrow
   | Sh_tuple of int
   | Sh_constr of int * Type.Ident.t
-  | Sh_poly of Poly.t
+  | Sh_scheme of Scheme.t
+  | Sh_poly of Scheme.t
 [@@deriving sexp, equal, compare, hash]
 
 let ( @-> ) = Sh_arrow
@@ -114,7 +115,7 @@ let arity t =
   match t with
   | Sh_arrow -> 2
   | Sh_tuple n | Sh_constr (n, _) -> n
-  | Sh_poly poly_shape -> List.length poly_shape.quantifiers
+  | Sh_scheme scheme_shape | Sh_poly scheme_shape -> List.length scheme_shape.quantifiers
 ;;
 
 let quantifiers t =
@@ -130,10 +131,10 @@ let quantifiers t =
     (* Invariant: All quantifiers are locally named from 0 to n *)
     let id_source = Identifier.create_source () in
     List.init n ~f:(fun _ -> create_var ~id_source ())
-  | Sh_poly poly_shape -> poly_shape.quantifiers
+  | Sh_scheme scheme_shape | Sh_poly scheme_shape -> scheme_shape.quantifiers
 ;;
 
-module Poly_shape_decomposition = struct
+module Scheme_shape_decomposition = struct
   module State = struct
     type t =
       { id_source : (Identifier.source[@sexp.opaque])
@@ -214,7 +215,7 @@ module Poly_shape_decomposition = struct
   end
 
   let of_applied_shape (shape : Self.t) types : Type.t =
-    (* All applied shapes are normalized (aside from polytypes) *)
+    (* All applied shapes are normalized aside from scheme-bearing types. *)
     match shape with
     | Sh_tuple _ -> Tuple types
     | Sh_constr (_, constr) -> Constr (types, constr)
@@ -222,7 +223,7 @@ module Poly_shape_decomposition = struct
       (match types with
        | [ type1; type2 ] -> Arrow (type1, type2)
        | _ -> assert false)
-    | Sh_poly _ -> Shape (types, shape)
+    | Sh_scheme _ | Sh_poly _ -> Shape (types, shape)
   ;;
 
   let rec of_scheme_body ~(state : State.t) (type_ : Type.t)
@@ -253,12 +254,16 @@ module Poly_shape_decomposition = struct
     | Shape (ts, shape) ->
       Part.map_principal_parts (List.map ts ~f:self_with_original) ~state ~f:(fun ts ->
         of_applied_shape shape ts)
-    | Poly scm ->
-      let ts, poly_shape = of_scheme scm in
+    | Scheme scm ->
+      let ts, scheme_shape = of_scheme scm in
       Part.map_principal_parts (List.map ts ~f:self_with_original) ~state ~f:(fun ts ->
-        Shape (ts, Sh_poly poly_shape))
+        Shape (ts, Sh_scheme scheme_shape))
+    | Poly scm ->
+      let ts, scheme_shape = of_scheme scm in
+      Part.map_principal_parts (List.map ts ~f:self_with_original) ~state ~f:(fun ts ->
+        Shape (ts, Sh_poly scheme_shape))
 
-  and of_scheme ({ quantifiers; body } : Type.Scheme.t) : Type.t list * Poly.t =
+  and of_scheme ({ quantifiers; body } : Type.Scheme.t) : Type.t list * Scheme.t =
     let state = State.create (Type.Var.Set.of_list quantifiers) in
     let scheme_body =
       let result = of_scheme_body ~state body in
@@ -276,18 +281,23 @@ module Poly_shape_decomposition = struct
     in
     ( types
     , (* Safety should be guaranteed by construction *)
-      (Poly.create_unchecked
+      (Scheme.create_unchecked
          ~quantifiers:shape_quantifiers
          (Type.Scheme.create ~quantifiers:scheme_quantifiers scheme_body)
        [@alert "-unsafe"]) )
   ;;
 end
 
-let poly_shape_decomposition_of_scheme = Poly_shape_decomposition.of_scheme
+let scheme_shape_decomposition = Scheme_shape_decomposition.of_scheme
+
+let scheme type_scheme =
+  let _, scheme_shape = scheme_shape_decomposition type_scheme in
+  Sh_scheme scheme_shape
+;;
 
 let poly type_scheme =
-  let _, poly = poly_shape_decomposition_of_scheme type_scheme in
-  Sh_poly poly
+  let _, scheme_shape = scheme_shape_decomposition type_scheme in
+  Sh_poly scheme_shape
 ;;
 
 module Var = struct

@@ -10,6 +10,7 @@ type t =
   | Arrow of t * t
   | Tuple of t list
   | Constr of t list * Type.Ident.t
+  | Scheme of scheme
   | Poly of scheme
   | Mu of Var.t * t
 
@@ -71,8 +72,11 @@ module Decoder = struct
            | _ -> assert false)
         | Principal_shape.Sh_tuple _ -> Tuple args
         | Principal_shape.Sh_constr (_, constr) -> Constr (args, constr)
-        | Principal_shape.Sh_poly poly_shape -> Poly (decode_poly_shape args poly_shape)
-      and decode_poly_shape args ({ quantifiers; scheme } : Principal_shape.Poly.t) =
+        | Principal_shape.Sh_scheme scheme_shape ->
+          Scheme (decode_scheme_shape args scheme_shape)
+        | Principal_shape.Sh_poly scheme_shape ->
+          Poly (decode_scheme_shape args scheme_shape)
+      and decode_scheme_shape args ({ quantifiers; scheme } : Principal_shape.Scheme.t) =
         decode_scheme (List.zip_exn quantifiers args) scheme
       and decode_scheme substitution ({ quantifiers; body } : Type.Scheme.t) =
         let quantifiers =
@@ -104,12 +108,14 @@ module Decoder = struct
           Constr (List.map types ~f:(decode_constraint_type substitution), constr)
         | Type.Shape (types, shape) ->
           decode_shape (List.map types ~f:(decode_constraint_type substitution)) shape
-        | Type.Poly scheme ->
-          let args, poly_shape =
-            Principal_shape.poly_shape_decomposition_of_scheme scheme
-          in
+        | Type.Scheme scheme ->
+          let args, scheme_shape = Principal_shape.scheme_shape_decomposition scheme in
           let args = List.map args ~f:(decode_constraint_type substitution) in
-          decode_shape args (Principal_shape.Sh_poly poly_shape)
+          decode_shape args (Principal_shape.Sh_scheme scheme_shape)
+        | Type.Poly scheme ->
+          let args, scheme_shape = Principal_shape.scheme_shape_decomposition scheme in
+          let args = List.map args ~f:(decode_constraint_type substitution) in
+          decode_shape args (Principal_shape.Sh_poly scheme_shape)
       and decode type_ =
         let id = G.Type.id type_ in
         match Hashtbl.find visited_table id with

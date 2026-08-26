@@ -44,8 +44,8 @@ module Convert = struct
     match type_.it with
     | Type_var v -> Type_var v.it
     | Type_arrow (param_type, ret_type) ->
-      let type_expr1 = core_param_type_to_type_expr ~env ~with_poly_params param_type
-      and type_expr2 = core_ret_type_to_type_expr ~env ~with_poly_params ret_type in
+      let type_expr1 = core_type_to_type_expr ~env ~with_poly_params param_type
+      and type_expr2 = core_type_to_type_expr ~env ~with_poly_params ret_type in
       Type_arrow (type_expr1, type_expr2)
     | Type_tuple types ->
       let type_exprs = List.map types ~f:self in
@@ -58,8 +58,12 @@ module Convert = struct
         ~constr_name;
       let arg_types = List.map arg_types ~f:self in
       Type_constr (arg_types, type_ident)
+    | Type_scheme scheme ->
+      assert with_poly_params;
+      Adt.Type_scheme (core_scheme_to_type_scheme_expr ~env ~with_poly_params scheme)
     | Type_poly scheme ->
-      Type_poly (core_scheme_to_type_scheme_expr ~env ~with_poly_params scheme)
+      let scheme = core_scheme_to_type_scheme_expr ~env ~with_poly_params scheme in
+      Adt.Type_poly scheme
 
   and core_scheme_to_type_scheme_expr ~env ~with_poly_params (scheme : Ast.core_scheme)
     : Adt.type_scheme_expr
@@ -68,34 +72,6 @@ module Convert = struct
     let scheme_quantifiers = List.map scheme_quantifiers ~f:With_range.it in
     let scheme_body = core_type_to_type_expr ~env ~with_poly_params scheme_body in
     { scheme_quantifiers; scheme_body }
-
-  and core_param_type_to_type_expr ~env ~with_poly_params (type_ : Ast.param_type)
-    : Adt.type_expr
-    =
-    match type_.it with
-    | Param_mono_type mono_type ->
-      let type_expr = core_type_to_type_expr ~env ~with_poly_params mono_type in
-      if with_poly_params
-      then Type_poly { scheme_quantifiers = []; scheme_body = type_expr }
-      else type_expr
-    | Param_poly_type scheme ->
-      assert with_poly_params;
-      let scheme = core_scheme_to_type_scheme_expr ~env ~with_poly_params scheme in
-      Type_poly scheme
-
-  and core_ret_type_to_type_expr ~env ~with_poly_params (type_ : Ast.return_type)
-    : Adt.type_expr
-    =
-    match type_.it with
-    | Return_mono_type mono_type ->
-      let type_expr = core_type_to_type_expr ~env ~with_poly_params mono_type in
-      if with_poly_params
-      then Type_poly { scheme_quantifiers = []; scheme_body = type_expr }
-      else type_expr
-    | Return_poly_type scheme ->
-      assert with_poly_params;
-      let scheme = core_scheme_to_type_scheme_expr ~env ~with_poly_params scheme in
-      Type_poly scheme
   ;;
 
   let rec core_type_to_type ~env ~with_poly_params (type_ : Ast.core_type) : Type.t =
@@ -106,8 +82,8 @@ module Convert = struct
        | Some v -> Type.var v
        | None -> Omniml_error.(raise @@ unbound_type_variable ~range:v.range v.it))
     | Type_arrow (param_type, ret_type) ->
-      let type1 = core_param_type_to_type ~env ~with_poly_params param_type
-      and type2 = core_ret_type_to_type ~env ~with_poly_params ret_type in
+      let type1 = core_type_to_type ~env ~with_poly_params param_type
+      and type2 = core_type_to_type ~env ~with_poly_params ret_type in
       Type.(type1 @-> type2)
     | Type_tuple types ->
       let types = types |> List.map ~f:self in
@@ -120,8 +96,12 @@ module Convert = struct
         ~constr_name;
       let arg_types = arg_types |> List.map ~f:self in
       Type.constr arg_types type_ident
+    | Type_scheme scheme ->
+      assert with_poly_params;
+      Type.scheme (core_scheme_to_type_scheme ~env ~with_poly_params scheme)
     | Type_poly scheme ->
-      Type.poly (core_scheme_to_type_scheme ~env ~with_poly_params scheme)
+      let scheme = core_scheme_to_type_scheme ~env ~with_poly_params scheme in
+      Type.poly scheme
 
   and core_scheme_to_type_scheme ~env ~with_poly_params scheme : Type.Scheme.t =
     let { scheme_quantifiers; scheme_body } = scheme.it in
@@ -132,30 +112,6 @@ module Convert = struct
     in
     let scheme_body = core_type_to_type ~env ~with_poly_params scheme_body in
     Type.Scheme.create ~quantifiers:scheme_quantifiers scheme_body
-
-  and core_param_type_to_type ~env ~with_poly_params (param_type : Ast.param_type)
-    : Type.t
-    =
-    match param_type.it with
-    | Param_mono_type mono_type ->
-      let type_ = core_type_to_type ~env ~with_poly_params mono_type in
-      if with_poly_params
-      then Type.poly (Type.Scheme.create ~quantifiers:[] type_)
-      else type_
-    | Param_poly_type scheme ->
-      let scheme = core_scheme_to_type_scheme ~env ~with_poly_params scheme in
-      Type.poly scheme
-
-  and core_ret_type_to_type ~env ~with_poly_params (ret_type : Ast.return_type) : Type.t =
-    match ret_type.it with
-    | Return_mono_type mono_type ->
-      let type_ = core_type_to_type ~env ~with_poly_params mono_type in
-      if with_poly_params
-      then Type.poly (Type.Scheme.create ~quantifiers:[] type_)
-      else type_
-    | Return_poly_type scheme ->
-      let scheme = core_scheme_to_type_scheme ~env ~with_poly_params scheme in
-      Type.poly scheme
   ;;
 
   let rec type_expr ~env (type_ : Adt.type_expr) : Type.t =
@@ -179,6 +135,7 @@ module Convert = struct
     | Type_constr (arg_type_exprs, constr) ->
       let arg_types = arg_type_exprs |> List.map ~f:(type_expr ~env) in
       Type.constr arg_types constr
+    | Type_scheme scheme -> Type.scheme (type_scheme_expr ~env scheme)
     | Type_poly scheme -> Type.poly (type_scheme_expr ~env scheme)
 
   and type_scheme_expr ~env { scheme_quantifiers; scheme_body } : Type.Scheme.t =
@@ -358,12 +315,12 @@ struct
         ret
         ~closure:(X.arg_closure arg |> List.map ~f:(fun v -> `Type v))
         ~with_:(function
-          | (Arrow (_, _) | Tuple _ | Poly _) as matchee ->
+          | (Arrow (_, _) | Tuple _ | Scheme _ | Poly _) as matchee ->
             let type_head =
               match matchee with
               | Arrow (_, _) -> `Arrow
               | Tuple _ -> `Tuple
-              | Poly _ -> `Poly
+              | Scheme _ | Poly _ -> `Poly
               | _ -> assert false
             in
             ff (Omniml_error.disambiguation_mismatched_type ~range:name.range ~type_head)
@@ -627,48 +584,105 @@ module Expression = struct
     exists label_arg (c_type >> c_arg)
   ;;
 
-  let default_mono_poly ~id_source : Constraint.default =
-    let mono = Type.Var.create ~id_source () in
-    Shape (Principal_shape.poly Type.(Scheme.create (var mono)))
+  let type_of_matchee : Type.Matchee.t -> Type.t =
+    let open Type in
+    function
+    | Arrow (var1, var2) -> var var1 @-> var var2
+    | Constr (args, ident) -> constr (List.map args ~f:var) ident
+    | Tuple comps -> tuple (List.map comps ~f:var)
+    | Scheme scm -> scheme scm
+    | Poly scm -> poly scm
   ;;
 
-  let match_inst ~id_source ~range ~poly_type ~mono_type =
+  let match_scheme_type ~with_poly_params ~id_source ~range scheme_type ~closure ~with_ =
+    match_
+      scheme_type
+      ~closure
+      ~with_:(function
+        | Scheme { quantifiers; body } -> with_ quantifiers body
+        | Poly scheme ->
+          if with_poly_params then with_ [] (Type.poly scheme) else assert false
+        | (Arrow _ | Constr _ | Tuple _) as matchee ->
+          if with_poly_params
+          then with_ [] (type_of_matchee matchee)
+          else (
+            let type_head =
+              match matchee with
+              | Arrow _ -> `Arrow
+              | Constr _ -> `Constr
+              | Tuple _ -> `Tuple
+              | _ -> assert false
+            in
+            ff (Omniml_error.scheme_mismatched_type ~range ~type_head)))
+      ~error:(fun _ -> Omniml_error.ambiguous_polytype ~range)
+      ~default:(fun () ->
+        if with_poly_params
+        then Constraint (with_ [] (Type.var scheme_type))
+        else (
+          let mono = Type.Var.create ~id_source () in
+          Shape (Principal_shape.scheme Type.(Scheme.create (var mono)))))
+  ;;
+
+  let match_poly_type ~id_source ~range poly_type ~closure ~with_ =
     match_
       poly_type
-      ~closure:[ `Type mono_type ]
+      ~closure
       ~with_:(function
-        | Poly { quantifiers; body } ->
-          exists_many quantifiers Type.(var mono_type =~ body)
-        | (Arrow _ | Constr _ | Tuple _) as matchee ->
+        | Poly scheme -> with_ scheme
+        | (Arrow _ | Constr _ | Tuple _ | Scheme _) as matchee ->
           let type_head =
             match matchee with
             | Arrow _ -> `Arrow
             | Constr _ -> `Constr
             | Tuple _ -> `Tuple
+            | Scheme _ -> `Poly
             | _ -> assert false
           in
           ff (Omniml_error.polytype_mismatched_type ~range ~type_head))
       ~error:(fun _ -> Omniml_error.ambiguous_polytype ~range)
-      ~default:(fun () -> default_mono_poly ~id_source)
+      ~default:(fun () ->
+        let mono = Type.Var.create ~id_source () in
+        Shape (Principal_shape.poly Type.(Scheme.create (var mono))))
+  ;;
+
+  let match_inst ~with_poly_params ~id_source ~range ~scheme_type ~mono_type =
+    match_scheme_type
+      ~with_poly_params
+      ~id_source
+      ~range
+      scheme_type
+      ~closure:[ `Type mono_type ]
+      ~with_:(fun quantifiers body ->
+        exists_many quantifiers Type.(var mono_type =~ body))
+  ;;
+
+  let match_scheme ~with_poly_params ~id_source ~range cvar ~scheme_type =
+    match_scheme_type
+      ~with_poly_params
+      ~id_source
+      ~range
+      scheme_type
+      ~closure:[ `Scheme cvar ]
+      ~with_:(fun quantifiers body -> forall quantifiers @@ inst cvar body)
+  ;;
+
+  let match_poly_inst ~id_source ~range ~poly_type ~mono_type =
+    match_poly_type
+      ~id_source
+      ~range
+      poly_type
+      ~closure:[ `Type mono_type ]
+      ~with_:(fun { quantifiers; body } ->
+        exists_many quantifiers Type.(var mono_type =~ body))
   ;;
 
   let match_poly ~id_source ~range cvar ~poly_type =
-    match_
+    match_poly_type
+      ~id_source
+      ~range
       poly_type
       ~closure:[ `Scheme cvar ]
-      ~with_:(function
-        | Poly { quantifiers; body } -> forall quantifiers @@ inst cvar body
-        | (Arrow _ | Constr _ | Tuple _) as matchee ->
-          let type_head =
-            match matchee with
-            | Arrow _ -> `Arrow
-            | Constr _ -> `Constr
-            | Tuple _ -> `Tuple
-            | _ -> assert false
-          in
-          ff (Omniml_error.polytype_mismatched_type ~range ~type_head))
-      ~error:(fun _ -> Omniml_error.ambiguous_polytype ~range)
-      ~default:(fun () -> default_mono_poly ~id_source)
+      ~with_:(fun { quantifiers; body } -> forall quantifiers @@ inst cvar body)
   ;;
 
   let infer_pat ~env ~with_poly_params pat pat_type =
@@ -696,7 +710,7 @@ module Expression = struct
     let id_source = Env.id_source env in
     exists' ~id_source
     @@ fun param_mono_type ->
-    Type.(var param_type =~ poly (Type.Scheme.create (var param_mono_type)))
+    Type.(var param_type =~ scheme (Type.Scheme.create (var param_mono_type)))
     >> bind_mono_pat ~env ~with_poly_params pat param_mono_type ~in_
   ;;
 
@@ -712,9 +726,10 @@ module Expression = struct
       (poly_binding
          (((Flexible, pat_type) :: pat_quantifiers)
           @. (match_inst
+                ~with_poly_params
                 ~id_source
                 ~range:pat.range
-                ~poly_type:param_type
+                ~scheme_type:param_type
                 ~mono_type:pat_type
               >> cpat)
           @=> bindings))
@@ -723,8 +738,8 @@ module Expression = struct
 
   let bind_known_poly_pat ~env ~with_poly_params pat scheme param_type ~in_ =
     let id_source = Env.id_source env in
-    let scheme = Convert.core_scheme_to_type_scheme ~env ~with_poly_params scheme in
-    let scheme_quantifiers = List.map scheme.quantifiers ~f:(fun v -> Rigid, v) in
+    let scm = Convert.core_scheme_to_type_scheme ~env ~with_poly_params scheme in
+    let scheme_quantifiers = List.map scm.quantifiers ~f:(fun v -> Rigid, v) in
     (* Infer the pattern *)
     let pat_type = Type.Var.create ~id_source () in
     let env, named_bindings, exist_bindings, cpat =
@@ -734,12 +749,12 @@ module Expression = struct
     let pat_quantifiers =
       (Flexible, pat_type) :: List.map exist_bindings ~f:(fun v -> Flexible, v)
     in
-    (* Unify the param type with the expected poly type *)
-    Type.(var param_type =~ poly scheme)
+    (* Unify the parameter type with the expected scheme type. *)
+    Type.(var param_type =~ scheme scm)
     >> let_unit
          (poly_binding
             ((scheme_quantifiers @ pat_quantifiers)
-             @. (cpat >> Type.(var pat_type =~ scheme.body))
+             @. (cpat >> Type.(var pat_type =~ scm.body))
              @=> bindings))
          ~in_:(in_ env)
   ;;
@@ -780,29 +795,33 @@ module Expression = struct
     | Exp_const const -> Type.(var exp_type =~ infer_constant const)
     | Exp_fun (params, ret_type_annot, exp_body) ->
       let ret_type_annot =
-        Option.map
-          ret_type_annot
-          ~f:(Convert.core_ret_type_to_type ~env ~with_poly_params)
+        Option.map ret_type_annot ~f:(Convert.core_type_to_type ~env ~with_poly_params)
       in
       let infer_arrow ~range ~env ~param ?expected_ret_type arr_type ~infer_body =
         exists' ~id_source
-        @@ fun poly_param_type ->
+        @@ fun scheme_param_type ->
         exists' ~id_source
-        @@ fun poly_ret_type ->
-        (* Ensure [arr_type] is an arrow with param type [poly_param_type] 
-           and return type [poly_ret_type] *)
-        Type.(var arr_type =~ var poly_param_type @-> var poly_ret_type)
+        @@ fun scheme_ret_type ->
+        (* Ensure [arr_type] is an arrow with parameter type [scheme_param_type]
+           and return type [scheme_ret_type]. *)
+        Type.(var arr_type =~ var scheme_param_type @-> var scheme_ret_type)
         (* Check the expected ret type *)
         >> Option.value_map expected_ret_type ~default:tt ~f:(fun expected_ret_type ->
-          Type.(var poly_ret_type =~ expected_ret_type))
-        >> bind_param ~env ~with_poly_params param poly_param_type ~in_:(fun env ->
-          (* Check that [exp] has a more general type than [poly_ret_type] *)
+          Type.(var scheme_ret_type =~ expected_ret_type))
+        >> bind_param ~env ~with_poly_params param scheme_param_type ~in_:(fun env ->
+          (* Check that [exp] has a more general type than [scheme_ret_type]. *)
           if with_poly_params
           then
             with_range ~range
             @@ infer_principal ~env ~f:(fun body_type -> infer_body ~env body_type)
-            @@ fun cvar -> match_poly ~id_source ~range cvar ~poly_type:poly_ret_type
-          else infer_body ~env poly_ret_type)
+            @@ fun cvar ->
+            match_scheme
+              ~with_poly_params:true
+              ~id_source
+              ~range
+              cvar
+              ~scheme_type:scheme_ret_type
+          else infer_body ~env scheme_ret_type)
       in
       let rec infer_arrows ~env params arr_type =
         match params with
@@ -829,37 +848,43 @@ module Expression = struct
       exists' ~id_source
       @@ fun arr_type ->
       exists' ~id_source
-      @@ fun poly_param_type ->
+      @@ fun scheme_param_type ->
       exists' ~id_source
-      @@ fun poly_ret_type ->
-      (* Ensure that [exp1] has an arrow type w/ parameter type [poly_param_type] 
-         and return type [poly_ret_type] *)
+      @@ fun scheme_ret_type ->
+      (* Ensure that [exp1] has an arrow with parameter type [scheme_param_type]
+         and return type [scheme_ret_type]. *)
       let c1 =
         infer_exp ~env ~with_poly_params exp1 arr_type
         >> with_range ~range:exp1.range
-           @@ Type.(var arr_type =~ var poly_param_type @-> var poly_ret_type)
+           @@ Type.(var arr_type =~ var scheme_param_type @-> var scheme_ret_type)
       in
-      (* Check that [exp2] has a more general type than [poly_param_type] *)
+      (* Check that [exp2] has a more general type than [scheme_param_type]. *)
       let c2 =
         if with_poly_params
         then
           infer_exp_principal ~env ~with_poly_params exp2
           @@ fun cvar ->
-          match_poly ~id_source ~range:exp2.range cvar ~poly_type:poly_param_type
-        else infer_exp ~env ~with_poly_params exp2 poly_param_type
+          match_scheme
+            ~with_poly_params:true
+            ~id_source
+            ~range:exp2.range
+            cvar
+            ~scheme_type:scheme_param_type
+        else infer_exp ~env ~with_poly_params exp2 scheme_param_type
       in
       c1
       >> c2
       >>
-      (* Check that [exp_type] is an instance of [poly_ret_type] *)
+      (* Check that [exp_type] is an instance of [scheme_ret_type]. *)
       if with_poly_params
       then
         match_inst
+          ~with_poly_params
           ~id_source
           ~range:exp.range
-          ~poly_type:poly_ret_type
+          ~scheme_type:scheme_ret_type
           ~mono_type:exp_type
-      else Type.(var poly_ret_type =~ var exp_type)
+      else Type.(var scheme_ret_type =~ var exp_type)
     | Exp_let (value_binding, exp) ->
       (infer_value_binding ~env ~with_poly_params value_binding
        @@ fun env -> infer_exp ~env ~with_poly_params exp exp_type)
@@ -911,12 +936,12 @@ module Expression = struct
                   ff
                     (Omniml_error.projection_out_of_bounds ~range:exp.range ~index ~arity)
                 | Some comp_type -> Type.(var exp_type =~ var comp_type))
-             | (Arrow _ | Constr _ | Poly _) as matchee ->
+             | (Arrow _ | Constr _ | Scheme _ | Poly _) as matchee ->
                let type_head =
                  match matchee with
                  | Arrow _ -> `Arrow
                  | Constr _ -> `Constr
-                 | Poly _ -> `Poly
+                 | Scheme _ | Poly _ -> `Poly
                  | _ -> assert false
                in
                ff
@@ -924,7 +949,7 @@ module Expression = struct
                     ~range:exp.range
                     ~type_head))
            ~error:(fun _ -> Omniml_error.ambiguous_tuple ~range:exp.range)
-           ~default:(fun () -> Shape (Principal_shape.tuple (max 2 index)))
+           ~default:(fun () -> Shape (Principal_shape.tuple (Int.max index 2)))
     | Exp_if_then_else (if_exp, then_exp, else_exp) ->
       exists' ~id_source
       @@ fun if_type ->
@@ -990,7 +1015,11 @@ module Expression = struct
          in
          Type.(
            var exp_type
-           =~ poly (Convert.core_scheme_to_type_scheme ~env ~with_poly_params core_scheme))
+           =~
+           let scheme =
+             Convert.core_scheme_to_type_scheme ~env ~with_poly_params core_scheme
+           in
+           poly scheme)
          >> forall quantifiers
             @@ exists' ~id_source
             @@ fun exp_type ->
@@ -999,7 +1028,7 @@ module Expression = struct
       exists' ~id_source
       @@ fun poly_type ->
       infer_exp ~env ~with_poly_params exp poly_type
-      >> match_inst ~id_source ~range:exp.range ~poly_type ~mono_type:exp_type
+      >> match_poly_inst ~id_source ~range:exp.range ~poly_type ~mono_type:exp_type
 
   and infer_exps ~env ~with_poly_params exps k =
     match exps with

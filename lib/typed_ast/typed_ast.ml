@@ -18,15 +18,12 @@ module Type = struct
     Fmt.string ppf (String.split_on_chars ~on:[ '.' ] ident.name |> List.last_exn)
   ;;
 
-  let pp ~with_poly_params ppf type_ =
+  let pp ppf type_ =
     let rec pp_mu ppf = function
       | Mu (var, type_) -> Fmt.pf ppf "@[%a@ as %a@]" pp_mu type_ pp_var var
       | type_ -> pp_arrow ppf type_
     and pp_arrow ppf = function
-      | Arrow (param, return) ->
-        let pp_param = if with_poly_params then pp_poly_param else pp_tuple in
-        let pp_return = if with_poly_params then pp_poly_return else pp_arrow in
-        Fmt.pf ppf "@[%a ->@ %a@]" pp_param param pp_return return
+      | Arrow (param, return) -> Fmt.pf ppf "@[%a ->@ %a@]" pp_tuple param pp_arrow return
       | type_ -> pp_tuple ppf type_
     and pp_tuple ppf = function
       | Tuple types -> Fmt.pf ppf "@[%a@]" Fmt.(list ~sep:(any " *@ ") pp_app) types
@@ -41,32 +38,13 @@ module Type = struct
     and pp_atom ppf = function
       | Var var -> pp_var ppf var
       | Poly scheme -> Fmt.pf ppf "@[[%a]@]" pp_scheme scheme
+      | Scheme scheme -> Fmt.pf ppf "@[(forall@ %a)@]" pp_scheme scheme
       | (Arrow _ | Tuple _ | Constr _ | Mu _) as type_ -> Fmt.parens pp_mu ppf type_
-    and pp_poly_param ppf = function
-      | Poly scheme -> pp_param_scheme ppf scheme
-      | type_ -> pp_tuple ppf type_
-    and pp_poly_return ppf = function
-      | Poly scheme -> pp_return_scheme ppf scheme
-      | type_ -> pp_arrow ppf type_
-    and pp_param_scheme ppf ({ quantifiers; body } as scheme) =
-      match quantifiers with
-      | [] -> pp_tuple ppf body
-      | _ -> Fmt.parens pp_scheme ppf scheme
-    and pp_return_scheme ppf ({ quantifiers; body } as scheme) =
-      match quantifiers with
-      | [] -> pp_arrow ppf body
-      | _ -> Fmt.parens pp_scheme ppf scheme
     and pp_scheme ppf { quantifiers; body } =
       match quantifiers with
       | [] -> pp_mu ppf body
       | quantifiers ->
-        Fmt.pf
-          ppf
-          "@[<hov 2>forall %a.@ %a@]"
-          Fmt.(list ~sep:sp pp_var)
-          quantifiers
-          pp_mu
-          body
+        Fmt.pf ppf "@[<hov 2>%a.@ %a@]" Fmt.(list ~sep:sp pp_var) quantifiers pp_mu body
     in
     pp_mu ppf type_
   ;;
@@ -94,68 +72,63 @@ let pp_constructor_name ppf name = Fmt.string ppf (Constructor_name.to_string na
 let pp_label_name ppf name = Fmt.string ppf (Label_name.to_string name)
 let pp_type_var ppf type_var = Fmt.pf ppf "'%s" (Type_var_name.to_string type_var)
 
-let rec pp_core_type ppf (type_ : Ast.core_type) =
-  match type_.it with
-  | Type_var type_var -> pp_type_var ppf type_var.it
-  | Type_arrow (param, return) ->
-    Fmt.pf ppf "@[%a ->@ %a@]" pp_param_type param pp_return_type return
-  | Type_tuple types -> Fmt.pf ppf "@[%a@]" Fmt.(list ~sep:(any " *@ ") pp_app_type) types
-  | Type_constr (args, type_name) -> pp_type_constr ppf (args, type_name)
-  | Type_poly scheme -> Fmt.pf ppf "[%a]" pp_core_scheme scheme
-
-and pp_param_type ppf ({ it; _ } : Ast.param_type) =
-  match it with
-  | Param_mono_type type_ ->
-    (match type_.it with
-     | Type_arrow _ -> Fmt.parens pp_core_type ppf type_
-     | _ -> pp_core_type ppf type_)
-  | Param_poly_type scheme -> Fmt.pf ppf "(forall %a)" pp_core_scheme scheme
-
-and pp_return_type ppf ({ it; _ } : Ast.return_type) =
-  match it with
-  | Return_mono_type type_ -> pp_core_type ppf type_
-  | Return_poly_type scheme -> Fmt.pf ppf "(forall %a)" pp_core_scheme scheme
-
-and pp_app_type ppf (type_ : Ast.core_type) =
-  match type_.it with
-  | Type_var _ | Type_constr _ | Type_poly _ -> pp_core_type ppf type_
-  | Type_arrow _ | Type_tuple _ -> Fmt.parens pp_core_type ppf type_
-
-and pp_type_constr ppf (args, type_name) =
-  match args with
-  | [] -> pp_type_name ppf type_name.it
-  | [ arg ] -> Fmt.pf ppf "@[%a@ %a@]" pp_app_type arg pp_type_name type_name.it
-  | args ->
-    Fmt.pf
-      ppf
-      "@[(%a)@ %a@]"
-      Fmt.(list ~sep:(any ",@ ") pp_core_type)
-      args
-      pp_type_name
-      type_name.it
-
-and pp_core_scheme ppf ({ it = { scheme_quantifiers; scheme_body }; _ } : Ast.core_scheme)
-  =
-  match scheme_quantifiers with
-  | [] -> pp_core_type ppf scheme_body
-  | quantifiers ->
-    Fmt.pf
-      ppf
-      "@[%a.@ %a@]"
-      Fmt.(list ~sep:sp (using With_range.it pp_type_var))
-      quantifiers
-      pp_core_type
-      scheme_body
+let pp_core_type ppf core_type =
+  let pp_type_var ppf (type_var : Type_var_name.t With_range.t) =
+    pp_type_var ppf type_var.it
+  in
+  let pp_type_name ppf (type_name : Type_name.t With_range.t) =
+    pp_type_name ppf type_name.it
+  in
+  let rec pp_arrow ppf (core_type : Ast.core_type) =
+    match core_type.it with
+    | Type_arrow (param, return) ->
+      Fmt.pf ppf "@[%a ->@ %a@]" pp_tuple param pp_arrow return
+    | _ -> pp_tuple ppf core_type
+  and pp_tuple ppf core_type =
+    match core_type.it with
+    | Type_tuple core_types ->
+      Fmt.pf ppf "@[%a@]" Fmt.(list ~sep:(any " *@ ") pp_constr) core_types
+    | _ -> pp_constr ppf core_type
+  and pp_constr ppf core_type =
+    match core_type.it with
+    | Type_constr (core_types, type_name) ->
+      Fmt.pf ppf "@[%a%a@]" pp_args core_types pp_type_name type_name
+    | _ -> pp_atom ppf core_type
+  and pp_args ppf core_types =
+    match core_types with
+    | [] -> ()
+    | [ core_type ] -> Fmt.pf ppf "%a@ " pp_constr core_type
+    | core_types -> Fmt.pf ppf "@[(%a)@ @]" Fmt.(list ~sep:comma pp_arrow) core_types
+  and pp_atom ppf core_type =
+    match core_type.it with
+    | Type_var type_var -> pp_type_var ppf type_var
+    | Type_poly scheme -> Fmt.pf ppf "@[[%a]@]" pp_scheme scheme
+    | Type_scheme scheme -> Fmt.pf ppf "@[(forall@ %a)@]" pp_scheme scheme
+    | Type_arrow _ | Type_tuple _ | Type_constr _ -> Fmt.parens pp_arrow ppf core_type
+  and pp_scheme ppf (scheme : Ast.core_scheme) =
+    let { Ast.scheme_quantifiers; scheme_body } = scheme.it in
+    match scheme_quantifiers with
+    | [] -> pp_arrow ppf scheme_body
+    | scheme_quantifiers ->
+      Fmt.pf
+        ppf
+        "@[<hov 2>%a.@ %a@]"
+        Fmt.(list ~sep:sp pp_type_var)
+        scheme_quantifiers
+        pp_arrow
+        scheme_body
+  in
+  pp_arrow ppf core_type
 ;;
 
-let pp_binding ~with_poly_params keyword ppf { binding_name; binding_type } =
+let pp_binding keyword ppf { binding_name; binding_type } =
   Fmt.pf
     ppf
     "@[<hov 2>%s %a :@ %a@]"
     keyword
     pp_var_name
     binding_name
-    (Type.pp ~with_poly_params)
+    Type.pp
     binding_type
 ;;
 
@@ -207,18 +180,13 @@ let pp_type_declarations ppf = function
     List.iter declarations ~f:(Fmt.pf ppf "@,%a" (pp_type_declaration "and"))
 ;;
 
-let pp_signature_item ~with_poly_params ppf ({ it; _ } : signature_item) =
+let pp_signature_item ppf ({ it; _ } : signature_item) =
   match it with
-  | Sig_value bindings ->
-    Fmt.(list ~sep:cut (pp_binding ~with_poly_params "val")) ppf bindings
-  | Sig_primitive binding -> pp_binding ~with_poly_params "external" ppf binding
+  | Sig_value bindings -> Fmt.(list ~sep:cut (pp_binding "val")) ppf bindings
+  | Sig_primitive binding -> pp_binding "external" ppf binding
   | Sig_type declarations -> pp_type_declarations ppf declarations
 ;;
 
-let pp ~with_poly_params ppf signature =
-  Fmt.pf
-    ppf
-    "@[<v>%a@]"
-    Fmt.(list ~sep:cut (pp_signature_item ~with_poly_params))
-    signature
+let pp ppf signature =
+  Fmt.pf ppf "@[<v>%a@]" Fmt.(list ~sep:cut pp_signature_item) signature
 ;;

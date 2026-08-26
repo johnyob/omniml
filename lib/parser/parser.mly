@@ -98,6 +98,8 @@ separated_nontrivial_list(sep, X):
         | tau -> tau        (* functions *)
         | tau * ... * tau   (* tuples *)
         | overline(tau) T   (* type constructors *)
+        | forall 'a. tau    (* polyparam type schemes *)
+        | ['a. tau]         (* first-class polymorphism *)
     v}
 
     The grammar is {e stratified} to handle the precedence issues that arise. *)
@@ -111,36 +113,16 @@ type_name:
     { type_name ~range:(range_of_lex $loc) id }
 
 %inline core_type:
-  type_ = arrow_type
+    type_ = arrow_type
     { type_ }
 
 arrow_type:
     type_ = tuple_type
       { type_ }
-  | type1 = arrow_arg_type
+  | type1 = tuple_type
     ; "->"
-    ; type2 = arrow_ret_type
+    ; type2 = arrow_type
       { Type.arrow ~range:(range_of_lex $loc) type1 type2 }
-
-
-arrow_arg_type:
-    type_ = tuple_type
-      { Type.Function_param.mono ~range:(range_of_lex $loc) type_ }
-  | "("
-    ; "forall" 
-    ; scheme = poly_core_scheme
-    ; ")"
-      { Type.Function_param.poly ~range:(range_of_lex $loc) scheme }
-
-
-arrow_ret_type:
-    type_ = arrow_type 
-      { Type.Function_return.mono ~range:(range_of_lex $loc) type_ }
-  | "("
-    ; "forall" 
-    ; scheme = poly_core_scheme
-    ; ")"
-      { Type.Function_return.poly ~range:(range_of_lex $loc) scheme }
 
 tuple_type:
     type_ = atom_type
@@ -162,6 +144,12 @@ atom_type:
     ; scheme = core_scheme 
     ; "]"
       { Type.poly ~range:(range_of_lex $loc) scheme }
+  | "(" 
+    ; "forall"
+    ; scheme = poly_core_scheme
+    ; ")"
+      { Type.forall ~range:(range_of_lex $loc) scheme }
+
 
 %inline type_argument_list:
     (* empty *)
@@ -208,8 +196,8 @@ core_scheme:
         | e.l                               (* field *)
         | e; e                              (* sequence *)
         | (e : tau)                         (* type annotation *)
-        | [e : sigma]                       (* polytype box *)
-        | <e>                              (* polytype unbox *)
+        | [e : sigma]                       (* first-class polymorphic value *)
+        | <e>                              (* polymorphic instantiation *)
     v} 
 
     Expressions also include cases, patterns and value bindings, given by the following
@@ -446,13 +434,8 @@ function_ret_type_annot:
       { rtype }
 
 atom_arrow_ret_type:
-    type_ = atom_type
-      { Type.Function_return.mono ~range:(range_of_lex $loc) type_ }
-  | "("
-    ; "forall"
-    ; scheme = poly_core_scheme
-    ; ")"
-      { Type.Function_return.poly ~range:(range_of_lex $loc) scheme }
+  type_ = atom_type
+    {  type_ }
 
 pattern:
     pat = construct_pattern
@@ -578,4 +561,3 @@ terminated_structure_item:
 structure:
   structure = nonempty_list(terminated_structure_item)
     { structure }
-
