@@ -2243,14 +2243,14 @@ let%expect_test "" =
   [%expect
     {|
     error[E010]: ambiguous constructor
-        ┌─ expect_test.ml:23:24
-     23 │          | { contents = B } -> ()
+        ┌─ expect_test.ml:22:24
+     22 │          ( { contents = A } -> ()
         │                         ^
         = hint: add a type annotation
 
     error[E010]: ambiguous constructor
-        ┌─ expect_test.ml:22:24
-     22 │          ( { contents = A } -> ()
+        ┌─ expect_test.ml:23:24
+     23 │          | { contents = B } -> ()
         │                         ^
         = hint: add a type annotation
     |}];
@@ -2825,15 +2825,15 @@ let%expect_test "" =
   [%expect
     {|
     error[E016]: unknown polytype
-        ┌─ expect_test.ml:3:61
-      3 │        let use_poly_mono = fun x -> let y = [ (id, x) ] in @[y] ;;
-        │                                                              ^
-        = hint: add a type annotation
-
-    error[E016]: unknown polytype
         ┌─ expect_test.ml:3:46
       3 │        let use_poly_mono = fun x -> let y = [ (id, x) ] in @[y] ;;
         │                                               ^^^^^^^
+        = hint: add a type annotation
+
+    error[E016]: unknown polytype
+        ┌─ expect_test.ml:3:61
+      3 │        let use_poly_mono = fun x -> let y = [ (id, x) ] in @[y] ;;
+        │                                                              ^
         = hint: add a type annotation
     |}];
   type_check_and_print ~defaulting:Unary str;
