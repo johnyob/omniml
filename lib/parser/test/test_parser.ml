@@ -439,113 +439,63 @@ let%expect_test "core_type : function" =
     ((it
       (Type_arrow
        ((it
-         (Param_mono_type
+         (Type_arrow
           ((it
-            (Type_arrow
-             ((it
-               (Param_mono_type
-                ((it
-                  (Type_constr ()
-                   ((it int)
-                    (range
-                     ((start 2) (stop 5)
-                      (source
-                       (Reader
-                        ((id 0) (name (expect_test.ml)) (length 28)
-                         (unsafe_get <fun>)))))))))
-                 (range
-                  ((start 2) (stop 5)
-                   (source
-                    (Reader
-                     ((id 0) (name (expect_test.ml)) (length 28)
-                      (unsafe_get <fun>)))))))))
+            (Type_constr ()
+             ((it int)
               (range
                ((start 2) (stop 5)
                 (source
                  (Reader
-                  ((id 0) (name (expect_test.ml)) (length 28) (unsafe_get <fun>)))))))
-             ((it
-               (Return_mono_type
-                ((it
-                  (Type_constr ()
-                   ((it int)
-                    (range
-                     ((start 9) (stop 12)
-                      (source
-                       (Reader
-                        ((id 0) (name (expect_test.ml)) (length 28)
-                         (unsafe_get <fun>)))))))))
-                 (range
-                  ((start 8) (stop 12)
-                   (source
-                    (Reader
-                     ((id 0) (name (expect_test.ml)) (length 28)
-                      (unsafe_get <fun>)))))))))
+                  ((id 0) (name (expect_test.ml)) (length 28) (unsafe_get <fun>)))))))))
+           (range
+            ((start 2) (stop 5)
+             (source
+              (Reader
+               ((id 0) (name (expect_test.ml)) (length 28) (unsafe_get <fun>)))))))
+          ((it
+            (Type_constr ()
+             ((it int)
               (range
                ((start 9) (stop 12)
                 (source
                  (Reader
                   ((id 0) (name (expect_test.ml)) (length 28) (unsafe_get <fun>)))))))))
            (range
-            ((start 2) (stop 12)
+            ((start 8) (stop 12)
              (source
               (Reader
                ((id 0) (name (expect_test.ml)) (length 28) (unsafe_get <fun>)))))))))
         (range
-         ((start 1) (stop 13)
+         ((start 2) (stop 12)
           (source
            (Reader
             ((id 0) (name (expect_test.ml)) (length 28) (unsafe_get <fun>)))))))
        ((it
-         (Return_mono_type
+         (Type_arrow
           ((it
-            (Type_arrow
-             ((it
-               (Param_mono_type
-                ((it
-                  (Type_constr ()
-                   ((it int)
-                    (range
-                     ((start 17) (stop 20)
-                      (source
-                       (Reader
-                        ((id 0) (name (expect_test.ml)) (length 28)
-                         (unsafe_get <fun>)))))))))
-                 (range
-                  ((start 16) (stop 20)
-                   (source
-                    (Reader
-                     ((id 0) (name (expect_test.ml)) (length 28)
-                      (unsafe_get <fun>)))))))))
+            (Type_constr ()
+             ((it int)
               (range
                ((start 17) (stop 20)
                 (source
                  (Reader
-                  ((id 0) (name (expect_test.ml)) (length 28) (unsafe_get <fun>)))))))
-             ((it
-               (Return_mono_type
-                ((it
-                  (Type_constr ()
-                   ((it int)
-                    (range
-                     ((start 24) (stop 27)
-                      (source
-                       (Reader
-                        ((id 0) (name (expect_test.ml)) (length 28)
-                         (unsafe_get <fun>)))))))))
-                 (range
-                  ((start 23) (stop 27)
-                   (source
-                    (Reader
-                     ((id 0) (name (expect_test.ml)) (length 28)
-                      (unsafe_get <fun>)))))))))
+                  ((id 0) (name (expect_test.ml)) (length 28) (unsafe_get <fun>)))))))))
+           (range
+            ((start 16) (stop 20)
+             (source
+              (Reader
+               ((id 0) (name (expect_test.ml)) (length 28) (unsafe_get <fun>)))))))
+          ((it
+            (Type_constr ()
+             ((it int)
               (range
                ((start 24) (stop 27)
                 (source
                  (Reader
                   ((id 0) (name (expect_test.ml)) (length 28) (unsafe_get <fun>)))))))))
            (range
-            ((start 17) (stop 27)
+            ((start 23) (stop 27)
              (source
               (Reader
                ((id 0) (name (expect_test.ml)) (length 28) (unsafe_get <fun>)))))))))
@@ -4454,72 +4404,40 @@ let%expect_test "top level external definitions" =
                 ((it
                   (Type_arrow
                    ((it
-                     (Param_mono_type
-                      ((it
-                        (Type_constr ()
-                         ((it int)
-                          (range
-                           ((start 31) (stop 34)
-                            (source
-                             (Reader
-                              ((id 0) (name (expect_test.ml)) (length 99)
-                               (unsafe_get <fun>)))))))))
+                     (Type_constr ()
+                      ((it int)
                        (range
-                        ((start 30) (stop 34)
+                        ((start 31) (stop 34)
                          (source
                           (Reader
                            ((id 0) (name (expect_test.ml)) (length 99)
                             (unsafe_get <fun>)))))))))
                     (range
-                     ((start 31) (stop 34)
+                     ((start 30) (stop 34)
                       (source
                        (Reader
                         ((id 0) (name (expect_test.ml)) (length 99)
                          (unsafe_get <fun>)))))))
                    ((it
-                     (Return_mono_type
+                     (Type_arrow
                       ((it
-                        (Type_arrow
-                         ((it
-                           (Param_mono_type
-                            ((it
-                              (Type_constr ()
-                               ((it int)
-                                (range
-                                 ((start 38) (stop 41)
-                                  (source
-                                   (Reader
-                                    ((id 0) (name (expect_test.ml)) (length 99)
-                                     (unsafe_get <fun>)))))))))
-                             (range
-                              ((start 37) (stop 41)
-                               (source
-                                (Reader
-                                 ((id 0) (name (expect_test.ml)) (length 99)
-                                  (unsafe_get <fun>)))))))))
+                        (Type_constr ()
+                         ((it int)
                           (range
                            ((start 38) (stop 41)
                             (source
                              (Reader
                               ((id 0) (name (expect_test.ml)) (length 99)
-                               (unsafe_get <fun>)))))))
-                         ((it
-                           (Return_mono_type
-                            ((it
-                              (Type_constr ()
-                               ((it bool)
-                                (range
-                                 ((start 45) (stop 49)
-                                  (source
-                                   (Reader
-                                    ((id 0) (name (expect_test.ml)) (length 99)
-                                     (unsafe_get <fun>)))))))))
-                             (range
-                              ((start 44) (stop 49)
-                               (source
-                                (Reader
-                                 ((id 0) (name (expect_test.ml)) (length 99)
-                                  (unsafe_get <fun>)))))))))
+                               (unsafe_get <fun>)))))))))
+                       (range
+                        ((start 37) (stop 41)
+                         (source
+                          (Reader
+                           ((id 0) (name (expect_test.ml)) (length 99)
+                            (unsafe_get <fun>)))))))
+                      ((it
+                        (Type_constr ()
+                         ((it bool)
                           (range
                            ((start 45) (stop 49)
                             (source
@@ -4527,7 +4445,7 @@ let%expect_test "top level external definitions" =
                               ((id 0) (name (expect_test.ml)) (length 99)
                                (unsafe_get <fun>)))))))))
                        (range
-                        ((start 38) (stop 49)
+                        ((start 44) (stop 49)
                          (source
                           (Reader
                            ((id 0) (name (expect_test.ml)) (length 99)
@@ -4582,16 +4500,8 @@ let%expect_test "top level external definitions" =
                 ((it
                   (Type_arrow
                    ((it
-                     (Param_mono_type
-                      ((it
-                        (Type_var
-                         ((it a)
-                          (range
-                           ((start 82) (stop 84)
-                            (source
-                             (Reader
-                              ((id 0) (name (expect_test.ml)) (length 99)
-                               (unsafe_get <fun>)))))))))
+                     (Type_var
+                      ((it a)
                        (range
                         ((start 82) (stop 84)
                          (source
@@ -4605,24 +4515,16 @@ let%expect_test "top level external definitions" =
                         ((id 0) (name (expect_test.ml)) (length 99)
                          (unsafe_get <fun>)))))))
                    ((it
-                     (Return_mono_type
-                      ((it
-                        (Type_constr ()
-                         ((it sexp)
-                          (range
-                           ((start 88) (stop 92)
-                            (source
-                             (Reader
-                              ((id 0) (name (expect_test.ml)) (length 99)
-                               (unsafe_get <fun>)))))))))
+                     (Type_constr ()
+                      ((it sexp)
                        (range
-                        ((start 87) (stop 92)
+                        ((start 88) (stop 92)
                          (source
                           (Reader
                            ((id 0) (name (expect_test.ml)) (length 99)
                             (unsafe_get <fun>)))))))))
                     (range
-                     ((start 88) (stop 92)
+                     ((start 87) (stop 92)
                       (source
                        (Reader
                         ((id 0) (name (expect_test.ml)) (length 99)
@@ -4744,16 +4646,8 @@ let%expect_test "polyparam - function" =
                 ((it
                   (Type_arrow
                    ((it
-                     (Param_mono_type
-                      ((it
-                        (Type_var
-                         ((it a)
-                          (range
-                           ((start 28) (stop 30)
-                            (source
-                             (Reader
-                              ((id 0) (name (expect_test.ml)) (length 59)
-                               (unsafe_get <fun>)))))))))
+                     (Type_var
+                      ((it a)
                        (range
                         ((start 28) (stop 30)
                          (source
@@ -4767,16 +4661,8 @@ let%expect_test "polyparam - function" =
                         ((id 0) (name (expect_test.ml)) (length 59)
                          (unsafe_get <fun>)))))))
                    ((it
-                     (Return_mono_type
-                      ((it
-                        (Type_var
-                         ((it a)
-                          (range
-                           ((start 34) (stop 36)
-                            (source
-                             (Reader
-                              ((id 0) (name (expect_test.ml)) (length 59)
-                               (unsafe_get <fun>)))))))))
+                     (Type_var
+                      ((it a)
                        (range
                         ((start 34) (stop 36)
                          (source
