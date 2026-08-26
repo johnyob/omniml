@@ -1220,7 +1220,7 @@ let%expect_test "" =
   type_check_and_print str;
   [%expect {| val id : ('a -> 'a as 'a) -> ('b -> 'b as 'b) |}];
   type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
-  [%expect {| val id : ('a -> 'a as 'a) -> ('b -> 'b as 'b) |}]
+  [%expect {| val id : ('a -> 'a as 'a) -> ('b -> 'b as 'b) -> ('c -> 'c as 'c) |}]
 ;;
 
 let%expect_test "" =
@@ -2522,7 +2522,7 @@ let%expect_test "" =
   [%expect
     {|
     val id : 'a -> 'a
-    val pid : [forall 'b. 'b -> 'b]
+    val pid : ['b. 'b -> 'b]
     val see_pid : ('c -> 'c) * ('d -> 'd)
     val see_pid_type : ('e -> 'e) * ('f -> 'f)
     |}];
@@ -2530,7 +2530,7 @@ let%expect_test "" =
   [%expect
     {|
     val id : 'a -> 'a
-    val pid : [forall 'b. 'b -> 'b]
+    val pid : ['b. 'b -> 'b]
     val see_pid : ('c -> 'c) * ('d -> 'd)
     val see_pid_type : ('e -> 'e) * ('f -> 'f)
     |}]
@@ -2549,17 +2549,17 @@ let%expect_test "" =
   [%expect
     {|
     val id : 'a -> 'a
-    val pid1 : [forall 'c. 'c * 'b -> 'c * 'b]
+    val pid1 : ['c. 'c * 'b -> 'c * 'b]
     val see_pid1 : ('d * 'e -> 'd * 'e) * ('f * 'e -> 'f * 'e)
     val see_pid1_type : ('g * 'h -> 'g * 'h) * ('i * 'h -> 'i * 'h)
     |}];
   type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect
     {|
-    val id : 'a -> 'a
-    val pid1 : [forall 'c. 'c * 'b -> 'c * 'b]
-    val see_pid1 : ('d * 'e -> 'd * 'e) * ('f * 'e -> 'f * 'e)
-    val see_pid1_type : ('g * 'h -> 'g * 'h) * ('i * 'h -> 'i * 'h)
+    val id : 'a * 'b -> 'a * 'b
+    val pid1 : ['d. 'd * 'c -> 'd * 'c]
+    val see_pid1 : ('e * 'f -> 'e * 'f) * ('g * 'f -> 'g * 'f)
+    val see_pid1_type : ('h * 'i -> 'h * 'i) * ('j * 'i -> 'j * 'i)
     |}]
 ;;
 
@@ -2609,17 +2609,17 @@ let%expect_test "" =
   [%expect
     {|
     val id : 'a -> 'a
-    val pid2 : [forall 'b 'c. 'b * 'c -> 'b * 'c]
+    val pid2 : ['b 'c. 'b * 'c -> 'b * 'c]
     val see_pid2 : ('d * 'e -> 'd * 'e) * ('f * 'g -> 'f * 'g)
     val see_pid2_type : ('h * 'i -> 'h * 'i) * ('j * 'k -> 'j * 'k)
     |}];
   type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect
     {|
-    val id : 'a -> 'a
-    val pid2 : [forall 'b 'c. 'b * 'c -> 'b * 'c]
-    val see_pid2 : ('d * 'e -> 'd * 'e) * ('f * 'g -> 'f * 'g)
-    val see_pid2_type : ('h * 'i -> 'h * 'i) * ('j * 'k -> 'j * 'k)
+    val id : 'a * 'b -> 'a * 'b
+    val pid2 : ['c 'd. 'c * 'd -> 'c * 'd]
+    val see_pid2 : ('e * 'f -> 'e * 'f) * ('g * 'h -> 'g * 'h)
+    val see_pid2_type : ('i * 'j -> 'i * 'j) * ('k * 'l -> 'k * 'l)
     |}]
 ;;
 
@@ -2640,20 +2640,20 @@ let%expect_test "" =
     {|
     external combine : 'a -> 'a -> 'a
     val id : 'b -> 'b
-    val qid : [forall 'c. 'c -> 'c]
-    val pid : [forall 'd. 'd -> 'd]
-    val pqid : [forall 'e. 'e -> 'e]
-    val pqid_type : [forall 'f. 'f -> 'f]
+    val qid : ['c. 'c -> 'c]
+    val pid : ['d. 'd -> 'd]
+    val pqid : ['e. 'e -> 'e]
+    val pqid_type : ['f. 'f -> 'f]
     |}];
   type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect
     {|
     external combine : 'a -> 'a -> 'a
     val id : 'b -> 'b
-    val qid : [forall 'c. 'c -> 'c]
-    val pid : [forall 'd. 'd -> 'd]
-    val pqid : [forall 'e. 'e -> 'e]
-    val pqid_type : [forall 'f. 'f -> 'f]
+    val qid : ['c. 'c -> 'c]
+    val pid : ['d. 'd -> 'd]
+    val pqid : ['e. 'e -> 'e]
+    val pqid_type : ['f. 'f -> 'f]
     |}]
 ;;
 
@@ -2711,14 +2711,14 @@ let%expect_test "" =
   [%expect
     {|
     val id : 'a -> 'a
-    val pid : [forall 'b. 'b -> 'b]
+    val pid : ['b. 'b -> 'b]
     val use_id_pid : 'c -> 'c
     |}];
   type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect
     {|
     val id : 'a -> 'a
-    val pid : [forall 'b. 'b -> 'b]
+    val pid : ['b. 'b -> 'b]
     val use_id_pid : 'c -> 'c
     |}]
 ;;
@@ -2796,20 +2796,20 @@ let%expect_test "" =
   [%expect
     {|
     val id : 'a -> 'a
-    val pid : [forall 'b. 'b -> 'b]
+    val pid : ['b. 'b -> 'b]
     val use_id_twice_app_pid : ('d -> 'd) * ('e -> 'e)
     val xx_pid : 'f -> 'f
-    val idide : [forall 'h. 'h -> 'h] -> ('i -> 'i) * ('j -> 'j)
+    val idide : ['h. 'h -> 'h] -> ('i -> 'i) * ('j -> 'j)
     val idide_pid : ('k -> 'k) * ('l -> 'l)
     |}];
   type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect
     {|
     val id : 'a -> 'a
-    val pid : [forall 'b. 'b -> 'b]
+    val pid : ['b. 'b -> 'b]
     val use_id_twice_app_pid : ('d -> 'd) * ('e -> 'e)
     val xx_pid : 'f -> 'f
-    val idide : [forall 'h. 'h -> 'h] -> ('i -> 'i) * ('j -> 'j)
+    val idide : ['h. 'h -> 'h] -> ('i -> 'i) * ('j -> 'j)
     val idide_pid : ('k -> 'k) * ('l -> 'l)
     |}]
 ;;
@@ -2921,7 +2921,7 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     |}];
   do_test
     {|
@@ -2943,7 +2943,7 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val xignore : int * bool
     |}];
   do_test
@@ -2981,7 +2981,7 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
     |}];
@@ -3007,7 +3007,7 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
     val xignore : int * bool
@@ -3032,7 +3032,7 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
     val xignore : int * bool
@@ -3072,10 +3072,10 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
+    val poly2 : ['k. 'k -> 'k] -> int * bool
     |}];
   do_test
     {|
@@ -3097,10 +3097,10 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
+    val poly2 : ['k. 'k -> 'k] -> int * bool
     val xignore : int * bool
     |}];
   do_test
@@ -3143,11 +3143,11 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
     |}];
   do_test
     {|
@@ -3169,11 +3169,11 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
     val xignore : int * int option
     |}];
   do_test
@@ -3214,12 +3214,12 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
     |}];
   do_test
     {|
@@ -3241,12 +3241,12 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
     val xignore : int * bool
     |}];
   do_test
@@ -3287,13 +3287,13 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> [forall 's. 's -> 's] -> int * bool
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
+    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
     |}];
   do_test
     {|
@@ -3315,13 +3315,13 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> [forall 's. 's -> 's] -> int * bool
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
+    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
     val xignore : int * bool
     |}];
   do_test
@@ -3365,14 +3365,14 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> [forall 's. 's -> 's] -> int * bool
-    val poly6 : [bool] -> [forall 'v. 'v -> 'v] -> ['w] -> 'w * 'w option
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
+    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
+    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
     |}];
   do_test
     {|
@@ -3394,14 +3394,14 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> [forall 's. 's -> 's] -> int * bool
-    val poly6 : [bool] -> [forall 'v. 'v -> 'v] -> ['w] -> 'w * 'w option
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
+    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
+    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
     val xignore : int * int option
     |}];
   do_test
@@ -3441,15 +3441,15 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> [forall 's. 's -> 's] -> int * bool
-    val poly6 : [bool] -> [forall 'v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : [forall 'z 'a1. 'a1 -> 'z] -> bool
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
+    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
+    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
+    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
     |}];
   do_test
     {|
@@ -3488,16 +3488,16 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> [forall 's. 's -> 's] -> int * bool
-    val poly6 : [bool] -> [forall 'v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : [forall 'z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [[forall 'd1. 'd1 -> 'd1] -> 'e1] -> 'e1
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
+    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
+    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
+    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
+    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
     |}];
   do_test
     {|
@@ -3522,16 +3522,16 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> [forall 's. 's -> 's] -> int * bool
-    val poly6 : [bool] -> [forall 'v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : [forall 'z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [[forall 'd1. 'd1 -> 'd1] -> 'e1] -> 'e1
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
+    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
+    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
+    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
+    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
     val xignore : int * bool
     |}];
   do_test
@@ -3558,17 +3558,17 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> [forall 's. 's -> 's] -> int * bool
-    val poly6 : [bool] -> [forall 'v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : [forall 'z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [[forall 'd1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val non_principal1 : [bool] -> [[forall 'h1. 'h1 -> 'h1] -> 'g1] -> 'g1
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
+    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
+    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
+    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
+    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
+    val non_principal1 : [bool] -> [['h1. 'h1 -> 'h1] -> 'g1] -> 'g1
     |}];
   do_test
     {|
@@ -3594,17 +3594,17 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> [forall 's. 's -> 's] -> int * bool
-    val poly6 : [bool] -> [forall 'v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : [forall 'z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [[forall 'd1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val non_principal2 : [bool] -> [[forall 'h1. 'h1 -> 'h1] -> 'g1] -> 'g1
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
+    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
+    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
+    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
+    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
+    val non_principal2 : [bool] -> [['h1. 'h1 -> 'h1] -> 'g1] -> 'g1
     |}];
   do_test
     {|
@@ -3630,17 +3630,17 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> [forall 's. 's -> 's] -> int * bool
-    val poly6 : [bool] -> [forall 'v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : [forall 'z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [[forall 'd1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val principal1 : [bool] -> [[forall 'h1. 'h1 -> 'h1] -> 'g1] -> 'g1
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
+    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
+    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
+    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
+    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
+    val principal1 : [bool] -> [['h1. 'h1 -> 'h1] -> 'g1] -> 'g1
     |}];
   do_test
     {|
@@ -3668,17 +3668,17 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> [forall 's. 's -> 's] -> int * bool
-    val poly6 : [bool] -> [forall 'v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : [forall 'z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [[forall 'd1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val principal2 : [bool] -> [[forall 'h1. 'h1 -> 'h1] -> 'g1] -> 'g1
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
+    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
+    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
+    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
+    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
+    val principal2 : [bool] -> [['h1. 'h1 -> 'h1] -> 'g1] -> 'g1
     |}];
   do_test
     {|
@@ -3705,17 +3705,17 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> [forall 's. 's -> 's] -> int * bool
-    val poly6 : [bool] -> [forall 'v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : [forall 'z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [[forall 'd1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val principal3 : ([forall 'g1. 'g1 -> 'g1] -> int * bool) option list
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
+    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
+    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
+    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
+    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
+    val principal3 : (['g1. 'g1 -> 'g1] -> int * bool) option list
     |}];
   do_test
     {|
@@ -3740,17 +3740,17 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> [forall 's. 's -> 's] -> int * bool
-    val poly6 : [bool] -> [forall 'v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : [forall 'z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [[forall 'd1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val non_principal3 : ([forall 'h1. 'h1 -> 'h1] -> int * bool) option list
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
+    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
+    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
+    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
+    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
+    val non_principal3 : (['h1. 'h1 -> 'h1] -> int * bool) option list
     |}];
   do_test
     {|
@@ -3775,17 +3775,17 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> [forall 's. 's -> 's] -> int * bool
-    val poly6 : [bool] -> [forall 'v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : [forall 'z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [[forall 'd1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val non_principal4 : ([forall 'h1. 'h1 -> 'h1] -> int * bool) option list
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
+    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
+    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
+    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
+    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
+    val non_principal4 : (['h1. 'h1 -> 'h1] -> int * bool) option list
     |}];
   do_test
     {|
@@ -3813,18 +3813,17 @@ let%expect_test "" =
     type 'a list =
       | Nil
       | Cons of 'a * 'a list
-    val poly1 : [forall 'h. 'h -> 'h] -> int * bool
+    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
-    val poly2 : [forall 'k. 'k -> 'k] -> int * bool
-    val poly3 : [forall 'n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> [forall 'q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> [forall 's. 's -> 's] -> int * bool
-    val poly6 : [bool] -> [forall 'v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : [forall 'z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [[forall 'd1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val foo :
-      [[forall 'i1. 'i1 -> 'i1] -> int] -> [forall 'j1 'k1. 'k1 -> 'j1] -> int
+    val poly2 : ['k. 'k -> 'k] -> int * bool
+    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
+    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
+    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
+    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
+    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
+    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
+    val foo : [['i1. 'i1 -> 'i1] -> int] -> ['j1 'k1. 'k1 -> 'j1] -> int
     |}]
 ;;
 
@@ -4203,11 +4202,51 @@ let%expect_test "" =
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:40:42
-     40 │        let xignore = poly4 true (fun x -> x + 1);;
-        │                                           ^^^^^ `int`
-        │                                                   is not equal to
-        │                                                 `'a`
+        ┌─ expect_test.ml:1:1
+      1 │ ╭  external fix : 'a 'b. (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b;;
+      2 │ │      type 'a ref;;
+      3 │ │      type 'a ref_repr = { contents : 'a };;
+      4 │ │
+      5 │ │      external create_ref : 'a. 'a -> 'a ref;;
+      6 │ │      external get_ref : 'a. 'a ref -> 'a;;
+      7 │ │      external set_ref : 'a. 'a ref -> 'a -> unit;;
+      8 │ │      external ref_repr : 'a. 'a ref -> 'a ref_repr;;
+      9 │ │
+     10 │ │      type 'a option =
+     11 │ │        | None
+     12 │ │        | Some of 'a
+     13 │ │      ;;
+     14 │ │
+     15 │ │      type 'a list =
+     16 │ │        | Nil
+     17 │ │        | Cons of 'a * 'a list
+     18 │ │      ;;
+     19 │ │
+     20 │ │        let poly1 = fun (forall id : 'a. 'a -> 'a) ->
+     21 │ │          (id 1, id true)
+     22 │ │        ;;
+     23 │ │
+     24 │ │        let id = fun x -> x;;
+     25 │ │
+     26 │ │        let poly2 = fun (forall id : 'a. 'a -> 'a) ->
+     27 │ │          ((id 1, id true) : int * bool)
+     28 │ │        ;;
+     29 │ │
+     30 │ │        let poly3 =
+     31 │ │          forall (type 'b) ->
+     32 │ │            fun (forall id : 'a. 'a -> 'a) (x : 'b) ->
+     33 │ │              ((id x, id (Some x)) : 'b * 'b option)
+     34 │ │        ;;
+     35 │ │
+     36 │ │        let poly4 = fix (fun poly4 p (forall id : 'a. 'a -> 'a) ->
+     37 │ │          if p then poly4 false id else (id 4, id true))
+     38 │ │        ;;
+     39 │ │
+     40 │ │        let xignore = poly4 true (fun x -> x + 1);;
+     41 │ │
+        │ ╰─────^ `int`
+                 is not equal to
+               `'a`
     |}];
   do_test
     ~add:true
@@ -5341,56 +5380,54 @@ let%expect_test "" =
     external concat : 'd list -> 'd list -> 'd list
     external length : 'e list -> int
     external id : 'f -> 'f
-    external ids : [forall 'g. 'g -> 'g] list
+    external ids : ['g. 'g -> 'g] list
     external map : ('h -> 'i) -> 'h list -> 'i list
     external app : ('j -> 'k) -> 'j -> 'k
     external revapp : 'l -> ('l -> 'm) -> 'm
-    external poly : [forall 'n. 'n -> 'n] -> int * bool
+    external poly : ['n. 'n -> 'n] -> int * bool
     external inc : int -> int
     external incs : (int -> int) list
     external choose : 'o -> 'o -> 'o
-    external auto : [forall 'p. 'p -> 'p] -> [forall 'q. 'q -> 'q]
-    external auto2 : [forall 'r. 'r -> 'r] -> 's -> 's
+    external auto : ['p. 'p -> 'p] -> ['q. 'q -> 'q]
+    external auto2 : ['r. 'r -> 'r] -> 's -> 's
     external compose : ('t -> 'u) -> ('v -> 't) -> 'v -> 'u
     val const2 : 'w -> 'x -> 'w
     val a1 : 'y -> 'z -> 'y
     val a2 : ('a1 -> 'a1) -> 'a1 -> 'a1
-    val a3 : [forall 'b1. 'b1 -> 'b1] list
-    val a4 : [forall 'd1. 'd1 -> 'd1] -> 'e1 -> 'e1
-    val a5 : [forall 'f1. 'f1 -> 'f1] -> [forall 'g1. 'g1 -> 'g1]
-    val a6 : [forall 'h1. 'h1 -> 'h1] -> 'i1 -> 'i1
-    val a7 : [forall 'j1. 'j1 -> 'j1] -> [forall 'k1. 'k1 -> 'k1]
+    val a3 : ['b1. 'b1 -> 'b1] list
+    val a4 : ['d1. 'd1 -> 'd1] -> 'e1 -> 'e1
+    val a5 : ['f1. 'f1 -> 'f1] -> ['g1. 'g1 -> 'g1]
+    val a6 : ['h1. 'h1 -> 'h1] -> 'i1 -> 'i1
+    val a7 : ['j1. 'j1 -> 'j1] -> ['k1. 'k1 -> 'k1]
     val a10 : (int * bool) * (int * bool) * (int * bool)
     external k : 'l1 -> 'l1 list -> int
-    external xs : ([forall 'm1. 'm1 -> 'm1] -> int * bool) list
+    external xs : (['m1. 'm1 -> 'm1] -> int * bool) list
     val a11 : int
     val a12 : (int * bool) * (int * bool) * (int * bool)
-    val b1 :
-      int * [forall 'o1. 'o1 -> 'o1] list * [forall 'p1. 'p1 -> 'p1] *
-      ('q1 -> 'q1) list
-    val b2 : [forall 'r1. 'r1 -> 'r1] list
-    val b3 : [forall 's1. 's1 -> 's1] list
+    val b1 : int * ['o1. 'o1 -> 'o1] list * ['p1. 'p1 -> 'p1] * ('q1 -> 'q1) list
+    val b2 : ['r1. 'r1 -> 'r1] list
+    val b3 : ['s1. 's1 -> 's1] list
     val b4 : (int -> int) list
     val b5 : (int * bool) list
-    val b7 : [forall 't1. 't1 -> 't1] list * bool
-    val b1 : [forall 'v1. 'v1 -> 'v1] -> int * bool
-    val b2 : [forall 'w1. 'w1 -> 'w1] list -> int * bool
-    val c1b : [forall 'y1. 'y1 -> 'y1] -> int * bool
+    val b7 : ['t1. 't1 -> 't1] list * bool
+    val b1 : ['v1. 'v1 -> 'v1] -> int * bool
+    val b2 : ['w1. 'w1 -> 'w1] list -> int * bool
+    val c1b : ['y1. 'y1 -> 'y1] -> int * bool
     type char
-    external g : ([forall 'z1. 'z1 -> 'z1] -> int * bool) -> char
+    external g : (['z1. 'z1 -> 'z1] -> int * bool) -> char
     val c1c : char
     external k : 'b2 -> 'b2 list -> 'b2
-    external h : int -> [forall 'c2. 'c2 -> 'c2]
-    external lst : [forall 'd2. int -> 'd2 -> 'd2] list
-    val e1b : [forall 'e2. int -> 'e2 -> 'e2]
-    val e2a : [forall 'f2. 'f2 -> 'f2] -> int * bool
-    val e2b : [forall 'g2. 'g2 -> 'g2] -> int * bool
+    external h : int -> ['c2. 'c2 -> 'c2]
+    external lst : ['d2. int -> 'd2 -> 'd2] list
+    val e1b : ['e2. int -> 'e2 -> 'e2]
+    val e2a : ['f2. 'f2 -> 'f2] -> int * bool
+    val e2b : ['g2. 'g2 -> 'g2] -> int * bool
     val e3a : int * bool
     val e3b : int * bool
     val e4a : (int * bool) list
     val e4b : (int * bool) list
-    val e5a : [forall 'h2. 'h2 -> 'h2] list -> int * bool
-    val e5b : [forall 'i2. 'i2 -> 'i2] list -> int * bool
+    val e5a : ['h2. 'h2 -> 'h2] list -> int * bool
+    val e5b : ['i2. 'i2 -> 'i2] list -> int * bool
     |}];
   type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect
@@ -5404,56 +5441,54 @@ let%expect_test "" =
     external concat : 'd list -> 'd list -> 'd list
     external length : 'e list -> int
     external id : 'f -> 'f
-    external ids : [forall 'g. 'g -> 'g] list
+    external ids : ['g. 'g -> 'g] list
     external map : ('h -> 'i) -> 'h list -> 'i list
     external app : ('j -> 'k) -> 'j -> 'k
     external revapp : 'l -> ('l -> 'm) -> 'm
-    external poly : [forall 'n. 'n -> 'n] -> int * bool
+    external poly : ['n. 'n -> 'n] -> int * bool
     external inc : int -> int
     external incs : (int -> int) list
     external choose : 'o -> 'o -> 'o
-    external auto : [forall 'p. 'p -> 'p] -> [forall 'q. 'q -> 'q]
-    external auto2 : [forall 'r. 'r -> 'r] -> 's -> 's
+    external auto : ['p. 'p -> 'p] -> ['q. 'q -> 'q]
+    external auto2 : ['r. 'r -> 'r] -> 's -> 's
     external compose : ('t -> 'u) -> ('v -> 't) -> 'v -> 'u
     val const2 : 'w -> 'x -> 'w
     val a1 : 'y -> 'z -> 'y
     val a2 : ('a1 -> 'a1) -> 'a1 -> 'a1
-    val a3 : [forall 'b1. 'b1 -> 'b1] list
-    val a4 : [forall 'd1. 'd1 -> 'd1] -> 'e1 -> 'e1
-    val a5 : [forall 'f1. 'f1 -> 'f1] -> [forall 'g1. 'g1 -> 'g1]
-    val a6 : [forall 'h1. 'h1 -> 'h1] -> 'i1 -> 'i1
-    val a7 : [forall 'j1. 'j1 -> 'j1] -> [forall 'k1. 'k1 -> 'k1]
+    val a3 : ['b1. 'b1 -> 'b1] list
+    val a4 : ['d1. 'd1 -> 'd1] -> 'e1 -> 'e1
+    val a5 : ['f1. 'f1 -> 'f1] -> ['g1. 'g1 -> 'g1]
+    val a6 : ['h1. 'h1 -> 'h1] -> 'i1 -> 'i1
+    val a7 : ['j1. 'j1 -> 'j1] -> ['k1. 'k1 -> 'k1]
     val a10 : (int * bool) * (int * bool) * (int * bool)
     external k : 'l1 -> 'l1 list -> int
-    external xs : ([forall 'm1. 'm1 -> 'm1] -> int * bool) list
+    external xs : (['m1. 'm1 -> 'm1] -> int * bool) list
     val a11 : int
     val a12 : (int * bool) * (int * bool) * (int * bool)
-    val b1 :
-      int * [forall 'o1. 'o1 -> 'o1] list * [forall 'p1. 'p1 -> 'p1] *
-      ('q1 -> 'q1) list
-    val b2 : [forall 'r1. 'r1 -> 'r1] list
-    val b3 : [forall 's1. 's1 -> 's1] list
+    val b1 : int * ['o1. 'o1 -> 'o1] list * ['p1. 'p1 -> 'p1] * ('q1 -> 'q1) list
+    val b2 : ['r1. 'r1 -> 'r1] list
+    val b3 : ['s1. 's1 -> 's1] list
     val b4 : (int -> int) list
     val b5 : (int * bool) list
-    val b7 : [forall 't1. 't1 -> 't1] list * bool
-    val b1 : [forall 'v1. 'v1 -> 'v1] -> int * bool
-    val b2 : [forall 'w1. 'w1 -> 'w1] list -> int * bool
-    val c1b : [forall 'y1. 'y1 -> 'y1] -> int * bool
+    val b7 : ['t1. 't1 -> 't1] list * bool
+    val b1 : ['v1. 'v1 -> 'v1] -> int * bool
+    val b2 : ['w1. 'w1 -> 'w1] list -> int * bool
+    val c1b : ['y1. 'y1 -> 'y1] -> int * bool
     type char
-    external g : ([forall 'z1. 'z1 -> 'z1] -> int * bool) -> char
+    external g : (['z1. 'z1 -> 'z1] -> int * bool) -> char
     val c1c : char
     external k : 'b2 -> 'b2 list -> 'b2
-    external h : int -> [forall 'c2. 'c2 -> 'c2]
-    external lst : [forall 'd2. int -> 'd2 -> 'd2] list
-    val e1b : [forall 'e2. int -> 'e2 -> 'e2]
-    val e2a : [forall 'f2. 'f2 -> 'f2] -> int * bool
-    val e2b : [forall 'g2. 'g2 -> 'g2] -> int * bool
+    external h : int -> ['c2. 'c2 -> 'c2]
+    external lst : ['d2. int -> 'd2 -> 'd2] list
+    val e1b : ['e2. int -> 'e2 -> 'e2]
+    val e2a : ['f2. 'f2 -> 'f2] -> int * bool
+    val e2b : ['g2. 'g2 -> 'g2] -> int * bool
     val e3a : int * bool
     val e3b : int * bool
     val e4a : (int * bool) list
     val e4b : (int * bool) list
-    val e5a : [forall 'h2. 'h2 -> 'h2] list -> int * bool
-    val e5b : [forall 'i2. 'i2 -> 'i2] list -> int * bool
+    val e5a : ['h2. 'h2 -> 'h2] list -> int * bool
+    val e5b : ['i2. 'i2 -> 'i2] list -> int * bool
     |}]
 ;;
 
@@ -5496,14 +5531,14 @@ let%expect_test "" =
   [%expect
     {|
     error[E010]: ambiguous constructor
-        ┌─ expect_test.ml:14:20
-     14 │            unify x (Foo (y));
+        ┌─ expect_test.ml:15:20
+     15 │            unify y (Foo (x))
         │                     ^^^
         = hint: add a type annotation
 
     error[E010]: ambiguous constructor
-        ┌─ expect_test.ml:15:20
-     15 │            unify y (Foo (x))
+        ┌─ expect_test.ml:14:20
+     14 │            unify x (Foo (y));
         │                     ^^^
         = hint: add a type annotation
     |}]
@@ -5655,10 +5690,10 @@ let%expect_test "polyparam schemes are distinct from first-class polymorphism" =
     external id : 'a -> 'a
     external head : 'b list -> 'b
     external schemes : (forall 'c. 'c -> 'c) list
-    external polys : [forall 'd. 'd -> 'd] list
+    external polys : ['d. 'd -> 'd] list
     external use_scheme : (forall 'e. 'e -> 'e) -> int
-    external use_poly : [forall 'f. 'f -> 'f] -> int
-    val poly_id : [forall 'g. 'g -> 'g]
+    external use_poly : ['f. 'f -> 'f] -> int
+    val poly_id : ['g. 'g -> 'g]
     val scheme_result : int
     val poly_result : int
     val explicit_poly_result : int
@@ -5681,7 +5716,7 @@ let%expect_test "a scheme is not an implicitly first-class polymorphic value" =
       4 │        let invalid_poly = use_poly id;;
         │                                    ^^ `'a -> 'a`
         │                                         is not equal to
-        │                                       `[forall 'b. 'b -> 'b]`
+        │                                       `['b. 'b -> 'b]`
     |}]
 ;;
 
