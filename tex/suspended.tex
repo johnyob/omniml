@@ -791,7 +791,8 @@ typechecks a term $\e$ against a type $\t$ in a given context, and
 The type system designer assigns modes---checking or inference---to each
 language construct. For instance, one can decide to typecheck function
 applications $\eapp \ea \eb$ by first \emph{inferring} that $\ea$ has some
-function type $\ta \tarrow \tb$, and then \emph{checking} $\eb$ against $\ta$ (\Rule{Syn-App});
+function type $\ta \tarrow \tb$, and then \emph{checking} $\eb$ against
+$\ta$ (\Rule{Syn-App}); 
 but the opposite, mode-correct choice (\Rule{Chk-App}) is also possible:
 \begin{mathpar}
   \infer[Syn-App]
@@ -842,6 +843,15 @@ typically preferred.
   \infer[Syn-Inst]
     {\G \th \e \Rightarrow \tpoly \ts}
     {\G \th \einst \e \Rightarrow \ts}
+
+\color{red}
+  \infer[Syn-Inst]
+    {\G \th \e \Rightarrow \tfor \tv \ts}
+    {\G \th \e \Leftarrow \ts \where {\tv \is {\color{red}\t}}}
+    
+  \infer[Chk-Sub]
+    {\G \th \e \Rightarrow \t \\ \t \lesssim \tp }
+    {\G \th \e \Leftarrow \tp}
 \end{mathparfig}
 
 
@@ -880,6 +890,10 @@ rules must irrevocably commit to a fixed set of modes, after which, principal
 types exist, but only with respect to a specification that made non-principal
 choices to begin with. For instance, \code{ex_6} would be ill-typed under the
 rules of \cref{fig:bidir-poly}.
+
+\XDR[TODO]{Say why \code{ex_6} would fail; Comment on the weakness of the
+system in \cref{fig:bidir-poly} and points to the discussion in
+\cref{fig/related-work}.}
 
 \paragraph{Limitations of directional type inference}
 
@@ -3668,7 +3682,8 @@ Every solved form is a normal form, but not every normal form is solved.
   \label{def/normal-forms}
   A constraint $\c$ is in \emph{normal form}, written $\hat\c$, if no 
   rewriting rules apply, \ie $\c \cnsolve$. Similarly, a constraint context 
-  $\C$ is in \emph{normal form}, written $\hat\C$, if $\C\where\ctrue$ is in normal form.
+  $\C$ is in \emph{normal form}, written $\hat\C$, if $\C\where\ctrue$ is in
+  normal form. 
 \end{definition}
 
 
@@ -4242,8 +4257,9 @@ If $\ca \csolve \cb$, then $\fvs \ca \supseteq \fvs \cb$.
   \begin{enumerate}
     \item $\c$ is solved.
     \item $\c$ is $\cfalse$.
-    \item for every match constraint $\c = \hat\C\where{\cmatch \tv \cbrs}$ with 
-      $\hat\c$ in normal form (\cref{def/normal-forms}), 
+    \item for every match constraint ${\cmatch \tv \cbrs}$ in $\c$, \ie
+      there exists $\hat\C$ in normal form (\cref{def/normal-forms}) such
+      that  $\c = \hat\C\where{\cmatch \tv \cbrs}$, then 
       $\Cshape {\hat\C} \tv \sh$ does not hold for any $\sh$.
   \end{enumerate}
 \end{theorem}
@@ -4414,9 +4430,64 @@ constraints that further refine the region's partial type scheme.
 \section{Discussion}
 \label{sec/discussion}
 
-
-We now discuss practical considerations and an alternative
+We first remark the lost of subject reduction.
+\XDR{I thinkm this should go back into the metatheory section}
+%% We now
+We then discuss practical considerations and an alternative
 semi-unification-based implementation of incremental instantiation.
+
+
+\begin{version}{\True}%\False
+\paragraph{Stability of typing by common program transformations}
+
+\newcommand {\eswap}{{\mathprefix {swap}\,}}
+\newcommand {\equityp}{\mathrel{\subseteq\!\joinrel\!\supseteq}}
+\newcommand {\subtyp}{\subseteq}
+
+
+The \emph{principal types} property is the salient attribute of \ML-style
+type systems. However, perhaps more importantly, typing of \ML programs is
+stable by common program transformations.  Let us write $\ea \subseteq \eb$
+for the preservation of typings, and $\equityp$ for equitypability.
+
+In \ML,
+\begin{enumerate*}
+\item
+  \emph{inlining} follows from subject reduction:
+ $\elet \x \ea \eb \subtyp \eb \where {\x \is \ea}$.
+
+\item
+  conversely, \emph{factorization} holds as a  consequence of
+  principal types: $\eb \where {\x \is \ea}  \subtyp \elet \x \ea
+  \eb$  whenever $\x$ appears in $\eb$.
+
+\item
+  Besides, \emph{application is redefinable and order independent}, as
+  illustrated by $\eappp f \ea \eb \equityp \eappp {\eswap f} \eb \ea$.
+  
+\end{enumerate*}
+
+\OML also preserves redefinable and order independent applications, as
+\geninst-directional type inference, while bidirectional type inference does not.
+%
+However, both factorization and inlining may break typability.
+
+The lack of factorization is not a defect of our system, but rather a
+consequence of static overloading: the expanded term $\e \where {x
+\is \e_0}$ can pick a different overloading choice for each occurrence of
+$\e_0$, which cannot be factored when they have incompatible types.
+
+The lack of inlining is a consequence of our support for
+\emph{backpropagation}: the let-form may use information from all
+occurrences of $\x$ in $\e$ to resolve fragile constructs in $e_0$, but in
+the inlined form each copy of $\e$ must resolve its implicit constructs
+independently, and it has access to less information to establish
+unicity.
+%
+As a result, the implicit \OML calculus does not preserve typability in its
+operational semantics. 
+\end{version}
+
 
 \paragraph{Error reporting}
 
@@ -8763,4 +8834,4 @@ Let $\e$ be an arbitrary closed well-typed term; that is, there exists a type
 % LocalWords:  OverloadedRecordDot Andreas Scherer Martinot Vivien Gundry
 % LocalWords:  Gooding ois homomorphic homomorphism ASUP omnidirectionally
 % LocalWords:  mem Pfenning bidir ness rcd postfix composable metatheory
-% LocalWords:  reimplementation parameterizing
+% LocalWords:  reimplementation parameterizing redefinable
