@@ -50,6 +50,7 @@ let add_type_def t type_def =
   match type_def.type_kind with
   | Type_variant constr_decls -> List.fold_left constr_decls ~init:t ~f:add_constr_def
   | Type_record label_defs -> List.fold_left label_defs ~init:t ~f:add_label_def
+  | Type_alias _ -> t
   | Type_abstract -> t
 ;;
 
