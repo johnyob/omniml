@@ -1,5 +1,11 @@
 .DEFAULT_GOAL := all
 
+ifneq ($(shell command -v opam 2>/dev/null),)
+DUNE := opam exec -- dune
+else
+DUNE := dune
+endif
+
 .PHONY: all
 all: build
 
@@ -8,38 +14,38 @@ install-ocamlformat:
 	opam install -y ocamlformat=0.26.2
 
 .PHONY: install-deps
-install-deps: install-switch install-ocamlformat
+install-opam-deps: install-opam-switch install-ocamlformat
 	opam install -y ocaml-lsp-server
 	opam install -y --deps-only --with-test --with-doc .
 
-.PHONY: install-switch
-install-switch:
+.PHONY: install-opam-switch
+install-opam-switch:
 	opam switch create .
 
 .PHONY: build
 build:
-	dune build
+	$(DUNE) build
 
 .PHONY: install
 install: all 
-	dune install --root .
+	$(DUNE) install --root .
 
 .PHONY: test
 test:
-	dune runtest
+	$(DUNE) runtest
 
 .PHONY: clean
 clean:
-	dune clean
+	$(DUNE) clean
 
 .PHONY: doc
 doc:
-	dune build @doc
+	$(DUNE) build @doc
 
 .PHONY: watch
 watch:
-	dune build @run -w --force --no-buffer
+	$(DUNE) build @run -w --force --no-buffer
 
 .PHONY: utop
 utop:
-	dune utop
+	$(DUNE) utop
