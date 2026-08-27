@@ -33,8 +33,14 @@ type type_definition =
 and type_def_kind =
   | Type_variant of constructor_definition list
   | Type_record of label_definition list
+  | Type_alias of alias_definition
   | Type_abstract
 [@@deriving sexp_of]
+
+and alias_definition =
+  { alias_alphas : Type_var_name.t list
+  ; alias_type : Ast.core_type
+  }
 
 and constructor_definition =
   { constructor_name : Constructor_name.t (** The user-defined name of the constructor. *)

@@ -5113,3 +5113,60 @@ let%expect_test "" =
     val f12 : int
     |}]
 ;;
+
+let%expect_test "" =
+  let str =
+    {|
+      type ('a, 'b) mapping = 'a -> 'b;;
+      external apply : 'a 'b. ('a, 'b) mapping -> 'a -> 'b;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect
+    {|
+    type ('a, 'b) mapping =
+      'a -> 'b
+    external apply : ('a -> 'b) -> 'a -> 'b
+    |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      type 'a pair = 'a * 'a;;
+      type int_pair = int pair;;
+      type box = Box of int_pair;;
+      let boxed = Box (1, 2);;
+    |}
+  in
+  type_check_and_print str;
+  [%expect
+    {|
+    type 'a pair =
+      'a * 'a
+    type int_pair =
+      int pair
+    type box =
+      | Box of int_pair
+    val boxed : box
+    |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      type ('a, 'b) pair = 'a * 'b;;
+      external bad : 'a. 'a pair;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect
+    {|
+    error[E008]: type takes 2 arguments but 1 arguments were supplied
+        ┌─ expect_test.ml:3:29
+      3 │        external bad : 'a. 'a pair;;
+        │                           -- ^^^^ expected 2 arguments
+        │                           │
+        │                           supplied 1 arguments
+    |}]
+;;

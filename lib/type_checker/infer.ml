@@ -4,11 +4,17 @@ open Ast
 open Constraint
 
 module Convert = struct
-  let type_name ~env (type_name : Type_name.With_range.t) : Adt.Type_ident.t * int =
+  let type_name ~env (type_name : Type_name.With_range.t)
+    : [ `Alias of Adt.alias_definition | `Newtype of Adt.Type_ident.t ] * int
+    =
     (* If the type name is shadowed, pick the closest one *)
     match Env.find_type_def env type_name.it |> List.hd with
     | None -> Omniml_error.(raise @@ unbound_type ~range:type_name.range type_name.it)
-    | Some type_def -> type_def.type_ident, type_def.type_arity
+    | Some type_def ->
+      ( (match type_def.type_kind with
+         | Type_alias alias_def -> `Alias alias_def
+         | _ -> `Newtype type_def.type_ident)
+      , type_def.type_arity )
   ;;
 
   let assert_expected_arity_is_equal_to_actual_arity
@@ -37,80 +43,130 @@ module Convert = struct
              constr_name))
   ;;
 
-  let rec core_type_to_type_expr ~env ~with_poly_params (type_ : Ast.core_type)
+  let rec core_type_to_type_expr
+            ~env
+            ?(subst = Type_var_name.Map.empty)
+            ~with_poly_params
+            (type_ : Ast.core_type)
     : Adt.type_expr
     =
-    let self = core_type_to_type_expr ~env ~with_poly_params in
+    let self ?(subst = subst) = core_type_to_type_expr ~env ~subst ~with_poly_params in
     match type_.it with
-    | Type_var v -> Type_var v.it
+    | Type_var v ->
+      (match Map.find subst v.it with
+       | None -> Type_var v.it
+       | Some type_expr -> type_expr)
     | Type_arrow (param_type, ret_type) ->
-      let type_expr1 = core_type_to_type_expr ~env ~with_poly_params param_type
-      and type_expr2 = core_type_to_type_expr ~env ~with_poly_params ret_type in
+      let type_expr1 = self param_type
+      and type_expr2 = self ret_type in
       Type_arrow (type_expr1, type_expr2)
     | Type_tuple types ->
       let type_exprs = List.map types ~f:self in
       Type_tuple type_exprs
     | Type_constr (arg_types, constr_name) ->
-      let type_ident, expected_arity = type_name ~env constr_name in
+      let newtype_or_alias, expected_arity = type_name ~env constr_name in
       assert_expected_arity_is_equal_to_actual_arity
         ~arg_types
         ~expected_arity
         ~constr_name;
       let arg_types = List.map arg_types ~f:self in
-      Type_constr (arg_types, type_ident)
+      (match newtype_or_alias with
+       | `Newtype type_ident -> Type_constr (arg_types, type_ident)
+       | `Alias alias_def ->
+         let subst =
+           List.fold2_exn
+             alias_def.alias_alphas
+             arg_types
+             ~init:subst
+             ~f:(fun subst alias_alpha arg_type ->
+               Map.set subst ~key:alias_alpha ~data:arg_type)
+         in
+         self ~subst alias_def.alias_type)
     | Type_scheme scheme ->
       assert with_poly_params;
-      Adt.Type_scheme (core_scheme_to_type_scheme_expr ~env ~with_poly_params scheme)
+      let scheme = core_scheme_to_type_scheme_expr ~env ~subst ~with_poly_params scheme in
+      Type_scheme scheme
     | Type_poly scheme ->
-      let scheme = core_scheme_to_type_scheme_expr ~env ~with_poly_params scheme in
-      Adt.Type_poly scheme
+      let scheme = core_scheme_to_type_scheme_expr ~env ~subst ~with_poly_params scheme in
+      Type_poly scheme
 
-  and core_scheme_to_type_scheme_expr ~env ~with_poly_params (scheme : Ast.core_scheme)
+  and core_scheme_to_type_scheme_expr
+        ~env
+        ?(subst = Type_var_name.Map.empty)
+        ~with_poly_params
+        (scheme : Ast.core_scheme)
     : Adt.type_scheme_expr
     =
     let { scheme_quantifiers; scheme_body } = scheme.it in
     let scheme_quantifiers = List.map scheme_quantifiers ~f:With_range.it in
-    let scheme_body = core_type_to_type_expr ~env ~with_poly_params scheme_body in
+    let scheme_body = core_type_to_type_expr ~env ~subst ~with_poly_params scheme_body in
     { scheme_quantifiers; scheme_body }
   ;;
 
-  let rec core_type_to_type ~env ~with_poly_params (type_ : Ast.core_type) : Type.t =
-    let self = core_type_to_type ~env ~with_poly_params in
+  let rec core_type_to_type
+            ~env
+            ?(subst = Type_var_name.Map.empty)
+            ~with_poly_params
+            (type_ : Ast.core_type)
+    : Type.t
+    =
+    let self ?(subst = subst) = core_type_to_type ~env ~subst ~with_poly_params in
     match type_.it with
     | Type_var v ->
-      (match Env.find_type_var env v.it with
-       | Some v -> Type.var v
-       | None -> Omniml_error.(raise @@ unbound_type_variable ~range:v.range v.it))
+      (match Map.find subst v.it with
+       | Some type_ -> type_
+       | None ->
+         (match Env.find_type_var env v.it with
+          | Some v -> Type.var v
+          | None -> Omniml_error.(raise @@ unbound_type_variable ~range:v.range v.it)))
     | Type_arrow (param_type, ret_type) ->
-      let type1 = core_type_to_type ~env ~with_poly_params param_type
-      and type2 = core_type_to_type ~env ~with_poly_params ret_type in
+      let type1 = self param_type
+      and type2 = self ret_type in
       Type.(type1 @-> type2)
     | Type_tuple types ->
       let types = types |> List.map ~f:self in
       Type.tuple types
     | Type_constr (arg_types, constr_name) ->
-      let type_ident, expected_arity = type_name ~env constr_name in
+      let newtype_or_alias, expected_arity = type_name ~env constr_name in
       assert_expected_arity_is_equal_to_actual_arity
         ~arg_types
         ~expected_arity
         ~constr_name;
       let arg_types = arg_types |> List.map ~f:self in
-      Type.constr arg_types type_ident
+      (match newtype_or_alias with
+       | `Newtype type_ident -> Type.constr arg_types type_ident
+       | `Alias alias_def ->
+         let subst =
+           List.fold2_exn
+             alias_def.alias_alphas
+             arg_types
+             ~init:subst
+             ~f:(fun subst alias_alpha arg_type ->
+               Map.set subst ~key:alias_alpha ~data:arg_type)
+         in
+         self ~subst alias_def.alias_type)
     | Type_scheme scheme ->
       assert with_poly_params;
-      Type.scheme (core_scheme_to_type_scheme ~env ~with_poly_params scheme)
+      let scheme = core_scheme_to_type_scheme ~env ~subst ~with_poly_params scheme in
+      Type.scheme scheme
     | Type_poly scheme ->
-      let scheme = core_scheme_to_type_scheme ~env ~with_poly_params scheme in
+      let scheme = core_scheme_to_type_scheme ~env ~subst ~with_poly_params scheme in
       Type.poly scheme
 
-  and core_scheme_to_type_scheme ~env ~with_poly_params scheme : Type.Scheme.t =
+  and core_scheme_to_type_scheme
+        ~env
+        ?(subst = Type_var_name.Map.empty)
+        ~with_poly_params
+        scheme
+    : Type.Scheme.t
+    =
     let { scheme_quantifiers; scheme_body } = scheme.it in
     let env, scheme_quantifiers =
       List.fold_map scheme_quantifiers ~init:env ~f:(fun env type_var ->
         Env.rename_type_var env ~type_var:type_var.it ~in_:(fun env ctype_var ->
           env, ctype_var))
     in
-    let scheme_body = core_type_to_type ~env ~with_poly_params scheme_body in
+    let scheme_body = core_type_to_type ~env ~subst ~with_poly_params scheme_body in
     Type.Scheme.create ~quantifiers:scheme_quantifiers scheme_body
   ;;
 
@@ -156,7 +212,9 @@ module Convert = struct
         Env.rename_type_var env ~type_var:type_var.it ~in_:(fun env ctype_var ->
           env, ctype_var))
     in
-    let body = core_type_to_type ~env ~with_poly_params scheme_body in
+    let body =
+      core_type_to_type ~env ~subst:Type_var_name.Map.empty ~with_poly_params scheme_body
+    in
     quantifiers, body
   ;;
 end
@@ -1135,6 +1193,11 @@ module Structure = struct
     let type_kind =
       match type_decl_kind with
       | Type_decl_abstract -> Adt.Type_abstract
+      | Type_decl_alias core_type ->
+        Adt.Type_alias
+          { alias_alphas = List.map type_decl_params ~f:With_range.it
+          ; alias_type = core_type
+          }
       | Type_decl_variant constr_decls ->
         let constructor_type =
           Adt.Type_constr

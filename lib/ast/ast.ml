@@ -104,6 +104,7 @@ and type_declaration_desc =
 and type_decl_kind =
   | Type_decl_variant of constructor_declaration list
   | Type_decl_record of label_declaration list
+  | Type_decl_alias of core_type
   | Type_decl_abstract
 
 and constructor_declaration =
