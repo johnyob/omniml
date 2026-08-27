@@ -35,6 +35,14 @@ module Scheme = struct
   [@@deriving sexp, equal, compare, hash]
 
   let create ?(quantifiers = []) body = { quantifiers; body }
+
+  module Expert = struct
+    let of_type t =
+      match t with
+      | Scheme s -> Some s
+      | _ -> None
+    ;;
+  end
 end
 
 module Matchee = struct

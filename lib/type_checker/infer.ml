@@ -100,7 +100,12 @@ module Convert = struct
     let { scheme_quantifiers; scheme_body } = scheme.it in
     let scheme_quantifiers = List.map scheme_quantifiers ~f:With_range.it in
     let scheme_body = core_type_to_type_expr ~env ~subst ~with_poly_params scheme_body in
-    { scheme_quantifiers; scheme_body }
+    match scheme_body with
+    | Type_scheme s ->
+      { scheme_quantifiers = scheme_quantifiers @ s.scheme_quantifiers
+      ; scheme_body = s.scheme_body
+      }
+    | _ -> { scheme_quantifiers; scheme_body }
   ;;
 
   let rec core_type_to_type
@@ -167,7 +172,10 @@ module Convert = struct
           env, ctype_var))
     in
     let scheme_body = core_type_to_type ~env ~subst ~with_poly_params scheme_body in
-    Type.Scheme.create ~quantifiers:scheme_quantifiers scheme_body
+    match Type.Scheme.Expert.of_type scheme_body with
+    | Some s ->
+      Type.Scheme.create ~quantifiers:(scheme_quantifiers @ s.quantifiers) s.body
+    | None -> Type.Scheme.create ~quantifiers:scheme_quantifiers scheme_body
   ;;
 
   let rec type_expr ~env (type_ : Adt.type_expr) : Type.t =
@@ -215,7 +223,9 @@ module Convert = struct
     let body =
       core_type_to_type ~env ~subst:Type_var_name.Map.empty ~with_poly_params scheme_body
     in
-    quantifiers, body
+    match Type.Scheme.Expert.of_type body with
+    | Some s -> quantifiers @ s.quantifiers, s.body
+    | None -> quantifiers, body
   ;;
 end
 

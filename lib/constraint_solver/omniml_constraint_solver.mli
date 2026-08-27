@@ -44,6 +44,10 @@ module Type : sig
 
         If [quantifiers] is omitted, the scheme is treated as monomorphic. *)
     val create : ?quantifiers:Var.t list -> type_ -> t
+
+    module Expert : sig
+      val of_type : type_ -> t option
+    end
   end
 
   (** [var v] is the type variable [v]. *)
