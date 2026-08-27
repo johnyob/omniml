@@ -5170,3 +5170,585 @@ let%expect_test "" =
         │                           supplied 1 arguments
     |}]
 ;;
+
+let%expect_test "church-encoded lists for FCP" =
+  (* All examples from:
+     - https://dl.acm.org/doi/pdf/10.1145/3408971 
+     - https://dl.acm.org/doi/pdf/10.1145/3408971
+     - https://arxiv.org/pdf/2607.16061
+  *)
+  let test =
+    Incremental_test.create
+      ~initial:
+        {|
+          type 'a list = (forall 'b. 'b -> ('a -> 'b -> 'b) -> 'b);;
+          
+          external head : 'a. 'a list -> 'a;;
+          external tail : 'a. 'a list -> 'a list;;
+          external nil : 'a. 'a list;;
+          external cons : 'a. 'a -> 'a list -> 'a list;;
+          external single : 'a. 'a -> 'a list;;
+          external concat : 'a. 'a list -> 'a list -> 'a list;;
+          external length : 'a. 'a list -> int;;
+          external id : 'a. 'a -> 'a;;
+          external inc : int -> int;;
+          external choose : 'a. 'a -> 'a -> 'a;;
+          external poly : (forall 'a. 'a -> 'a) -> int * bool;;
+          external auto : (forall 'a. 'a -> 'a) -> (forall 'a. 'a -> 'a);;
+          external auto2 : 'b. (forall 'a. 'a -> 'a) -> 'b -> 'b;;
+          external ids : (forall 'a. 'a -> 'a) list;;
+          external map : 'a 'b. ('a -> 'b) -> 'a list -> 'b list;;
+          external app : 'a 'b. ('a -> 'b) -> 'a -> 'b;;
+          external revapp : 'a 'b. 'a -> ('a -> 'b) -> 'b;;
+          external flip : 'a 'b 'c. ('a -> 'b -> 'c) -> 'b -> 'a -> 'c;;
+
+          type ('s, 'a) st = 
+            | St 
+          ;;
+          
+          external run_st : 'v. (forall 's. ('s, 'v) st) -> 'v;;
+          external arg_st : 's. ('s, int) st;;
+          external compose : 'a 'b 'c. ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c;;
+         |}
+      (type_check_and_print ~with_poly_params:true ~defaulting:Unary)
+  in
+  [%expect
+    {|
+    type 'a list =
+      (forall 'b. 'b -> ('a -> 'b -> 'b) -> 'b)
+    external head : (forall 'b. 'b -> ('a -> 'b -> 'b) -> 'b) -> 'a
+    external tail :
+      (forall 'd. 'd -> ('c -> 'd -> 'd) -> 'd) ->
+      (forall 'e. 'e -> ('c -> 'e -> 'e) -> 'e)
+    external nil : 'f -> ('g -> 'f -> 'f) -> 'f
+    external cons :
+      'h ->
+      (forall 'i. 'i -> ('h -> 'i -> 'i) -> 'i) ->
+      (forall 'j. 'j -> ('h -> 'j -> 'j) -> 'j)
+    external single : 'k -> (forall 'l. 'l -> ('k -> 'l -> 'l) -> 'l)
+    external concat :
+      (forall 'n. 'n -> ('m -> 'n -> 'n) -> 'n) ->
+      (forall 'o. 'o -> ('m -> 'o -> 'o) -> 'o) ->
+      (forall 'p. 'p -> ('m -> 'p -> 'p) -> 'p)
+    external length : (forall 'r. 'r -> ('q -> 'r -> 'r) -> 'r) -> int
+    external id : 's -> 's
+    external inc : int -> int
+    external choose : 't -> 't -> 't
+    external poly : (forall 'u. 'u -> 'u) -> int * bool
+    external auto : (forall 'v. 'v -> 'v) -> (forall 'w. 'w -> 'w)
+    external auto2 : (forall 'x. 'x -> 'x) -> 'y -> 'y
+    external ids : 'z -> ((forall 'a1. 'a1 -> 'a1) -> 'z -> 'z) -> 'z
+    external map :
+      ('b1 -> 'c1) ->
+      (forall 'd1. 'd1 -> ('b1 -> 'd1 -> 'd1) -> 'd1) ->
+      (forall 'e1. 'e1 -> ('c1 -> 'e1 -> 'e1) -> 'e1)
+    external app : ('f1 -> 'g1) -> 'f1 -> 'g1
+    external revapp : 'h1 -> ('h1 -> 'i1) -> 'i1
+    external flip : ('j1 -> 'k1 -> 'l1) -> 'k1 -> 'j1 -> 'l1
+    type ('s, 'a) st =
+      | St
+    external run_st : (forall 'n1. ('n1, 'm1) st) -> 'm1
+    external arg_st : ('o1, int) st
+    external compose : ('p1 -> 'q1) -> ('r1 -> 'p1) -> 'r1 -> 'q1
+    |}];
+  let do_test = Incremental_test.run test in
+  (* A1 *)
+  do_test
+    {|
+      let const2 = fun x y -> y;;
+    |};
+  [%expect {| val const2 : 's1 -> 't1 -> 't1 |}];
+  (* A2 *)
+  do_test
+    {|
+      let a2 = choose id;;
+    |};
+  [%expect {| val a2 : ('s1 -> 's1) -> 's1 -> 's1 |}];
+  (* A3: infers [(forall 'a. 'a -> 'a) list]. *)
+  do_test
+    {|
+      let a3 = choose nil ids;;
+    |};
+  [%expect {| val a3 : 's1 -> ((forall 't1. 't1 -> 't1) -> 's1 -> 's1) -> 's1 |}];
+  (* A4 *)
+  do_test
+    {|
+      let a4 = fun (forall x : 'a. 'a -> 'a) -> x x;;
+    |};
+  [%expect {| val a4 : (forall 's1. 's1 -> 's1) -> 't1 -> 't1 |}];
+  (* A5 *)
+  do_test
+    {|
+      let a5 = id auto;;
+    |};
+  [%expect {| val a5 : (forall 's1. 's1 -> 's1) -> (forall 't1. 't1 -> 't1) |}];
+  (* A6 *)
+  do_test
+    {|
+      let a6 = id auto2;;
+    |};
+  [%expect {| val a6 : (forall 's1. 's1 -> 's1) -> 't1 -> 't1 |}];
+  (* A7 *)
+  do_test
+    {|
+      let a7 = choose id auto;;
+    |};
+  [%expect {| val a7 : (forall 's1. 's1 -> 's1) -> (forall 't1. 't1 -> 't1) |}];
+  (* A8 (Fresco X, QL X, HMF X, MLF +, ATIA X, FCIF X) *)
+  do_test
+    {|
+      let a8 = choose id auto2;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:31:23
+     31 │        let a8 = choose id auto2;;
+        │                        ^^ `'a -> 'a`
+        │                             is not equal to
+        │                           `(forall 'b. 'b -> 'b) -> 'c -> 'c`
+    |}];
+  (* A9 *)
+  do_test
+    {|
+      external f : 'a. ('a -> 'a) -> 'a list -> 'a;;
+      let a9 = f (choose id) ids;;
+    |};
+  [%expect
+    {|
+    external f :
+      ('s1 -> 's1) -> (forall 't1. 't1 -> ('s1 -> 't1 -> 't1) -> 't1) -> 's1
+    val a9 : 'u1 -> 'u1
+    |}];
+  (* A10a *)
+  do_test
+    {|
+      let a10a = poly id;;
+    |};
+  [%expect {| val a10a : int * bool |}];
+  (* A10b *)
+  do_test
+    {|
+      let a10b = poly (fun x -> x);;
+    |};
+  [%expect {| val a10b : int * bool |}];
+  (* A10c *)
+  do_test
+    {|
+      let a10c = id poly (fun x -> x);;
+    |};
+  [%expect {| val a10c : int * bool |}];
+  (* A11 *)
+  do_test
+    {|
+      external k : 'a. 'a -> 'a list -> int;;
+      external xs : ((forall 'a. 'a -> 'a) -> int * bool) list;;
+      let a11 = k (fun f -> (f 42, f true)) xs;;
+    |};
+  [%expect
+    {|
+    external k : 's1 -> (forall 't1. 't1 -> ('s1 -> 't1 -> 't1) -> 't1) -> int
+    external xs :
+      'u1 -> (((forall 'v1. 'v1 -> 'v1) -> int * bool) -> 'u1 -> 'u1) -> 'u1
+    val a11 : int
+    |}];
+  (* A12a (called D1 in GI) *)
+  do_test
+    {|
+      let a12a = app poly id;;
+    |};
+  [%expect {| val a12a : int * bool |}];
+  (* A12b (called D2 in GI) *)
+  do_test
+    {|
+      let a12b = revapp id poly;;
+    |};
+  [%expect {| val a12b : int * bool |}];
+  (* A13z (called D3 in GI) *)
+  do_test
+    {|
+      let a13z = run_st arg_st;;
+    |};
+  [%expect {| val a13z : int |}];
+  (* A13a (called D4 in GI) *)
+  do_test
+    {|
+      let a13a = app run_st arg_st;;
+    |};
+  [%expect {| val a13a : int |}];
+  (* A13b (called D5 in GI) *)
+  do_test
+    {|
+      let a13b = revapp arg_st run_st;;
+    |};
+  [%expect {| val a13b : int |}];
+  (* C1 in GI *)
+  do_test
+    {|
+      let b1z = length ids;;
+    |};
+  [%expect {| val b1z : int |}];
+  (* B1a (called C2 in GI) *)
+  do_test
+    {|
+      let b1a = tail ids;;
+    |};
+  [%expect {| val b1a : 's1 -> ((forall 't1. 't1 -> 't1) -> 's1 -> 's1) -> 's1 |}];
+  (* B1b (called C3 in GI) *)
+  do_test
+    {|
+      let b1b = head ids;;
+    |};
+  [%expect {| val b1b : 's1 -> 's1 |}];
+  (* B1c (called C4 in GI) *)
+  do_test
+    {|
+      let b1c = single id;;
+    |};
+  [%expect {| val b1c : 's1 -> (('t1 -> 't1) -> 's1 -> 's1) -> 's1 |}];
+  (* B2 (called C5 in GI) *)
+  do_test
+    {|
+      let b2 = cons id ids;;
+    |};
+  [%expect {| val b2 : 's1 -> ((forall 't1. 't1 -> 't1) -> 's1 -> 's1) -> 's1 |}];
+  (* B3 (called C6 in GI) *)
+  do_test
+    {|
+      let b3 = cons (fun x -> x) ids;;
+    |};
+  [%expect {| val b3 : 's1 -> ((forall 't1. 't1 -> 't1) -> 's1 -> 's1) -> 's1 |}];
+  (* B4 (called C7 in GI) *)
+  do_test
+    {|
+      let b4 = concat (single inc) (single id);;
+    |};
+  [%expect {| val b4 : 's1 -> ((int -> int) -> 's1 -> 's1) -> 's1 |}];
+  (* B5 (replaces C8 in GI) *)
+  do_test
+    {|
+      let b5 = concat (single id) ids;;
+    |};
+  [%expect {| val b5 : 's1 -> ((forall 't1. 't1 -> 't1) -> 's1 -> 's1) -> 's1 |}];
+  (* B6 (called C9 in GI) *)
+  do_test
+    {|
+      let b6 = map poly (single id);;
+    |};
+  [%expect {| val b6 : 's1 -> (int * bool -> 's1 -> 's1) -> 's1 |}];
+  (* B7 (Fresco X, QL +, GI +, called C10 in GI) *)
+  do_test
+    {|
+      let b7 = map head (single ids);;
+    |};
+  [%expect {| val b7 : 's1 -> ((forall 't1. 't1 -> 't1) -> 's1 -> 's1) -> 's1 |}];
+  (* B8 *)
+  do_test
+    {|
+      let b8 = head ids true;;
+    |};
+  [%expect {| val b8 : bool |}];
+  (* C1a (everyone fails on this, called B1 in GI) *)
+  do_test
+    {|
+      let c1a = fun f -> (f 1, f true);;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:31:34
+     31 │        let c1a = fun f -> (f 1, f true);;
+        │                                   ^^^^ `bool`
+        │                                          is not equal to
+        │                                        `int`
+    |}];
+  (* C1b *)
+  do_test
+    {|
+      let c1b = fun (forall f : 'a. 'a -> 'a) -> (f 1, f true);;
+    |};
+  [%expect {| val c1b : (forall 's1. 's1 -> 's1) -> int * bool |}];
+  (* C1c (MLF X, GI X, QL +, Fresco +) *)
+  do_test
+    {|
+      external g : ((forall 'a. 'a -> 'a) -> int * bool) -> unit;;
+      let c1c = g (fun f -> (f 42, f true));;
+    |};
+  [%expect
+    {|
+    external g : ((forall 's1. 's1 -> 's1) -> int * bool) -> unit
+    val c1c : unit
+    |}];
+  (* C2 (called E3 in GI) *)
+  do_test
+    {|
+      external r : (forall 'a. 'a -> (forall 'b. 'b -> 'b)) -> int;;
+      let c2 = r (fun x y -> y);;
+    |};
+  [%expect
+    {|
+    external r : (forall 't1. 't1 -> (forall 's1. 's1 -> 's1)) -> int
+    val c2 : int
+    |}];
+  (* eta-expansion dependencies *)
+  do_test
+    ~add:true
+    {|
+      external h : int -> (forall 'a. 'a -> 'a);;
+      external k : 'a. 'a -> 'a list -> 'a;;
+      external lst : (forall 'a. int -> 'a -> 'a) list;;
+    |};
+  [%expect
+    {|
+    external h : int -> (forall 's1. 's1 -> 's1)
+    external k : 't1 -> (forall 'u1. 'u1 -> ('t1 -> 'u1 -> 'u1) -> 'u1) -> 't1
+    external lst : 'v1 -> ((forall 'w1. int -> 'w1 -> 'w1) -> 'v1 -> 'v1) -> 'v1
+    |}];
+  (* E1a (everyone fails on this) *)
+  do_test
+    {|
+      let e1a = k h lst;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:35:19
+     35 │        let e1a = k h lst;;
+        │                    ^ `int -> (forall 'a. 'a -> 'a)`
+        │                        is not equal to
+        │                      `int -> 'b -> 'b`
+    |}];
+  (* E1b (called E2 in GI) *)
+  do_test
+    {|
+      let e1b = k (fun x -> h x) lst;;
+    |};
+  [%expect {| val e1b : int -> 'x1 -> 'x1 |}];
+  (* E2a (MLF +) *)
+  do_test
+    {|
+      let e2a = fun x -> poly x;;
+    |};
+  [%expect
+    {|
+    error[E012]: generic type variable escapes its scope
+        ┌─ expect_test.ml:35:31
+     35 │        let e2a = fun x -> poly x;;
+        │                                ^
+    |}];
+  (* E2b *)
+  do_test
+    {|
+      let e2b = (fun x -> poly x : (forall 'a. 'a -> 'a) -> int * bool);;
+     |};
+  [%expect {| val e2b : (forall 'x1. 'x1 -> 'x1) -> int * bool |}];
+  (* E3a *)
+  do_test
+    {|
+      let e3a = app poly id;;
+    |};
+  [%expect {| val e3a : int * bool |}];
+  (* E3b (Fresco passes with freezing) *)
+  do_test
+    {|
+      let e3b = app (fun x -> poly x) id;;
+    |};
+  [%expect
+    {|
+    error[E012]: generic type variable escapes its scope
+        ┌─ expect_test.ml:35:36
+     35 │        let e3b = app (fun x -> poly x) id;;
+        │                                     ^
+    |}];
+  (* E4a *)
+  do_test
+    {|
+      let e4a = map poly ids;; 
+    |};
+  [%expect {| val e4a : 'x1 -> (int * bool -> 'x1 -> 'x1) -> 'x1 |}];
+  (* E4b *)
+  do_test
+    {|
+      let e4b = map (fun x -> x) ids;;
+    |};
+  [%expect {| val e4b : 'x1 -> (('y1 -> 'y1) -> 'x1 -> 'x1) -> 'x1 |}];
+  (* E5a (Fresco fails) *)
+  do_test
+    {|
+      let e5a = compose poly head;;
+    |};
+  [%expect
+    {|
+    val e5a :
+      (forall 'y1. 'y1 -> ((forall 'x1. 'x1 -> 'x1) -> 'y1 -> 'y1) -> 'y1) ->
+      int * bool
+    |}];
+  (* E5b (called B2 in GI) *)
+  do_test
+    {|
+      let b2 = fun xs -> poly (head xs);;
+    |};
+  [%expect
+    {|
+    error[E012]: generic type variable escapes its scope
+        ┌─ expect_test.ml:35:37
+     35 │        let b2 = fun xs -> poly (head xs);;
+        │                                      ^^
+    |}];
+  (* E6 *)
+  do_test
+    {|
+      let e6 = (fun f -> app f) poly id;;
+    |};
+  [%expect {| val e6 : int * bool |}];
+  (* E7 (Fresco fails without freezing) *)
+  do_test
+    {|
+      let e7 = (fun f -> app poly f) id;;
+    |};
+  [%expect
+    {|
+    error[E012]: generic type variable escapes its scope
+        ┌─ expect_test.ml:35:35
+     35 │        let e7 = (fun f -> app poly f) id;;
+        │                                    ^
+    |}];
+  (* F1 *)
+  do_test
+    {|
+      let f1 = map (fun f -> (f true, f 42)) ids;;
+    |};
+  [%expect {| val f1 : 'x1 -> (bool * int -> 'x1 -> 'x1) -> 'x1 |}];
+  (* F2 (Fresco fails without freezing) *)
+  do_test
+    {|
+      let f2 = app (fun f -> (f true, f 42)) id;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:35:41
+     35 │        let f2 = app (fun f -> (f true, f 42)) id;;
+        │                                          ^^ `int`
+        │                                               is not equal to
+        │                                             `bool`
+    |}];
+  (* F3 (Fresco X, QL +) *)
+  do_test
+    {|
+      let f3 = map id ids;;
+    |};
+  [%expect {| val f3 : 'x1 -> ((forall 'y1. 'y1 -> 'y1) -> 'x1 -> 'x1) -> 'x1 |}];
+  (* F4 (Fresco fails without freezing) *)
+  do_test
+    {|
+      let f4 = (fun f -> (f 42, f true)) id;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:35:35
+     35 │        let f4 = (fun f -> (f 42, f true)) id;;
+        │                                    ^^^^ `bool`
+        │                                           is not equal to
+        │                                         `int`
+    |}];
+  (* F5 *)
+  do_test
+    {|
+      external pair : 'a 'b. 'a -> 'b -> 'a * 'b;;
+      let f5 = (pair (fun x -> 42) 42 : ((forall 'a. 'a -> 'a) -> int) * int);;
+    |};
+  [%expect
+    {|
+    external pair : 'x1 -> 'y1 -> 'x1 * 'y1
+    val f5 : ((forall 'z1. 'z1 -> 'z1) -> int) * int
+    |}];
+  (* F6 *)
+  do_test
+    {|
+      let f6 = choose nil ids;;
+    |};
+  [%expect {| val f6 : 'x1 -> ((forall 'y1. 'y1 -> 'y1) -> 'x1 -> 'x1) -> 'x1 |}];
+  (* F7 *)
+  do_test
+    {|
+      let f7 = head (choose nil ids);;
+    |};
+  [%expect {| val f7 : 'x1 -> 'x1 |}];
+  (* F8 (QL X, Fresco +) *)
+  do_test
+    {|
+      external f : 'a. (int -> 'a) -> 'a;;
+      let f8 = f (fun x -> ids);;
+    |};
+  [%expect
+    {|
+    external f : (int -> 'x1) -> 'x1
+    val f8 : 'y1 -> ((forall 'z1. 'z1 -> 'z1) -> 'y1 -> 'y1) -> 'y1
+    |}];
+  (* F9 (QL X, Fresco +) *)
+  do_test
+    {|
+      external f : 'a. (forall 'b. 'b -> 'b * 'a) -> 'a;;      
+      let f9 = f (fun x -> (x, ids));;
+    |};
+  [%expect
+    {|
+    external f : (forall 'y1. 'y1 -> 'y1 * 'x1) -> 'x1
+    val f9 : 'z1 -> ((forall 'a2. 'a2 -> 'a2) -> 'z1 -> 'z1) -> 'z1
+    |}];
+  (* F10 (QL X, Fresco +) *)
+  do_test
+    {|
+      external f : 'a. ((forall 'b. 'b -> 'b) -> 'a) -> 'a;;      
+      let f10 = f (fun x -> ids);;
+    |};
+  [%expect
+    {|
+    external f : ((forall 'x1. 'x1 -> 'x1) -> 'y1) -> 'y1
+    val f10 : 'z1 -> ((forall 'a2. 'a2 -> 'a2) -> 'z1 -> 'z1) -> 'z1
+    |}];
+  (* F11a *)
+  do_test
+    {|
+      external polys : (forall 'a. 'a -> 'a) list -> int * bool;;
+      let f11a = polys (single id);;      
+    |};
+  [%expect
+    {|
+    external polys :
+      (forall 'y1. 'y1 -> ((forall 'x1. 'x1 -> 'x1) -> 'y1 -> 'y1) -> 'y1) ->
+      int * bool
+    val f11a : int * bool
+    |}];
+  (* F11b (Fresco fails without freezing, QL X) *)
+  do_test
+    {|
+      external polys : (forall 'a. 'a -> 'a) list -> int * bool;;
+      let f11b = let xs = single id in polys xs;;      
+    |};
+  [%expect
+    {|
+    external polys :
+      (forall 'y1. 'y1 -> ((forall 'x1. 'x1 -> 'x1) -> 'y1 -> 'y1) -> 'y1) ->
+      int * bool
+    val f11b : int * bool
+    |}];
+  (* F12 (From p10 in Fresco) *)
+  do_test
+    {|
+      external g : 'b. (forall 'a. 'a -> 'a) -> 'b -> 'b list;;
+      external f : 'c 'd. ('c -> 'c -> 'd list) -> int;;
+      let f12 = f g;;
+    |};
+  [%expect
+    {|
+    external g :
+      (forall 'x1. 'x1 -> 'x1) ->
+      'y1 -> (forall 'z1. 'z1 -> ('y1 -> 'z1 -> 'z1) -> 'z1)
+    external f :
+      ('a2 -> 'a2 -> (forall 'c2. 'c2 -> ('b2 -> 'c2 -> 'c2) -> 'c2)) -> int
+    val f12 : int
+    |}]
+;;
