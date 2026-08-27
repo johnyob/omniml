@@ -2877,16 +2877,34 @@ let%expect_test "" =
 (** Module for incrementally building up test code, like adding to a file *)
 module Incremental_test = struct
   type t =
-    { mutable curr_str : string
+    { mutable curr_input : string
+    ; mutable curr_output : string
     ; test_fn : string -> unit
     }
 
-  let create ?(initial = "") test_fn = { curr_str = initial; test_fn }
+  let create ?(initial = "") test_fn =
+    test_fn initial;
+    let curr_output =
+      Ppx_expect_runtime.For_external.read_current_test_output_exn ~here:[%here]
+    in
+    Fmt.pr "%s%!" curr_output;
+    { curr_input = initial; curr_output; test_fn }
+  ;;
 
   let run t ?(add = false) str =
-    let full_str = t.curr_str ^ str in
-    t.test_fn full_str;
-    if add then t.curr_str <- full_str
+    let next_input = t.curr_input ^ str in
+    t.test_fn next_input;
+    let next_output =
+      Ppx_expect_runtime.For_external.read_current_test_output_exn ~here:[%here]
+    in
+    (* Print output *)
+    (match String.chop_prefix next_output ~prefix:t.curr_output with
+     | None -> Fmt.pr "%s%!" next_output
+     | Some chopped_next_output ->
+       Fmt.pr "%s%!" chopped_next_output;
+       (* Test was likely successful! Update output accordingly :D *)
+       if add then t.curr_output <- next_output);
+    if add then t.curr_input <- next_input
   ;;
 end
 
@@ -2896,6 +2914,23 @@ let%expect_test "" =
       ~initial:(include_fix ^ include_ref ^ include_option ^ include_list)
       (type_check_and_print ~defaulting:Unary)
   in
+  [%expect
+    {|
+    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
+    type 'a ref
+    type 'a ref_repr =
+      { contents : 'a }
+    external create_ref : 'c -> 'c ref
+    external get_ref : 'd ref -> 'd
+    external set_ref : 'e ref -> 'e -> unit
+    external ref_repr : 'f ref -> 'f ref_repr
+    type 'a option =
+      | None
+      | Some of 'a
+    type 'a list =
+      | Nil
+      | Cons of 'a * 'a list
+    |}];
   let do_test = Incremental_test.run test in
   do_test
     ~add:true
@@ -2905,47 +2940,12 @@ let%expect_test "" =
         (id 3, id true) 
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    |}];
+  [%expect {| val poly1 : ['h. 'h -> 'h] -> int * bool |}];
   do_test
     {|
       let xignore = poly1 [(fun x -> x)];;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val xignore : int * bool
-    |}];
+  [%expect {| val xignore : int * bool |}];
   do_test
     {|
       let xignore = poly1 [(fun x -> x + 1)];;
@@ -2967,21 +2967,6 @@ let%expect_test "" =
     |};
   [%expect
     {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
     val id : 'i -> 'i
     val xignore : int * bool
     |}];
@@ -2991,52 +2976,12 @@ let%expect_test "" =
     {|
       let xignore = poly1 [id (fun x -> x)];;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val xignore : int * bool
-    |}];
+  [%expect {| val xignore : int * bool |}];
   do_test
     {|
       let xignore = poly1 [(let r = create_ref None in fun x -> set_ref r (Some x); x)];;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val xignore : int * bool
-    |}];
+  [%expect {| val xignore : int * bool |}];
   do_test
     {|
       let escape = fun f -> poly1 [(fun x -> f x; x)];;
@@ -3056,53 +3001,12 @@ let%expect_test "" =
         ((id 1, id true) : int * bool)
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    |}];
+  [%expect {| val poly2 : ['k. 'k -> 'k] -> int * bool |}];
   do_test
     {|
       let xignore = poly2 [(fun x -> x)];;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val xignore : int * bool
-    |}];
+  [%expect {| val xignore : int * bool |}];
   do_test
     {|
       let xignore = poly2 [(fun x -> x + 1)];;
@@ -3127,55 +3031,12 @@ let%expect_test "" =
             ((id x, id (Some x)) : 'b * 'b option)
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    |}];
+  [%expect {| val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option |}];
   do_test
     {|
       let xignore = poly3 [(fun x -> x)] [8];;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val xignore : int * int option
-    |}];
+  [%expect {| val xignore : int * int option |}];
   do_test
     {|
       let xignore = poly3 [(fun x -> x + 1)] [8];;
@@ -3198,57 +3059,12 @@ let%expect_test "" =
         if p then poly4 [false] [id] else (id 4, id true))
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    |}];
+  [%expect {| val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool |}];
   do_test
     {|
       let xignore = poly4 [true] [(fun x -> x)];;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val xignore : int * bool
-    |}];
+  [%expect {| val xignore : int * bool |}];
   do_test
     {|
       let xignore = poly4 [true] [(fun x -> x + 1)];;
@@ -3271,59 +3087,12 @@ let%expect_test "" =
         ((if p then poly5 [false] [id] else (id 5, id true)) : int * bool))
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
-    |}];
+  [%expect {| val poly5 : [bool] -> ['s. 's -> 's] -> int * bool |}];
   do_test
     {|
       let xignore = poly5 [true] [(fun x -> x)];;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
-    val xignore : int * bool
-    |}];
+  [%expect {| val xignore : int * bool |}];
   do_test
     {|
       let xignore = poly5 [true] [(fun x -> x + 1)];;
@@ -3349,61 +3118,12 @@ let%expect_test "" =
             ((if p then poly6 [false] [id] [x] else (id x, id (Some x))) : 'b * 'b option))
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
-    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    |}];
+  [%expect {| val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option |}];
   do_test
     {|
       let xignore = poly6 [true] [(fun x -> x)] [8];; 
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
-    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val xignore : int * int option
-    |}];
+  [%expect {| val xignore : int * int option |}];
   do_test
     {|
       let xignore = poly6 [true] [(fun x -> x + 1)] [8];;
@@ -3425,32 +3145,7 @@ let%expect_test "" =
         (magic 5 : bool)
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
-    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
-    |}];
+  [%expect {| val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool |}];
   do_test
     {|
       let xignore = needs_magic [(fun x -> x)];;
@@ -3472,33 +3167,7 @@ let%expect_test "" =
         (f [(fun x -> x)] : 'b)
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
-    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    |}];
+  [%expect {| val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1 |}];
   do_test
     {|
       let xignore = with_id [(fun id -> 
@@ -3506,34 +3175,7 @@ let%expect_test "" =
         (id 1, id true))] 
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
-    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val xignore : int * bool
-    |}];
+  [%expect {| val xignore : int * bool |}];
   do_test
     {|
       let non_principal1 = fun p f ->
@@ -3542,34 +3184,7 @@ let%expect_test "" =
         if p then with_id [f] else f [(fun x -> x)]
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
-    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val non_principal1 : [bool] -> [['h1. 'h1 -> 'h1] -> 'g1] -> 'g1
-    |}];
+  [%expect {| val non_principal1 : [bool] -> [['h1. 'h1 -> 'h1] -> 'g1] -> 'g1 |}];
   do_test
     {|
       let non_principal2 = fun p f ->
@@ -3578,34 +3193,7 @@ let%expect_test "" =
         if p then f [(fun x -> x)] else with_id [f]
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
-    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val non_principal2 : [bool] -> [['h1. 'h1 -> 'h1] -> 'g1] -> 'g1
-    |}];
+  [%expect {| val non_principal2 : [bool] -> [['h1. 'h1 -> 'h1] -> 'g1] -> 'g1 |}];
   do_test
     {|
       let principal1 = exists (type 'b) -> fun p (f : [['a. 'a -> 'a] -> 'b]) ->
@@ -3614,34 +3202,7 @@ let%expect_test "" =
         if p then f [(fun x -> x)] else with_id [f]
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
-    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val principal1 : [bool] -> [['h1. 'h1 -> 'h1] -> 'g1] -> 'g1
-    |}];
+  [%expect {| val principal1 : [bool] -> [['h1. 'h1 -> 'h1] -> 'g1] -> 'g1 |}];
   do_test
     {|
       let principal2 = exists (type 'b) -> 
@@ -3652,34 +3213,7 @@ let%expect_test "" =
         : [bool] -> [['a. 'a -> 'a] -> 'b] -> 'b)
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
-    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val principal2 : [bool] -> [['h1. 'h1 -> 'h1] -> 'g1] -> 'g1
-    |}];
+  [%expect {| val principal2 : [bool] -> [['h1. 'h1 -> 'h1] -> 'g1] -> 'g1 |}];
   do_test
     {|
       let principal3 = ( 
@@ -3689,34 +3223,7 @@ let%expect_test "" =
         : (['a. 'a -> 'a] -> int * bool) option list)
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
-    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val principal3 : (['g1. 'g1 -> 'g1] -> int * bool) option list
-    |}];
+  [%expect {| val principal3 : (['g1. 'g1 -> 'g1] -> int * bool) option list |}];
   do_test
     {|
       let non_principal3 = 
@@ -3724,34 +3231,7 @@ let%expect_test "" =
         Cons (Some (fun x -> let x = @[x] in (x 6, x false)), Nil))
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
-    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val non_principal3 : (['h1. 'h1 -> 'h1] -> int * bool) option list
-    |}];
+  [%expect {| val non_principal3 : (['h1. 'h1 -> 'h1] -> int * bool) option list |}];
   do_test
     {|
       let non_principal4 = 
@@ -3759,34 +3239,7 @@ let%expect_test "" =
         Cons ((Some (fun x -> let x = @[x] in (x 6, x false)) : (['a. 'a -> 'a] -> int * bool) option), Nil))
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
-    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val non_principal4 : (['h1. 'h1 -> 'h1] -> int * bool) option list
-    |}];
+  [%expect {| val non_principal4 : (['h1. 'h1 -> 'h1] -> int * bool) option list |}];
   do_test
     {|
       let foo = fun (f : [['a. 'a -> 'a] -> int]) -> 
@@ -3797,34 +3250,7 @@ let%expect_test "" =
         : ['a 'b. 'a -> 'b] -> int)
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : ['h. 'h -> 'h] -> int * bool
-    val id : 'i -> 'i
-    val xignore : int * bool
-    val poly2 : ['k. 'k -> 'k] -> int * bool
-    val poly3 : ['n. 'n -> 'n] -> ['o] -> 'o * 'o option
-    val poly4 : [bool] -> ['q. 'q -> 'q] -> int * bool
-    val poly5 : [bool] -> ['s. 's -> 's] -> int * bool
-    val poly6 : [bool] -> ['v. 'v -> 'v] -> ['w] -> 'w * 'w option
-    val needs_magic : ['z 'a1. 'a1 -> 'z] -> bool
-    val with_id : [['d1. 'd1 -> 'd1] -> 'e1] -> 'e1
-    val foo : [['i1. 'i1 -> 'i1] -> int] -> ['j1 'k1. 'k1 -> 'j1] -> int
-    |}]
+  [%expect {| val foo : [['i1. 'i1 -> 'i1] -> int] -> ['j1 'k1. 'k1 -> 'j1] -> int |}]
 ;;
 
 let%expect_test "" =
@@ -3833,6 +3259,23 @@ let%expect_test "" =
       ~initial:(include_fix ^ include_ref ^ include_option ^ include_list)
       (type_check_and_print ~with_poly_params:true ~defaulting:Unary)
   in
+  [%expect
+    {|
+    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
+    type 'a ref
+    type 'a ref_repr =
+      { contents : 'a }
+    external create_ref : 'c -> 'c ref
+    external get_ref : 'd ref -> 'd
+    external set_ref : 'e ref -> 'e -> unit
+    external ref_repr : 'f ref -> 'f ref_repr
+    type 'a option =
+      | None
+      | Some of 'a
+    type 'a list =
+      | Nil
+      | Cons of 'a * 'a list
+    |}];
   let do_test = Incremental_test.run test in
   do_test
     ~add:true
@@ -3841,47 +3284,12 @@ let%expect_test "" =
         (id 1, id true)
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    |}];
+  [%expect {| val poly1 : (forall 'g. 'g -> 'g) -> int * bool |}];
   do_test
     {|
       let xignore = poly1 (fun x -> x);;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val xignore : int * bool
-    |}];
+  [%expect {| val xignore : int * bool |}];
   do_test
     {|
       let xignore = poly1 (fun x -> x + 1);;
@@ -3900,100 +3308,25 @@ let%expect_test "" =
     {|
       let id = fun x -> x;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    |}];
+  [%expect {| val id : 'h -> 'h |}];
   do_test
     {|
       let xignore = poly1 id;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val xignore : int * bool
-    |}];
+  [%expect {| val xignore : int * bool |}];
   (* Passes in OmniML since we don't have the value restriction, 
      but fails in OCaml *)
   do_test
     {|
       let xignore = poly1 (id (fun x -> x));;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val xignore : int * bool
-    |}];
+  [%expect {| val xignore : int * bool |}];
   (* Ditto *)
   do_test
     {|
       let xignore = poly1 (let r = create_ref None in fun x -> set_ref r (Some x); x);;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val xignore : int * bool
-    |}];
+  [%expect {| val xignore : int * bool |}];
   do_test
     {|
       let escape = fun f -> poly1 (fun x -> f x; x);;
@@ -4012,51 +3345,12 @@ let%expect_test "" =
         ((id 1, id true) : int * bool)
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    |}];
+  [%expect {| val poly2 : (forall 'i. 'i -> 'i) -> int * bool |}];
   do_test
     {|
       let xignore = poly2 (fun x -> x);;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val xignore : int * bool
-    |}];
+  [%expect {| val xignore : int * bool |}];
   do_test
     {|
       let xignore = poly2 (fun x -> x + 1);;
@@ -4079,53 +3373,12 @@ let%expect_test "" =
             ((id x, id (Some x)) : 'b * 'b option)
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    |}];
+  [%expect {| val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option |}];
   do_test
     {|
       let xignore = poly3 (fun x -> x) 8;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val xignore : int * int option
-    |}];
+  [%expect {| val xignore : int * int option |}];
   do_test
     {|
       let xignore = poly3 (fun x -> x + 1) 8;;
@@ -4146,55 +3399,12 @@ let%expect_test "" =
         if p then poly4 false id else (id 4, id true))
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    |}];
+  [%expect {| val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool |}];
   do_test
     {|
       let xignore = poly4 true (fun x -> x);;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val xignore : int * bool
-    |}];
+  [%expect {| val xignore : int * bool |}];
   do_test
     {|
       let xignore = poly4 true (fun x -> x + 1);;
@@ -4255,57 +3465,12 @@ let%expect_test "" =
         ((if p then poly5 false id else (id 5, id true)) : int * bool))
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool
-    |}];
+  [%expect {| val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool |}];
   do_test
     {|
       let xignore = poly5 true (fun x -> x);;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool
-    val xignore : int * bool
-    |}];
+  [%expect {| val xignore : int * bool |}];
   do_test
     {|
       let xignore = poly5 true (fun x -> x + 1);;
@@ -4328,59 +3493,12 @@ let%expect_test "" =
             ((if p then poly6 false id x else (id x, id (Some x))) : 'b * 'b option))
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool
-    val poly6 : bool -> (forall 'n. 'n -> 'n) -> 'o -> 'o * 'o option
-    |}];
+  [%expect {| val poly6 : bool -> (forall 'n. 'n -> 'n) -> 'o -> 'o * 'o option |}];
   do_test
     {|
       let xignore = poly6 true (fun x -> x) 8;; 
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool
-    val poly6 : bool -> (forall 'n. 'n -> 'n) -> 'o -> 'o * 'o option
-    val xignore : int * int option
-    |}];
+  [%expect {| val xignore : int * int option |}];
   do_test
     {|
       let xignore = poly6 true (fun x -> x + 1) 8;;
@@ -4401,31 +3519,7 @@ let%expect_test "" =
         (magic 5 : bool)
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool
-    val poly6 : bool -> (forall 'n. 'n -> 'n) -> 'o -> 'o * 'o option
-    val needs_magic : (forall 'p 'q. 'q -> 'p) -> bool
-    |}];
+  [%expect {| val needs_magic : (forall 'p 'q. 'q -> 'p) -> bool |}];
   do_test
     {|
       let xignore = needs_magic (fun x -> x);;
@@ -4501,164 +3595,35 @@ let%expect_test "" =
         (f (fun x -> x) : 'b)
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool
-    val poly6 : bool -> (forall 'n. 'n -> 'n) -> 'o -> 'o * 'o option
-    val needs_magic : (forall 'p 'q. 'q -> 'p) -> bool
-    val with_id : ((forall 'r. 'r -> 'r) -> 's) -> 's
-    |}];
+  [%expect {| val with_id : ((forall 'r. 'r -> 'r) -> 's) -> 's |}];
   do_test
     {|
       let xignore = with_id (fun id -> 
         (id 1, id true)) 
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool
-    val poly6 : bool -> (forall 'n. 'n -> 'n) -> 'o -> 'o * 'o option
-    val needs_magic : (forall 'p 'q. 'q -> 'p) -> bool
-    val with_id : ((forall 'r. 'r -> 'r) -> 's) -> 's
-    val xignore : int * bool
-    |}];
+  [%expect {| val xignore : int * bool |}];
   do_test
     {|
       let non_principal1 = fun p f ->
         if p then with_id f else f (fun x -> x)
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool
-    val poly6 : bool -> (forall 'n. 'n -> 'n) -> 'o -> 'o * 'o option
-    val needs_magic : (forall 'p 'q. 'q -> 'p) -> bool
-    val with_id : ((forall 'r. 'r -> 'r) -> 's) -> 's
-    val non_principal1 : bool -> ((forall 't. 't -> 't) -> 'u) -> 'u
-    |}];
+  [%expect {| val non_principal1 : bool -> ((forall 't. 't -> 't) -> 'u) -> 'u |}];
   do_test
     {|
       let non_principal2 = fun p f ->
         if p then f (fun x -> x) else with_id f
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool
-    val poly6 : bool -> (forall 'n. 'n -> 'n) -> 'o -> 'o * 'o option
-    val needs_magic : (forall 'p 'q. 'q -> 'p) -> bool
-    val with_id : ((forall 'r. 'r -> 'r) -> 's) -> 's
-    val non_principal2 : bool -> ((forall 't. 't -> 't) -> 'u) -> 'u
-    |}];
+  [%expect {| val non_principal2 : bool -> ((forall 't. 't -> 't) -> 'u) -> 'u |}];
   do_test
     {|
       let principal1 = exists (type 'b) -> fun p (f : (forall 'a. 'a -> 'a) -> 'b) ->
         if p then f (fun x -> x) else with_id f
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool
-    val poly6 : bool -> (forall 'n. 'n -> 'n) -> 'o -> 'o * 'o option
-    val needs_magic : (forall 'p 'q. 'q -> 'p) -> bool
-    val with_id : ((forall 'r. 'r -> 'r) -> 's) -> 's
-    val principal1 : bool -> ((forall 't. 't -> 't) -> 'u) -> 'u
-    |}];
+  [%expect {| val principal1 : bool -> ((forall 't. 't -> 't) -> 'u) -> 'u |}];
   do_test
     {|
       let principal2 = exists (type 'b) -> 
@@ -4667,33 +3632,7 @@ let%expect_test "" =
         : bool -> ((forall 'a. 'a -> 'a) -> 'b) -> 'b)
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool
-    val poly6 : bool -> (forall 'n. 'n -> 'n) -> 'o -> 'o * 'o option
-    val needs_magic : (forall 'p 'q. 'q -> 'p) -> bool
-    val with_id : ((forall 'r. 'r -> 'r) -> 's) -> 's
-    val principal2 : bool -> ((forall 't. 't -> 't) -> 'u) -> 'u
-    |}];
+  [%expect {| val principal2 : bool -> ((forall 't. 't -> 't) -> 'u) -> 'u |}];
   do_test
     {|
       let principal3 = ( 
@@ -4702,33 +3641,7 @@ let%expect_test "" =
         : ((forall 'a. 'a -> 'a) -> int * bool) option list)
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool
-    val poly6 : bool -> (forall 'n. 'n -> 'n) -> 'o -> 'o * 'o option
-    val needs_magic : (forall 'p 'q. 'q -> 'p) -> bool
-    val with_id : ((forall 'r. 'r -> 'r) -> 's) -> 's
-    val principal3 : ((forall 't. 't -> 't) -> int * bool) option list
-    |}];
+  [%expect {| val principal3 : ((forall 't. 't -> 't) -> int * bool) option list |}];
   do_test
     {|
       let non_principal3 = 
@@ -4736,33 +3649,7 @@ let%expect_test "" =
         Cons (Some (fun x -> (x 6, x false)), Nil))
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool
-    val poly6 : bool -> (forall 'n. 'n -> 'n) -> 'o -> 'o * 'o option
-    val needs_magic : (forall 'p 'q. 'q -> 'p) -> bool
-    val with_id : ((forall 'r. 'r -> 'r) -> 's) -> 's
-    val non_principal3 : ((forall 't. 't -> 't) -> int * bool) option list
-    |}];
+  [%expect {| val non_principal3 : ((forall 't. 't -> 't) -> int * bool) option list |}];
   do_test
     {|
       let non_principal4 = 
@@ -4770,33 +3657,7 @@ let%expect_test "" =
         Cons ((Some (fun x -> (x 6, x false)) : ((forall 'a. 'a -> 'a) -> int * bool) option), Nil))
       ;;
     |};
-  [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool
-    val poly6 : bool -> (forall 'n. 'n -> 'n) -> 'o -> 'o * 'o option
-    val needs_magic : (forall 'p 'q. 'q -> 'p) -> bool
-    val with_id : ((forall 'r. 'r -> 'r) -> 's) -> 's
-    val non_principal4 : ((forall 't. 't -> 't) -> int * bool) option list
-    |}];
+  [%expect {| val non_principal4 : ((forall 't. 't -> 't) -> int * bool) option list |}];
   do_test
     {|
       let foo = fun (f : (forall 'a. 'a -> 'a) -> int) -> 
@@ -4805,32 +3666,7 @@ let%expect_test "" =
       ;;
     |};
   [%expect
-    {|
-    external fix : (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b
-    type 'a ref
-    type 'a ref_repr =
-      { contents : 'a }
-    external create_ref : 'c -> 'c ref
-    external get_ref : 'd ref -> 'd
-    external set_ref : 'e ref -> 'e -> unit
-    external ref_repr : 'f ref -> 'f ref_repr
-    type 'a option =
-      | None
-      | Some of 'a
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    val poly1 : (forall 'g. 'g -> 'g) -> int * bool
-    val id : 'h -> 'h
-    val poly2 : (forall 'i. 'i -> 'i) -> int * bool
-    val poly3 : (forall 'j. 'j -> 'j) -> 'k -> 'k * 'k option
-    val poly4 : bool -> (forall 'l. 'l -> 'l) -> int * bool
-    val poly5 : bool -> (forall 'm. 'm -> 'm) -> int * bool
-    val poly6 : bool -> (forall 'n. 'n -> 'n) -> 'o -> 'o * 'o option
-    val needs_magic : (forall 'p 'q. 'q -> 'p) -> bool
-    val with_id : ((forall 'r. 'r -> 'r) -> 's) -> 's
-    val foo : ((forall 't. 't -> 't) -> int) -> (forall 'u 'v. 'v -> 'u) -> int
-    |}]
+    {| val foo : ((forall 't. 't -> 't) -> int) -> (forall 'u 'v. 'v -> 'u) -> int |}]
 ;;
 
 let%expect_test "" =
@@ -5721,7 +4557,11 @@ let%expect_test "a scheme is not an implicitly first-class polymorphic value" =
 ;;
 
 let%expect_test "" =
-  (* All examples from https://dl.acm.org/doi/pdf/10.1145/3408971 *)
+  (* All examples from:
+     - https://dl.acm.org/doi/pdf/10.1145/3408971 
+     - https://dl.acm.org/doi/pdf/10.1145/3408971
+     - https://arxiv.org/pdf/2607.16061
+  *)
   let test =
     Incremental_test.create
       ~initial:
@@ -5752,1066 +4592,524 @@ let%expect_test "" =
               
               external run_st : 'v. (forall 's. ('s, 'v) st) -> 'v;;
               external arg_st : 's. ('s, int) st;;
+              external compose : 'a 'b 'c. ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c;;
            |}
         )
       (type_check_and_print ~with_poly_params:true ~defaulting:Unary)
   in
+  [%expect
+    {|
+    type 'a list =
+      | Nil
+      | Cons of 'a * 'a list
+    external head : 'a list -> 'a
+    external tail : 'b list -> 'b list
+    external nil : 'c list
+    external cons : 'd -> 'd list -> 'd list
+    external single : 'e -> 'e list
+    external concat : 'f list -> 'f list -> 'f list
+    external length : 'g list -> int
+    external id : 'h -> 'h
+    external inc : int -> int
+    external choose : 'i -> 'i -> 'i
+    external poly : (forall 'j. 'j -> 'j) -> int * bool
+    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
+    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
+    external ids : (forall 'o. 'o -> 'o) list
+    external map : ('p -> 'q) -> 'p list -> 'q list
+    external app : ('r -> 's) -> 'r -> 's
+    external revapp : 't -> ('t -> 'u) -> 'u
+    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
+    type ('s, 'a) st =
+      | St
+    external run_st : (forall 'z. ('z, 'y) st) -> 'y
+    external arg_st : ('a1, int) st
+    external compose : ('b1 -> 'c1) -> ('d1 -> 'b1) -> 'd1 -> 'c1
+    |}];
   let do_test = Incremental_test.run test in
   (* A1 *)
   do_test
     {|
       let const2 = fun x y -> y;;
     |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    val const2 : 'b1 -> 'c1 -> 'c1
-    |}];
+  [%expect {| val const2 : 'e1 -> 'f1 -> 'f1 |}];
   (* A2 *)
   do_test
     {|
-      let _ = choose id;;
+      let a2 = choose id;;
     |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
+  [%expect {| val a2 : ('e1 -> 'e1) -> 'e1 -> 'e1 |}];
   (* A3: infers [(forall 'a. 'a -> 'a) list]. *)
   do_test
     {|
-      let _ = choose nil ids;;
+      let a3 = choose nil ids;;
     |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
+  [%expect {| val a3 : (forall 'e1. 'e1 -> 'e1) list |}];
   (* A4 *)
   do_test
     {|
-      let _ = fun (forall x : 'a. 'a -> 'a) -> x x;;
+      let a4 = fun (forall x : 'a. 'a -> 'a) -> x x;;
     |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
+  [%expect {| val a4 : (forall 'e1. 'e1 -> 'e1) -> 'f1 -> 'f1 |}];
   (* A5 *)
   do_test
     {|
-      let _ = id auto;;
+      let a5 = id auto;;
     |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
+  [%expect {| val a5 : (forall 'e1. 'e1 -> 'e1) -> (forall 'f1. 'f1 -> 'f1) |}];
   (* A6 *)
   do_test
     {|
-      let _ = id auto2;;
+      let a6 = id auto2;;
     |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
+  [%expect {| val a6 : (forall 'e1. 'e1 -> 'e1) -> 'f1 -> 'f1 |}];
   (* A7 *)
   do_test
     {|
-      let _ = choose id auto;;
+      let a7 = choose id auto;;
     |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
-  (* A8 *)
+  [%expect {| val a7 : (forall 'e1. 'e1 -> 'e1) -> (forall 'f1. 'f1 -> 'f1) |}];
+  (* A8 (Fresco X, QL X, HMF X, MLF +, ATIA X, FCIF X) *)
   do_test
     {|
-      let _ = choose id auto2;;
+      let a8 = choose id auto2;;
     |};
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:33:22
-     33 │        let _ = choose id auto2;;
-        │                       ^^ `'a -> 'a`
-        │                            is not equal to
-        │                          `(forall 'b. 'b -> 'b) -> 'c -> 'c`
+        ┌─ expect_test.ml:34:23
+     34 │        let a8 = choose id auto2;;
+        │                        ^^ `'a -> 'a`
+        │                             is not equal to
+        │                           `(forall 'b. 'b -> 'b) -> 'c -> 'c`
     |}];
   (* A9 *)
   do_test
     {|
       external f : 'a. ('a -> 'a) -> 'a list -> 'a;;
-      let _ = f (choose id) ids;;
+      let a9 = f (choose id) ids;;
     |};
   [%expect
     {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    external f : ('b1 -> 'b1) -> 'b1 list -> 'b1
+    external f : ('e1 -> 'e1) -> 'e1 list -> 'e1
+    val a9 : 'f1 -> 'f1
     |}];
-  (* A10 *)
+  (* A10a *)
   do_test
     {|
-      let _ = poly id;;
+      let a10a = poly id;;
     |};
-  [%expect
+  [%expect {| val a10a : int * bool |}];
+  (* A10b *)
+  do_test
     {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
+      let a10b = poly (fun x -> x);;
+    |};
+  [%expect {| val a10b : int * bool |}];
+  (* A10c *)
+  do_test
+    {|
+      let a10c = id poly (fun x -> x);;
+    |};
+  [%expect {| val a10c : int * bool |}];
   (* A11 *)
   do_test
     {|
-      let _ = poly (fun x -> x);;
+      external k : 'a. 'a -> 'a list -> int;;
+      external xs : ((forall 'a. 'a -> 'a) -> int * bool) list;;
+      let a11 = k (fun f -> (f 42, f true)) xs;;
     |};
   [%expect
     {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
+    external k : 'e1 -> 'e1 list -> int
+    external xs : ((forall 'f1. 'f1 -> 'f1) -> int * bool) list
+    val a11 : int
     |}];
-  (* A12 *)
+  (* A12a (called D1 in GI) *)
   do_test
     {|
-      let _ = id poly (fun x -> x);;
+      let a12a = app poly id;;
     |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
-  (* B1 *)
+  [%expect {| val a12a : int * bool |}];
+  (* A12b (called D2 in GI) *)
   do_test
     {|
-      let _ = fun f -> (f 1, f true);;
+      let a12b = revapp id poly;;
+    |};
+  [%expect {| val a12b : int * bool |}];
+  (* A13z (called D3 in GI) *)
+  do_test
+    {|
+      let a13z = run_st arg_st;;
+    |};
+  [%expect {| val a13z : int |}];
+  (* A13a (called D4 in GI) *)
+  do_test
+    {|
+      let a13a = app run_st arg_st;;
+    |};
+  [%expect {| val a13a : int |}];
+  (* A13b (called D5 in GI) *)
+  do_test
+    {|
+      let a13b = revapp arg_st run_st;;
+    |};
+  [%expect {| val a13b : int |}];
+  (* C1 in GI *)
+  do_test
+    {|
+      let b1z = length ids;;
+    |};
+  [%expect {| val b1z : int |}];
+  (* B1a (called C2 in GI) *)
+  do_test
+    {|
+      let b1a = tail ids;;
+    |};
+  [%expect {| val b1a : (forall 'e1. 'e1 -> 'e1) list |}];
+  (* B1b (called C3 in GI) *)
+  do_test
+    {|
+      let b1b = head ids;;
+    |};
+  [%expect {| val b1b : 'e1 -> 'e1 |}];
+  (* B1c (called C4 in GI) *)
+  do_test
+    {|
+      let b1c = single id;;
+    |};
+  [%expect {| val b1c : ('e1 -> 'e1) list |}];
+  (* B2 (called C5 in GI) *)
+  do_test
+    {|
+      let b2 = cons id ids;;
+    |};
+  [%expect {| val b2 : (forall 'e1. 'e1 -> 'e1) list |}];
+  (* B3 (called C6 in GI) *)
+  do_test
+    {|
+      let b3 = cons (fun x -> x) ids;;
+    |};
+  [%expect {| val b3 : (forall 'e1. 'e1 -> 'e1) list |}];
+  (* B4 (called C7 in GI) *)
+  do_test
+    {|
+      let b4 = concat (single inc) (single id);;
+    |};
+  [%expect {| val b4 : (int -> int) list |}];
+  (* B5 (replaces C8 in GI) *)
+  do_test
+    {|
+      let b5 = concat (single id) ids;;
+    |};
+  [%expect {| val b5 : (forall 'e1. 'e1 -> 'e1) list |}];
+  (* B6 (called C9 in GI) *)
+  do_test
+    {|
+      let b6 = map poly (single id);;
+    |};
+  [%expect {| val b6 : (int * bool) list |}];
+  (* B7 (Fresco X, QL +, GI +, called C10 in GI) *)
+  do_test
+    {|
+      let b7 = map head (single ids);;
+    |};
+  [%expect {| val b7 : (forall 'e1. 'e1 -> 'e1) list |}];
+  (* B8 *)
+  do_test
+    {|
+      let b8 = head ids true;;
+    |};
+  [%expect {| val b8 : bool |}];
+  (* C1a (everyone fails on this, called B1 in GI) *)
+  do_test
+    {|
+      let c1a = fun f -> (f 1, f true);;
     |};
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:33:32
-     33 │        let _ = fun f -> (f 1, f true);;
-        │                                 ^^^^ `bool`
-        │                                        is not equal to
-        │                                      `int`
+        ┌─ expect_test.ml:34:34
+     34 │        let c1a = fun f -> (f 1, f true);;
+        │                                   ^^^^ `bool`
+        │                                          is not equal to
+        │                                        `int`
     |}];
+  (* C1b *)
   do_test
     {|
-      let _ = fun (forall f : 'a. 'a -> 'a) -> (f 1, f true);;
+      let c1b = fun (forall f : 'a. 'a -> 'a) -> (f 1, f true);;
+    |};
+  [%expect {| val c1b : (forall 'e1. 'e1 -> 'e1) -> int * bool |}];
+  (* C1c (MLF X, GI X, QL +, Fresco +) *)
+  do_test
+    {|
+      external g : ((forall 'a. 'a -> 'a) -> int * bool) -> unit;;
+      let c1c = g (fun f -> (f 42, f true));;
     |};
   [%expect
     {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
+    external g : ((forall 'e1. 'e1 -> 'e1) -> int * bool) -> unit
+    val c1c : unit
     |}];
-  (* B2 *)
+  (* C2 (called E3 in GI) *)
   do_test
     {|
-      let _ = fun xs -> poly (head xs);;
+      external r : (forall 'a. 'a -> (forall 'b. 'b -> 'b)) -> int;;
+      let c2 = r (fun x y -> y);;
+    |};
+  [%expect
+    {|
+    external r : (forall 'f1. 'f1 -> (forall 'e1. 'e1 -> 'e1)) -> int
+    val c2 : int
+    |}];
+  (* eta-expansion dependencies *)
+  do_test
+    ~add:true
+    {|
+      external h : int -> (forall 'a. 'a -> 'a);;
+      external k : 'a. 'a -> 'a list -> 'a;;
+      external lst : (forall 'a. int -> 'a -> 'a) list;;
+    |};
+  [%expect
+    {|
+    external h : int -> (forall 'e1. 'e1 -> 'e1)
+    external k : 'f1 -> 'f1 list -> 'f1
+    external lst : (forall 'g1. int -> 'g1 -> 'g1) list
+    |}];
+  (* E1a (everyone fails on this) *)
+  do_test
+    {|
+      let e1a = k h lst;;
+    |};
+  [%expect
+    {|
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:38:19
+     38 │        let e1a = k h lst;;
+        │                    ^ `int -> (forall 'a. 'a -> 'a)`
+        │                        is not equal to
+        │                      `int -> 'b -> 'b`
+    |}];
+  (* E1b (called E2 in GI) *)
+  do_test
+    {|
+      let e1b = k (fun x -> h x) lst;;
+    |};
+  [%expect {| val e1b : int -> 'h1 -> 'h1 |}];
+  (* E2a (MLF +) *)
+  do_test
+    {|
+      let e2a = fun x -> poly x;;
     |};
   [%expect
     {|
     error[E012]: generic type variable escapes its scope
-        ┌─ expect_test.ml:33:31
-     33 │        let _ = fun xs -> poly (head xs);;
-        │                                ^^^^^^^
+        ┌─ expect_test.ml:38:31
+     38 │        let e2a = fun x -> poly x;;
+        │                                ^
     |}];
-  (* C1 *)
+  (* E2b *)
   do_test
     {|
-      let _ = length ids;;
+      let e2b = (fun x -> poly x : (forall 'a. 'a -> 'a) -> int * bool);;
+     |};
+  [%expect {| val e2b : (forall 'h1. 'h1 -> 'h1) -> int * bool |}];
+  (* E3a *)
+  do_test
+    {|
+      let e3a = app poly id;;
+    |};
+  [%expect {| val e3a : int * bool |}];
+  (* E3b (Fresco passes with freezing) *)
+  do_test
+    {|
+      let e3b = app (fun x -> poly x) id;;
     |};
   [%expect
     {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
+    error[E012]: generic type variable escapes its scope
+        ┌─ expect_test.ml:38:36
+     38 │        let e3b = app (fun x -> poly x) id;;
+        │                                     ^
     |}];
-  (* C2 *)
+  (* E4a *)
   do_test
     {|
-      let _ = tail ids;;
+      let e4a = map poly ids;; 
+    |};
+  [%expect {| val e4a : (int * bool) list |}];
+  (* E4b *)
+  do_test
+    {|
+      let e4b = map (fun x -> x) ids;;
+    |};
+  [%expect {| val e4b : ('h1 -> 'h1) list |}];
+  (* E5a (Fresco fails) *)
+  do_test
+    {|
+      let e5a = compose poly head;;
+    |};
+  [%expect {| val e5a : (forall 'h1. 'h1 -> 'h1) list -> int * bool |}];
+  (* E5b (called B2 in GI) *)
+  do_test
+    {|
+      let b2 = fun xs -> poly (head xs);;
     |};
   [%expect
     {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
+    error[E012]: generic type variable escapes its scope
+        ┌─ expect_test.ml:38:32
+     38 │        let b2 = fun xs -> poly (head xs);;
+        │                                 ^^^^^^^
     |}];
-  (* C2 *)
+  (* E6 *)
   do_test
     {|
-      let _ = head ids;;
+      let e6 = (fun f -> app f) poly id;;
+    |};
+  [%expect {| val e6 : int * bool |}];
+  (* E7 (Fresco fails without freezing) *)
+  do_test
+    {|
+      let e7 = (fun f -> app poly f) id;;
     |};
   [%expect
     {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
+    error[E012]: generic type variable escapes its scope
+        ┌─ expect_test.ml:38:35
+     38 │        let e7 = (fun f -> app poly f) id;;
+        │                                    ^
     |}];
-  (* C3 *)
+  (* F1 *)
   do_test
     {|
-      let _ = single id;;
+      let f1 = map (fun f -> (f true, f 42)) ids;;
     |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
-  (* C4 *)
+  [%expect {| val f1 : (bool * int) list |}];
+  (* F2 (Fresco fails without freezing) *)
   do_test
     {|
-      let _ = cons id ids;;
-    |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
-  (* C5 *)
-  do_test
-    {|
-      let _ = cons (fun x -> x) ids;;
-    |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
-  (* C7 *)
-  do_test
-    {|
-      let _ = concat (single inc) (single id);;
-    |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
-  (* C8 *)
-  do_test
-    {|
-      external g : 'a. 'a list -> 'a list -> 'a;;
-      let _ = g (single id) ids;;
-    |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    external g : 'b1 list -> 'b1 list -> 'b1
-    |}];
-  (* C9 *)
-  do_test
-    {|
-      let _ = map poly (single id);;
-    |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
-  (* C10 *)
-  do_test
-    {|
-      let _ = map head (single ids);;
-    |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
-  (* D0 *)
-  do_test
-    {|
-      let _ = poly id;;
-    |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
-  (* D1 *)
-  do_test
-    {|
-      let _ = app poly id;;
-    |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
-  (* D2 *)
-  do_test
-    {|
-      let _ = revapp id poly;;
-    |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
-  (* D3 *)
-  do_test
-    {|
-      let _ = run_st arg_st;;
-    |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
-  (* D4 *)
-  do_test
-    {|
-      let _ = app run_st arg_st;;
-    |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
-  (* D5 *)
-  do_test
-    {|
-      let _ = revapp arg_st run_st;;
-    |};
-  [%expect
-    {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    |}];
-  (* E1 *)
-  do_test
-    {|
-      external h : int -> (forall 'a. 'a -> 'a);;
-      external k : 'a. 'a -> 'a list -> 'a;;
-      external lst : (forall 'a. int -> 'a -> 'a) list;;
-      let _ = k h lst;;
+      let f2 = app (fun f -> (f true, f 42)) id;;
     |};
   [%expect
     {|
     error[E011]: mismatched type
-        ┌─ expect_test.ml:36:17
-     36 │        let _ = k h lst;;
-        │                  ^ `int -> (forall 'a. 'a -> 'a)`
-        │                      is not equal to
-        │                    `int -> 'b -> 'b`
+        ┌─ expect_test.ml:38:41
+     38 │        let f2 = app (fun f -> (f true, f 42)) id;;
+        │                                          ^^ `int`
+        │                                               is not equal to
+        │                                             `bool`
     |}];
+  (* F3 (Fresco X, QL +) *)
   do_test
     {|
-      external h : int -> (forall 'a. 'a -> 'a);;
-      external k : 'a. 'a -> 'a list -> 'a;;
-      external lst : (forall 'a. int -> 'a -> 'a) list;;
-      let _ = k (fun x -> h x) lst;;
+      let f3 = map id ids;;
+    |};
+  [%expect {| val f3 : (forall 'h1. 'h1 -> 'h1) list |}];
+  (* F4 (Fresco fails without freezing) *)
+  do_test
+    {|
+      let f4 = (fun f -> (f 42, f true)) id;;
     |};
   [%expect
     {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    external h : int -> (forall 'b1. 'b1 -> 'b1)
-    external k : 'c1 -> 'c1 list -> 'c1
-    external lst : (forall 'd1. int -> 'd1 -> 'd1) list
+    error[E011]: mismatched type
+        ┌─ expect_test.ml:38:35
+     38 │        let f4 = (fun f -> (f 42, f true)) id;;
+        │                                    ^^^^ `bool`
+        │                                           is not equal to
+        │                                         `int`
     |}];
+  (* F5 *)
   do_test
     {|
-      external r : (forall 'a. 'a -> (forall 'b. 'b -> 'b)) -> int;;
-      let _ = r (fun x y -> y);;
+      external pair : 'a 'b. 'a -> 'b -> 'a * 'b;;
+      let f5 = (pair (fun x -> 42) 42 : ((forall 'a. 'a -> 'a) -> int) * int);;
     |};
   [%expect
     {|
-    type 'a list =
-      | Nil
-      | Cons of 'a * 'a list
-    external head : 'a list -> 'a
-    external tail : 'b list -> 'b list
-    external nil : 'c list
-    external cons : 'd -> 'd list -> 'd list
-    external single : 'e -> 'e list
-    external concat : 'f list -> 'f list -> 'f list
-    external length : 'g list -> int
-    external id : 'h -> 'h
-    external inc : int -> int
-    external choose : 'i -> 'i -> 'i
-    external poly : (forall 'j. 'j -> 'j) -> int * bool
-    external auto : (forall 'k. 'k -> 'k) -> (forall 'l. 'l -> 'l)
-    external auto2 : (forall 'm. 'm -> 'm) -> 'n -> 'n
-    external ids : (forall 'o. 'o -> 'o) list
-    external map : ('p -> 'q) -> 'p list -> 'q list
-    external app : ('r -> 's) -> 'r -> 's
-    external revapp : 't -> ('t -> 'u) -> 'u
-    external flip : ('v -> 'w -> 'x) -> 'w -> 'v -> 'x
-    type ('s, 'a) st =
-      | St
-    external run_st : (forall 'z. ('z, 'y) st) -> 'y
-    external arg_st : ('a1, int) st
-    external r : (forall 'c1. 'c1 -> (forall 'b1. 'b1 -> 'b1)) -> int
+    external pair : 'h1 -> 'i1 -> 'h1 * 'i1
+    val f5 : ((forall 'j1. 'j1 -> 'j1) -> int) * int
+    |}];
+  (* F6 *)
+  do_test
+    {|
+      let f6 = choose nil ids;;
+    |};
+  [%expect {| val f6 : (forall 'h1. 'h1 -> 'h1) list |}];
+  (* F7 *)
+  do_test
+    {|
+      let f7 = head (choose nil ids);;
+    |};
+  [%expect {| val f7 : 'h1 -> 'h1 |}];
+  (* F8 (QL X, Fresco +) *)
+  do_test
+    {|
+      external f : 'a. (int -> 'a) -> 'a;;
+      let f8 = f (fun x -> ids);;
+    |};
+  [%expect
+    {|
+    external f : (int -> 'h1) -> 'h1
+    val f8 : (forall 'i1. 'i1 -> 'i1) list
+    |}];
+  (* F9 (QL X, Fresco +) *)
+  do_test
+    {|
+      external f : 'a. (forall 'b. 'b -> 'b * 'a) -> 'a;;      
+      let f9 = f (fun x -> (x, ids));;
+    |};
+  [%expect
+    {|
+    external f : (forall 'i1. 'i1 -> 'i1 * 'h1) -> 'h1
+    val f9 : (forall 'j1. 'j1 -> 'j1) list
+    |}];
+  (* F10 (QL X, Fresco +) *)
+  do_test
+    {|
+      external f : 'a. ((forall 'b. 'b -> 'b) -> 'a) -> 'a;;      
+      let f10 = f (fun x -> ids);;
+    |};
+  [%expect
+    {|
+    external f : ((forall 'h1. 'h1 -> 'h1) -> 'i1) -> 'i1
+    val f10 : (forall 'j1. 'j1 -> 'j1) list
+    |}];
+  (* F11a *)
+  do_test
+    {|
+      external polys : (forall 'a. 'a -> 'a) list -> int * bool;;
+      let f11a = polys (single id);;      
+    |};
+  [%expect
+    {|
+    external polys : (forall 'h1. 'h1 -> 'h1) list -> int * bool
+    val f11a : int * bool
+    |}];
+  (* F11b (Fresco fails without freezing, QL X) *)
+  do_test
+    {|
+      external polys : (forall 'a. 'a -> 'a) list -> int * bool;;
+      let f11b = let xs = single id in polys xs;;      
+    |};
+  [%expect
+    {|
+    external polys : (forall 'h1. 'h1 -> 'h1) list -> int * bool
+    val f11b : int * bool
+    |}];
+  (* F12 (From p10 in Fresco) *)
+  do_test
+    {|
+      external g : 'b. (forall 'a. 'a -> 'a) -> 'b -> 'b list;;
+      external f : 'c 'd. ('c -> 'c -> 'd list) -> int;;
+      let f12 = f g;;
+    |};
+  [%expect
+    {|
+    external g : (forall 'h1. 'h1 -> 'h1) -> 'i1 -> 'i1 list
+    external f : ('j1 -> 'j1 -> 'k1 list) -> int
+    val f12 : int
     |}]
 ;;
