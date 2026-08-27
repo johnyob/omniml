@@ -503,6 +503,9 @@ type_decl_kind:
     (* empty *)
       { Type_decl_abstract }
   | "="
+    ; type_ = core_type
+      { Type_decl_alias type_ }
+  | "="
     ; constr_decls = preceded_or_separated_nonempty_list("|", constructor_declaration)
       { Type_decl_variant constr_decls }
   | "="

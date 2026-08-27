@@ -141,6 +141,7 @@ let pp_type_params ppf = function
 
 let pp_type_decl_kind ppf = function
   | Ast.Type_decl_abstract -> ()
+  | Type_decl_alias core_type -> Fmt.pf ppf " =@;%a" pp_core_type core_type
   | Type_decl_variant constructors ->
     let pp_constructor ppf { Ast.constructor_name; constructor_arg } =
       Fmt.pf

@@ -20,6 +20,15 @@ and type_scheme_expr =
   }
 [@@deriving sexp_of]
 
+let create_type_scheme_expr ?(quantifiers = []) body =
+  match body with
+  | Type_scheme s ->
+    { scheme_quantifiers = quantifiers @ s.scheme_quantifiers
+    ; scheme_body = s.scheme_body
+    }
+  | _ -> { scheme_quantifiers = quantifiers; scheme_body = body }
+;;
+
 (** Type definitions to encode user-defined types e.g. variants. *)
 
 type type_definition =
@@ -33,8 +42,14 @@ type type_definition =
 and type_def_kind =
   | Type_variant of constructor_definition list
   | Type_record of label_definition list
+  | Type_alias of alias_definition
   | Type_abstract
 [@@deriving sexp_of]
+
+and alias_definition =
+  { alias_alphas : Type_var_name.t list
+  ; alias_type : Ast.core_type
+  }
 
 and constructor_definition =
   { constructor_name : Constructor_name.t (** The user-defined name of the constructor. *)

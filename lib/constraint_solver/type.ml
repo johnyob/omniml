@@ -27,6 +27,12 @@ let shape ts sh = Shape (ts, sh)
 let scheme scm = Scheme scm
 let poly scm = Poly scm
 
+let guarded t =
+  match t with
+  | Scheme s -> `Scheme s
+  | _ -> `Guarded
+;;
+
 module Scheme = struct
   type t = Self.Scheme.t =
     { quantifiers : Var.t list
@@ -34,7 +40,11 @@ module Scheme = struct
     }
   [@@deriving sexp, equal, compare, hash]
 
-  let create ?(quantifiers = []) body = { quantifiers; body }
+  let create ?(quantifiers = []) body =
+    match guarded body with
+    | `Guarded -> { quantifiers; body }
+    | `Scheme s -> { quantifiers = quantifiers @ s.quantifiers; body = s.body }
+  ;;
 end
 
 module Matchee = struct
