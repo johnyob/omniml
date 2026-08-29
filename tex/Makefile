@@ -29,7 +29,7 @@ toplas-diff.tex: suspended.tex
 	cp suspended.tex /tmp/suspended-new.tex
 	git show before-toplas-reviews-1:tex/suspended.tex > /tmp/suspended-old.tex
 	$(SED) -i 's/\\jobname.cfg/suspended.final.cfg/' /tmp/suspended-{new,old}.tex
-	# Didier's "\llabel A", "lref C" etc. confuse latexdiff; get rid of them
+# Didier's "\llabel A", "lref C" etc. confuse latexdiff; get rid of them
 	$(SED) -i 's/\\llabel \([A-Za-z]*\)/\\llabel{\1}/' /tmp/suspended-{new,old}.tex
 	$(SED) -i 's/\\lref \([A-Za-z]*\)/\lref{\1}/' /tmp/suspended-{new,old}.tex
 	$(LATEXDIFF) /tmp/suspended-old.tex /tmp/suspended-new.tex > toplas-diff.tex

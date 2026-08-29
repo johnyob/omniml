@@ -239,3 +239,59 @@ Incremental computation of dependencies with both edge removal and insertion
 may be needed. In any case, experimentation will be needed to
 understand whether this is a critical issue.
 \end{version}
+
+\begin{version}{\True}%\False
+
+\paragraph{Stability of typing by common program transformations}
+
+\newcommand {\equityp}{\mathrel{\subseteq\!\joinrel\!\supseteq}}
+\newcommand {\subtyp}{\subseteq}
+
+
+The \emph{principal types} property is the salient attribute of \ML-style
+type systems. In practice, it is perhaps even more important that typings
+are is preserved by common program transformations.  Let us write $\ea
+\subseteq \eb$ for the preservation of typings, and $\equityp$ for
+equitypability.
+
+In \ML,
+\begin{enumerate*}
+\item
+ it follows  from subject reduction that typings are preserved by
+ \emph{inlining}: 
+ $\elet \x \ea \eb \subtyp \eb \where {\x \is \ea}$.
+
+\item
+  Conversely, they are also preserved by \emph{factorization} holds as a
+  consequence of principal types: $\eb \where {\x \is \ea}  \subtyp \elet \x \ea
+  \eb$  whenever $\x$ appears in $\eb$.
+
+\item
+  Besides, \emph{application is redefinable and order independent}, as
+  illustrated by the equitypability of $\eappp f \ea \eb$ and $\eappp
+  {\eswap f} \eb \ea$ where $\eswap$ is $\efun {f x y} \eappp f y x$. 
+  
+\end{enumerate*}
+
+\OML, as \geninst-directional type inference, preserves redefinable and
+order independent applications, while bidirectional type inference does not.
+%
+However, both factorization and inlining may break typability.  This applies
+to both overloading and polytypes fragile constructs.
+
+
+The lack of factorization is inherent to the use of contextual information:
+A program of the form $(\eannot {\efun y \e}{} \ta, \eannot {\efun y \e}{}
+\tb)$ may enforce different shapes for the type of $y$, while $\elet \x
+{\efun y \e} {(\eannot \x{} \ta, \eannot \x{} \tb)}$ cannot.
+
+The lack of inlining is a consequence of our support for
+\emph{backpropagation}: the let-form may use information from all
+occurrences of $\x$ in $\e$ to resolve fragile constructs in $e_0$, but in
+the inlined form each copy of $\e$ must resolve its implicit constructs
+independently, and it has access to less information to establish
+unicity.
+%
+As a result, the implicit \OML calculus does not preserve typability in its
+operational semantics.
+\end{version}

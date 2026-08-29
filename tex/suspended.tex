@@ -123,7 +123,7 @@ the identity function $\efun \x \x$ has the principal type $\tfor \tv \tv \to
 \parcomment {Benefits of principality: practical implications}
 
 The existence of principal types in \ML has important practical benefits. It
-makes inference predictable, compositional, and efficient: since every
+makes inference wpredictable, compositional, and efficient: since every
 expression has a most general type, local typing decisions are always optimal,
 with no need for guessing or backtracking. Beyond inference, principality
 ensures that well-typedness is stable under common program transformations such
@@ -891,8 +891,9 @@ types exist, but only with respect to a specification that made non-principal
 choices to begin with. For instance, \code{ex_6} would be ill-typed under the
 rules of \cref{fig:bidir-poly}.
 
-\XDR[TODO]{Say why \code{ex_6} would fail; Comment on the weakness of the
-system in \cref{fig:bidir-poly} and points to the discussion in
+\XDR[TODO]{Say why (a transcription of) \code{ex_6} would fail. Comment on
+the weakness of the system in \cref{fig:bidir-poly} and points to the
+discussion in
 \cref{fig/related-work}.}
 
 \paragraph{Limitations of directional type inference}
@@ -2179,6 +2180,91 @@ any $\gt$.
 \end{example}
 
 
+\subsection{Metatheoretical properties}
+\label{sec/oml/metatheory}
+
+\paragraph{Principal types}
+
+As expected, type inference in \OML enjoys principal types. 
+
+\begin{restatable}[Principal types]{theorem}{principalTypesBIS}
+\label{thm:principal-types}
+For any well-typed closed \OML term $\e$, there exists a type $\t$
+%% , which we call principal,
+such that:
+\begin{enumerate*}[(\roman*)]
+\item
+  $\th \e : \t$.
+\item
+  For any other typing $\th \e : \tp$, then $\tp = \theta(\t)$ for some
+  substitution $\theta$.
+\end{enumerate*}
+\end{restatable}
+This is proved in \cref{apx/principal-types} using soundness and
+completeness of constraint generation (\cref{thm:soundness-and-completeness}). 
+
+\paragraph{Subject reduction}
+
+Unfortunately, inlining  does not preserve typings, and consequently,
+\OML does not enjoy subject reduction \emph{per se} in the presence of
+fragile constructs.
+
+This is a consequence of our support for \emph{backpropagation}: let
+bindings $\elet \x \ea \eb$ may use information from all occurrences of $\x$
+in $\eb$ to resolve fragile constructs in $ea$, but in the inlined form $\eb
+\where {\x \is \ea}$, each copy of $\ea$ must resolve its implicit
+constructs independently while it has access to less information to
+establish unicity.  This may only happen if $\ea$ has fragile constructs,
+but it may happen similarly for both overloading or polytypes ones.
+
+The solution to this limitation is to let type inference elaborate fragile
+constructs into their robust counterparts before reduction. This also applies
+to factorization discussed next.
+
+
+\paragraph{Factorization} 
+
+
+\OML also fails to preserve typing by factorization. That is,
+$\eb \where {\x \is \ea}$ may be typable when $\x$ occurs free in $\eb$
+while $\elet \x \ea \eb$ fails to type. This is a direct consequence of the
+use of contextual information. For instance, a program of the form $(\eannot
+{\efun y \e}{} \ta, \eannot {\efun y \e}{} \tb)$ may enforce different
+shapes for the type of $y$ on each component, while $\elet \x {\efun y \e}
+{(\eannot \x{} \ta, \eannot \x{} \tb)}$ cannot.
+
+Stability of typing by factorization holds in \ML, as a consequence of
+principal types and the fact that the expected type of an expression cannot
+help typecheck it.  The lost of this property is \OML reveals a fragility of
+our declarative specification. Namely, the non-local aspect of the typing
+rules for fragile constructs (\cref {fig/oml/typing/I}).
+
+Linear let-bindings $\elet \x \ea \eb$ when $\x$ occurs exactly once in
+$\eb$ are still equitypable with their inlined form $\eb \where{\x \is
+\ea}$. Here, linear factorization is enabled by backpropagation. 
+
+\XDR{This is an important subcase, but it should still  be checked}
+
+
+
+\paragraph{Other program transformations}
+
+
+Another useful property of \ML is that type application is redefinable and
+order independent. This property can be captured by the fact that both
+expressions $\eappp f \ea \eb$ and $\eappp {\eswap f} \eb \ea$ are
+equitypable where $\eswap$ is $\efun {f x y} \eappp f y x$.
+%
+\OML, as well as \geninst-directional type inference, preserves
+this property, by contrast with bidirectional type inference.
+
+Interestingly, typings of functional expressions are also preserved by
+$\eta$-expansion.  That is, if $\G \th e : \ta \to \tb$, then $\G \th {\efun
+\x {\eapp \e \x}} : \ta \to \tb$.
+\XDR{To be checked.}
+
+
+
 \section{Constraints}
 \label{sec:constraints}
 
@@ -3113,7 +3199,7 @@ hence the generated constraint for \code{ex_1_1} is satisfiable.
 \end{example}
 
 \subsection{Metatheory}
-\label{sec/oml/metatheory}
+\label{sec/constraints/metatheory}
 
 Constraint generation is sound and complete with respect to the typing judgment:
 %
@@ -4430,63 +4516,8 @@ constraints that further refine the region's partial type scheme.
 \section{Discussion}
 \label{sec/discussion}
 
-We first remark the lost of subject reduction.
-\XDR{I thinkm this should go back into the metatheory section}
-%% We now
-We then discuss practical considerations and an alternative
+We now discuss practical considerations and an alternative
 semi-unification-based implementation of incremental instantiation.
-
-
-\begin{version}{\True}%\False
-\paragraph{Stability of typing by common program transformations}
-
-\newcommand {\eswap}{{\mathprefix {swap}\,}}
-\newcommand {\equityp}{\mathrel{\subseteq\!\joinrel\!\supseteq}}
-\newcommand {\subtyp}{\subseteq}
-
-
-The \emph{principal types} property is the salient attribute of \ML-style
-type systems. However, perhaps more importantly, typing of \ML programs is
-stable by common program transformations.  Let us write $\ea \subseteq \eb$
-for the preservation of typings, and $\equityp$ for equitypability.
-
-In \ML,
-\begin{enumerate*}
-\item
-  \emph{inlining} follows from subject reduction:
- $\elet \x \ea \eb \subtyp \eb \where {\x \is \ea}$.
-
-\item
-  conversely, \emph{factorization} holds as a  consequence of
-  principal types: $\eb \where {\x \is \ea}  \subtyp \elet \x \ea
-  \eb$  whenever $\x$ appears in $\eb$.
-
-\item
-  Besides, \emph{application is redefinable and order independent}, as
-  illustrated by $\eappp f \ea \eb \equityp \eappp {\eswap f} \eb \ea$.
-  
-\end{enumerate*}
-
-\OML also preserves redefinable and order independent applications, as
-\geninst-directional type inference, while bidirectional type inference does not.
-%
-However, both factorization and inlining may break typability.
-
-The lack of factorization is not a defect of our system, but rather a
-consequence of static overloading: the expanded term $\e \where {x
-\is \e_0}$ can pick a different overloading choice for each occurrence of
-$\e_0$, which cannot be factored when they have incompatible types.
-
-The lack of inlining is a consequence of our support for
-\emph{backpropagation}: the let-form may use information from all
-occurrences of $\x$ in $\e$ to resolve fragile constructs in $e_0$, but in
-the inlined form each copy of $\e$ must resolve its implicit constructs
-independently, and it has access to less information to establish
-unicity.
-%
-As a result, the implicit \OML calculus does not preserve typability in its
-operational semantics. 
-\end{version}
 
 
 \paragraph{Error reporting}
@@ -8601,8 +8632,8 @@ and $\sub(\tvs) = \tys$.
 
 \begin{lemma}
   \label{lem:mgus}
-  For two substitutions $\sub$, $\subp$. If $\exists \sub \centails \exists \subp$, there exists
-  $\subpp$ such that $\sub = \subpp \compose \subp$.
+  For two substitutions $\sub$, $\subp$. If $\exists \sub \centails \exists
+  \subp$, there exists  $\subpp$ such that $\sub = \subpp \compose \subp$.
   \begin{proof}
     Standard result, follows from definition of $\exists \sub$.
   \end{proof}
@@ -8612,7 +8643,8 @@ and $\sub(\tvs) = \tys$.
 
 \begin{lemma}
   \label{lem:ctxt-gen-correctness}
-  For any term context $\E$, term $\e$, $\ctxinfer \E \t \tp \where{\cinfer \e \t} = \cinfer {\E\where{\e}} \tp$.
+  For any term context $\E$, term $\e$, $\ctxinfer \E \t \tp \where{\cinfer
+  \e \t} = \cinfer {\E\where{\e}} \tp$.
   \begin{proof}
     By induction on the structure of $\E$.
   \end{proof}
@@ -8628,14 +8660,14 @@ and $\sub(\tvs) = \tys$.
 
 \begin{lemma}[Simple soundness and completeness]
   \label{lem:simple-soundness-completeness}
-  For simple terms $\e$.
-  $\sub(\G) \thsimplesd \e : \sub(\t)$ if and only if $\sub$ is a unifier of $\csem {\G \th \e : \t}$.
+  For simple terms $\e$.  $\sub(\G) \thsimplesd \e : \sub(\t)$ if and only
+  if $\sub$ is a unifier of $\csem {\G \th \e : \t}$.
   \begin{proof}
     By induction on $\e \simple$.
   \end{proof}
 \end{lemma}
 
-\begin{theorem}[Soundness and completeness]
+\begin{theorem}[Soundness and completeness of constraint generation]
   \label{thm:soundness-and-completeness}
   $\Th \e : \sub(\tv)$ if and only if $\sub$ is a unifier of $\csem {\e : \tv}$
   \begin{proof}
@@ -8745,36 +8777,43 @@ and $\sub(\tvs) = \tys$.
 \end{theorem}
 
 \subsection{Principal types}
+\label{apx/principal-types}
 
 \principalTypesBIS*
 \begin{proof}
 
-Let $\e$ be an arbitrary closed well-typed term; that is, there exists a type
-  $\t$ such that $\th \e : \t$.
-  By \cref{thm:soundness-and-completeness}, the constraint $\cinfer \e \tv$ is satisfiable
-  (specifically under the unifier $\cunif \tv \t$). By \cref{corollary:correctness}, there
-  exists a solved constraint $\hat\c$ such that $\hat\c \cequiv \cinfer \e \tv$.
-  From $\hat\c$, we extract a unifier $\sub$. Since $\hat\c \cequiv \exists \sub$,
-  it follows that $\sub$ is \emph{most general}.
+Let $\e$ be an arbitrary closed well-typed term; that is, there exists a
+type $\t$ such that $\th \e : \t$.  By 
+\cref{thm:soundness-and-completeness}, the constraint $\cinfer \e \tv$ is
+satisfiable (specifically under the unifier $\cunif \tv \t$). By
+\cref{corollary:correctness}, there exists a solved constraint $\hat\c$ such
+that $\hat\c \cequiv \cinfer \e \tv$.  From $\hat\c$, we extract a
+unifier~$\sub$. Since $\hat\c \cequiv \exists \sub$, it follows that $\sub$
+is  \emph{most general}.
 
-  We claim that $\sub(\tv)$ is the principal type of $\e$. This amounts to showing:
-  \begin{enumerate}[(\roman*)]
-    \item
-      \label{proof:principal-types:1}
-      $\th \e : \sub(\tv)$
-    \item
-      \label{proof:principal-types:2}
-      For any other typing $\th \e : \tp$, then $\tp = \theta(\sub(\tv))$ for some $\theta$.
-  \end{enumerate}
-  Since $\sub$ is a unifier of $\cinfer \e \tv$, it follows immediately from
-  \cref{thm:soundness-and-completeness} that $\th \e : \sub(\tv)$, proving \ref{proof:principal-types:1}.
-  For \ref{proof:principal-types:2}, suppose $\th \e : \tp$ for some $\tp$. Then by
-  \cref{thm:soundness-and-completeness} again, there exists a unifier $\subp$ of $\cinfer \e \tv$
-  such that $\subp(\tv) = \tp$. Since $\sub$ is most general, we have $\exists \subp \centails \exists \sub$,
-  and by \cref{lem:mgus}, this implies the existence of a substitution $\subpp$ such that
-  $\subp = \subpp \compose \sub$.
-  Hence, $\tp = \subp(\tv) = \subpp(\sub(\tv))$, witnessing that $\tp$ is an instance of $\sub(\tv)$, as
-  required \ref{proof:principal-types:2}.
+We claim that $\sub(\tv)$ is the principal type of $\e$. This amounts to showing:
+\begin{enumerate}[(\roman*)]
+
+\item
+  \label{proof:principal-types:1}
+  $\th \e : \sub(\tv)$
+
+\item
+  \label{proof:principal-types:2}
+  For any other typing $\th \e : \tp$, then $\tp = \theta(\sub(\tv))$ for
+  some $\theta$.
+
+\end{enumerate}
+Since $\sub$ is a unifier of $\cinfer \e \tv$, it follows immediately from
+\cref{thm:soundness-and-completeness} that $\th \e : \sub(\tv)$, proving
+\ref{proof:principal-types:1}.  For \ref{proof:principal-types:2}, suppose
+$\th \e : \tp$ for some $\tp$. Then by \cref{thm:soundness-and-completeness}
+again, there exists a unifier $\subp$ of $\cinfer \e \tv$ such that
+$\subp(\tv) = \tp$. Since $\sub$ is most general, we have $\exists \subp
+\centails \exists \sub$, and by \cref{lem:mgus}, this implies the existence
+of a substitution $\subpp$ such that $\subp = \subpp \compose \sub$.  Hence,
+$\tp = \subp(\tv) = \subpp(\sub(\tv))$, witnessing that $\tp$ is an instance
+of $\sub(\tv)$, as required \ref{proof:principal-types:2}.
 \end{proof}
 
 
@@ -8833,5 +8872,5 @@ Let $\e$ be an arbitrary closed well-typed term; that is, there exists a type
 % LocalWords:  DisambiguateRecordField DuplicateRecordFields typeclass emy
 % LocalWords:  OverloadedRecordDot Andreas Scherer Martinot Vivien Gundry
 % LocalWords:  Gooding ois homomorphic homomorphism ASUP omnidirectionally
-% LocalWords:  mem Pfenning bidir ness rcd postfix composable metatheory
-% LocalWords:  reimplementation parameterizing redefinable
+% LocalWords:  mem Pfenning bidir ness rcd postfix composable metatheory se
+% LocalWords:  reimplementation parameterizing redefinable subcase
