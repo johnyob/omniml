@@ -846,15 +846,6 @@ typically preferred.
   \infer[Syn-Inst]
     {\G \th \e \Rightarrow \tpoly \ts}
     {\G \th \einst \e \Rightarrow \ts}
-
-\color{red}
-  \infer[Syn-Inst]
-    {\G \th \e \Rightarrow \tfor \tv \ts}
-    {\G \th \e \Leftarrow \ts \where {\tv \is {\color{red}\t}}}
-    
-  \infer[Chk-Sub]
-    {\G \th \e \Rightarrow \t \\ \t \lesssim \tp }
-    {\G \th \e \Leftarrow \tp}
 \end{mathparfig}
 
 
@@ -876,7 +867,23 @@ Formally, a type $\t$ is \emph{known} when it is either:
 \parcomment{\Polytype rules}
 
 Using this notion of known types, we can give a \emph{principal} type system
-for \polytypes, shown in \cref{fig:bidir-poly}. This system eliminates two
+for \polytypes, shown in \cref{fig:bidir-poly}.\footnote{%
+  %
+  The rules in \cref{fig:bidir-poly} deliberately make no \emph{guesses}, in
+  order to isolate the role of \emph{known} type information. Consequently, the
+  system is rather weak. In particular, \Rule{Chk-Inst} permits polymorphic
+  instantiation only in checking mode: $\t$ in $\ts \leq \t$ must already be
+  known, rather than guessed. 
+  %
+  This restriction is not intended to stack the deck against bidirectional
+  typing: relaxing it would require a bidirectional account of inferred impredicative
+  instantiation, which remains an active area of research
+  \citep{journals/pacmpl/SerranoHJV20, journals/pacmpl/ParreauxBFC24,
+  journals/corr/abs-2607-16061}. The restriction is moreover orthogonal to the
+  limitation illustrated later in \cref{example:bidir-poly}.
+}
+%
+This system eliminates two
 artifacts needed in the \geninst-directional presentation: explicit annotations
 on boxing and annotation variables. Since $\eannot \e {} \t$ already propagates
 known information, $\epoly \e$ requires no attached annotation; and because
@@ -891,11 +898,96 @@ optimal assignment of modes. For any choice of modes, some programs will
 typecheck successfully, while others will fail unnecessarily. Yet, the typing
 rules must irrevocably commit to a fixed set of modes, after which, principal
 types exist, but only with respect to a specification that made non-principal
-choices to begin with. For instance, \code{ex_6} would be ill-typed under the
-rules of \cref{fig:bidir-poly}.
+choices to begin with. 
 
-\begin{version}{\Xxx}%\False
-\color{blue}
+For instance, \code{ex_6} is ill-typed under the rules in
+\cref{fig:bidir-poly}, as the following example demonstrates.
+
+\begin{example}
+\label{example:bidir-poly}
+Recall that \code{ex_6}, transcibed into the \PolyML calculus, is defined as:
+\begin{mathpar}
+  \texttt{ex}_6 \eqdef \eapp {\parens{\efun p {\einst p}}} {\eannot {\epoly {\efun x x}} {} {\tpoly {\tfor \tva {\tva \to \tva}}}} \\
+  \texttt{pid} \eqdef \eannot {\epoly {\efun x x}} {} {\tpoly {\tfor \tva {\tva \to \tva}}} \qquad
+  \tau_{\texttt{pid}} \eqdef \tfor \tva {\tva \to \tva}
+\end{mathpar}
+
+  Suppose we try to infer $\tvb \to \tvb$ for \code{ex_6}. Using \Rule{Syn-App} would require a derivation 
+of the following form:
+\begin{mathpar}
+  \infer*[right=Syn-App]
+    {
+      \infer*[right=??]
+        {\color{red}\text{No rule applies}}
+        {\th \efun p {\einst p} \Rightarrow {\tau_{\texttt{pid}} \to {\tvb \to \tvb}}}
+      \\
+      \infer*[right=Chk-Inst]
+        {
+          \infer*[right=Syn-Annot]
+            {\vdots}
+            {\th \texttt{pid} \Rightarrow \tau_{\texttt{pid}}}
+          \\
+          \tau_{\texttt{pid}} \leq \tau_{\texttt{pid}}
+         }
+        {\th \texttt{pid}  \Leftarrow \tau_{\texttt{pid}}}
+    }
+    %------------------------------------------------------------------------------------------------------------
+    {\th 
+      \eapp {\parens{\efun p {\einst p}}} {\texttt{pid}} 
+     \Rightarrow 
+      \tvb \to \tvb}
+\end{mathpar}
+%
+The first premise cannot be derived: functions are introduction forms and
+\Rule{Chk-Fun} only permits them to be \emph{checked}. Although the annotation
+in \code{pid} determines its type, \Rule{Syn-App} cannot use this information
+to typecheck the function, since the information flows from the function to its
+argument rather than conversely. 
+
+Indeed, taking the opposite, equally mode-correct rule (\Rule{Chk-App}) for applications accepts the program.
+With \Rule{Chk-App}, we can check \code{ex_6} against $\tvb \to \tvb$:
+\begin{mathpar}
+  \infer*[right=Chk-App]
+    {
+      \infer*[right=Chk-Fun]
+        {
+          \infer*[right=Chk-Inst]
+            {
+              \infer*[right=Syn-Inst]
+                {
+                  \infer*[right=Syn-Var]
+                    { }
+                    {p : \tau_{\texttt{pid}} \th p \Rightarrow \tau_{\texttt{pid}}}
+                }
+                {p : \tau_{\texttt{pid}} \th \einst p \Rightarrow \tfor \tva \tva \to \tva}
+              \\\\
+\tfor \tva \tva \to \tva \leq \tvb \to \tvb
+            }
+            {p : \tau_{\texttt{pid}} \th \einst p \Leftarrow \tvb \to \tvb}
+        }
+        %-----------------------------------------------------------------------
+        {\th \efun p {\einst p} \Leftarrow \tau_{\texttt{pid}} \to \tvb \to \tvb}
+      \\
+      \infer*[right=]
+        {\vdots}
+        {\th \texttt{pid} \Rightarrow \tau_{\texttt{pid}}}
+    }
+    %------------------------------------------------------------------------------
+    {\th 
+      \eapp {\parens{\efun p {\einst p}}} {\texttt{pid}} 
+     \Leftarrow
+      \tvb \to \tvb}
+\end{mathpar}
+%
+Here the annotated argument \code{pid} is inferred first, making its type available to check the function. 
+%
+Thus \code{ex_6} is not intrinsically difficult to type bidirectionally: it is reejcted only because 
+\cref{fig:bidir-poly} has committed to \Rule{Syn-App}. For this particular program, that fixed choice of 
+modes causes a needless failure.
+\end{example}
+
+
+\begin{version}{}%\False
 \XDR[TODO]{Fix the example}
 We decided
 \begin{enumerate*}
