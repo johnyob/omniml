@@ -78,7 +78,7 @@ These are defined in Definition 5.2
 > \hat is not clear.)
 
 Theorem 5.5 is now 5.7. We rephrased the theorem. 
-*\hat C means is normal form for constraint contexts).
+$\hat \C$z means normal form for constraint contexts.
 
 > 
 > > p.29, L39:  What does \bar \epsilon stand for?
@@ -125,24 +125,32 @@ constaints.
 > sentence explaining that the list is useful for elimination forms with
 > multiple subterms would help.
 
-TODO: Add a not in the manuscript.
+Added a footnote to explain that we may need a nonempty set for other
+fragile constructs. 
 
 ## Other comments
 
 > - Page 6, footnote 4 appears on the wrong page.
 
-It looks fine on the current version.
+There are two occurrences of the footnote. 
+The footnoe correctly appears on the page where it is first 
+mentionned. 
 
 > - Page 6, it may be worth mentioning that rule Annot-Poly is not the only rule
 > for the ==>ann judgment, but perhaps the only interesting one.
 
-TODO: Say so
+Adding "excerpt" of the rules and a metion to "other omitted congruence rules". 
 
 > - diff page 29. There seemed to be some discussion on the stability of
 >   typing by commonsta program transformations. I could not find it anywhere
 >   in the paper. Do those results still hold? If so, It'd be useful to add
 >   them to the discussion.
 
-TODO: Even though this paragraph was commented out in the original
-submission, we decided it would be worth to be reinstalled but in the
-discussion section. 
+This was actually not present in the original submission, but only in an
+earlier version of the paper. Reconsidering it, this is useful pertinent
+information. 
+
+We added a metatheory subsection in OmniML, moved the principal type theorem
+there and discussed the possible lost of well-typedness by both let-inlining
+and let-factorization. Hence the lost of subsection reduction. 
+
