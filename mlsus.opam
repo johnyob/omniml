@@ -13,7 +13,7 @@ depends: [
   "async"
   "ppx_jane"
   "fmt"
-  "menhir"
+  "menhir" {>= "20180523"}
   "grace"
   "odoc" {with-doc}
 ]

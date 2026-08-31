@@ -895,6 +895,7 @@ choices to begin with. For instance, \code{ex_6} would be ill-typed under the
 rules of \cref{fig:bidir-poly}.
 
 \begin{version}{\Xxx}%\False
+\color{blue}
 \XDR[TODO]{Fix the example}
 We decided
 \begin{enumerate*}
@@ -2279,19 +2280,21 @@ to factorization discussed next.
 Inlining and factorization may likewise fail to preserve typing because they
 change what type information is shared. We write these transformations as:
 \begin{mathpar}
-\begin{aligned}
-  \elet \x \ea \eb &&\longmapsto&&& \eb\where{\x\is\ea} &&&&&&\text{Inlining}\\
-  \eb\where{\x\is\ea} &&\longmapsto&&& \elet \x \ea \eb &&&&&&\text{Factorization}
-\end{aligned}
+\begin{tabular}{RCL<{\qquad}l}
+  \elet \x \ea \eb &\longmapsto& \eb\where{\x\is\ea} & Inlining\\
+  \eb\where{\x\is\ea} &\longmapsto& \elet \x \ea \eb & Factorization
+\end{tabular}
 \end{mathpar}
 subject to the usual variable-capture conditions.
 
 Inlining removes sharing. Recall example \code{ex_8} from
 \cref{sec/overview/omni}:
-\begin{program}[input]
+\begin{program}[input,breaklines=true]
 type 'a gpoint = { x : 'a; y : 'a }                     
 let diag (n : 'a) : 'a gpoint = { x = n; y = n }
-°\halfline°
+\end{program}
+\vskip -\medskipamount
+\begin{program}[input]
 let ex_8 gp =                                           
   let getx p = p.x in getx (diag 42), (getx gp : float)
 \end{program}
@@ -2341,20 +2344,13 @@ occurs exactly once in $\eb$, then $\elet \x \ea \eb$ and $\eb\where{\x\is\ea}$
 are equitypable. Backpropagation is precisely what makes linear factorization
 possible. 
 
-% This is definitely true
-% \XDR{This is an important subcase, but it should still  be checked}
-
 \OML also preserves the order independence of function application enjoyed by
 \ML. In particular, $\eappp f \ea \eb$ and $\eappp {\eswap f} \eb \ea$ are
-equitypable where $\eswap \eqdef \efun {f x y} \eappp f y x$. This property is
-also preserved by \geninst-directional inference, but not by bidirectional
-inference (\cref{sec/overview/directional}). Additionally, typability of
-$\eta$-expansion is preserved \ie $\e$ and $\efun \x {\eapp \e \x}$ are
-equitypable.
-
-% \XDR{To be checked.}
-% This can easily be seen by reducing the constraints that are introduced by 
-% eta-expansion
+equitypable where $\eswap$ is defined as $\efun {f x y} \eappp f y x$. This
+property is also preserved by \geninst-directional inference, but not by
+bidirectional inference (\cref{sec/overview/directional}). Additionally,
+typability of $\eta$-expansion is preserved \ie $\e$ and $\efun \x {\eapp \e
+\x}$ are equitypable when $\e$ has a function type. 
 
 
 \section{Constraints}
