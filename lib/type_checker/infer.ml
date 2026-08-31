@@ -453,29 +453,34 @@ let inst_label ~(env : Env.t) ~(label_name : Label_name.With_range.t) ~label_typ
 module Pattern = struct
   module Fragment = struct
     type t =
-      { var_bindings : Type.Var.t Var_name.Map.t
+      { var_bindings : Type.Var.t With_range.t Var_name.Map.t
       ; exist_bindings : Type.Var.t list
       }
     [@@deriving sexp_of]
 
     let empty = { var_bindings = Var_name.Map.empty; exist_bindings = [] }
 
-    let singleton var type_ =
-      { var_bindings = Var_name.Map.singleton var type_; exist_bindings = [] }
+    let singleton (var : Var_name.With_range.t) type_ =
+      { var_bindings =
+          Var_name.Map.singleton var.it (With_range.create ~range:var.range type_)
+      ; exist_bindings = []
+      }
     ;;
 
-    let extend t ~var ~type_ =
-      { t with var_bindings = Map.set t.var_bindings ~key:var ~data:type_ }
+    let extend t ~(var : Var_name.With_range.t) ~type_ =
+      match
+        Map.add
+          t.var_bindings
+          ~key:var.it
+          ~data:(With_range.create ~range:var.range type_)
+      with
+      | `Ok var_bindings -> { t with var_bindings }
+      | `Duplicate ->
+        let fst_range = (Map.find_exn t.var_bindings var.it).range in
+        Omniml_error.(raise @@ non_linear_pattern var.it ~fst_range ~snd_range:var.range)
     ;;
 
     let exists t type_var = { t with exist_bindings = type_var :: t.exist_bindings }
-
-    let merge t1 t2 =
-      { var_bindings =
-          Map.merge_skewed t1.var_bindings t2.var_bindings ~combine:(fun ~key:_ _ b -> b)
-      ; exist_bindings = t1.exist_bindings @ t2.exist_bindings
-      }
-    ;;
   end
 
   module With_fragment = struct
@@ -540,11 +545,11 @@ module Pattern = struct
     match pat.it with
     | Pat_any -> return tt
     | Pat_var x ->
-      let%map () = perform_extend ~var:x.it ~type_:pat_type in
+      let%map () = perform_extend ~var:x ~type_:pat_type in
       tt
     | Pat_alias (pat, x) ->
       let%bind cpat = infer_pat ~env ~with_poly_params pat pat_type in
-      let%map () = perform_extend ~var:x.it ~type_:pat_type in
+      let%map () = perform_extend ~var:x ~type_:pat_type in
       cpat
     | Pat_const const -> return @@ Type.(var pat_type =~ infer_constant const)
     | Pat_tuple pats ->
@@ -735,7 +740,8 @@ module Expression = struct
     let env, named_bindings =
       Map.to_alist var_bindings
       |> List.fold_map ~init:env ~f:(fun env (var, type_) ->
-        Env.rename_var env ~var ~in_:(fun env cvar -> env, (var, cvar @: Type.var type_)))
+        Env.rename_var env ~var ~in_:(fun env cvar ->
+          env, (var, cvar @: Type.var type_.it)))
     in
     env, named_bindings, exist_bindings, cpat
   ;;

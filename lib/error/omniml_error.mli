@@ -34,6 +34,7 @@ val bug_s : here:Source_code_position.t -> Sexp.t -> t
 val unterminated_comment : range:Range.t -> t
 val unknown_start_of_token : range:Range.t -> char -> t
 val syntax_error : range:Range.t -> t
+val file_not_found : string -> t
 val unbound_variable : range:Range.t -> Var_name.t -> t
 val unbound_type : range:Range.t -> Type_name.t -> t
 val unbound_type_variable : range:Range.t -> Type_var_name.t -> t
@@ -85,6 +86,7 @@ val polytype_mismatched_type
 
 val ambiguous_tuple : range:Range.t -> t
 val ambiguous_polytype : range:Range.t -> t
+val non_linear_pattern : Var_name.t -> fst_range:Range.t -> snd_range:Range.t -> t
 
 module For_testing : sig
   val use_expect_test_config : unit -> unit

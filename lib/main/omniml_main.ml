@@ -50,7 +50,7 @@ let type_check_and_print
       ~with_poly_params
       ~defaulting
   =
-  Omniml_error.handle_uncaught ~exit:false
+  Omniml_error.handle_uncaught ~exit:true
   @@ fun () ->
   let cst = constraint_gen ?source lexbuf ~dump_ast ~with_stdlib ~with_poly_params in
   if dump_constraint then Fmt.pr "Generated constraint:@.%a@." pp_constraint cst;

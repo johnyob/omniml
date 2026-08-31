@@ -1,9 +1,13 @@
 open Core
-open Async
 open Omniml_main
 
 let open_with_lexbuf ~f filename () =
-  let in_ = In_channel.create filename in
+  let in_ =
+    try In_channel.create filename with
+    | Sys_error _ ->
+      Fmt.epr "@[%a@]@." Omniml_error.pp (Omniml_error.file_not_found filename);
+      exit 1
+  in
   protect
     ~f:(fun () ->
       let lexbuf = Lexing.from_channel in_ in
