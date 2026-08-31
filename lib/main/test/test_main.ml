@@ -4380,6 +4380,41 @@ let%expect_test "" =
     |}]
 ;;
 
+let%expect_test "" =
+  let str =
+    {|
+      let non_trivial_cycle = fun (f, g) -> (f g, g f);;
+    |}
+  in
+  type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
+  [%expect
+    {|
+    error[E016]: unknown polytype
+        ┌─ expect_test.ml:2:51
+      2 │        let non_trivial_cycle = fun (f, g) -> (f g, g f);;
+        │                                                    ^^^
+        = hint: add a type annotation
+
+    error[E016]: unknown polytype
+        ┌─ expect_test.ml:2:46
+      2 │        let non_trivial_cycle = fun (f, g) -> (f g, g f);;
+        │                                               ^^^
+        = hint: add a type annotation
+
+    error[E016]: unknown polytype
+        ┌─ expect_test.ml:2:53
+      2 │        let non_trivial_cycle = fun (f, g) -> (f g, g f);;
+        │                                                      ^
+        = hint: add a type annotation
+
+    error[E016]: unknown polytype
+        ┌─ expect_test.ml:2:48
+      2 │        let non_trivial_cycle = fun (f, g) -> (f g, g f);;
+        │                                                 ^
+        = hint: add a type annotation
+    |}]
+;;
+
 (*
    Why can cycles not occur in the defaulting of polyparams (without -rectypes)?
 
@@ -5114,6 +5149,13 @@ let%expect_test "" =
     |}]
 ;;
 
+let%expect_test "file-not-found diagnostic" =
+  Omniml_error.file_not_found "examples/missing.ml"
+  |> Fmt.str "%a" Omniml_error.pp
+  |> print_endline;
+  [%expect {| error[E018]: source file `examples/missing.ml` does not exist |}]
+;;
+
 let%expect_test "" =
   let str =
     {|
@@ -5750,5 +5792,24 @@ let%expect_test "church-encoded lists for FCP" =
     external f :
       ('a2 -> 'a2 -> (forall 'c2. 'c2 -> ('b2 -> 'c2 -> 'c2) -> 'c2)) -> int
     val f12 : int
+    |}]
+;;
+
+let%expect_test "" =
+  let str =
+    {|
+      let non_linear_pattern = fun (x, x) -> x;;
+    |}
+  in
+  type_check_and_print str;
+  [%expect
+    {|
+    error[E019]: identifier `x` is bound more than once in the same pattern
+        ┌─ expect_test.ml:2:40
+      2 │        let non_linear_pattern = fun (x, x) -> x;;
+        │                                      -  ^ bound here again
+        │                                      │
+        │                                      bound here
+        = hint: if this is intentional, prefix it with an underscore `_x`
     |}]
 ;;

@@ -22,6 +22,9 @@ module Code = struct
     | Projection_out_of_bounds
     | Ambiguous_tuple
     | Ambiguous_polytype
+    | Unbound_label
+    | File_not_found
+    | Non_linear_pattern
     | Unknown
   [@@deriving sexp]
 
@@ -42,6 +45,9 @@ module Code = struct
     | Projection_out_of_bounds -> "E014"
     | Ambiguous_tuple -> "E015"
     | Ambiguous_polytype -> "E016"
+    | Unbound_label -> "E017"
+    | File_not_found -> "E018"
+    | Non_linear_pattern -> "E019"
     | Unknown -> "E???"
   ;;
 end
@@ -63,7 +69,7 @@ let pp ppf t =
 let handle_uncaught ~exit:should_exit f =
   try f () with
   | T t ->
-    Fmt.(pf stderr "@[%a@]@." pp t);
+    Fmt.epr "@[%a@]@." pp t;
     if should_exit && not !is_in_expect_test then exit 1
 ;;
 
@@ -122,6 +128,16 @@ let syntax_error ~range : t =
        "syntax error"
 ;;
 
+let file_not_found filename : t =
+  singleton
+  @@ Diagnostic.createf
+       ~code:Code.File_not_found
+       Error
+       "source file %a does not exist"
+       pp_quoted_s
+       filename
+;;
+
 let not_found_in_this_scope_label ~range =
   Diagnostic.Label.primaryf ~range "not found in this scope"
 ;;
@@ -174,7 +190,7 @@ let unbound_label ~range (label_name : Label_name.t) : t =
   singleton
   @@ Diagnostic.createf
        ~labels:[ not_found_in_this_scope_label ~range ]
-       ~code:Code.Unbound_constructor
+       ~code:Code.Unbound_label
        Error
        "cannot find label %a in this scope"
        pp_quoted_s
@@ -412,6 +428,28 @@ let ambiguous_polytype ~range =
        ~code:Code.Ambiguous_polytype
        Error
        "unknown polytype"
+;;
+
+let non_linear_pattern (var_name : Var_name.t) ~fst_range ~snd_range =
+  let open Diagnostic in
+  let var_name = (var_name :> string) in
+  singleton
+  @@ Diagnostic.createf
+       ~labels:
+         [ Label.secondaryf ~range:fst_range "bound here"
+         ; Label.primaryf ~range:snd_range "bound here again"
+         ]
+       ~notes:
+         [ Message.createf
+             "hint: if this is intentional, prefix it with an underscore %a"
+             pp_quoted_s
+             ("_" ^ var_name)
+         ]
+       ~code:Code.Non_linear_pattern
+       Error
+       "identifier %a is bound more than once in the same pattern"
+       pp_quoted_s
+       var_name
 ;;
 
 module For_testing = struct
