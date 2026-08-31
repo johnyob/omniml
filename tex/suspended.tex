@@ -1,6 +1,6 @@
 %; whizzy section
 
-%% Leave the above line for didier
+%% Leave the above line fRecall 
 %% No macros before \documentclass
 
 \RequirePackage{boolean}
@@ -1879,10 +1879,13 @@ context's hole $\hole$, respectively.
 In other words, $\eshape[\es] \E \e \sh$ holds when the type of the subterm
 $\e$ has a unique shape $\sh$ fixed by its context $\E$ and sibling terms
 $\es$, while $\Eshape \E \es \sh$ holds when the expected type of the hole
-in $\E$ with subterms $\es$\footnote {The set $\es$ is actually empty in
-both Rule \Rule {Use-I} and Rule \Rule {Rcd-Proj-I}, but the general case
-where $\es$ is nonempty could be needed for other fragile constructs.}  has
-the unique shape $\sh$.
+in $\E$ with subterms $\es$\footnote{%
+  In this paper, $\es$ is empty in all uses of this unicity condition
+  (\Rule{Use-I} and \Rule{Rcd-Proj-I}); in general, it may be non-empty for
+  fragile eliminators with multiple subterms. 
+}%
+has the unique shape $\sh$.
+
 \parcomment{The formal definition / auxiliary notions}
 \begin{mathpar}
 \def \Eqdef {&\eqdef&}
@@ -2210,12 +2213,16 @@ any $\gt$.
 \end{example}
 
 
-\subsection{Metatheoretical properties}
+\subsection{Metatheory}
 \label{sec/oml/metatheory}
 
-\paragraph{Principal types}
+\paragraph{Principality}
 
-As expected, type inference in \OML enjoys principal types. 
+As expected, \OML enjoys principality. We prove this in
+\cref{apx/principal-types} from soundness and completeness of constraint
+generation (\cref{thm:constraint-gen-is-sound-and-complete}) and correctness of
+constraint solving (\cref{corollary:correctness}), established in the
+following two sections.
 
 \begin{restatable}[Principal types]{theorem}{principalTypesBIS}
 \label{thm:principal-types}
@@ -2230,11 +2237,26 @@ such that:
   substitution $\theta$.
 \end{enumerate*}
 \end{restatable}
-This is proved in \cref{apx/principal-types} using soundness and
-completeness of constraint generation (\cref{thm:soundness-and-completeness}). 
 
 \paragraph{Subject reduction}
 
+\OML does not enjoy subject reduction in the presence of fragile constructs.
+Reduction may erase contextual information needed to establish unicity. 
+The following program gives a counterexample:
+\begin{program}[input]
+let ex_1_2 r = if true then r.x else (r : point).y
+\end{program}
+%
+It typechecks because the annotation of \code{(r : point)}
+determines the shape of \code{r}, whereas its reduct \code{r.x} is ill-typed. 
+
+This is a general consequence of the contextual typing rules introduced in
+\cref{fig/oml/typing/I}. Subject reduction does, however, hold in the absence
+of fragile constructs. We can therefore recover the usual property
+operationally by first elaborating fragile constructs into their robust
+counterparts, and only then reducing. 
+
+\begin{version}{}
 Unfortunately, inlining  does not preserve typings, and consequently,
 \OML does not enjoy subject reduction \emph{per se} in the presence of
 fragile constructs.
@@ -2250,11 +2272,54 @@ but it may happen similarly for both overloading or polytypes ones.
 The solution to this limitation is to let type inference elaborate fragile
 constructs into their robust counterparts before reduction. This also applies
 to factorization discussed next.
+\end{version}
 
+\paragraph{Program transformations} 
 
-\paragraph{Factorization} 
+Inlining and factorization may likewise fail to preserve typing because they
+change what type information is shared. We write these transformations as:
+\begin{mathpar}
+\begin{aligned}
+  \elet \x \ea \eb &&\longmapsto&&& \eb\where{\x\is\ea} &&&&&&\text{Inlining}\\
+  \eb\where{\x\is\ea} &&\longmapsto&&& \elet \x \ea \eb &&&&&&\text{Factorization}
+\end{aligned}
+\end{mathpar}
+subject to the usual variable-capture conditions.
 
+Inlining removes sharing. Recall example \code{ex_8} from
+\cref{sec/overview/omni}:
+\begin{program}[input]
+type 'a gpoint = { x : 'a; y : 'a }                     
+let diag (n : 'a) : 'a gpoint = { x = n; y = n }
+°\halfline°
+let ex_8 gp =                                           
+  let getx p = p.x in getx (diag 42), (getx gp : float)
+\end{program}
+%
+Information from both uses of \code{getx} may \emph{backpropagate} back to its
+body \code{fun p -> p.x}, providing enough type information to resolve the
+overloaded projection \code{p.x}. After inlining, however, each copy of \code{fun p -> p.x}
+is resolved independently. In particular, while \code{((fun p -> p.x) gp : float)}
+constrains the result of the projection to have type \code{float}, it provides 
+no information about the shape of \code{p}'s type. Consequently, the projection 
+\code{p.x} cannot be resolved.
 
+Dually, factorization introduces sharing. Suppose we inline \code{getx} from \code{ex_8}
+and annotate \code{gp} with a distinct float-point type:
+\begin{program}[input]
+type fpoint = { x : float; y : float }
+°\halfline°
+let ex_9 (gp : fpoint) = 
+  (fun p -> p.x) (diag 42), ((fun p -> p.x) gp : float)
+\end{program}
+%
+Here the two copies of \code{fun p -> p.x} typecheck independently, with
+\code{p} having types \code{int gpoint} and \code{fpoint}, respectively.
+Factorizing them forces both uses to constrain a single typing of \code{p},
+requiring a record shape compatible with both. Since these shapes differ, the
+factorized term is ill-typed. 
+
+\begin{version}{}
 \OML also fails to preserve typing by factorization. That is,
 $\eb \where {\x \is \ea}$ may be typable when $\x$ occurs free in $\eb$
 while $\elet \x \ea \eb$ fails to type. This is a direct consequence of the
@@ -2268,31 +2333,28 @@ principal types and the fact that the expected type of an expression cannot
 help typecheck it.  The lost of this property is \OML reveals a fragility of
 our declarative specification. Namely, the non-local aspect of the typing
 rules for fragile constructs (\cref {fig/oml/typing/I}).
+\end{version}
 
-Linear let-bindings $\elet \x \ea \eb$ when $\x$ occurs exactly once in
-$\eb$ are still equitypable with their inlined form $\eb \where{\x \is
-\ea}$. Here, linear factorization is enabled by backpropagation. 
+These failures do not apply to all program transformations. In particular,
+\emph{linear} let-bindings are preserved by inlining and factorization: if $\x$
+occurs exactly once in $\eb$, then $\elet \x \ea \eb$ and $\eb\where{\x\is\ea}$
+are equitypable. Backpropagation is precisely what makes linear factorization
+possible. 
 
-\XDR{This is an important subcase, but it should still  be checked}
+% This is definitely true
+% \XDR{This is an important subcase, but it should still  be checked}
 
+\OML also preserves the order independence of function application enjoyed by
+\ML. In particular, $\eappp f \ea \eb$ and $\eappp {\eswap f} \eb \ea$ are
+equitypable where $\eswap \eqdef \efun {f x y} \eappp f y x$. This property is
+also preserved by \geninst-directional inference, but not by bidirectional
+inference (\cref{sec/overview/directional}). Additionally, typability of
+$\eta$-expansion is preserved \ie $\e$ and $\efun \x {\eapp \e \x}$ are
+equitypable.
 
-
-\paragraph{Other program transformations}
-
-
-Another useful property of \ML is that type application is redefinable and
-order independent. This property can be captured by the fact that both
-expressions $\eappp f \ea \eb$ and $\eappp {\eswap f} \eb \ea$ are
-equitypable where $\eswap$ is $\efun {f x y} \eappp f y x$.
-%
-\OML, as well as \geninst-directional type inference, preserves
-this property, by contrast with bidirectional type inference.
-
-Interestingly, typings of functional expressions are also preserved by
-$\eta$-expansion.  That is, if $\G \th e : \ta \to \tb$, then $\G \th {\efun
-\x {\eapp \e \x}} : \ta \to \tb$.
-\XDR{To be checked.}
-
+% \XDR{To be checked.}
+% This can easily be seen by reducing the constraints that are introduced by 
+% eta-expansion
 
 
 \section{Constraints}
@@ -3238,20 +3300,6 @@ Constraint generation is sound and complete with respect to the typing judgment:
 A closed \OML term $\e$ is typable if and only if
 the constraint $\cexists \tv {\cinfer \e \tv}$ is satisfiable.
 \end{theorem}
-
-\begin{restatable}[Principal types]{theorem}{principalTypesBIS}
-\label{thm:principal-types}
-For any well-typed closed \OML term $\e$, there exists a type $\t$
-%% , which we call principal,
-such that:
-\begin{enumerate*}[(\roman*)]
-\item
-  $\th \e : \t$.
-\item
-  For any other typing $\th \e : \tp$, then $\tp = \theta(\t)$ for some
-  substitution $\theta$.
-\end{enumerate*}
-\end{restatable}
 
 \section{Constraint solving}
 \label{sec:solving}
@@ -4392,6 +4440,7 @@ If $\ca \csolve \cb$, then $\fvs \ca \supseteq \fvs \cb$.
 \end{restatable}
 
 \begin{corollary}[Correctness]
+  \label{corollary:correctness}
   For the term-variable-closed constraint $\c$, $\c$ is satisfiable if and
   only if\/ $\c \csolve^* \hat\up$ and $\hat\up$ is a solved form equivalent
   to $\c$.
@@ -4812,7 +4861,7 @@ early. The following program, in the contextual System-$\F$ calculus of \citet{j
 illustrates the issue:
 \begin{program}[input]
 let choose : 'a. 'a -> 'a -> 'a = fun x y -> x
-let ex_1_2 = (choose id : (($$'a. 'a -> 'a) -> 'a. 'a -> 'a) -> _) °\Ocamlcomment{\ocamlFlag {\LCTI}1}°
+let ex_1_3 = (choose id : (($$'a. 'a -> 'a) -> 'a. 'a -> 'a) -> _) °\Ocamlcomment{\ocamlFlag {\LCTI}1}°
 \end{program}
 %
 This program is rejected because \ocaml{id} must be inferred ($m =
@@ -8417,7 +8466,7 @@ rules that are not inherently destructive.
 \end{lemma}
 
 \begin{corollary}
-  \label{corollary:correctness}
+  \label{corollary:apx-correctness}
   For the closed-term-variable constraint $\c$, $\c$ is satisfiable if and only if
   $\c \csolve^* \hat\c$ and $\hat\c$ is a solved form equivalent to $\c$.
   \begin{proof}
@@ -8816,7 +8865,7 @@ Let $\e$ be an arbitrary closed well-typed term; that is, there exists a
 type $\t$ such that $\th \e : \t$.  By 
 \cref{thm:soundness-and-completeness}, the constraint $\cinfer \e \tv$ is
 satisfiable (specifically under the unifier $\cunif \tv \t$). By
-\cref{corollary:correctness}, there exists a solved constraint $\hat\c$ such
+\cref{corollary:apx-correctness}, there exists a solved constraint $\hat\c$ such
 that $\hat\c \cequiv \cinfer \e \tv$.  From $\hat\c$, we extract a
 unifier~$\sub$. Since $\hat\c \cequiv \exists \sub$, it follows that $\sub$
 is  \emph{most general}.
