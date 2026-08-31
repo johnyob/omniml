@@ -1,4 +1,4 @@
-%; whizzy section
+w%; whizzy section
 
 %% Leave the above line for didier
 %% No macros before \documentclass
@@ -891,18 +891,42 @@ types exist, but only with respect to a specification that made non-principal
 choices to begin with. For instance, \code{ex_6} would be ill-typed under the
 rules of \cref{fig:bidir-poly}.
 
-\XDR[TODO]{Say why (a transcription of) \code{ex_6} would fail. Comment on
-the weakness of the system in \cref{fig:bidir-poly} and points to the
-discussion in
-\cref{fig/related-work}.}
+\begin{version}{\Xxx}%\False
+\XDR[TODO]{Fix the example}
+We decided
+\begin{enumerate*}
+
+\item 
+  to explain  why (a transcription of) \code{ex_6} would fail;
+
+\item
+  comment on the weakness of the system in \cref{fig:bidir-poly}; and
+
+\item
+  points to the discussion in \cref{sec:related-work}.
+
+\end{enumerate*}
+
+However, I think it does not work with polytypes: we cannot find an
+examples that illustrate bidirectionality without predicative instantiation:
+this would require two examples that only different by the modes of
+inference, one that typechecks and the other that fails, but because
+all examples will require type annotations because both generalization and
+instantiation require type annotations without predicative instantiation. 
+
+Perhaps the best option is to illustration bidirectionality with
+overloading. We then need to change \cref {fig:bidir-poly}.
+\end{version}
+
 
 \paragraph{Limitations of directional type inference}
 
 Bidirectional typechecking is lightweight, practical, and well-suited for
-complex language features such as higher-rank polymorphism, dependent types, or
-subtyping. It supports the propagation of type information with minimal
-annotations. Its main downside lies in the need to fix an often arbitrary flow
-of type information---as in the case of function applications discussed above.
+complex language features such as higher-rank polymorphism, dependent types,
+or subtyping. It supports the propagation of type information with minimal
+annotations. Its main downside lies in the need to fix an often arbitrary
+flow of type information---as in the case of function applications discussed
+above.
 
 On the other hand, \emph{\geninst-directional} type inference appears better
 suited for \ML: %
@@ -8874,3 +8898,4 @@ of $\sub(\tv)$, as required \ref{proof:principal-types:2}.
 % LocalWords:  Gooding ois homomorphic homomorphism ASUP omnidirectionally
 % LocalWords:  mem Pfenning bidir ness rcd postfix composable metatheory se
 % LocalWords:  reimplementation parameterizing redefinable subcase
+% LocalWords:  bidirectionality
