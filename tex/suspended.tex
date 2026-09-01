@@ -905,37 +905,43 @@ For instance, \code{ex_6} is ill-typed under the rules in
 
 \begin{example}
 \label{example:bidir-poly}
+\newcommand{\pid}{\texttt{pid}}\newcommand{\tpid}{\tau_\pid}
 Recall that \code{ex_6}, transcibed into the \PolyML calculus, is defined as:
 \begin{mathpar}
-  \texttt{ex}_6 \eqdef \eapp {\parens{\efun p {\einst p}}} {\eannot {\epoly {\efun x x}} {} {\tpoly {\tfor \tva {\tva \to \tva}}}} \\
-  \texttt{pid} \eqdef \eannot {\epoly {\efun x x}} {} {\tpoly {\tfor \tva {\tva \to \tva}}} \qquad
-  \tau_{\texttt{pid}} \eqdef \tfor \tva {\tva \to \tva}
-\end{mathpar}
+\texttt{ex}_6 \eqdef
+\eapp {\parens{\efun p {\einst p}}}
+      {\eannot {\epoly {\efun x x}} {} {\tpoly {\tfor \tva {\tva \to \tva}}}} 
 
-  Suppose we try to infer $\tvb \to \tvb$ for \code{ex_6}. Using \Rule{Syn-App} would require a derivation 
-of the following form:
+\pid \eqdef
+\eannot {\epoly {\efun x x}} {} {\tpoly {\tfor \tva {\tva \to \tva}}} 
+
+\tpid \eqdef
+\tfor \tva {\tva \to \tva}
+\end{mathpar}
+Suppose we try to infer $\tvb \to \tvb$ for \code{ex_6}. Using
+\Rule{Syn-App} would require a derivation of the following form:
 \begin{mathpar}
   \infer*[right=Syn-App]
     {
       \infer*[right=??]
         {\color{red}\text{No rule applies}}
-        {\th \efun p {\einst p} \Rightarrow {\tau_{\texttt{pid}} \to {\tvb \to \tvb}}}
+        {\th \efun p {\einst p} \Rightarrow
+                {\tpid \to {\tvb \to \tvb}}}
       \\
-      \infer*[right=Chk-Inst]
+      \infer*[Right=Chk-Inst]
         {
           \infer*[right=Syn-Annot]
             {\vdots}
-            {\th \texttt{pid} \Rightarrow \tau_{\texttt{pid}}}
+            {\th \pid \Rightarrow \tpid}
           \\
-          \tau_{\texttt{pid}} \leq \tau_{\texttt{pid}}
+          \tpid \leq \tpid
          }
-        {\th \texttt{pid}  \Leftarrow \tau_{\texttt{pid}}}
+        {\th \pid  \Leftarrow \tpid}
+        \hskip -5em
     }
-    %------------------------------------------------------------------------------------------------------------
-    {\th 
-      \eapp {\parens{\efun p {\einst p}}} {\texttt{pid}} 
-     \Rightarrow 
-      \tvb \to \tvb}
+    %-----------------------------------------------------------
+    {\th \eapp {\parens{\efun p {\einst p}}} \pid \Rightarrow \tvb \to \tvb}
+   \hskip 5em\null
 \end{mathpar}
 %
 The first premise cannot be derived: functions are introduction forms and
@@ -944,75 +950,53 @@ in \code{pid} determines its type, \Rule{Syn-App} cannot use this information
 to typecheck the function, since the information flows from the function to its
 argument rather than conversely. 
 
-Indeed, taking the opposite, equally mode-correct rule (\Rule{Chk-App}) for applications accepts the program.
+Indeed, taking the opposite, equally mode-correct rule \Rule{Chk-App} for
+applications (instead of Rule \Rule {Syn-App}, \ie using a dual version
+of the system proposed in \cref{fig:bidir-poly}) accepts the program.
+%
 With \Rule{Chk-App}, we can check \code{ex_6} against $\tvb \to \tvb$:
 \begin{mathpar}
-  \infer*[right=Chk-App]
-    {
-      \infer*[right=Chk-Fun]
-        {
-          \infer*[right=Chk-Inst]
+\colorlet{ebox}{green!20}
+\hskip 9em
+\infer*[right=\ebox{Chk-App}]
+    {\hskip -9em
+     \infer*[left=Chk-Inst]
             {
-              \infer*[right=Syn-Inst]
+              \infer*[Left=Syn-Inst]
                 {
-                  \infer*[right=Syn-Var]
+                  \infer*[Left=Syn-Var]
                     { }
-                    {p : \tau_{\texttt{pid}} \th p \Rightarrow \tau_{\texttt{pid}}}
+                    {p : \tpid \th p \Leftarrow \tpid}
                 }
-                {p : \tau_{\texttt{pid}} \th \einst p \Rightarrow \tfor \tva \tva \to \tva}
-              \\\\
-\tfor \tva \tva \to \tva \leq \tvb \to \tvb
+                {p : \tpid \th \einst p \Rightarrow \tfor \tva \tva \to \tva}
+                \\
+                \tfor \tva \tva \to \tva \leq \tvb \to \tvb
             }
-            {p : \tau_{\texttt{pid}} \th \einst p \Leftarrow \tvb \to \tvb}
+        {\infer*[Left=Chk-Fun]
+            {p : \tpid \th \einst p \Leftarrow \tvb \to \tvb}
+        %-------------------------------------------------------------------
+        {\th \efun p {\einst p} \Leftarrow \tpid \to \tvb \to \tvb}
         }
-        %-----------------------------------------------------------------------
-        {\th \efun p {\einst p} \Leftarrow \tau_{\texttt{pid}} \to \tvb \to \tvb}
       \\
-      \infer*[right=]
+      \infer*[Right=Syn-Annot]
         {\vdots}
-        {\th \texttt{pid} \Rightarrow \tau_{\texttt{pid}}}
+        {\th \pid \Rightarrow \tpid}
     }
-    %------------------------------------------------------------------------------
-    {\th 
-      \eapp {\parens{\efun p {\einst p}}} {\texttt{pid}} 
-     \Leftarrow
-      \tvb \to \tvb}
+    %------------------------------------------------------------------------
+    {\th \eapp {\parens{\efun p {\einst p}}} \pid \Leftarrow \tvb \to \tvb}
 \end{mathpar}
 %
-Here the annotated argument \code{pid} is inferred first, making its type available to check the function. 
+Here the annotated argument \code{pid} is inferred first, making its type
+$\tpid$ available to check the function.  
 %
-Thus \code{ex_6} is not intrinsically difficult to type bidirectionally: it is reejcted only because 
-\cref{fig:bidir-poly} has committed to \Rule{Syn-App}. For this particular program, that fixed choice of 
+Thus \code{ex_6} is not intrinsically difficult to type bidirectionally: it
+is reejcted only because \cref{fig:bidir-poly} has committed to
+\Rule{Syn-App}. For this particular program, that fixed choice of  
 modes causes a needless failure.
 \end{example}
 
 
-\begin{version}{}%\False
-\XDR[TODO]{Fix the example}
-We decided
-\begin{enumerate*}
 
-\item 
-  to explain  why (a transcription of) \code{ex_6} would fail;
-
-\item
-  comment on the weakness of the system in \cref{fig:bidir-poly}; and
-
-\item
-  points to the discussion in \cref{sec:related-work}.
-
-\end{enumerate*}
-
-However, I think it does not work with polytypes: we cannot find an
-examples that illustrate bidirectionality without predicative instantiation:
-this would require two examples that only different by the modes of
-inference, one that typechecks and the other that fails, but because
-all examples will require type annotations because both generalization and
-instantiation require type annotations without predicative instantiation. 
-
-Perhaps the best option is to illustration bidirectionality with
-overloading. We then need to change \cref {fig:bidir-poly}.
-\end{version}
 
 
 \paragraph{Limitations of directional type inference}
