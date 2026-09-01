@@ -525,7 +525,7 @@ construct $\einst \e$ before it can be typed at any instance $\t$ of $\ts$.
 Because they are boxed, polytypes can be treated as regular
 (mono)types, thereby enabling impredicativity.
 
-\begin{bnffig}[tb]
+\begin{bnffig}[htpb!]
   {fig:polyml-syntax}
   {Selected syntax for \polytypes \citep*{\BBpolyml}.}
      \entry[Terms]{\e}{
@@ -960,7 +960,8 @@ Recall that \code{ex_6}, transcibed into the \PolyML calculus, is defined as:
 Suppose we try to infer $\tvb \to \tvb$ for \code{ex_6}. Using
 \Rule{Syn-App} would require a derivation of the following form:
 \begin{mathpar}
-  \infer*[right=Syn-App]
+\colorlet{ebox}{illtyped}
+  \infer*[right=\ebox{Syn-App}]
     {
       \infer*[right=??]
         {\color{red}\text{No rule applies}}
@@ -995,7 +996,7 @@ of the system proposed in \cref{fig:bidir-poly}) accepts the program.
 %
 With \Rule{Chk-App}, we can check \code{ex_6} against $\tvb \to \tvb$:
 \begin{mathpar}
-\colorlet{ebox}{green!20}
+\colorlet{ebox}{welltyped}
 \hskip 9em
 \infer*[right=\ebox{Chk-App}]
     {\hskip -9em
@@ -1029,7 +1030,7 @@ Here the annotated argument \code{pid} is inferred first, making its type
 $\tpid$ available to check the function.  
 %
 Thus \code{ex_6} is not intrinsically difficult to type bidirectionally: it
-is reejcted only because \cref{fig:bidir-poly} has committed to
+is rejected only because \cref{fig:bidir-poly} has committed to
 \Rule{Syn-App}. For this particular program, that fixed choice of  
 modes causes a needless failure.
 \end{example}
@@ -1915,9 +1916,6 @@ can therefore be represented as the shape application $\shapp (\tint \tlist)$.
 \endgroup
 
 
-\subsection {Typing rules for fragile, implicit constructs}
-\label{sec/oml/typing/I}
-
 \begin{mathparfig}[htpb!]
   {fig/oml/typing/I}
   {Typing rules for fragile, implicitly typed extensions.}
@@ -1969,6 +1967,12 @@ can therefore be represented as the shape application $\shapp (\tint \tlist)$.
       \wide\implies \shape \gt = \sh
 \end{mathparfig}
 
+
+\subsection {Typing rules for fragile, implicit constructs}
+\label{sec/oml/typing/I}
+
+
+
 \parcomment{Typing rules are contextual. Re-iterate the idea of unicity}
 
 We now turn to the typing of fragile implicit constructs
@@ -1999,7 +2003,7 @@ in $\E$ with subterms $\es$\footnote{%
   In this paper, $\es$ is empty in all uses of this unicity condition
   (\Rule{Use-I} and \Rule{Rcd-Proj-I}); in general, it may be non-empty for
   fragile eliminators with multiple subterms. 
-}%
+}
 has the unique shape $\sh$.
 
 \parcomment{The formal definition / auxiliary notions}
@@ -2360,7 +2364,7 @@ such that:
 Reduction may erase contextual information needed to establish unicity. 
 The following program gives a counterexample:
 \begin{program}[input]
-let ex_1_2 r = if true then r.x else (r : point).y
+let ex_1_2 r = if true then r.x else (r : point).y      °\ocamlflags 10°
 \end{program}
 %
 It typechecks because the annotation of \code{(r : point)}
@@ -2371,24 +2375,6 @@ This is a general consequence of the contextual typing rules introduced in
 of fragile constructs. We can therefore recover the usual property
 operationally by first elaborating fragile constructs into their robust
 counterparts, and only then reducing. 
-
-\begin{version}{}
-Unfortunately, inlining  does not preserve typings, and consequently,
-\OML does not enjoy subject reduction \emph{per se} in the presence of
-fragile constructs.
-
-This is a consequence of our support for \emph{backpropagation}: let
-bindings $\elet \x \ea \eb$ may use information from all occurrences of $\x$
-in $\eb$ to resolve fragile constructs in $ea$, but in the inlined form $\eb
-\where {\x \is \ea}$, each copy of $\ea$ must resolve its implicit
-constructs independently while it has access to less information to
-establish unicity.  This may only happen if $\ea$ has fragile constructs,
-but it may happen similarly for both overloading or polytypes ones.
-
-The solution to this limitation is to let type inference elaborate fragile
-constructs into their robust counterparts before reduction. This also applies
-to factorization discussed next.
-\end{version}
 
 \paragraph{Program transformations} 
 
@@ -2404,13 +2390,11 @@ subject to the usual variable-capture conditions.
 
 Inlining removes sharing. Recall example \code{ex_8} from
 \cref{sec/overview/omni}:
-\begin{program}[input,breaklines=true]
+\begin{program}[input]
 type 'a gpoint = { x : 'a; y : 'a }                     
 let diag (n : 'a) : 'a gpoint = { x = n; y = n }
-\end{program}
-\vskip -\medskipamount
-\begin{program}[input]
-let ex_8 gp =                                           
+°\halfline°
+let ex_8 gp =                                         °\ocamlflags 20°
   let getx p = p.x in getx (diag 42), (getx gp : float)
 \end{program}
 %
@@ -2427,7 +2411,7 @@ and annotate \code{gp} with a distinct float-point type:
 \begin{program}[input]
 type fpoint = { x : float; y : float }
 °\halfline°
-let ex_9 (gp : fpoint) = 
+let ex_9 (gp : fpoint) =                      °\ocamlflags 10°
   (fun p -> p.x) (diag 42), ((fun p -> p.x) gp : float)
 \end{program}
 %
@@ -2436,22 +2420,6 @@ Here the two copies of \code{fun p -> p.x} typecheck independently, with
 Factorizing them forces both uses to constrain a single typing of \code{p},
 requiring a record shape compatible with both. Since these shapes differ, the
 factorized term is ill-typed. 
-
-\begin{version}{}
-\OML also fails to preserve typing by factorization. That is,
-$\eb \where {\x \is \ea}$ may be typable when $\x$ occurs free in $\eb$
-while $\elet \x \ea \eb$ fails to type. This is a direct consequence of the
-use of contextual information. For instance, a program of the form $(\eannot
-{\efun y \e}{} \ta, \eannot {\efun y \e}{} \tb)$ may enforce different
-shapes for the type of $y$ on each component, while $\elet \x {\efun y \e}
-{(\eannot \x{} \ta, \eannot \x{} \tb)}$ cannot.
-
-Stability of typing by factorization holds in \ML, as a consequence of
-principal types and the fact that the expected type of an expression cannot
-help typecheck it.  The lost of this property is \OML reveals a fragility of
-our declarative specification. Namely, the non-local aspect of the typing
-rules for fragile constructs (\cref {fig/oml/typing/I}).
-\end{version}
 
 These failures do not apply to all program transformations. In particular,
 \emph{linear} let-bindings are preserved by inlining and factorization: if $\x$
@@ -2472,10 +2440,10 @@ typability of $\eta$-expansion is preserved \ie $\e$ and $\efun \x {\eapp \e
 \label{sec:constraints}
 
 
-%% BEWARE: The following two figures only be located as the top of a
+%% BEWARE: The following two figures only be located as the top (or bottom) of a
 %% page---otherwise  it would be  misplaced
 
-\begin{mathparfig}[t]%
+\begin{mathparfig}[b]%
   {fig:constraints}%
   {Selected syntax and semantics of constraints.}
 \begin{bnfgrammar}
@@ -3006,7 +2974,19 @@ $\t$ is a type variable and $\C$ is satisfiable.
 \subsection{Constraint generation}
 \label{sec/oml/constraints}
 
-\begin{mathparfig}[tp]
+% Intro
+We now present the formal translation from terms $\e$ to constraints $\c$,
+such that the resulting constraint is satisfiable if and only if the term is
+well typed. The translation is defined as a function $\cinfer \e \t$, where $\e$
+is the term to be translated and $\t$ is the expected type of $\e$.
+%
+The expected type $\t$ is permitted to contain type variables, which can be
+existentially bound in order to perform type inference. The models of
+constraint $\cinfer \e \t$ interpret the free variables of
+$\t$ such that $\t$ becomes a valid type of $\e$. For example, to infer the
+entire type of $\e$ we may pick a fresh type variable $\tv$ for $\t$.
+
+\begin{mathparfig}[bp]
   {fig:patterns-oml}
   {Patterns for \OML.}
   \begin{bnfgrammar}
@@ -3187,18 +3167,6 @@ $\t$ is a type variable and $\C$ is satisfiable.
 \end{tabular*}
 \end{mathparfig}
 
-
-% Intro
-We now present the formal translation from terms $\e$ to constraints $\c$,
-such that the resulting constraint is satisfiable if and only if the term is
-well typed. The translation is defined as a function $\cinfer \e \t$, where $\e$
-is the term to be translated and $\t$ is the expected type of $\e$.
-%
-The expected type $\t$ is permitted to contain type variables, which can be
-existentially bound in order to perform type inference. The models of
-constraint $\cinfer \e \t$ interpret the free variables of
-$\t$ such that $\t$ becomes a valid type of $\e$. For example, to infer the
-entire type of $\e$ we may pick a fresh type variable $\tv$ for $\t$.
 
 
 \paragraph{Shape patterns}
@@ -4065,10 +4033,10 @@ constraints already handled by the solver.
 
 \rewrite[S-Inst-Poly]
   {\cletr \x \tv {\tvs} {\ueqs \cand \c}
-      {\C\where{\cpapp \x \tvp \tvc \inst}}}
+      {\C\where{\cpapp \x \tvb \tvc \inst}}}
   {\cfor \tvb \cexists {\tvbs} {\ueqs} \cequiv \ctrue \\\\
    \tvb, \tvbs \subseteq \tv, \tvs \\
-   \tvbs \disjoint \c \\
+   \tvb, \tvbs \disjoint \c \\
    \inst(\tvb) \disjoint \insts \C \\
    \x \disjoint \bvs \C}
   {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where\ctrue}}
@@ -4149,9 +4117,9 @@ There are three cases in which an instantiation constraint is eliminated:
     instantiations are needed (\Rule{S-Inst-Copy}).
     
   \item
-    The copied variable $\tvp$ is polymorphic, and thus the instantiation
+    The copied variable $\tvb$ is polymorphic, and thus the instantiation
     constraint imposes no restriction (\Rule{S-Inst-Poly}), provided no
-    other instantiations of $\tvp$ exist for the same instantiation $\inst$ (if
+    other instantiations of $\tvb$ exist for the same instantiation $\inst$ (if
     not, then apply \Rule{S-Inst-Unif}).
 
   \item
@@ -4445,7 +4413,12 @@ outlined above.
               \cunif \tvcgetxret \tvd \cand \cunif \tvpc {\trcd \tgpoint \tint} \\ 
             \cunif {\tvpc} {\trcd \tgpoint {\tvcgetxret'}}}}
     }
-    & \Rule{S-Inst-Copy} \\[5ex]
+    & \Rule{S-Inst-Copy}
+\end{tabular*}
+\end{mathpar}
+%% BEWARE: explicit break in mathpar for page break
+\begin{mathpar}
+\begin{tabular*}{\linewidth}{;;L;;L~R}
 \csolve 
     &\C\Where{
         \ldots \commaq
@@ -6364,27 +6337,27 @@ $\c$. \\
       {\tvc, \inst} \x { \cpinst \inst \tv \tvc \cand \cunif \tvc \t}}}}
 
   \rewrite[S-Inst-Copy]
-    {\cletr \x \tv \tvs {\c} \C\where{\cpapp \x \tvp \tvc \inst}}
-    {\c = \cp \cand \cunif \tvp {\cunif {\shapp \tvbs} \ueq}\\\\
-     \tvp \in \reg \tv \tvs \\
+    {\cletr \x \tv \tvs {\c} \C\where{\cpapp \x \tvb \tvc \inst}}
+    {\c = \cp \cand \cunif \tvb {\cunif {\shapp \tvbs} \ueq}\\\\
+     \tvb \in \reg \tv \tvs \\
      \neg \cyclic {\c} \\
-     \tvbs' \disjoint \tvp, \tvc, \tvbs \\
+     \tvbs' \disjoint \tvb, \tvc, \tvbs \\
      \x \disjoint \bvs \C}
     {\cletr \x \tv \tvs {\c}
       \C\where{\cexists {\tvbs'}
          {\cunif \tvc {\shapp \tvbs'} \cand \overline{\cpapp \x {\tvb} {\tvb'} \inst}}}}
 
   \rewrite[S-Inst-Unify]
-    {\cpinst \inst \tv \tvca \cand \cpinst \inst \tv \tvcb}
+    {\cpinst \inst \tvb \tvca \cand \cpinst \inst \tvb \tvcb}
     {}
-    {\cpinst \inst \tv \tvca \cand \cunif \tvca \tvcb}
+    {\cpinst \inst \tvb \tvca \cand \cunif \tvca \tvcb}
 
   \rewrite[S-Inst-Poly]
     {\cletr \x \tv {\tvs} {\ueqs \cand \c}
-        {\C\where{\cpapp \x \tvp \tvc \inst}}}
+        {\C\where{\cpapp \x \tvb \tvc \inst}}}
     {\cfor \tvb \cexists {\tvbs} {\ueqs} \cequiv \ctrue \\\\
      \tvb, \tvbs \subseteq \tv, \tvs \\
-     \tvbs \disjoint \c \\
+     \tvb, \tvbs \disjoint \c \\
      \inst(\tvb) \disjoint \insts \C \\
      \x \disjoint \bvs \C}
     {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where\ctrue}}
@@ -7853,20 +7826,20 @@ generally in our system.
     \proofcaserewrite
       {S-Inst-Copy}
       {\cletr \x \tv \tvs {\c}
-	\C\where{\cpapp \x \tvp \tvc \inst}\\
-	\c = \cp \cand \cunif \tvp {\cunif {\shapp \tvbs} \ueq}\\
-	\tvp \in \reg \tv \tvs \\
+	\C\where{\cpapp \x \tvb \tvc \inst}\\
 	\neg \cyclic {\c} \\
-	\tvbs' \disjoint \tvp, \tvc, \tvbs \\
-       \x \disjoint \bvs \C}
+  \x \disjoint \bvs \C \\
+	\c = \cp \cand \cunif \tvb {\cunif {\shapp \tvbs} \ueq}\\
+	\tvb \in \reg \tv \tvs \\
+	\tvbs' \disjoint \tvb, \tvc, \tvbs}
       {\cletr \x \tv \tvs {\c}
-	\C\where{\cexists {\tvbs'} \cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst}}
+  \C\where{\cexists {\tvbs'} \cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst}}
 
 	\begin{llproof}
 	  \disjointPf{\x}{\bvs \C}{Premise}
-	  \disjointPf{\tvbs'}{\tvp, \tvc, \tvbs}{Premise}
+	  \disjointPf{\tvbs'}{\tvb, \tvc, \tvbs}{Premise}
 	  \decolumnizePf
-	  \Sufficientpf{equivalence between}{\cpapp \x \tvp \tvc \inst
+	  \Sufficientpf{equivalence between}{\cpapp \x \tvb \tvc \inst
           \text{ and }
           \hfil \penalty -50{}\hfill
            \cexists {\tvbs'} \cunif \tvc {\shapp \tvbs'} \cand
@@ -7877,14 +7850,14 @@ generally in our system.
 	  \proofcase{$\implies$}
 
 	    \begin{llproof}
-	      \vdashPf{\semenvp} {\cpapp \x \tvp \tvc \inst}{Premise}
+	      \vdashPf{\semenvp} {\cpapp \x \tvb \tvc \inst}{Premise}
 	      \inPf{\greg \gt \semenva}{\semenvp(\x)}{$\cexistsi \inst \x \in \C$}
 	      \eqPf{\semenvp(\inst)}{\semenva}{\ditto}
-	      \eqPf{\semenvp(\tvc)}{\semenv(\inst)(\tvp)}{Simple inversion}
-	      \continueeqPf{\semenva(\tvp)}{Above}
-	      \vdashPf{\semenva}{\cp \cand \cunif \tvp {\cunif {\shapp \tvbs} \ueq}}{Above}
-	      \vdashPf{\semenva}{\cunif \tvp {\cunif {\shapp \tvbs} \ueq}}{Simple inversion}
-	      \eqPf{\semenva(\tvp)}{\shapp {\semenva(\tvbs)}}{\ditto}
+	      \eqPf{\semenvp(\tvc)}{\semenv(\inst)(\tvb)}{Simple inversion}
+	      \continueeqPf{\semenva(\tvb)}{Above}
+	      \vdashPf{\semenva}{\cp \cand \cunif \tvb {\cunif {\shapp \tvbs} \ueq}}{Above}
+	      \vdashPf{\semenva}{\cunif \tvb {\cunif {\shapp \tvbs} \ueq}}{Simple inversion}
+	      \eqPf{\semenva(\tvb)}{\shapp {\semenva(\tvbs)}}{\ditto}
 	      \eqPf{\semenvp(\tvc)}{\shapp {\semenva(\tvbs)}}{Above}
 	      \vdashPf{\semenvp\where{\tvbs' \is \semenva(\tvbs)}}{\cunif \tvc {\shapp {\tvbs'}}}{By \Rule{Unif}}
 	      \vdashPf{\semenvp\where{\tvbs' \is \semenva(\tvbs)}}{\cpapp \x \tvbs {\tvbs'} \inst}{By \Rule{Incr-Inst}}
@@ -7900,16 +7873,16 @@ generally in our system.
 
     \proofcaserewrite
       {S-Inst-Unify}
-      {\cpinst \inst \tv \tvca \cand \cpinst \inst \tv \tvcb}
-      {\cpinst \inst \tv \tvca \cand \cunif \tvca \tvcb}
+      {\cpinst \inst \tvb \tvca \cand \cpinst \inst \tvb \tvcb}
+      {\cpinst \inst \tvb \tvca \cand \cunif \tvca \tvcb}
 
       \begin{llproof}
 
 	\Sufficientpf{equivalence between}
-        {\cpinst \inst \tv \tvca \cand \cpinst \inst \tv \tvcb
+        {\cpinst \inst \tvb \tvca \cand \cpinst \inst \tvb \tvcb
          \text{ and }
          \hfil \penalty -50{}\hfill
-         \cpinst \inst \tv \tvca \cand \cunif \tvca \tvcb}
+         \cpinst \inst \tvb \tvca \cand \cunif \tvca \tvcb}
         {\cref{lem:simple-ctxt-equiv}}
 
       \end{llproof}
@@ -7918,14 +7891,14 @@ generally in our system.
 	\proofcase{$\implies$}
 
 	  \begin{llproof}
-	    \vdashPf{\semenv}{\cpinst \inst \tv \tvca \cand \cpinst \inst \tv \tvcb}{Premise}
-	    \vdashPf{\semenv}{\cpinst \inst \tv \tvca}{Simple inversion}
-	    \vdashPf{\semenv}{\cpinst \inst \tv \tvcb}{\ditto}
-	    \eqPf{\semenv(\tvca)}{\semenv(\inst)(\tv)}{\ditto}
-	    \eqPf{\semenv(\tvcb)}{\semenv(\inst)(\tv)}{\ditto}
+	    \vdashPf{\semenv}{\cpinst \inst \tvb \tvca \cand \cpinst \inst \tvb \tvcb}{Premise}
+	    \vdashPf{\semenv}{\cpinst \inst \tvb \tvca}{Simple inversion}
+	    \vdashPf{\semenv}{\cpinst \inst \tvb \tvcb}{\ditto}
+	    \eqPf{\semenv(\tvca)}{\semenv(\inst)(\tvb)}{\ditto}
+	    \eqPf{\semenv(\tvcb)}{\semenv(\inst)(\tvb)}{\ditto}
 	    \eqPf{\semenv(\tvca)}{\semenv(\tvcb)}{Above}
 	    \vdashPf{\semenv}{\cunif \tvca \tvcb}{By \Rule{Unif}}
-\Hand	    \vdashPf{\semenv}{\cpinst \inst \tv \tvca \cand \cunif \tvca \tvcb}{By \Rule{Conj}}
+\Hand	    \vdashPf{\semenv}{\cpinst \inst \tvb \tvca \cand \cunif \tvca \tvcb}{By \Rule{Conj}}
 	  \end{llproof}
 
 	\proofcase{$\impliedby$}
@@ -7938,16 +7911,16 @@ generally in our system.
     \proofcaserewrite
       {S-Inst-Poly}
       {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where{\cpapp \x \tvb \tvc \inst}} \\
-       \cfor \tvb \cexists {\tvbs \setminus \tvb} {\ueqs} \cequiv \ctrue \\\\
-       \tvb \in \tvbs \subseteq \tv, \tvs \\
-       \tvbs \disjoint \c \\
+       \cfor \tvb \cexists {\tvbs} {\ueqs} \cequiv \ctrue \\\\
+       \tvb, \tvbs \subseteq \tv, \tvs \\
+       \tvb, \tvbs \disjoint \c \\
        \inst(\tvb) \disjoint \insts \C \\
        \x \disjoint \bvs \C}
       {\cletr \x \tv {\tvs} {\ueqs \cand \c} {\C\where\ctrue}}
 
 	\begin{llproof}
-	  \equivPf{\cfor \tvb \cexists {\tvbs \setminus \tvb} \ueqs}{\ctrue}{Premise}
-	  \disjointPf{\tvbs}{\c}{Premise}
+	  \equivPf{\cfor \tvb \cexists {\tvbs} \ueqs}{\ctrue}{Premise}
+	  \disjointPf{\tvb, \tvbs}{\c}{Premise}
     \disjointPf{\inst(\tvb)}{\insts \C}{Premise}
 	  \disjointPf{\x}{\bvs \C}{Premise}
 	  \decolumnizePf
@@ -7985,12 +7958,12 @@ generally in our system.
 
 		\begin{llproof}
 		  \LetPf{\semenvbp}{\semenva\where{\tvb \is \semenvp(\tvc)}}{}
-      \vdashPf{\semenvbp}{\cexists {\tvbs \setminus \tvb} \ueqs}{$\tfor \tvb {\cexists {\tvbs \setminus \tvb} \ueqs} \cequiv \ctrue$}
-		  \LetPf{\semenvb}{\semenva\where{\tvb \is \semenvp(\tvc), \tvbs \setminus \tvb \is \gts}}{}
+      \vdashPf{\semenvbp}{\cexists {\tvbs} \ueqs}{$\tfor \tvb {\cexists {\tvbs} \ueqs} \cequiv \ctrue$}
+		  \LetPf{\semenvb}{\semenva\where{\tvb \is \semenvp(\tvc), \tvbs \is \gts}}{}
       \vdashPf{\semenvb}{\ueqs}{Simple inversion}
 		  \vdashPf{\semenva}{\ueqs \cand \c}{By definition}
 		  \vdashPf{\semenva}{\c}{Simple inversion}
-		  \vdashPf{\semenvb}{\c}{$\tvbs \disjoint \c$}
+		  \vdashPf{\semenvb}{\c}{$\tvb, \tvbs \disjoint \c$}
 		  \vdashPf{\semenvb}{\ueqs \cand \c}{By \Rule{Conj}}
 		  \inPf{\greg \gtp \semenvb}{\semenv(\x)}{By definition}
 		  \supposePf{\semenvc \th \Cb\where\ctrue}{Considering entailment on $\cexistsi \inst \x$}
@@ -8172,8 +8145,8 @@ generally in our system.
           $\x \disjoint \hat\C$ and $\inst(\tv) \disjoint \insts {\hat\C}$;
       \item
         \label {item/progress/suspended}
-      for every match constraint $\c = \hat\C\where{\cmatch \tv \cbrs}$, 
-          $\Cshape {\hat\C} \tv \sh$ does not hold for any $\sh$.
+      for every match constraint $\c = \hat\C\where{\cmatch \t \cbrs}$, 
+          $\Cshape {\hat\C} \t \sh$ does not hold for any $\sh$.
       \end{enumerate*}
     Here, $\hat\C$ is a normalized context (\cref{def/normal-forms-appendix}).  
   \end{enumerate}
@@ -8190,9 +8163,9 @@ generally in our system.
 
 	  We have $\nCshape \hole \tv$. It suffices
 	  that every match constraint in a context-reachable position
-	  $\hat\C\where{\cmatch \tvp \cbrs}$ satisfies $\nCshape {\hat\C} \tvp$.
+	  $\hat\C\where{\cmatch \tp \cbrs}$ satisfies $\nCshape {\hat\C} \tp$.
 	  By the definition of constraint contexts, there is only one such
-	  $\hat\C$, namely $\hole$, for which we already have $\nCshape \hole \tv$.
+	  $\hat\C$, namely $\hole$, for which we already have $\nCshape \hole \t$.
 	  Hence $\cmatch \t \cbrs$ is stuck.
       \end{proofcases}
 
@@ -8230,15 +8203,15 @@ generally in our system.
 
 	    Otherwise, $\x \disjoint \bvs {\hat \Ca \cand \cb}$, thus $\hat\Ca\where{\cpapp \x \tv \tvc \inst}$ is stuck.
 
-	  \proofcase{$\hat\Ca\where{\cmatch \tvp \cbrs}$}
-	    We have $\nCshape \Ca \tvp$.
+	  \proofcase{$\hat\Ca\where{\cmatch \tp \cbrs}$}
+	    We have $\nCshape \Ca \tp$.
 
-	    Consider a match constraint $\cmatch \tvp \cbrs$ in $\ca$.
+	    Consider a match constraint $\cmatch \tp \cbrs$ in $\ca$.
 
-      If $\th \Cshape {\where{\hat\Ca\where{-} \cand \cb}} \tvp \sh$. Then we can apply \Rule{S-Match-Ctx}.
+      If $\th \Cshape {\where{\hat\Ca\where{-} \cand \cb}} \tp \sh$. Then we can apply \Rule{S-Match-Ctx}.
 
-      Otherwise $\not \th \Cshape {\where{\hat\Ca\where{-} \cand \cb}} \tvp \sh$. We have \cref{lem:unicity-completeness},
-      so we are stuck and $\nCshape {(\Ca \cand \cb)} \tvp$.
+      Otherwise $\not \th \Cshape {\where{\hat\Ca\where{-} \cand \cb}} \tp \sh$. We have \cref{lem:unicity-completeness},
+      so we are stuck and $\nCshape {(\Ca \cand \cb)} \tp$.
 	\end{proofcases}
 
     \end{proofcases}
@@ -8283,12 +8256,12 @@ generally in our system.
 
 	  Apply \Rule{S-Let-AppR}.
 
-    \proofcase{$\hat\C\where{\cpapp \x \tvp \tvc \inst}$} We have $\x \disjoint \bvs {\hat\C}$ or $\inst(\tvp) \disjoint \insts {\hat\C}$.
+    \proofcase{$\hat\C\where{\cpapp \x \tvb \tvc \inst}$} We have $\x \disjoint \bvs {\hat\C}$ or $\inst(\tvb) \disjoint \insts {\hat\C}$.
 	    \begin{itemize}
-		\proofcase{$\tvp \in \reg \tv \tvs$}
+		\proofcase{$\tvb \in \reg \tv \tvs$}
 
 		We can either apply \Rule{S-Inst-Copy} or \Rule{S-Compress}
-		if a multi-equation involving $\tvp$ occurs in $\ca$.
+		if a multi-equation involving $\tvb$ occurs in $\ca$.
 
 		Otherwise, we consider cases where $\ca$ is solved or stuck.
 
@@ -8296,8 +8269,8 @@ generally in our system.
 		There are two cases:
 		\begin{itemize}
 		  \proofcase{$\cexists {\tv, \tvs} \ueqs \cequiv \ctrue$}
-		  As $\tvp$ does not appear in the head position of any multi-equation in $\ueqs$,
-		  it must be polymorphic. Thus $\cfor \tvp {\cexists {\tv, \tvs \setminus \tvp} \ueqs} \cequiv \ctrue$.
+		  As $\tvb$ does not appear in the head position of any multi-equation in $\ueqs$,
+		  it must be polymorphic. Thus $\cfor \tvb {\cexists {\tv, \tvs \setminus \tvb} \ueqs} \cequiv \ctrue$.
 		  So we can apply \Rule{S-Inst-Poly}.
 
 		  \proofcase{$\cexists {\tv, \tvs} \ueqs \cnequiv \ctrue$}
@@ -8307,19 +8280,19 @@ generally in our system.
 
 		If $\ca$ is stuck, then neither stuck case regarding instantiations
 		in $\ca$ is fixed, so in these cases the constraint remains
-		stuck. If $\ca$ is stuck with $\hat\Cp\where{\cmatch \tvb
+		stuck. If $\ca$ is stuck with $\hat\Cp\where{\cmatch \tp
     \cbrs'}$. Then either backpropagation (via \Rule{S-Uni-BackProp} and \Rule{S-Match-Ctx})
 		applies with an equation in $\hat\C$, or the entire constraint
     is stuck (by \cref{lem:unicity-completeness}).
 
-		\proofcase{$\tvp \notin \reg \tv \tvs$} Apply \Rule{S-Inst-Mono}.
+		\proofcase{$\tvb \notin \reg \tv \tvs$} Apply \Rule{S-Inst-Mono}.
 
 
 
 
 	    \end{itemize}
 
-	  \proofcase{For any $\hat\C\where{\cmatch \tvp \cbrs}$} We have $\nCshape {\hat\C} \tvp$.
+	  \proofcase{For any $\hat\C\where{\cmatch \tp \cbrs}$} We have $\nCshape {\hat\C} \tp$.
 
 	  Either $\cletr \x \tv \tvs \ca \cb$ can progress with an instantiation constraint (in the above case) to discharge
 	  the match constraint or $\cletr \x \tv \tvs \ca \cb$ is stuck.
@@ -8526,22 +8499,23 @@ rules that are not inherently destructive.
     \proofcaserewrite
       {S-Inst-Copy}
       {\cletr \x \tv \tvs {\c}
-	\C\where{\cpapp \x \tvp \tvc \inst}\\
-	\c = \cp \cand \cunif \tvp {\cunif {\shapp \tvbs} \ueq}\\
-	\tvp \in \reg \tv \tvs \\
+	\C\where{\cpapp \x \tvb \tvc \inst}\\
 	\neg \cyclic {\c} \\
-       \tvbs' \disjoint \tvp, \tvc, \tvbs \\
-       \x \disjoint \bvs \C}
+\x \disjoint \bvs \C \\
+	\c = \cp \cand \cunif \tvb {\cunif {\shapp \tvbs} \ueq}\\
+	\tvb \in \reg \tv \tvs \\
+       \tvbs' \disjoint \tvb, \tvc, \tvbs
+       }
       {\cletr \x \tv \tvs {\c}
 	\C\where{\cexists {\tvbs'} \cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst}}
 
       We aim to show that the weight of the rewritten constraint
       $\cexists {\tvbs'} \cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst$
-      is strictly less than the original $\cpapp \x \tvp \tvc \inst$.
+      is strictly less than the original $\cpapp \x \tvb \tvc \inst$.
 
       \begin{mathpar}
 	\begin{tabular}{RCL}
-	  \cw {\cpapp \x \tvp \tvc \inst} &=& 1 + \stw \tv \\
+	  \cw {\cpapp \x \tvb \tvc \inst} &=& 1 + \stw \tvb \\
 	  &\geq& 1 + 2 \times \sw \sh + \sum\iton \stw \tvbi  \\[1ex]
 	  \cw {\cexists {\tvbs'} \cunif \tvc {\shapp \tvbs'} \cand \cpapp \x {\tvbs} {\tvbs'} \inst}
 	  &=&
