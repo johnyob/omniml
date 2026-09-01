@@ -603,7 +603,7 @@ unboxing, but permit instantiations to be implicit. They therefore stand
 in contrast to \emph{implicit} higher-rank or first-class polymorphism,
 provided by systems such as
 \DK~\citep*{dunfield-krishnaswami-bidirectional-poly},
-\QuickLook~\citep*{journals/pacmpl/SerranoHJV20}, and \Frost~\citep*{frost},
+\QuickLook~\citep*{journals/pacmpl/SerranoHJV20}, and \Frost~\citep*{journals/corr/abs-2607-16061},
 where polymorphic values are unboxed. At the same time, they are less explicit
 than \emph{fully explicit} polymorphism (\eg System-$\F$), where both
 quantification and instantiation must be explicitly and fully specified.
@@ -5095,19 +5095,19 @@ implicit, inferring the most-general type, whereas \polytypes require an
 explicit type annotation $\expoly \e \tvs \ts$. 
 
 \QuickLook \citep{journals/pacmpl/SerranoHJV20}, \Haskell's latest approach at
-first-class polymorphism, uses bidirectional propagation to take
-a ``quick look'' at the spine of an application to guide the instantiation of
-higher-rank functions. This permits \emph{argument reordering}, allowing
-later arguments to influence the type of earlier ones within the same
-application spine. While this mitigates the order-dependence of fixed directionality
-(\cref{sec/overview/directional}), it still enforces a global direction of
-type propagation between surrounding constructs (\eg let-bindings). In this
-sense, \QuickLook is \emph{locally omnidirectional} but \emph{globally
-directional}: they reduce order sensitivity within applications, but do not
-provide a declarative account of type flow between arbitrary constructs, as
-required for omnidirectionality. More recently, \Frost \citep{frost} follows a
-similar line but extends it to handle $\eta$-expansion and introduces a
-freezing operator, akin to that of \FreezeML, that helps propagate type
+first-class polymorphism, uses bidirectional propagation to take a ``quick
+look'' at the spine of an application to guide the instantiation of higher-rank
+functions. This permits \emph{argument reordering}, allowing later arguments to
+influence the type of earlier ones within the same application spine. While
+this mitigates the order-dependence of fixed directionality
+(\cref{sec/overview/directional}), it still enforces a global direction of type
+propagation between surrounding constructs (\eg let-bindings). In this sense,
+\QuickLook is \emph{locally omnidirectional} but \emph{globally directional}:
+they reduce order sensitivity within applications, but do not provide a
+declarative account of type flow between arbitrary constructs, as required for
+omnidirectionality. More recently, \Frost \citep{journals/corr/abs-2607-16061}
+follows a similar line but extends it to handle $\eta$-expansion and introduces
+a freezing operator, akin to that of \FreezeML, that helps propagate type
 information when the default order of inference is insufficient.
 
 \paragraph{Type-based disambiguation in \SML}
