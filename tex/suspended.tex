@@ -6,7 +6,7 @@
 \RequirePackage{boolean}
 \input{\jobname.cfg}
 
-\documentclass[acmsmall,screen,nonacm%
+\documentclass[acmsmall,screen%
 \Anonymous{,anonymous}{}%
 \Final{}{,review}%
 %% \Draft{,draft}{}% Intendedly hidden, as it destroys hyperrefs
@@ -49,6 +49,45 @@
   \city{Paris}
   \country{France}
 }
+
+\begin{CCSXML}
+<ccs2012>
+   <concept>
+       <concept_id>10003752.10003790.10011740</concept_id>
+       <concept_desc>Theory of computation~Type theory</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10011007.10011006.10011008.10011009.10011012</concept_id>
+       <concept_desc>Software and its engineering~Functional languages</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10011007.10011006.10011008.10011024.10011025</concept_id>
+       <concept_desc>Software and its engineering~Polymorphism</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+ </ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Theory of computation~Type theory}
+\ccsdesc[500]{Software and its engineering~Functional languages}
+\ccsdesc[500]{Software and its engineering~Polymorphism}
+
+\keywords{constraint-based type inference, static overloading, semi-explicit first-class polymorphism}
+
+\copyrightyear{2025}
+\acmJournal{TOPLAS}
+\acmDOI{XXXXXXX.XXXXXXX}
+% \acmVolume{X}
+% \acmNumber{X}
+% \acmArticle{X}
+% \acmYear{2026}
+% \acmMonth{9}
+
+\received{November 2025}
+\received[revised]{April 2026}
+\received[accepted]{September 2026}
 
 %% Main repeated citations
 
