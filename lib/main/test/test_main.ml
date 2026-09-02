@@ -1,24 +1,22 @@
 open! Core
 open! Grace
-open Omniml_main
 
-let () =
-  Async.Log.Global.For_testing.use_test_output ();
-  Omniml_error.For_testing.use_expect_test_config ()
-;;
+let () = Async.Log.Global.For_testing.use_test_output ()
 
 let type_check_and_print
       ?(dump_ast = false)
       ?(dump_constraint = false)
       ?(with_stdlib = true)
       ?(with_poly_params = false)
-      ?(defaulting = Options.Defaulting.default)
+      ?(defaulting = Omniml_main.Options.Defaulting.default)
       ?(log_level = `Info)
       str
   =
+  Omniml_error.handle_uncaught ~use_ansi:false ~exit:false
+  @@ fun () ->
   Async.Log.Global.set_level log_level;
   let source = Omniml_source.For_testing.expect_test_source str in
-  type_check_and_print
+  Omniml_main.type_check_and_print
     ~source
     ~dump_ast
     ~dump_constraint
@@ -5147,13 +5145,6 @@ let%expect_test "" =
     external f : ('j1 -> 'j1 -> 'k1 list) -> int
     val f12 : int
     |}]
-;;
-
-let%expect_test "file-not-found diagnostic" =
-  Omniml_error.file_not_found "examples/missing.ml"
-  |> Fmt.str "%a" Omniml_error.pp
-  |> print_endline;
-  [%expect {| error[E018]: source file `examples/missing.ml` does not exist |}]
 ;;
 
 let%expect_test "" =

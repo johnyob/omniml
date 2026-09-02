@@ -10,18 +10,12 @@ let pp_structure ppf structure =
 ;;
 
 let lex_and_print ?source lexbuf =
-  Omniml_error.handle_uncaught ~exit:true
-  @@ fun () ->
   let tokens = Lexer.read_tokens ?source lexbuf in
   Fmt.(pr "@[<v>%a@]@." (list Token.pp)) tokens
 ;;
 
 let parse ?source lexbuf = Parser.parse_structure ?source lexbuf
-
-let parse_and_print ?source lexbuf =
-  Omniml_error.handle_uncaught ~exit:true
-  @@ fun () -> Fmt.pr "%a@." pp_structure (parse ?source lexbuf)
-;;
+let parse_and_print ?source lexbuf = Fmt.pr "%a@." pp_structure (parse ?source lexbuf)
 
 let constraint_gen ?source lexbuf ~dump_ast ~with_stdlib =
   let structure = parse ?source lexbuf in
@@ -29,14 +23,9 @@ let constraint_gen ?source lexbuf ~dump_ast ~with_stdlib =
   Omniml_type_checker.infer_str ~with_stdlib structure
 ;;
 
-let pp_constraint ppf cst =
-  Omniml_error.handle_uncaught ~exit:true
-  @@ fun () -> Fmt.pf ppf "@[%a@]" Sexp.pp_hum ([%sexp_of: Constraint.t] cst)
-;;
+let pp_constraint ppf cst = Fmt.pf ppf "@[%a@]" Sexp.pp_hum ([%sexp_of: Constraint.t] cst)
 
 let constraint_gen_and_print ?source lexbuf ~dump_ast ~with_stdlib ~with_poly_params =
-  Omniml_error.handle_uncaught ~exit:true
-  @@ fun () ->
   let cst = constraint_gen ?source lexbuf ~dump_ast ~with_stdlib ~with_poly_params in
   Fmt.pr "%a@." pp_constraint cst
 ;;
@@ -50,8 +39,6 @@ let type_check_and_print
       ~with_poly_params
       ~defaulting
   =
-  Omniml_error.handle_uncaught ~exit:true
-  @@ fun () ->
   let cst = constraint_gen ?source lexbuf ~dump_ast ~with_stdlib ~with_poly_params in
   if dump_constraint then Fmt.pr "Generated constraint:@.%a@." pp_constraint cst;
   let range =

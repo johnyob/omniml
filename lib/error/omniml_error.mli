@@ -14,14 +14,13 @@ val both : t -> t -> t
 (** [all ts] combines all errors in [ts] into one *)
 val all : t list -> t
 
-include Pretty_printer.S with type t := t
+(** [handle_uncaught ~exit f] catches [T err] escaping [f] and 
+    prints the error message to stderr.
 
-(** [handle_uncaught ~exit f] catches [T err] escaping [f] and prints the error
-    message to stderr.
-
-    Exits with return code 1 if [exit] is [true] and [f] is not running
-    in an expect test, and returns unit otherwise. *)
-val handle_uncaught : exit:bool -> (unit -> unit) -> unit
+    Exits with return code 1 if [exit] is [true] and returns [()] otherwise.
+    If [use_ansi] is [None], then rendering is dictated by [TERM] and [isatty stderr]. 
+    Otherwise, [use_ansi] can override these defaults. *)
+val handle_uncaught : ?use_ansi:bool -> exit:bool -> (unit -> unit) -> unit
 
 (** [bug ~here msg] constructs an internal fatal error.
     This error is only to be used to indicate a bug in Omniml. *)
@@ -87,7 +86,3 @@ val polytype_mismatched_type
 val ambiguous_tuple : range:Range.t -> t
 val ambiguous_polytype : range:Range.t -> t
 val non_linear_pattern : Var_name.t -> fst_range:Range.t -> snd_range:Range.t -> t
-
-module For_testing : sig
-  val use_expect_test_config : unit -> unit
-end

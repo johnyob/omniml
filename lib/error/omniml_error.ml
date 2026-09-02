@@ -2,8 +2,6 @@ open Core
 open Grace
 open Omniml_ast.Ast_types
 
-let is_in_expect_test = ref false
-
 module Code = struct
   type t =
     | Unterminated_comment
@@ -58,19 +56,15 @@ exception T of t
 
 let raise t = raise (T t) [@@always_inline]
 
-let pp ppf t =
-  let open Grace_ansi_renderer in
-  let config = { Config.default with use_ansi = not !is_in_expect_test } in
-  List.iteri t ~f:(fun i diag ->
-    if i <> 0 then Fmt.pf ppf "@.@.";
-    Grace_ansi_renderer.pp_diagnostic ~config ~code_to_string:Code.to_string () ppf diag)
-;;
-
-let handle_uncaught ~exit:should_exit f =
+let handle_uncaught ?use_ansi ~exit:should_exit f =
   try f () with
   | T t ->
-    Fmt.epr "@[%a@]@." pp t;
-    if should_exit && not !is_in_expect_test then exit 1
+    let config = Grace_ansi_renderer.{ Config.default with use_ansi } in
+    List.iteri t ~f:(fun i diag ->
+      if i <> 0 then Fmt.epr "@.@.";
+      Grace_ansi_renderer.epr_diagnostic ~config ~code_to_string:Code.to_string diag);
+    Fmt.epr "@.";
+    if should_exit then exit 1
 ;;
 
 let singleton diag : t = [ diag ]
@@ -451,7 +445,3 @@ let non_linear_pattern (var_name : Var_name.t) ~fst_range ~snd_range =
        pp_quoted_s
        var_name
 ;;
-
-module For_testing = struct
-  let use_expect_test_config () = is_in_expect_test := true
-end
