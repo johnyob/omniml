@@ -63,10 +63,11 @@
 % This looks like a space hack, but it's not! The point
 % is to remove a visually-ugly stacking of spacings coming
 % from the figure and the math environment.
+\newcommand{\nodisplayskip}
+  {\abovedisplayskip 0em\belowdisplayskip\abovedisplayskip}
 \newenvironment{mathparfig}[3][htb!]
    {\begin{figure}[#1]
-       \abovedisplayskip 0em
-       \belowdisplayskip 0em
+       \nodisplayskip
        \def \LABEL{#2}%
        \def \CAPTION{#3}%
        \begin{mathpar}}
@@ -344,3 +345,4 @@
   {\subsubsection {#2}\hfill
    \ifempty{#3}{}{\Fbox {\ensuremath{#3}}}
    \ifempty {#1}{}{\label{#1}}}
+

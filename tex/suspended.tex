@@ -659,7 +659,12 @@ annotation variable $\av$ is eligible for generalization (\eg $\tfor \av
 monomorphic---that is, it cannot be generalized in the current context---is
 considered \emph{not-yet-known} and cannot be relied on for disambiguation.
 
+\parcomment{\PolyML typing rules}
 
+Using this approach, we can give typing rules for polytypes; this
+yields precisely the formulation introduced in
+\PolyML~\citep*{\BBpolyml}, whose most important rules are given in
+\cref{fig:polyml}. 
 \begin{mathparfig}[htpb!]
   {fig:polyml}
   {\Geninst-directional syntax and typing rules for polytypes---excerpt from
@@ -692,14 +697,6 @@ considered \emph{not-yet-known} and cannot be relied on for disambiguation.
     {\annot \ts \tsp}
     {\annot {\tpoly \ts} {\tannot {\tpoly \tsp} \av}}
 \end{mathparfig}
-
-
-\parcomment{\PolyML typing rules}
-
-Using this approach, we can give typing rules for polytypes; this
-yields precisely the formulation introduced in
-\PolyML~\citep*{\BBpolyml}, whose most important rules are given in
-\cref{fig:polyml}. 
 %
 \parcomment {Boxing}
 %
@@ -1610,19 +1607,19 @@ specifications for fragile features often fail to preserve principality.
 
 \parcomment {Why do natural approaches not guarantee principal types.}
 
-\begin{wraphbox}{}{}
-\begin{mathpar}[inline]
-  \inferrule[Rcd-Proj-I-Nat]
-    {\labfrom \elab \T \leq \ta \to \tb \\\\ \G \th \e : \ta}
-    {\G \th \efield \e \elab : \tb}
-\end{mathpar}
-\end{wraphbox}
-
 Consider records, for instance. We can ask the user to provide a type
 annotation by using an explicit record projection $\exfield \e \T \elab$, which
 has a simple typing rule (\Rule{Rcd-Proj-X} in \cref{fig/oml/syntax-xtyping}).
 By contrast, the natural typing rule for the overloaded projections $\efield \e
-\elab$ breaks principality (\Rule{Rcd-Proj-I-Nat}). For example, term $\efun r
+\elab$ (\Rule{Rcd-Proj-I-Nat}) breaks principality.
+%% \begin{wraphbox}{}{}
+\begin{mathpar}%[inline]
+  \inferrule*[right=Rcd-Proj-I-Nat]
+    {\labfrom \elab \T \leq \ta \to \tb \\ \G \th \e : \ta}
+    {\G \th \efield \e \elab : \tb}
+\end{mathpar}
+%% \end{wraphbox}
+For example, term $\efun r
 \efield r {\ttlab x}$ admits two incompatible types, \code{point -> int} and
 \code{gray_point -> int}, as explained in \cref{sec/overview}.
 
@@ -1855,7 +1852,7 @@ $\Shapesz \subset \Shapes$ the set of non-trivial shapes.
 
 \parcomment {Instantiation order of shapes}
 
-\begin{wraphbox}{}{}
+\begin{wraphbox}{-1}{}
 \begin{mathpar}[inline]
   \infer[Inst-Shape]
     { }
@@ -1961,15 +1958,19 @@ can therefore be represented as the shape application $\shapp (\tint \tlist)$.
      \G \th \E\where{\exfield \e \T \elab} : \t}
     {\G \th \E\where{\efield \e \elab} : \t}
 
-\eshape[\es] \E \e \sh \quad\eqdef\quad
+\let \Eqdef \eqdef\def\eqdef{&\Eqdef&}
+\let \Implies \implies\def\implies{&\Implies&}
+\begin{tabular}{RCL;C;L}
+\eshape[\es] \E \e \sh \eqdef
   \forall \G, \t, \gt, \uad
   \G \th \eerase {\E \where {\emagic {\es, \eannot \e {} \gt }}} : \t
-      \wide\implies \shape \gt = \sh
-
-\Eshape \E \es \sh \quad\eqdef\quad
+      \implies \shape \gt = \sh
+\\[.4ex]
+\Eshape \E \es \sh \eqdef
   \forall \G, \t, \gt, \uad
       \G \th \eerase {\E\where{\eannotmagic \es {} \gt}} : \t
-      \wide\implies \shape \gt = \sh
+      \implies \shape \gt = \sh
+\end{tabular}
 \end{mathparfig}
 
 \parcomment{Typing rules are contextual. Re-iterate the idea of unicity}
@@ -2004,20 +2005,19 @@ in $\E$ with subterms $\es$\footnote{%
   fragile eliminators with multiple subterms. 
 }
 has the unique shape $\sh$.
-
 \parcomment{The formal definition / auxiliary notions}
 \begin{mathpar}
-\def \Eqdef {&\eqdef&}
-{\begin{tabular}{RCL}
+\def \Eqdef {&\eqdef&}\let \Implies \implies\def\implies{&\Implies&}
+{\begin{tabular}{RCLCL}
 \eshape[\es] \E \e \sh \Eqdef
   \forall \G, \t, \gt, \uad
   \G \th \eerase {\E \where {\emagic {\es, \eannot \e {} \gt }}} : \t
-      \wide\implies \shape \gt = \sh
-\\[1ex]
+  \Implies \shape \gt = \sh
+\\[.4ex]
 \Eshape \E \es \sh \Eqdef
   \forall \G, \t, \gt, \uad
       \G \th \eerase {\E\where{\eannotmagic \es {} \gt}} : \t
-      \wide\implies \shape \gt = \sh
+      \Implies \shape \gt = \sh
 \end{tabular}}
 \end{mathpar}
 %
@@ -3147,7 +3147,8 @@ $\t$ is a type variable and $\C$ is satisfiable.
 \Crule
   {\cinfer {\emagic \es} \t}
   {\cexists \tvs \cAnd\iton \cinfer \ei \tvi}
-\\\\
+\vadjust{\medskip}
+\\
 \Crule
   {\cinfer \e {\tfor \tvs \t}}
   {\cfor \tvs \cinfer \e \t}
