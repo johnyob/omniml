@@ -1,6 +1,6 @@
 (library
  (name omniml_collector)
  (public_name omniml.collector)
- (libraries core async omniml.std omniml.unifier)
+ (libraries core omniml.log omniml.std omniml.unifier)
  (preprocess
   (pps ppx_jane)))

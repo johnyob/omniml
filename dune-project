@@ -17,4 +17,4 @@
 
 (package
  (name omniml)
- (depends ocaml dune core core_unix async ppx_jane fmt menhir grace ppx_quick_test base_quickcheck))
+ (depends ocaml dune core core_unix ppx_jane ppx_log fmt menhir grace ppx_quick_test base_quickcheck))

@@ -1,7 +1,7 @@
 open Core
 open Omniml_std
 open Omniml_unifier
-module Ppx_log_syntax = Async.Ppx_log_syntax
+open Omniml_log
 
 module type Structure = Omniml_collector_intf.Structure
 
@@ -92,8 +92,13 @@ module Make (S : Structure) = struct
     (* A node's region owns a pool containing the node.  Rendering either its
        structure or region here would therefore recurse around the collector
        graph.  Detailed collector logging uses [Log.node] below. *)
-    let sexp_of_t _sexp_of_a { id; rootings; structure = _; status; region = _ } =
-      [%sexp { id : Identifier.t; rootings : Rootings.t; status : Node_status.t }]
+    let sexp_of_t (type a) sexp_of_a { id; rootings; structure; status; region = _ } =
+      [%sexp
+        { id : Identifier.t
+        ; rootings : Rootings.t
+        ; status : Node_status.t
+        ; structure : a S.t
+        }]
     ;;
 
     type 'a ctx =

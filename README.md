@@ -41,6 +41,15 @@ To get started with type checking some examples, run the command below:
 ❯ dune exec omniml -- type-check examples/test.ml
 ```
 
+To capture a constraint-solver trace, enable debug events and select an output file:
+```sh
+❯ dune exec omniml -- type-check -log-level debug -trace-file trace.json examples/power.ml
+```
+
+The trace is written synchronously when the command exits. Open `trace.json` in
+`chrome://tracing` or [Perfetto](https://ui.perfetto.dev) to inspect nested solver calls
+and their structured S-expression fields.
+
 ## Commands
 
 For an overview of commands, run:

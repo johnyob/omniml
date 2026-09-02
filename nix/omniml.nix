@@ -17,8 +17,8 @@ with ocamlPackages;
       core
       core_unix
       base_quickcheck
-      async
       ppx_jane
+      ppx_log
       grace
       fmt
       menhir

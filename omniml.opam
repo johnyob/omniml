@@ -10,8 +10,8 @@ depends: [
   "dune" {>= "3.10"}
   "core"
   "core_unix"
-  "async"
   "ppx_jane"
+  "ppx_log"
   "fmt"
   "menhir"
   "grace"

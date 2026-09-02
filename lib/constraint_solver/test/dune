@@ -2,7 +2,7 @@
  (name test_constraint_solver)
  (libraries
   core
-  async
+  omniml.log
   omniml.std
   omniml.constraint_solver
   omniml.typed_ast
