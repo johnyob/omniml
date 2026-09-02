@@ -126,6 +126,29 @@ module Command = struct
       ; "type-check", type_check
       ]
   ;;
+
+  let is_command = function
+    (* OmniML commands *)
+    | "lex" | "parse" | "constraint-gen" | "type-check" -> true
+    (* Built-in commands from [Command] *)
+    | "help"
+    | "-help"
+    | "--help"
+    | "version"
+    | "-version"
+    | "--version"
+    | "-build-info"
+    | "--build-info" -> true
+    | _ -> false
+  ;;
 end
 
-let () = Command_unix.run Command.v
+let () =
+  let argv =
+    match Sys.get_argv () |> Array.to_list with
+    | program :: (arg :: _ as args) when Command.is_command arg -> program :: args
+    | program :: args -> program :: "type-check" :: args
+    | [] -> assert false
+  in
+  Command_unix.run ~argv Command.v
+;;
