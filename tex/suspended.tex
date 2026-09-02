@@ -527,7 +527,7 @@ construct $\einst \e$ before it can be typed at any instance $\t$ of $\ts$.
 Because they are boxed, polytypes can be treated as regular
 (mono)types, thereby enabling impredicativity.
 
-\begin{bnffig}[htpb!]
+\begin{bnffig}[tb]
   {fig:polyml-syntax}
   {Selected syntax for \polytypes \citep*{\BBpolyml}.}
      \entry[Terms]{\e}{
@@ -1918,6 +1918,9 @@ can therefore be represented as the shape application $\shapp (\tint \tlist)$.
 \endgroup
 
 
+\subsection {Typing rules for fragile, implicit constructs}
+\label{sec/oml/typing/I}
+
 \begin{mathparfig}[htpb!]
   {fig/oml/typing/I}
   {Typing rules for fragile, implicitly typed extensions.}
@@ -1968,12 +1971,6 @@ can therefore be represented as the shape application $\shapp (\tint \tlist)$.
       \G \th \eerase {\E\where{\eannotmagic \es {} \gt}} : \t
       \wide\implies \shape \gt = \sh
 \end{mathparfig}
-
-
-\subsection {Typing rules for fragile, implicit constructs}
-\label{sec/oml/typing/I}
-
-
 
 \parcomment{Typing rules are contextual. Re-iterate the idea of unicity}
 
@@ -2442,10 +2439,10 @@ typability of $\eta$-expansion is preserved \ie $\e$ and $\efun \x {\eapp \e
 \label{sec:constraints}
 
 
-%% BEWARE: The following two figures only be located as the top (or bottom) of a
+%% BEWARE: The following two figures only be located as the top of a
 %% page---otherwise  it would be  misplaced
 
-\begin{mathparfig}[b]%
+\begin{mathparfig}[t]%
   {fig:constraints}%
   {Selected syntax and semantics of constraints.}
 \begin{bnfgrammar}
@@ -2976,19 +2973,7 @@ $\t$ is a type variable and $\C$ is satisfiable.
 \subsection{Constraint generation}
 \label{sec/oml/constraints}
 
-% Intro
-We now present the formal translation from terms $\e$ to constraints $\c$,
-such that the resulting constraint is satisfiable if and only if the term is
-well typed. The translation is defined as a function $\cinfer \e \t$, where $\e$
-is the term to be translated and $\t$ is the expected type of $\e$.
-%
-The expected type $\t$ is permitted to contain type variables, which can be
-existentially bound in order to perform type inference. The models of
-constraint $\cinfer \e \t$ interpret the free variables of
-$\t$ such that $\t$ becomes a valid type of $\e$. For example, to infer the
-entire type of $\e$ we may pick a fresh type variable $\tv$ for $\t$.
-
-\begin{mathparfig}[bp]
+\begin{mathparfig}[tp]
   {fig:patterns-oml}
   {Patterns for \OML.}
   \begin{bnfgrammar}
@@ -3169,6 +3154,18 @@ entire type of $\e$ we may pick a fresh type variable $\tv$ for $\t$.
 \end{tabular*}
 \end{mathparfig}
 
+
+% Intro
+We now present the formal translation from terms $\e$ to constraints $\c$,
+such that the resulting constraint is satisfiable if and only if the term is
+well typed. The translation is defined as a function $\cinfer \e \t$, where $\e$
+is the term to be translated and $\t$ is the expected type of $\e$.
+%
+The expected type $\t$ is permitted to contain type variables, which can be
+existentially bound in order to perform type inference. The models of
+constraint $\cinfer \e \t$ interpret the free variables of
+$\t$ such that $\t$ becomes a valid type of $\e$. For example, to infer the
+entire type of $\e$ we may pick a fresh type variable $\tv$ for $\t$.
 
 
 \paragraph{Shape patterns}
