@@ -1598,7 +1598,7 @@ let%expect_test "" =
       1 │    let escape = fun f ->
       2 │ ╭    forall (type 'a) ->
       3 │ │      (f : 'a -> 'a)
-        │ ╰──
+        │ ╰───────────────────^
       4 │    ;;
     |}]
 ;;
@@ -1626,7 +1626,7 @@ let%expect_test "" =
       1 │    let escape = fun x ->
       2 │ ╭    forall (type 'a) ->
       3 │ │      (x : 'a)
-        │ ╰──
+        │ ╰─────────────^
       4 │    ;;
     |}]
 ;;
@@ -2577,10 +2577,11 @@ let%expect_test "" =
     error[E011]: mismatched type
         ┌─ expect_test.ml:5:63
       5 │        let see_pid1_type_wrong = forall (type 'a 'b 'c 'd) -> (see_pid1 : ('a * 'b -> 'a * 'b) * ('c * 'd -> 'c * 'd)) ;;
-        │                                                                ^^^^^^^^
-        │  `('a * 'b -> 'a * 'b) * ('c * 'b -> 'c * 'b)`
-        │    is not equal to
-        │  `('d * 'e -> 'd * 'e) * ('f * 'g -> 'f * 'g)`
+        │                                                                ^^^^^^^^ `('a * 'b -> 'a * 'b) *
+        │                                                                          ('c * 'b -> 'c * 'b)`
+        │                                                                           is not equal to
+        │                                                                         `('d * 'e -> 'd * 'e) *
+        │                                                                          ('f * 'g -> 'f * 'g)`
     |}];
   type_check_and_print ~with_poly_params:true ~defaulting:Unary str;
   [%expect
@@ -3413,48 +3414,12 @@ let%expect_test "" =
         ┌─ expect_test.ml:1:1
       1 │ ╭  external fix : 'a 'b. (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b;;
       2 │ │      type 'a ref;;
-      3 │ │      type 'a ref_repr = { contents : 'a };;
-      4 │ │
-      5 │ │      external create_ref : 'a. 'a -> 'a ref;;
-      6 │ │      external get_ref : 'a. 'a ref -> 'a;;
-      7 │ │      external set_ref : 'a. 'a ref -> 'a -> unit;;
-      8 │ │      external ref_repr : 'a. 'a ref -> 'a ref_repr;;
-      9 │ │
-     10 │ │      type 'a option =
-     11 │ │        | None
-     12 │ │        | Some of 'a
-     13 │ │      ;;
-     14 │ │
-     15 │ │      type 'a list =
-     16 │ │        | Nil
-     17 │ │        | Cons of 'a * 'a list
-     18 │ │      ;;
-     19 │ │
-     20 │ │        let poly1 = fun (forall id : 'a. 'a -> 'a) ->
-     21 │ │          (id 1, id true)
-     22 │ │        ;;
-     23 │ │
-     24 │ │        let id = fun x -> x;;
-     25 │ │
-     26 │ │        let poly2 = fun (forall id : 'a. 'a -> 'a) ->
-     27 │ │          ((id 1, id true) : int * bool)
-     28 │ │        ;;
-     29 │ │
-     30 │ │        let poly3 =
-     31 │ │          forall (type 'b) ->
-     32 │ │            fun (forall id : 'a. 'a -> 'a) (x : 'b) ->
-     33 │ │              ((id x, id (Some x)) : 'b * 'b option)
-     34 │ │        ;;
-     35 │ │
-     36 │ │        let poly4 = fix (fun poly4 p (forall id : 'a. 'a -> 'a) ->
-     37 │ │          if p then poly4 false id else (id 4, id true))
-     38 │ │        ;;
-     39 │ │
+        · │
      40 │ │        let xignore = poly4 true (fun x -> x + 1);;
      41 │ │
         │ ╰─────^ `int`
-                 is not equal to
-               `'a`
+        │           is not equal to
+        │         `'a`
     |}];
   do_test
     ~add:true
@@ -3529,62 +3494,12 @@ let%expect_test "" =
         ┌─ expect_test.ml:1:1
       1 │ ╭  external fix : 'a 'b. (('a -> 'b) -> 'a -> 'b) -> 'a -> 'b;;
       2 │ │      type 'a ref;;
-      3 │ │      type 'a ref_repr = { contents : 'a };;
-      4 │ │
-      5 │ │      external create_ref : 'a. 'a -> 'a ref;;
-      6 │ │      external get_ref : 'a. 'a ref -> 'a;;
-      7 │ │      external set_ref : 'a. 'a ref -> 'a -> unit;;
-      8 │ │      external ref_repr : 'a. 'a ref -> 'a ref_repr;;
-      9 │ │
-     10 │ │      type 'a option =
-     11 │ │        | None
-     12 │ │        | Some of 'a
-     13 │ │      ;;
-     14 │ │
-     15 │ │      type 'a list =
-     16 │ │        | Nil
-     17 │ │        | Cons of 'a * 'a list
-     18 │ │      ;;
-     19 │ │
-     20 │ │        let poly1 = fun (forall id : 'a. 'a -> 'a) ->
-     21 │ │          (id 1, id true)
-     22 │ │        ;;
-     23 │ │
-     24 │ │        let id = fun x -> x;;
-     25 │ │
-     26 │ │        let poly2 = fun (forall id : 'a. 'a -> 'a) ->
-     27 │ │          ((id 1, id true) : int * bool)
-     28 │ │        ;;
-     29 │ │
-     30 │ │        let poly3 =
-     31 │ │          forall (type 'b) ->
-     32 │ │            fun (forall id : 'a. 'a -> 'a) (x : 'b) ->
-     33 │ │              ((id x, id (Some x)) : 'b * 'b option)
-     34 │ │        ;;
-     35 │ │
-     36 │ │        let poly4 = fix (fun poly4 p (forall id : 'a. 'a -> 'a) ->
-     37 │ │          if p then poly4 false id else (id 4, id true))
-     38 │ │        ;;
-     39 │ │
-     40 │ │        let poly5 = fix (fun poly5 (p : bool) (forall id : 'a. 'a -> 'a) ->
-     41 │ │          ((if p then poly5 false id else (id 5, id true)) : int * bool))
-     42 │ │        ;;
-     43 │ │
-     44 │ │        let poly6 = forall (type 'b) ->
-     45 │ │          fix (fun poly6 ->
-     46 │ │            fun (p : bool) (forall id : 'a. 'a -> 'a) (x : 'b) ->
-     47 │ │              ((if p then poly6 false id x else (id x, id (Some x))) : 'b * 'b option))
-     48 │ │        ;;
-     49 │ │
-     50 │ │        let needs_magic = fun (forall magic : 'a 'b. 'a -> 'b) ->
-     51 │ │          (magic 5 : bool)
-     52 │ │        ;;
-     53 │ │
+        · │
      54 │ │        let xignore = needs_magic (fun x -> x);;
      55 │ │
         │ ╰─────^ `'a`
-                 is not equal to
-               `'b`
+        │           is not equal to
+        │         `'b`
     |}];
   do_test
     ~add:true
