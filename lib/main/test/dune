@@ -1,6 +1,6 @@
 (library
  (name test_main)
- (libraries core grace async dedent fmt omniml.main)
+ (libraries core grace dedent fmt omniml.log omniml.main)
  (inline_tests)
  (preprocess
   (pps ppx_jane -log-source-position)))

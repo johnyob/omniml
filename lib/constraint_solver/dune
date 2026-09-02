@@ -3,8 +3,8 @@
  (public_name omniml.constraint_solver)
  (libraries
   core
-  async
   grace
+  omniml.log
   omniml.std
   omniml.unifier
   omniml.collector

@@ -1,5 +1,6 @@
 open Core
 open Omniml_main
+open Omniml_log
 
 let open_with_lexbuf ~f filename () =
   Omniml_error.handle_uncaught ~exit:true
@@ -94,13 +95,15 @@ module Command = struct
         +> Params.disable_stdlib
         +> Params.fpoly_params
         +> Params.defaulting
-        +> Async_log.Global.set_level_via_param ())
+        +> Global.set_level_via_param ()
+        +> Global.set_trace_file_via_param ())
       (fun filename
         dump_ast
         dump_constraint
         without_stdlib
         with_poly_params
         defaulting
+        ()
         () ->
          open_with_lexbuf filename ~f:(fun lexbuf ->
            let source = `File filename in

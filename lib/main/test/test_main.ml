@@ -1,7 +1,8 @@
 open! Core
 open! Grace
+open! Omniml_log
 
-let () = Async.Log.Global.For_testing.use_test_output ()
+let () = Global.For_testing.use_test_output ()
 
 let type_check_and_print
       ?(dump_ast = false)
@@ -14,7 +15,7 @@ let type_check_and_print
   =
   Omniml_error.handle_uncaught ~use_ansi:false ~exit:false
   @@ fun () ->
-  Async.Log.Global.set_level log_level;
+  Global.set_level log_level;
   let source = Omniml_source.For_testing.expect_test_source str in
   Omniml_main.type_check_and_print
     ~source

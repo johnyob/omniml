@@ -1,0 +1,6 @@
+(library
+ (name omniml_log)
+ (public_name omniml.log)
+ (libraries core ppx_log.types)
+ (preprocess
+  (pps ppx_jane)))

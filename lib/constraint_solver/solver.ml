@@ -1,4 +1,5 @@
 open! Import
+open Omniml_log
 module G = Generalization
 module S = Suspended
 
@@ -226,8 +227,18 @@ let match_type
 
 let rec solve : type a. state:State.t -> env:Env.t -> a Constraint.t -> a Elaboration.t =
   fun ~state ~env cst ->
-  [%log.global.debug
-    "Solving constraint" (state : State.t) (env : Env.t) (cst : Constraint.t)];
+  Global.Span.with_
+    ~level:`Debug
+    ~fields:(fun () ->
+      [ "state", [%sexp (state : State.t)]
+      ; "env", [%sexp (env : Env.t)]
+      ; "constraint", [%sexp (cst : Constraint.t)]
+      ])
+    "solve"
+    ~f:(fun () -> solve_body ~state ~env cst)
+
+and solve_body : type a. state:State.t -> env:Env.t -> a Constraint.t -> a Elaboration.t =
+  fun ~state ~env cst ->
   let self ~state ?(env = env) cst = solve ~state ~env cst in
   match cst with
   | True -> Elaboration.return ()

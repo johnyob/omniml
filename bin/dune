@@ -1,6 +1,6 @@
 (executable
  (public_name omniml)
  (name omniml)
- (libraries core core_unix.command_unix async omniml.main)
+ (libraries core core_unix.command_unix omniml.log omniml.main)
  (preprocess
   (pps ppx_jane)))

@@ -4,7 +4,7 @@ module C = Omniml_constraint_solver.Constraint
 module T = Omniml_constraint_solver.Type
 
 let () =
-  let open Async.Log.Global in
+  let open Omniml_log.Global in
   For_testing.use_test_output ()
 ;;
 
@@ -17,7 +17,7 @@ let match_err _ =
 let default_match_err () = C.(Constraint (ff (match_err ())))
 
 let print_solve_result ?defaulting ?(log_level = `Info) cst =
-  Async.Log.Global.set_level log_level;
+  Omniml_log.Global.set_level log_level;
   let cst = C.map cst ~f:(fun _ -> ()) in
   let result = Omniml_constraint_solver.solve ?defaulting cst in
   match result with
