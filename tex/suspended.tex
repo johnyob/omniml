@@ -639,8 +639,8 @@ ambiguous constructs in a \emph{principal} way. The key idea is that this
 ordering reveals which types are \emph{known}, namely types that are fixed by
 generalization---and therefore stable enough to guide disambiguation. We call
 this approach \geninst-directional (read as ``\textbf{pi}-directional'') type
-inference, reflecting that \textbf{p}olymorphic expressions must be typed
-before their \textbf{i}nstances. 
+inference, reflecting that \textbf polymorphic expressions must be typed
+before their \textbf instances. 
 
 \parcomment{Annotation variables. Why?}
 
@@ -8181,7 +8181,7 @@ generally in our system.
 	We either apply the above $\exists$ case, or both $\ca$ and $\cb$ are solved
 	multi-equations $\ueqs_1, \ueqs_2$. We perform cases on this:
 	\begin{proofcases}
-	  \proofcase{$\ueqs_1$ and $\ueqs_2$ are mergable} Apply \Rule{U-Merge}.
+	  \proofcase{$\ueqs_1$ and $\ueqs_2$ are mergeable} Apply \Rule{U-Merge}.
 	  \proofcase{$\cyclic {\ueqs_1, \ueqs_2}$} Apply \Rule{U-Cycle}.
 	  \proofcase{Otherwise} The conjunction $\ueqs_1 \cand \ueqs_2$ is solved.
 	\end{proofcases}
@@ -9003,26 +9003,26 @@ of $\sub(\tv)$, as required \ref{proof:principal-types:2}.
 % LocalWords:  directionally typecheckers typechecker disambiguates unshare
 % LocalWords:  typechecks acyclic emlti Disambiguating disambiguated GADT
 % LocalWords:  prototyped instantiation Monotypes postfixed unsatisfiable
-% LocalWords:  satisfiable matchee datatypes arbritraty generalizable Unif
+% LocalWords:  satisfiable matchee datatypes generalizable Unif mergeable
 % LocalWords:  monomorphization desugars Forall satisfiability formers iff
 % LocalWords:  equirecursive principalShapes subterms Susp Ctx foundedness
-% LocalWords:  unsatisfiability getx olymorphic nstances ive typings LetR
+% LocalWords:  unsatisfiability getx typings LetR
 % LocalWords:  metavariable subterm Metatheory  monotypes Rcd Henglein phd
 % LocalWords:  ExistsLeft ExistsRight ConjLeft ConjRight equational AppR Wf
-% LocalWords:  existentials instantiations desugared susp ively renamings
+% LocalWords:  existentials instantiations desugared susp  renamings
 % LocalWords:  quantifications subcomponents BackProp Tarjan's invariants
 % LocalWords:  rossberg wasm WebAssembly dunfield krishnaswami jones Huet's
 % LocalWords:  huet unif conf Vytiniotis Peyton Schrijvers Sulzmann Leijen
 % LocalWords:  disambiguating namespace implicits Bour Yallop Didier Annot
-% LocalWords:  acyclicity canonicalization aaa formedness unannotated inX
+% LocalWords:  acyclicity canonicalization formedness unannotated inX
 % LocalWords:  casted inHole inAnnot unsubstituted oml RCLL Scm LCL Decomp
 % LocalWords:  cheatsheet inI ProjX PolyX UseX unifier Gc Defn sw iw gpoint
-% LocalWords:  InstLeft InstRight mergable tw uw RRCL eqs priori multiset
+% LocalWords:  InstLeft InstRight  tw uw RRCL eqs priori multiset
 % LocalWords:  reflexitivity metatheoretic lexicographically Unifiers TODO
 % LocalWords:  rcl env Pcd illtyped inHole Ui unfoldings welltyped mprset
 % LocalWords:  lessskip Xbla Ybla explicitating Composability composability
 % LocalWords:  determinacy subcases unifications annotatability approxi Rcx
-% LocalWords:  mation macroified cpoint concretize Dom omnidirectionality
+% LocalWords:   macroified cpoint concretize Dom omnidirectionality
 % LocalWords:  hindley popl garrigue monomorphically polyparams polyml Chk
 % LocalWords:  impredicativity PolyML knownness mathpar nihilo fn diag gp
 % LocalWords:  Bidirectionalized destructors unparsable metalevel Erwig CPP
@@ -9037,5 +9037,6 @@ of $\sub(\tv)$, as required \ref{proof:principal-types:2}.
 % LocalWords:  OverloadedRecordDot Andreas Scherer Martinot Vivien Gundry
 % LocalWords:  Gooding ois homomorphic homomorphism ASUP omnidirectionally
 % LocalWords:  mem Pfenning bidir ness rcd postfix composable metatheory se
-% LocalWords:  reimplementation parameterizing redefinable subcase
-% LocalWords:  bidirectionality
+% LocalWords:  reimplementation parameterizing redefinable subcase pid ebox
+% LocalWords:  bidirectionality context's RCLCL reduct backpropagate fpoint
+% LocalWords:  abstraction's implication's lossy DS Refl
