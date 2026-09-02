@@ -8,19 +8,20 @@ with prev; {
       ocamlPackages_5_2 = ocamlPackages_5_2.overrideScope (
         _: prev:
           with prev; {
-            grace = buildDunePackage rec {
+            grace = buildDunePackage {
               pname = "grace";
-              version = "0.2.0";
+              version = "0.4.1";
 
               minimalOCamlVersion = "4.14";
 
               src = fetchFromGitHub {
                 owner = "johnyob";
                 repo = "grace";
-                rev = "275adda398834612b804283fe9548708e570bfdf";
-                hash = "sha256-2zBYXrNb/rVWjEBmmQfW+rAWs/qhx6nMhAdJEwIdhHQ=";
+                rev = "9ebd80819fe6963ca9af25ff380a26987885ae36";
+                hash = "sha256-dhFECxv7Tzp1MR7WwZ+2W6w89exbxO4fvTQO0aTwmVk=";
               };
-              propagatedBuildInputs = [core ppx_jane fmt dedent iter core_unix uutf ppx_optcomp];
+              propagatedBuildInputs = [fmt dedent iter yojson];
+              checkInputs = [core core_unix ppx_jane dedent];
             };
           }
       );

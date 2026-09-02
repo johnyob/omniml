@@ -1,9 +1,7 @@
 open! Import
 
-let () = Omniml_error.For_testing.use_expect_test_config ()
-
 let lex_and_print input =
-  Omniml_error.handle_uncaught ~exit:false
+  Omniml_error.handle_uncaught ~use_ansi:false ~exit:false
   @@ fun () ->
   let source = Omniml_source.For_testing.expect_test_source input in
   let lexbuf = Lexing.from_string input in

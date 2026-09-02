@@ -1,4 +1,4 @@
 # NOTE: To be kept in sync with ocamlPackages in nix/overlay.nix
 pin-depends: [
-  [ "grace.0.2.0" "git+https://github.com/johnyob/grace.git#275adda398834612b804283fe9548708e570bfdf" ]
+  [ "grace.0.4.1" "git+https://github.com/johnyob/grace.git#9ebd80819fe6963ca9af25ff380a26987885ae36" ]
 ]

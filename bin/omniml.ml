@@ -2,11 +2,11 @@ open Core
 open Omniml_main
 
 let open_with_lexbuf ~f filename () =
+  Omniml_error.handle_uncaught ~exit:true
+  @@ fun () ->
   let in_ =
     try In_channel.create filename with
-    | Sys_error _ ->
-      Fmt.epr "@[%a@]@." Omniml_error.pp (Omniml_error.file_not_found filename);
-      exit 1
+    | Sys_error _ -> Omniml_error.(raise @@ file_not_found filename)
   in
   protect
     ~f:(fun () ->
@@ -84,7 +84,7 @@ module Command = struct
   ;;
 
   let type_check =
-    Async_command.async_spec
+    Command.basic_spec
       ~summary:"Type checks [filename]."
       Command.Spec.(
         empty
@@ -104,17 +104,14 @@ module Command = struct
         () ->
          open_with_lexbuf filename ~f:(fun lexbuf ->
            let source = `File filename in
-           let () =
-             type_check_and_print
-               ~source
-               ~dump_ast
-               ~dump_constraint
-               ~with_stdlib:(not without_stdlib)
-               ~with_poly_params
-               ~defaulting
-               lexbuf
-           in
-           Async_log.Global.flushed ()))
+           type_check_and_print
+             ~source
+             ~dump_ast
+             ~dump_constraint
+             ~with_stdlib:(not without_stdlib)
+             ~with_poly_params
+             ~defaulting
+             lexbuf))
   ;;
 
   let v =
