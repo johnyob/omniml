@@ -5720,3 +5720,42 @@ let%expect_test "" =
         = hint: if this is intentional, prefix it with an underscore `_x`
     |}]
 ;;
+
+let%expect_test "" =
+  type_check_and_print
+    {|
+      type poly = Poly of (forall 'a. 'a -> 'a);;
+    |};
+  [%expect
+    {|
+    error[E020]: polymorphic parameters are disabled
+        ┌─ expect_test.ml:2:27
+      2 │        type poly = Poly of (forall 'a. 'a -> 'a);;
+        │                            ^^^^^^^^^^^^^^^^^^^^^ requires polymorphic parameters
+        = hint: enable this feature with `-fpoly-params`
+    |}];
+  type_check_and_print
+    {|
+      external use_poly : (forall 'a. 'a -> 'a) -> int;;
+    |};
+  [%expect
+    {|
+    error[E020]: polymorphic parameters are disabled
+        ┌─ expect_test.ml:2:27
+      2 │        external use_poly : (forall 'a. 'a -> 'a) -> int;;
+        │                            ^^^^^^^^^^^^^^^^^^^^^ requires polymorphic parameters
+        = hint: enable this feature with `-fpoly-params`
+    |}];
+  type_check_and_print
+    {|
+      let use_poly = fun (forall id : 'a. 'a -> 'a) -> id 0;;
+    |};
+  [%expect
+    {|
+    error[E020]: polymorphic parameters are disabled
+        ┌─ expect_test.ml:2:26
+      2 │        let use_poly = fun (forall id : 'a. 'a -> 'a) -> id 0;;
+        │                           ^^^^^^^^^^^^^^^^^^^^^^^^^^ requires polymorphic parameters
+        = hint: enable this feature with `-fpoly-params`
+    |}]
+;;

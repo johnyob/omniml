@@ -3,6 +3,10 @@ open Ast_types
 open Ast
 open Constraint
 
+let assert_with_poly_params ~with_poly_params ~range =
+  if not with_poly_params then Omniml_error.(raise @@ poly_params_disabled ~range)
+;;
+
 module Convert = struct
   let type_name ~env (type_name : Type_name.With_range.t)
     : [ `Alias of Adt.alias_definition | `Newtype of Adt.Type_ident.t ] * int
@@ -83,7 +87,7 @@ module Convert = struct
          in
          self ~subst alias_def.alias_type)
     | Type_scheme scheme ->
-      assert with_poly_params;
+      assert_with_poly_params ~with_poly_params ~range:type_.range;
       let scheme = core_scheme_to_type_scheme_expr ~env ~subst ~with_poly_params scheme in
       Type_scheme scheme
     | Type_poly scheme ->
@@ -146,7 +150,7 @@ module Convert = struct
          in
          self ~subst alias_def.alias_type)
     | Type_scheme scheme ->
-      assert with_poly_params;
+      assert_with_poly_params ~with_poly_params ~range:type_.range;
       let scheme = core_scheme_to_type_scheme ~env ~subst ~with_poly_params scheme in
       Type.scheme scheme
     | Type_poly scheme ->
@@ -815,7 +819,7 @@ module Expression = struct
       then bind_unknown_poly_pat ~env ~with_poly_params pat type_ ~in_
       else bind_mono_pat ~env ~with_poly_params pat type_ ~in_
     | Param_poly_val { pat; scheme } ->
-      assert with_poly_params;
+      assert_with_poly_params ~with_poly_params ~range:param.range;
       bind_known_poly_pat ~env ~with_poly_params pat scheme type_ ~in_
   ;;
 
