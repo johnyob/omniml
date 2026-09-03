@@ -92,7 +92,11 @@ module Make (S : Structure) = struct
     (* A node's region owns a pool containing the node.  Rendering either its
        structure or region here would therefore recurse around the collector
        graph.  Detailed collector logging uses [Log.node] below. *)
-    let sexp_of_t (type a) sexp_of_a { id; rootings; structure; status; region = _ } =
+    let sexp_of_t
+          (type a)
+          sexp_of_a
+          ({ id; rootings; structure; status; region = _ } : a t)
+      =
       [%sexp
         { id : Identifier.t
         ; rootings : Rootings.t
