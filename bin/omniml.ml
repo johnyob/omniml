@@ -42,10 +42,8 @@ module Params = struct
   let defaulting =
     flag
       "-defaulting"
-      (optional_with_default
-         Omniml_main.Options.Defaulting.default
-         Omniml_main.Options.Defaulting.arg_type)
-      ~doc:"STRATEGY Defaulting strategy, disabled by default"
+      (optional Omniml_main.Options.Defaulting.arg_type)
+      ~doc:"STRATEGY Defaulting strategy. Disabled by default, enabled with -fpoly-params"
   ;;
 end
 
@@ -105,6 +103,9 @@ module Command = struct
         defaulting
         ()
         () ->
+         let defaulting =
+           Option.value defaulting ~default:(if with_poly_params then Unary else Disabled)
+         in
          open_with_lexbuf filename ~f:(fun lexbuf ->
            let source = `File filename in
            type_check_and_print
