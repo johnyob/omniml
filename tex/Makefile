@@ -1,11 +1,6 @@
 PRJ = suspended suspended.final suspended.draft wits
 
-LATEXMK = latexmk -bibtex -pdf -outdir=_build -auxdir=_build
-LATEXMK_WATCH = $(LATEXMK) -pvc -interaction=nonstopmode
-
-SOURCES=$(shell find . -name '*.tex' -or -name '*.bib' -or -name '*.sty' -or -name '*.cfg' | grep -v toplas-diff.tex)
-
-BUILD=_build
+include Makefile.latex
 
 default: suspended.pdf
 
@@ -36,32 +31,6 @@ toplas-diff.tex: suspended.tex
 
 all: $(addsuffix .pdf,${PRJ})
 
-%.log: %.pdf
-	@cat $(BUILD)/$@ 
-
-%.wlog: %.pdf
-	@$(MAKE) $*.log | grep -E '(Warning:|pdfTeX warning|Overfull)' 
-
-%.werr: %.pdf
-	@$(MAKE) $*.wlog | grep -v -f warnings.ok
-
-%.ok: %.pdf Makefile
-	if $(MAKE) $*.werr | grep -v Font | grep -i 'warning'; then false; fi
-	touch $@
-
-.PRECIOUS: %.pdf
-
-%.pdf: %.tex ${SOURCES}
-	@mkdir -p $(BUILD)
-	$(LATEXMK) $* || (cp $(BUILD)/$@ . && false)
-	cp $(BUILD)/$@ .
-
-%.wpdf: %.tex ${SOURCES}
-	$(LATEXMK_WATCH) $<
-
-%.view: %.pdf
-	open $< &
-
 arxiv.zip: suspended.final.ok
 	sh arxiv.sh
 
@@ -84,6 +53,27 @@ cleaner vacuum: clean arxiv.clean
 	rm -f wits.final.pdf
 	rm -f wits.submit.pdf
 	rm -f toplascl.pdf
+	rm -f toplas-source.zip
 
 clean-alistair: vacuum
 	rm -rf *.toc *.aux $(addsuffix .bbl,${PRJ}) *.blg *.log *~* *.bak *.out cut.sh .latexrun.db* *.fls *.rel _region_.* *.synctex.gz *.fdb_latexmk *.ist *.glo
+
+TOPLAS_SOURCES = \
+	suspended.final.tex \
+	suspended.final.cfg \
+	suspended.bib \
+	acmart.cls \
+	ACM-Reference-Format.bst \
+	warnings.ok \
+	$(filter-out letterbib.sty,$(wildcard *.sty))
+
+TOPLAS_ZIP_BUILD = $(BUILD)/toplas-zip
+
+toplas-source.zip: Makefile Makefile.latex Makefile.toplas $(TOPLAS_SOURCES) suspended.final.pdf
+	rm -rf $(TOPLAS_ZIP_BUILD)
+	mkdir -p $(TOPLAS_ZIP_BUILD)
+	cp -L Makefile.latex $(TOPLAS_SOURCES) $(TOPLAS_ZIP_BUILD)/
+	cp Makefile.toplas $(TOPLAS_ZIP_BUILD)/Makefile
+	rm -f $@
+	cd $(TOPLAS_ZIP_BUILD) && zip -q ../../$@ *
+	rm -rf $(TOPLAS_ZIP_BUILD)
