@@ -40,6 +40,9 @@
 
           settings.global.excludes = ["examples/*" "result" ".direnv" "_build"];
         };
+
+        mkScriptAlias = name: cmd:
+          pkgs.writeShellScriptBin name cmd;
       in {
         packages = {
           inherit omniml;
@@ -74,9 +77,7 @@
             ocamlPackages.dune
           ];
 
-          shellHook = ''
-            alias omniml='dune exec omniml --'
-          '';
+          packages = [(mkScriptAlias "omniml" ''exec dune exec omniml -- "$@"'')];
         };
       });
 }
