@@ -5863,3 +5863,29 @@ let%expect_test "" =
         = hint: enable this feature with `-ffcp`
     |}]
 ;;
+
+let%expect_test "" =
+  (* This test checks the defaulting of rigid variables. 
+     Notably the pattern constraint is solved *after* the 
+     expression constraint. *)
+  type_check_and_print
+    ~with_fcp:true
+    {|
+      type 'a list = (forall 'r. 'r -> ('a -> 'r -> 'r) -> 'r);; 
+      
+      let church_map = forall (type 'a 'b) -> 
+        let (res : 'a list -> ('a -> 'b) -> 'b list) = 
+          fun t f -> (fun z c -> t z (fun x r -> c (f x) r))
+        in
+        res
+      ;;
+    |};
+  [%expect
+    {|
+    type 'a list =
+      (forall 'r. 'r -> ('a -> 'r -> 'r) -> 'r)
+    val church_map :
+      (forall 'f. 'f -> ('e -> 'f -> 'f) -> 'f) ->
+      ('e -> 'g) -> (forall 'h. 'h -> ('g -> 'h -> 'h) -> 'h)
+    |}]
+;;
