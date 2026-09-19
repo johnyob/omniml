@@ -178,6 +178,37 @@ let%expect_test "Cannot unsuspend undetermined" =
     |}]
 ;;
 
+let%expect_test "Unary defaulting discharges an orphaned match" =
+  let open C in
+  let id_source = Identifier.create_source () in
+  let rigid = T.Var.create ~id_source () in
+  let matchee = T.Var.create ~id_source () in
+  let cst =
+    forall [ rigid ]
+    @@ exists matchee
+    @@ (match_
+          matchee
+          ~closure:[]
+          ~with_:(fun _ -> tt)
+          ~default:(fun () -> Constraint tt)
+          ~error:match_err
+        >> T.(var matchee =~ var rigid))
+  in
+  print_solve_result ~defaulting:true cst;
+  [%expect
+    {|
+    ("Constraint is satisfiable"
+     (cst
+      (Forall (((id 0) (name Type.Var)))
+       (Exists ((id 1) (name Type.Var))
+        (Conj
+         (Match (matchee ((id 1) (name Type.Var)))
+          (closure ((type_vars ()) (vars ()))) (case <fun>) (else_ <fun>)
+          (error <fun>))
+         (Eq (Var ((id 1) (name Type.Var))) (Var ((id 0) (name Type.Var)))))))))
+    |}]
+;;
+
 let%expect_test "Can unsuspend determined (pre)" =
   let open C in
   let id_source = Identifier.create_source () in

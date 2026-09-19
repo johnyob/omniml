@@ -103,6 +103,11 @@ module Defaulting = struct
           ~default:(fun () -> Shape_var_dependencies.create shape_var)
       in
       let visit_suspended suspended =
+        (* A match's shape variable may have been detached from its matchee by
+           unification with a rigid variable.  Seed it as a candidate even when
+           it is consequently no longer reachable through the closure. *)
+        ignore
+          (find_or_alloc_shape_var_deps suspended.shape_var : Shape_var_dependencies.t);
         let mark = G.Type.Mark.create () in
         let rec visit_type type_ =
           if G.Type.try_mark type_ mark ()
