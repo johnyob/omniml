@@ -1,0 +1,1 @@
+let xx_fail = (fun x -> x x : (forall 'a. 'a -> 'a) -> (forall 'b. 'b -> 'b));;

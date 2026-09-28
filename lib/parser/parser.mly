@@ -411,22 +411,17 @@ atom_expression:
       { Predef_names.or_ ~range:(range_of_lex $loc) }
 
 function_param:
-    pat = atom_pattern
-      { Expression.Function_param.mono_val
-          ~range:(range_of_lex $loc)
-          pat
-      }
-  | "("
-    ; "forall"
-    ; pat = pattern
-    ; ":"
-    ; scheme = poly_core_scheme
-    ; ")"
-      { Expression.Function_param.poly_val
-          ~range:(range_of_lex $loc)
-          pat 
-          scheme
-      }
+  pat = atom_pattern
+    { let pat, param_type = 
+        match (pat : Ast.pattern).it with 
+        | Pat_annot (pat, param_type) -> 
+          pat, Some param_type
+        | _ -> pat, None
+      in
+      Expression.function_param
+        ~range:(range_of_lex $loc)
+        ?param_type
+        pat }
 
 function_ret_type_annot:
     ":"

@@ -8,6 +8,7 @@ module For_testing : sig
   module Type = Type
   module Principal_shape = Principal_shape
   module Scheduler = Scheduler
+  module Ivar = Ivar
 
   module Quickcheckable : sig
     module Type : sig

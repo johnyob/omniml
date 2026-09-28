@@ -1,0 +1,9 @@
+type 's church_list = (forall 'r. 'r -> ('s -> 'r -> 'r) -> 'r);;
+
+type ('a, 'b) church_map = ('a -> 'b) -> 'a church_list -> 'b church_list;;
+
+let church_map =
+ forall (type 'a 'b) ->
+ let (x : ('a, 'b) church_map) = ((fun f xs -> fun z c -> xs z (fun x r -> c (f x) r))) in 
+ x
+ ;;

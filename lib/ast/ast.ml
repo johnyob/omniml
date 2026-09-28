@@ -38,11 +38,9 @@ and pattern_desc =
 type function_param = function_param_desc With_range.t
 
 and function_param_desc =
-  | Param_mono_val of pattern
-  | Param_poly_val of
-      { pat : pattern
-      ; scheme : core_scheme
-      }
+  { function_param_pat : pattern
+  ; function_param_type : core_type option
+  }
 [@@deriving sexp_of]
 
 type expression = expression_desc With_range.t

@@ -672,7 +672,7 @@ module Expression = struct
       scheme_type
       ~closure:[ `Type mono_type ]
       ~with_:(fun quantifiers body ->
-        exists_many quantifiers Type.(var mono_type =~ body))
+        with_range ~range @@ exists_many quantifiers Type.(var mono_type =~ body))
   ;;
 
   let match_scheme ~range cvar ~scheme_type =
@@ -680,7 +680,8 @@ module Expression = struct
       ~range
       scheme_type
       ~closure:[ `Scheme cvar ]
-      ~with_:(fun quantifiers body -> forall quantifiers @@ inst cvar body)
+      ~with_:(fun quantifiers body ->
+        with_range ~range @@ forall quantifiers @@ inst cvar body)
   ;;
 
   let match_poly_inst ~id_source ~range ~poly_type ~mono_type =
@@ -690,7 +691,7 @@ module Expression = struct
       poly_type
       ~closure:[ `Type mono_type ]
       ~with_:(fun { quantifiers; body } ->
-        exists_many quantifiers Type.(var mono_type =~ body))
+        with_range ~range @@ exists_many quantifiers Type.(var mono_type =~ body))
   ;;
 
   let match_poly ~id_source ~range cvar ~poly_type =
@@ -699,7 +700,8 @@ module Expression = struct
       ~range
       poly_type
       ~closure:[ `Scheme cvar ]
-      ~with_:(fun { quantifiers; body } -> forall quantifiers @@ inst cvar body)
+      ~with_:(fun { quantifiers; body } ->
+        with_range ~range @@ forall quantifiers @@ inst cvar body)
   ;;
 
   let infer_pat ~env pat pat_type =
@@ -715,6 +717,15 @@ module Expression = struct
     env, named_bindings, exist_bindings, cpat
   ;;
 
+  let infer_annot ~env annot type_ =
+    let annot_type = Convert.core_type_to_type ~env annot in
+    Type.(var type_ =~ annot_type)
+  ;;
+
+  let infer_optional_annot ~env annot type_ =
+    Option.value_map annot ~default:tt ~f:(fun annot -> infer_annot ~env annot type_)
+  ;;
+
   let bind_mono_pat ~env (pat : pattern) pat_type ~in_ =
     let env, named_bindings, exists_bindings, cpat = infer_pat ~env pat pat_type in
     let bindings = List.map named_bindings ~f:snd in
@@ -722,15 +733,8 @@ module Expression = struct
     exists_many exists_bindings (cpat >> let_unit (mono_binding bindings) ~in_)
   ;;
 
-  let bind_mono_match_val ~env pat param_type ~in_ =
-    let id_source = Env.id_source env in
-    exists' ~id_source
-    @@ fun param_mono_type ->
-    Type.(var param_type =~ scheme (Type.Scheme.create (var param_mono_type)))
-    >> bind_mono_pat ~env pat param_mono_type ~in_
-  ;;
-
-  let bind_unknown_poly_pat ~env (pat : Ast.pattern) param_type ~in_ =
+  let bind_poly_pat ~env (pat : Ast.pattern) param_type ~in_ =
+    (* Note that [param_type] is a scheme not (not a guarded type) *)
     let id_source = Env.id_source env in
     let pat_type = Type.Var.create ~id_source () in
     let env, named_bindings, exist_bindings, cpat = infer_pat ~env pat pat_type in
@@ -745,7 +749,8 @@ module Expression = struct
       ~in_:(in_ env)
   ;;
 
-  let bind_known_poly_pat ~env pat scheme param_type ~in_ =
+  (*
+     let bind_known_poly_pat ~env pat scheme param_type ~in_ =
     let id_source = Env.id_source env in
     let scm = Convert.core_scheme_to_type_scheme ~env scheme in
     let scheme_quantifiers = List.map scm.quantifiers ~f:(fun v -> Rigid, v) in
@@ -765,16 +770,15 @@ module Expression = struct
              @=> bindings))
          ~in_:(in_ env)
   ;;
+  *)
 
-  let bind_param ~env param type_ ~in_ =
-    match With_range.it param with
-    | Param_mono_val pat ->
-      if Omniml_options.is_enabled (Env.options env) First_class_polymorphism
-      then bind_unknown_poly_pat ~env pat type_ ~in_
-      else bind_mono_pat ~env pat type_ ~in_
-    | Param_poly_val { pat; scheme } ->
-      assert_with_fcp ~env ~range:param.range;
-      bind_known_poly_pat ~env pat scheme type_ ~in_
+  let bind_param ~env (param : function_param) type_ ~in_ =
+    let { function_param_type; function_param_pat } = param.it in
+    infer_optional_annot ~env function_param_type type_
+    >>
+    if Omniml_options.is_enabled (Env.options env) First_class_polymorphism
+    then bind_poly_pat ~env function_param_pat type_ ~in_
+    else bind_mono_pat ~env function_param_pat type_ ~in_
   ;;
 
   let rec bind_params ~env params_and_types ~in_ =
@@ -785,9 +789,33 @@ module Expression = struct
         bind_params ~env params_and_types ~in_)
   ;;
 
+  let infer_principal ~env ~f k =
+    let id_source = Env.id_source env in
+    let cvar = Var.create ~id_source () in
+    let type_ = Type.Var.create ~id_source () in
+    let_unit
+      (poly_binding ([ Flexible, type_ ] @. f type_ @=> [ cvar @: Type.var type_ ]))
+      ~in_:(k cvar)
+  ;;
+
+  let infer_poly ~env ~range ~f scheme_exp_type =
+    if Omniml_options.is_enabled (Env.options env) First_class_polymorphism
+    then
+      infer_principal ~env ~f
+      @@ fun cvar -> match_scheme ~range ~scheme_type:scheme_exp_type cvar
+    else f scheme_exp_type
+  ;;
+
+  let infer_inst ~env ~range scheme_type mono_type =
+    if Omniml_options.is_enabled (Env.options env) First_class_polymorphism
+    then match_inst ~range ~scheme_type ~mono_type
+    else Type.(var scheme_type =~ var mono_type)
+  ;;
+
   let rec infer_exp ~(env : Env.t) (exp : expression) (exp_type : Type.Var.t) =
     let id_source = Env.id_source env in
-    with_range ~range:exp.range
+    let range = exp.range in
+    with_range ~range
     @@
     match exp.it with
     | Exp_var var ->
@@ -801,23 +829,17 @@ module Expression = struct
       in
       let infer_arrow ~range ~env ~param ?expected_ret_type arr_type ~infer_body =
         exists' ~id_source
-        @@ fun scheme_param_type ->
+        @@ fun param_type ->
         exists' ~id_source
-        @@ fun scheme_ret_type ->
-        (* Ensure [arr_type] is an arrow with parameter type [scheme_param_type]
-           and return type [scheme_ret_type]. *)
-        Type.(var arr_type =~ var scheme_param_type @-> var scheme_ret_type)
+        @@ fun ret_type ->
+        (* Ensure [arr_type] is an arrow with parameter type [param_type]
+           and return type [ret_type]. *)
+        Type.(var arr_type =~ var param_type @-> var ret_type)
         (* Check the expected ret type *)
         >> Option.value_map expected_ret_type ~default:tt ~f:(fun expected_ret_type ->
-          Type.(var scheme_ret_type =~ expected_ret_type))
-        >> bind_param ~env param scheme_param_type ~in_:(fun env ->
-          (* Check that [exp] has a more general type than [scheme_ret_type]. *)
-          if Omniml_options.is_enabled (Env.options env) First_class_polymorphism
-          then
-            with_range ~range
-            @@ infer_principal ~env ~f:(fun body_type -> infer_body ~env body_type)
-            @@ fun cvar -> match_scheme ~range cvar ~scheme_type:scheme_ret_type
-          else infer_body ~env scheme_ret_type)
+          Type.(var ret_type =~ expected_ret_type))
+        >> bind_param ~env param param_type ~in_:(fun env ->
+          with_range ~range @@ infer_poly ~env ~range ~f:(infer_body ~env) ret_type)
       in
       let rec infer_arrows ~env params arr_type =
         match params with
@@ -843,32 +865,18 @@ module Expression = struct
       exists' ~id_source
       @@ fun arr_type ->
       exists' ~id_source
-      @@ fun scheme_param_type ->
+      @@ fun param_type ->
       exists' ~id_source
-      @@ fun scheme_ret_type ->
+      @@ fun ret_type ->
       (* Ensure that [exp1] has an arrow with parameter type [scheme_param_type]
          and return type [scheme_ret_type]. *)
-      let c1 =
-        infer_exp ~env exp1 arr_type
-        >> with_range ~range:exp1.range
-           @@ Type.(var arr_type =~ var scheme_param_type @-> var scheme_ret_type)
-      in
+      infer_exp ~env exp1 arr_type
+      >> (with_range ~range:exp1.range
+          @@ Type.(var arr_type =~ var param_type @-> var ret_type))
       (* Check that [exp2] has a more general type than [scheme_param_type]. *)
-      let c2 =
-        if Omniml_options.is_enabled (Env.options env) First_class_polymorphism
-        then
-          infer_exp_principal ~env exp2
-          @@ fun cvar ->
-          match_scheme ~range:exp2.range cvar ~scheme_type:scheme_param_type
-        else infer_exp ~env exp2 scheme_param_type
-      in
-      c1
-      >> c2
-      >>
-      (* Check that [exp_type] is an instance of [scheme_ret_type]. *)
-      if Omniml_options.is_enabled (Env.options env) First_class_polymorphism
-      then match_inst ~range:exp.range ~scheme_type:scheme_ret_type ~mono_type:exp_type
-      else Type.(var scheme_ret_type =~ var exp_type)
+      >> infer_poly_exp ~env exp2 param_type
+      (* Check that [exp_type] is an instance of [ret_type]. *)
+      >> infer_inst ~env ~range ret_type exp_type
     | Exp_let (value_binding, exp) ->
       (infer_value_binding ~env value_binding @@ fun env -> infer_exp ~env exp exp_type)
       >>| ignore
@@ -886,9 +894,9 @@ module Expression = struct
           Env.rename_type_var env ~type_var:type_var.it ~in_:(fun env ctype_var ->
             env, (Rigid, ctype_var)))
       in
-      let exp_type' = Type.Var.create ~id_source:(Env.id_source env) () in
+      let exp_type' = Type.Var.create ~id_source () in
       let c = infer_exp ~env exp exp_type' in
-      let x = Var.create ~id_source:(Env.id_source env) () in
+      let x = Var.create ~id_source () in
       let_unit
         (poly_binding
            (((Flexible, exp_type') :: rigid_type_vars)
@@ -897,12 +905,15 @@ module Expression = struct
         ~in_:(inst x (Type.var exp_type))
     | Exp_annot (exp, annot) ->
       let annot = Convert.core_type_to_type ~env annot in
-      let c = infer_exp ~env exp exp_type in
-      Type.(var exp_type =~ annot) >> c
+      exists' ~id_source
+      @@ fun annot_type ->
+      Type.(var annot_type =~ annot)
+      >> infer_poly_exp ~env exp annot_type
+      >> infer_inst ~env ~range annot_type exp_type
     | Exp_tuple exps ->
-      infer_exps ~env exps
-      @@ fun (exp_types, c) ->
-      Type.(var exp_type =~ tuple (List.map ~f:var exp_types)) >> c
+      infer_tuple_exps ~env exps
+      @@ fun (tuple_exp_types, c) ->
+      Type.(var exp_type =~ tuple (List.map ~f:var tuple_exp_types)) >> c
     | Exp_proj (exp', index) ->
       exists' ~id_source
       @@ fun tuple_type ->
@@ -918,7 +929,7 @@ module Expression = struct
                   let arity = List.length comp_types in
                   ff
                     (Omniml_error.projection_out_of_bounds ~range:exp.range ~index ~arity)
-                | Some comp_type -> Type.(var exp_type =~ var comp_type))
+                | Some comp_type -> infer_inst ~env ~range comp_type exp_type)
              | (Arrow _ | Constr _ | Scheme _ | Poly _) as matchee ->
                let type_head =
                  match matchee with
@@ -954,7 +965,7 @@ module Expression = struct
         ~constr_type:exp_type
       @@ fun arg_type ->
       (match arg_exp, arg_type with
-       | Some arg_exp, Some arg_type -> infer_exp ~env arg_exp arg_type
+       | Some arg_exp, Some arg_type -> infer_poly_exp ~env arg_exp arg_type
        | None, None -> tt
        | _ ->
          Omniml_error.(
@@ -976,7 +987,7 @@ module Expression = struct
       let c1 = infer_exp ~env exp record_type in
       let c2 =
         inst_label ~env ~label_name ~label_type:record_type
-        @@ fun arg_type -> Type.(var exp_type =~ var arg_type)
+        @@ fun arg_type -> infer_inst ~env ~range arg_type exp_type
       in
       c1 >> c2
     | Exp_poly (exp, scheme_annot) ->
@@ -997,14 +1008,18 @@ module Expression = struct
       infer_exp ~env exp poly_type
       >> match_poly_inst ~id_source ~range:exp.range ~poly_type ~mono_type:exp_type
 
-  and infer_exps ~env exps k =
+  and infer_poly_exp ~env exp exp_type =
+    infer_poly ~env ~range:exp.range ~f:(infer_exp ~env exp) exp_type
+
+  and infer_tuple_exps ~env exps k =
     match exps with
     | [] -> k ([], tt)
     | exp :: exps ->
       exists' ~id_source:(Env.id_source env)
       @@ fun exp_type ->
-      let c1 = infer_exp ~env exp exp_type in
-      infer_exps ~env exps @@ fun (exp_types, c2) -> k (exp_type :: exp_types, c1 >> c2)
+      let c1 = infer_poly_exp ~env exp exp_type in
+      infer_tuple_exps ~env exps
+      @@ fun (exp_types, c2) -> k (exp_type :: exp_types, c1 >> c2)
 
   and infer_label_exps ~env ~record_type label_exps =
     label_exps
@@ -1015,15 +1030,7 @@ module Expression = struct
 
   and infer_label_exp ~env ~label_type label_name arg_exp =
     inst_label ~env ~label_name ~label_type
-    @@ fun arg_type -> infer_exp ~env arg_exp arg_type
-
-  and infer_principal ~env ~f k =
-    let id_source = Env.id_source env in
-    let cvar = Var.create ~id_source () in
-    let type_ = Type.Var.create ~id_source () in
-    let_unit
-      (poly_binding ([ Flexible, type_ ] @. f type_ @=> [ cvar @: Type.var type_ ]))
-      ~in_:(k cvar)
+    @@ fun arg_type -> infer_poly_exp ~env arg_exp arg_type
 
   and infer_exp_principal ~env exp k =
     with_range ~range:exp.range @@ infer_principal ~env ~f:(infer_exp ~env exp) k

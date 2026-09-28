@@ -162,6 +162,9 @@ let match_
   (* Add [matchee] to closure since [get_matchee_args] relies on it being live. *)
   let closure = Closure.{ closure with types = matchee :: closure.types } in
   let add_handler shape_var =
+    let shape_var =
+      Principal_shape.Var.revive shape_var ~id_source:gstate.G.State.id_source
+    in
     let t = create ~state ~gstate ~closure ~shape_var in
     Principal_shape.Var.add_handler
       shape_var
@@ -179,19 +182,29 @@ let match_
             mark_resumed t ~state;
             default ();
             free t ~gstate)
-      }
+      };
+    shape_var
   in
   match G.Type.inner matchee with
   | Var ->
     let shape_var = Principal_shape.Var.create ~id_source:gstate.id_source () in
-    add_handler shape_var;
+    ignore (add_handler shape_var : Principal_shape.Var.t);
     G.unify_var
       ~state:gstate
       ~curr_region
       matchee
       (G.Type.create ~state:gstate ~curr_region (Structure (Shape_var shape_var)))
-  | Structure (Shape_var shape_var) -> add_handler shape_var
-  | Structure (Structure Rigid_var) -> default ()
+  | Structure (Shape_var shape_var) ->
+    let new_shape_var = add_handler shape_var in
+    if
+      not
+        (Identifier.equal
+           (Principal_shape.Var.id shape_var)
+           (Principal_shape.Var.id new_shape_var))
+    then G.replace_shape_var ~state:gstate matchee ~old_shape_var:shape_var ~new_shape_var
+  | Structure (Structure Rigid_var) ->
+    (* Optimisation: Immediately default *)
+    default ()
   | Structure (Structure (Structure { args; shape })) ->
     (* Optimisation: Immediately solve the case *)
     with_ ~shape ~args

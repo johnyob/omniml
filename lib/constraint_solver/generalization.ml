@@ -353,6 +353,26 @@ and unify_var ~state ~curr_region var type_ =
   assert (Scheduler.is_empty dummy_scheduler)
 ;;
 
+let replace_shape_var ~(state : State.t) type_ ~old_shape_var ~new_shape_var =
+  let old_id = Principal_shape.Var.id old_shape_var in
+  let visited = Hash_set.create (module Identifier) in
+  let rec loop type_ =
+    let type_id = Type.id type_ in
+    if not (Hash_set.mem visited type_id)
+    then (
+      Hash_set.add visited type_id;
+      match Type.inner type_ with
+      | I.Structure (M.Shape_var shape_var)
+        when Identifier.equal (Principal_shape.Var.id shape_var) old_id ->
+        let instances = Type.instances type_ in
+        Type.update_structure ~state type_ (fun structure ->
+          { structure with inner = I.Structure (M.Shape_var new_shape_var) });
+        Map.iter instances ~f:(fun (_src_level, instance) -> loop instance)
+      | _ -> ())
+  in
+  loop type_
+;;
+
 let new_region ~(state : State.t) ?range curr_region =
   let pool = Pool.create ?range () in
   G.Region.create ~state:state.type_state ~parent:curr_region pool

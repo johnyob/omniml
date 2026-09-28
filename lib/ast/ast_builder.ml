@@ -43,10 +43,8 @@ module type S = sig
   end
 
   module Expression : sig
-    module Function_param : sig
-      val mono_val : (pattern -> function_param) with_range_fn
-      val poly_val : (pattern -> core_scheme -> function_param) with_range_fn
-    end
+    val function_param
+      : (?param_type:core_type -> pattern -> function_param) with_range_fn
 
     val var : (Var_name.With_range.t -> expression) with_range_fn
     val const : (constant -> expression) with_range_fn
@@ -151,13 +149,11 @@ module Default : S with type 'a with_range_fn := range:Range.t -> 'a = struct
   end
 
   module Expression = struct
-    module Function_param = struct
-      let mono_val ~range pat = With_range.create ~range @@ Param_mono_val pat
-
-      let poly_val ~range pat scheme =
-        With_range.create ~range @@ Param_poly_val { pat; scheme }
-      ;;
-    end
+    let function_param ~range ?param_type pat =
+      With_range.create
+        ~range
+        { function_param_pat = pat; function_param_type = param_type }
+    ;;
 
     let var ~range var_name = With_range.create ~range @@ Exp_var var_name
     let const ~range const = With_range.create ~range @@ Exp_const const
@@ -261,11 +257,7 @@ module Make (R : Range) : S with type 'a with_range_fn := 'a = struct
   end
 
   module Expression = struct
-    module Function_param = struct
-      let mono_val = Expression.Function_param.mono_val ~range:R.v
-      let poly_val = Expression.Function_param.poly_val ~range:R.v
-    end
-
+    let function_param = Expression.function_param ~range:R.v
     let var = Expression.var ~range:R.v
     let const = Expression.const ~range:R.v
     let fun_ = Expression.fun_ ~range:R.v

@@ -987,6 +987,7 @@ let%expect_test "" =
       ;;
 
       let enqueue = fun (Q (xs, ys)) y -> norm (Q (xs, Cons (y, ys)));;
+      let int_queue = enqueue empty 1;;
       let dequeue = fun q ->
         match q with
         ( Q (Cons (x, xs), ys) -> norm (Q (xs, ys))
@@ -1032,6 +1033,7 @@ let%expect_test "" =
     external rev : 'f list -> 'f list
     val norm : 'g queue -> 'g queue
     val enqueue : 'h queue -> 'h -> 'h queue
+    val int_queue : int queue
     val dequeue : 'i queue -> 'i queue
     val hd : 'j queue -> 'j
     val bfs : 'k tree queue -> 'k list
@@ -1054,6 +1056,7 @@ let%expect_test "" =
     external rev : 'f list -> 'f list
     val norm : 'g queue -> 'g queue
     val enqueue : 'h queue -> 'h -> 'h queue
+    val int_queue : int queue
     val dequeue : 'i queue -> 'i queue
     val hd : 'j queue -> 'j
     val bfs : 'k tree queue -> 'k list
@@ -3312,7 +3315,7 @@ let%expect_test "" =
   do_test
     ~add:true
     {|
-      let poly1 = fun (forall id : 'a. 'a -> 'a) ->
+      let poly1 = fun (id : (forall 'a. 'a -> 'a)) ->
         (id 1, id true)
       ;;
     |};
@@ -3373,7 +3376,7 @@ let%expect_test "" =
   do_test
     ~add:true
     {|
-      let poly2 = fun (forall id : 'a. 'a -> 'a) ->
+      let poly2 = fun (id : (forall 'a. 'a -> 'a)) ->
         ((id 1, id true) : int * bool)
       ;;
     |};
@@ -3401,7 +3404,7 @@ let%expect_test "" =
     {|
       let poly3 = 
         forall (type 'b) ->
-          fun (forall id : 'a. 'a -> 'a) (x : 'b) ->
+          fun (id : (forall 'a. 'a -> 'a)) (x : 'b) ->
             ((id x, id (Some x)) : 'b * 'b option)
       ;;
     |};
@@ -3427,7 +3430,7 @@ let%expect_test "" =
   do_test
     ~add:true
     {|
-      let poly4 = fix (fun poly4 p (forall id : 'a. 'a -> 'a) ->
+      let poly4 = fix (fun poly4 p (id : (forall 'a. 'a -> 'a)) ->
         if p then poly4 false id else (id 4, id true))
       ;;
     |};
@@ -3457,7 +3460,7 @@ let%expect_test "" =
   do_test
     ~add:true
     {|
-      let poly5 = fix (fun poly5 (p : bool) (forall id : 'a. 'a -> 'a) -> 
+      let poly5 = fix (fun poly5 (p : bool) (id : (forall 'a. 'a -> 'a)) -> 
         ((if p then poly5 false id else (id 5, id true)) : int * bool))
       ;;
     |};
@@ -3485,7 +3488,7 @@ let%expect_test "" =
     {|
       let poly6 = forall (type 'b) -> 
         fix (fun poly6 -> 
-          fun (p : bool) (forall id : 'a. 'a -> 'a) (x : 'b) ->
+          fun (p : bool) (id : (forall 'a. 'a -> 'a)) (x : 'b) ->
             ((if p then poly6 false id x else (id x, id (Some x))) : 'b * 'b option))
       ;;
     |};
@@ -3511,7 +3514,7 @@ let%expect_test "" =
   do_test
     ~add:true
     {|
-      let needs_magic = fun (forall magic : 'a 'b. 'a -> 'b) ->
+      let needs_magic = fun (magic : (forall 'a 'b. 'a -> 'b)) ->
         (magic 5 : bool)
       ;;
     |};
@@ -3972,7 +3975,7 @@ let%expect_test "" =
 let%expect_test "" =
   let str =
     {|
-      let poly_pattern = fun (forall (id1, id2) : 'a 'b. ('a -> 'a) * ('b -> 'b)) -> 
+      let poly_pattern = fun ((id1, id2) : (forall 'a 'b. ('a -> 'a) * ('b -> 'b))) -> 
         let _ = id1 1 in
         let _ = id1 true in
         let _ = id2 1 in
@@ -4701,7 +4704,7 @@ let%expect_test "" =
   (* A4 *)
   do_test
     {|
-      let a4 = fun (forall x : 'a. 'a -> 'a) -> x x;;
+      let a4 = fun (x : (forall 'a. 'a -> 'a)) -> x x;;
     |};
   [%expect {| val a4 : (forall 'e1. 'e1 -> 'e1) -> 'f1 -> 'f1 |}];
   (* A5 *)
@@ -4891,7 +4894,7 @@ let%expect_test "" =
   (* C1b *)
   do_test
     {|
-      let c1b = fun (forall f : 'a. 'a -> 'a) -> (f 1, f true);;
+      let c1b = fun (f : (forall 'a. 'a -> 'a)) -> (f 1, f true);;
     |};
   [%expect {| val c1b : (forall 'e1. 'e1 -> 'e1) -> int * bool |}];
   (* C1c (MLF X, GI X, QL +, Fresco +) *)
@@ -5326,7 +5329,7 @@ let%expect_test "church-encoded lists for FCP" =
   (* A4 *)
   do_test
     {|
-      let a4 = fun (forall x : 'a. 'a -> 'a) -> x x;;
+      let a4 = fun (x : (forall 'a. 'a -> 'a)) -> x x;;
     |};
   [%expect {| val a4 : (forall 's1. 's1 -> 's1) -> 't1 -> 't1 |}];
   (* A5 *)
@@ -5518,7 +5521,7 @@ let%expect_test "church-encoded lists for FCP" =
   (* C1b *)
   do_test
     {|
-      let c1b = fun (forall f : 'a. 'a -> 'a) -> (f 1, f true);;
+      let c1b = fun (f : (forall 'a. 'a -> 'a)) -> (f 1, f true);;
     |};
   [%expect {| val c1b : (forall 's1. 's1 -> 's1) -> int * bool |}];
   (* C1c (MLF X, GI X, QL +, Fresco +) *)
@@ -5852,7 +5855,7 @@ let%expect_test "" =
     |}];
   type_check_and_print
     {|
-      let use_poly = fun (forall id : 'a. 'a -> 'a) -> id 0;;
+      let use_poly = fun (id : (forall 'a. 'a -> 'a)) -> id 0;;
     |};
   [%expect
     {|

@@ -10,7 +10,6 @@ and queued_job =
 and t =
   { maintenance_jobs : queued_job Queue.t
   ; handler_jobs : queued_job Queue.t
-  ; fallback_jobs : queued_job Queue.t
   ; mutable next_sequence : int
   ; mutable running : bool
   ; mutable running_handler : bool
@@ -21,7 +20,6 @@ and t =
 let create () =
   { maintenance_jobs = Queue.create ()
   ; handler_jobs = Queue.create ()
-  ; fallback_jobs = Queue.create ()
   ; next_sequence = 0
   ; running = false
   ; running_handler = false
@@ -29,12 +27,7 @@ let create () =
   }
 ;;
 
-let is_empty t =
-  Queue.is_empty t.maintenance_jobs
-  && Queue.is_empty t.handler_jobs
-  && Queue.is_empty t.fallback_jobs
-;;
-
+let is_empty t = Queue.is_empty t.maintenance_jobs && Queue.is_empty t.handler_jobs
 let is_maintenance_empty t = Queue.is_empty t.maintenance_jobs
 
 let enqueue_job t queue job =
@@ -46,7 +39,6 @@ let enqueue_job t queue job =
 let enqueue t job = enqueue_job t t.maintenance_jobs job
 let enqueue_all t jobs = List.iter jobs ~f:(enqueue t)
 let enqueue_handler t job = enqueue_job t t.handler_jobs job
-let enqueue_fallback t job = enqueue_job t t.fallback_jobs job
 
 let drain_maintenance t =
   if not t.draining_maintenance
@@ -82,8 +74,7 @@ let run t =
       ~f:(fun () ->
         let dequeue_next () =
           match Queue.peek t.maintenance_jobs, Queue.peek t.handler_jobs with
-          | None, None ->
-            Option.map (Queue.dequeue t.fallback_jobs) ~f:(fun job -> `Handler job)
+          | None, None -> None
           | Some _, None ->
             Option.map (Queue.dequeue t.maintenance_jobs) ~f:(fun job -> `Maintenance job)
           | None, Some _ ->
@@ -113,6 +104,5 @@ let run t =
 let clear t =
   if t.running then invalid_arg "Scheduler.clear: scheduler is running";
   Queue.clear t.maintenance_jobs;
-  Queue.clear t.handler_jobs;
-  Queue.clear t.fallback_jobs
+  Queue.clear t.handler_jobs
 ;;

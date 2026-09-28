@@ -325,6 +325,7 @@ module Var = struct
 
     and contents =
       | Empty of Handler.t list
+      | Cancelled of Self.t option
       | Full of Self.t
     [@@deriving sexp_of]
 
@@ -336,6 +337,20 @@ module Var = struct
       let contents =
         match t1.contents, t2.contents with
         | Empty hs1, Empty hs2 -> Empty (hs1 @ hs2)
+        | Cancelled (Some shape1), Cancelled (Some shape2) ->
+          if equal shape1 shape2 then Cancelled (Some shape1) else Cancelled None
+        | Cancelled (Some shape), Cancelled None | Cancelled None, Cancelled (Some shape)
+          -> Cancelled (Some shape)
+        | Cancelled None, Cancelled None -> Cancelled None
+        | Empty handlers, Cancelled None | Cancelled None, Empty handlers ->
+          Empty handlers
+        | Empty handlers, Cancelled (Some shape) | Cancelled (Some shape), Empty handlers
+          ->
+          List.iter handlers ~f:(fun handler -> Handler.schedule handler shape ~scheduler);
+          Full shape
+        | (Full _ as c), Cancelled _ | Cancelled _, (Full _ as c) ->
+          (* A cancelled shape variable behaves like an unconstrained variable. *)
+          c
         | Full sh1, Full sh2 -> if equal sh1 sh2 then Full sh1 else raise Cannot_merge
         | Empty hs, (Full sh as c) | (Full sh as c), Empty hs ->
           List.iter hs ~f:(fun h -> Handler.schedule h sh ~scheduler);
@@ -355,14 +370,20 @@ module Var = struct
   let is_empty t =
     match contents t with
     | Empty _ -> true
-    | Full _ -> false
+    | Cancelled _ | Full _ -> false
+  ;;
+
+  let is_cancelled t =
+    match contents t with
+    | Cancelled _ -> true
+    | Empty _ | Full _ -> false
   ;;
 
   exception Empty
 
   let shape_exn t =
     match contents t with
-    | Empty _ -> raise Empty
+    | Empty _ | Cancelled _ -> raise Empty
     | Full shape -> shape
   ;;
 
@@ -371,9 +392,21 @@ module Var = struct
     | Empty -> None
   ;;
 
+  let revive t ~id_source =
+    match contents t with
+    | Empty _ | Full _ -> t
+    | Cancelled shape ->
+      let id = Identifier.create id_source in
+      let contents =
+        Option.value_map shape ~f:(fun shape -> S.Full shape) ~default:(S.Empty [])
+      in
+      U.Term.create { id; contents }
+  ;;
+
   let add_handler t ~scheduler handler =
     match contents t with
     | Empty handlers -> set_contents t (Empty (handler :: handlers))
+    | Cancelled _ -> invalid_arg "cannot add a handler to a cancelled shape variable"
     | Full shape -> Handler.schedule handler shape ~scheduler
   ;;
 
@@ -382,6 +415,11 @@ module Var = struct
   let fill_exn t shape ~scheduler =
     match contents t with
     | Full previous -> if not (equal shape previous) then raise Not_empty
+    | Cancelled None -> set_contents t (Cancelled (Some shape))
+    | Cancelled (Some previous) ->
+      (* Agreement remains useful as soft evidence, but conflicting instances
+         mean there is no single shape with which to revive the variable. *)
+      if not (equal shape previous) then set_contents t (Cancelled None)
     | Empty handlers ->
       set_contents t (Full shape);
       List.iter handlers ~f:(fun handler -> Handler.schedule handler shape ~scheduler)
@@ -390,8 +428,9 @@ module Var = struct
   let cancel_exn t ~scheduler =
     match contents t with
     | Full _shape -> raise Not_empty
+    | Cancelled _ -> ()
     | Empty handlers ->
-      set_contents t (Empty []);
+      set_contents t (Cancelled None);
       List.iter handlers ~f:(Handler.schedule_cancel ~scheduler)
   ;;
 

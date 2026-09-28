@@ -41,38 +41,51 @@ module Var : sig
     [@@deriving sexp_of]
   end
 
-  (** A write-once cell containing a principal shape. *)
+  (** A cell containing a principal shape. Cancelled cells retain soft shape
+      evidence and can be revived by adding a handler. *)
   type t [@@deriving sexp_of]
 
   (** [id t] is the identifier of the shape var. *)
   val id : t -> Identifier.t
 
-  (** [is_empty t] returns true when the cell is empty. *)
+  (** [is_empty t] returns true when the cell is active and empty. *)
   val is_empty : t -> bool
+
+  (** [is_cancelled t] returns true when the cell is cancelled. *)
+  val is_cancelled : t -> bool
 
   exception Empty
 
   (** [shape_exn t] returns the current contents of the cell.
 
-      @raises Empty if [t] is empty. *)
+      @raises Empty if [t] is empty or cancelled. *)
   val shape_exn : t -> shape
 
   val shape : t -> shape option
 
+  (** [revive t] returns [t] when it is active. When [t] is cancelled, it
+      returns a fresh active variable initialized from [t]'s soft shape evidence.
+      The cancelled variable itself is unchanged. *)
+  val revive : t -> id_source:Identifier.source -> t
+
   (** [add_handler t h] adds a handler to the shape var that is scheduled
       once the variable is filled.
 
-      If the shape is already filled, then the handler is scheduled immediately. *)
+      If the shape is already filled, then the handler is scheduled immediately.
+      Call [revive] before adding a handler to a potentially cancelled variable. *)
   val add_handler : t -> scheduler:Scheduler.t -> Handler.t -> unit
 
   exception Not_empty
 
-  (** [fill_exn t s] fills [t] with shape [s] if [t] was empty.
+  (** [fill_exn t s] fills [t] with shape [s] if [t] was empty. A cancelled
+      variable records agreeing fills as soft evidence without scheduling handlers;
+      a conflicting fill clears that evidence.
 
       @raise Not_empty when [t] is filled with [s'] and [s <> s']. *)
   val fill_exn : t -> shape -> scheduler:Scheduler.t -> unit
 
-  (** [cancel_exn t] cancels any handlers associated with [t].
+  (** [cancel_exn t] cancels any handlers associated with [t]. Repeated
+      cancellation is a no-op.
 
       @raise Not_empty when [t] is filled with a shape. *)
   val cancel_exn : t -> scheduler:Scheduler.t -> unit

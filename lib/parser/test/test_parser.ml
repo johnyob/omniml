@@ -4605,7 +4605,7 @@ let%expect_test "type definition - empty variant" =
 let%expect_test "polyparam - function" =
   let exp =
     {|
-      fun (forall id : 'a. 'a -> 'a) -> id 1; id true
+      fun (id : (forall 'a. 'a -> 'a)) -> id 1; id true
     |}
   in
   parse_and_print_expression exp;
